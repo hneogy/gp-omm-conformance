@@ -11,8 +11,7 @@ traceable to a provider response whose URL, retrieval time and SHA-256 are recor
 Status: version `0.1.0`, audited (see `AUDIT.md`), prepared for publication. Maintainer: Honorius Neogy
 (NEOGY LLC).
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
-*(badge placeholder: a Zenodo DOI is minted for every release and this line is updated with the first one)* See `DECISIONS.md` for the full decision log and `MANIFEST.md` for every case,
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22867654.svg)](https://doi.org/10.5281/zenodo.22867654) See `DECISIONS.md` for the full decision log and `MANIFEST.md` for every case,
 source and known gap.
 
 ## The migration in one page
@@ -333,6 +332,9 @@ makes this data freely available; please respect its usage policy. Standards: CC
 Alpha-5 definition: Space-Track, https://www.space-track.org/documentation.
 
 To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, H. (NEOGY LLC).
-gp-omm-conformance, version 0.1.0, 2026-09-21, https://github.com/hneogy/gp-omm-conformance.* A Zenodo DOI is
-minted per release and added to `CITATION.cff` and the badge above; until then cite the version,
-date and URL.
+gp-omm-conformance, version 0.1.0, 2026-09-21, https://github.com/hneogy/gp-omm-conformance.*
+Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
+corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
+general. The **version DOI** [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655) refers to exactly v0.1.0; use
+it when your results depend on a specific set of expected values. Each later release gets its own
+version DOI under the same concept DOI.

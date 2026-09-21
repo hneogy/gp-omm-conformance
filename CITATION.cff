@@ -1,10 +1,11 @@
 # Citation metadata (Citation File Format 1.2.0). Copyright (c) 2026 NEOGY LLC; licensed MIT.
 cff-version: 1.2.0
-message: "If you use this corpus, please cite it as below. A Zenodo DOI is minted per release; once the first DOI exists it is added here under 'identifiers'."
+message: "If you use this corpus, please cite it as below. Use the concept DOI to refer to the corpus in general (it resolves to the latest release) and the version DOI to refer to exactly the release you used."
 type: dataset
 title: "gp-omm-conformance: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary (Alpha-5, six- and nine-digit NORAD_CAT_IDs, CCSDS OMM)"
 version: "0.1.0"
 date-released: "2026-09-21"
+doi: 10.5281/zenodo.22867654
 license: MIT
 authors:
   - given-names: Honorius
@@ -29,6 +30,10 @@ keywords:
   - SGP4
   - CelesTrak
   - conformance testing
-# identifiers:
-#   - type: doi
-#     value: 10.5281/zenodo.XXXXXXX   # added when the first release DOI is minted
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22867654
+    description: "Concept DOI for all versions of gp-omm-conformance; resolves to the latest release"
+  - type: doi
+    value: 10.5281/zenodo.22867655
+    description: "Version DOI for release v0.1.0"
