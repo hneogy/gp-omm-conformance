@@ -1,0 +1,7225 @@
+{
+ "case": "bstar-and-derivative-forms",
+ "title": "Drag terms: negative BSTAR, negative first derivative, non-zero second derivative, implied-decimal exponent fields",
+ "schema_version": "1.0",
+ "generated_at": "2026-09-21T03:54:07Z",
+ "generator": "tools/make_expected.py",
+ "kind": "gp",
+ "sources": {
+  "fixtures/bstar-and-derivative-forms/raw/decaying.tle": {
+   "tier": "live",
+   "format": "tle",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:11:44Z",
+   "http_status": 200,
+   "bytes": 13272,
+   "sha256": "90b5925c40cec7ac2853563c8b1b65d4685f975a8526270022eef665d52d2576",
+   "provenance": "live",
+   "record_count": 79,
+   "facts": {
+    "format": "tle",
+    "record_count": 79,
+    "line_endings": {
+     "crlf": 237,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 13272
+   }
+  },
+  "fixtures/bstar-and-derivative-forms/raw/decaying.csv": {
+   "tier": "live",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:11:46Z",
+   "http_status": 200,
+   "bytes": 13599,
+   "sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79",
+   "provenance": "live",
+   "record_count": 82,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 82,
+    "line_endings": {
+     "crlf": 83,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 13599
+   }
+  },
+  "fixtures/bstar-and-derivative-forms/raw/decaying-recapture.tle": {
+   "tier": "live",
+   "format": "tle",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=tle",
+   "retrieved_at": "2026-09-21T00:41:33Z",
+   "http_status": 200,
+   "bytes": 13272,
+   "sha256": "90b5925c40cec7ac2853563c8b1b65d4685f975a8526270022eef665d52d2576",
+   "provenance": "live",
+   "record_count": 79,
+   "recapture_of": "decaying.tle",
+   "facts": {
+    "format": "tle",
+    "record_count": 79,
+    "line_endings": {
+     "crlf": 237,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 13272
+   }
+  },
+  "fixtures/satcat-70000-cutoff/raw/gp-69999-first.tle": {
+   "tier": "stable",
+   "format": "tle",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:44:29Z",
+   "http_status": 200,
+   "bytes": 168,
+   "sha256": "b7f96c3912c2445c1ba94cd9a061e4b270f5f58bd4fb27fd188cc838c645700d",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "format": "tle",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 3,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 168
+   }
+  },
+  "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv": {
+   "tier": "stable",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:44:33Z",
+   "http_status": 200,
+   "bytes": 376,
+   "sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 376
+   }
+  }
+ },
+ "records": [
+  {
+   "norad_cat_id": 20453,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 20453,
+    "object_name": "DELTA 2 R/B(1)",
+    "object_id": "1990-008B",
+    "epoch": "2026-09-20T13:39:33.839424",
+    "mean_motion": "15.96788691",
+    "eccentricity": "0.00225122",
+    "inclination": "35.5934",
+    "ra_of_asc_node": "307.3932",
+    "arg_of_pericenter": "310.369",
+    "mean_anomaly": "49.5094",
+    "bstar": "0.00075988826",
+    "mean_motion_dot": "0.00350177",
+    "mean_motion_ddot": "0.00004993505",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 95679
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0022512",
+      "bstar": "0.00075989",
+      "mean_motion_ddot": "0.000049935"
+     },
+     "fields": {
+      "catalog_field": "20453",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "90008B  ",
+      "epoch_field": "26263.56914166",
+      "two_digit_year": "26",
+      "ndot_field": " .00350177",
+      "nddot_field": " 49935-4",
+      "bstar_field": " 75989-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0022512",
+      "rev_field": "95679",
+      "checksum_written": [
+       "6",
+       "3"
+      ],
+      "checksum_computed": [
+       6,
+       3
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 27153,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 27153,
+    "object_name": "PSLV DEB",
+    "object_id": "2001-049CZ",
+    "epoch": "2026-09-20T14:12:41.584608",
+    "mean_motion": "15.92851381",
+    "eccentricity": "0.00024726",
+    "inclination": "97.815",
+    "ra_of_asc_node": "23.0765",
+    "arg_of_pericenter": "241.754",
+    "mean_anomaly": "118.3484",
+    "bstar": "0.0010684",
+    "mean_motion_dot": "0.00366783",
+    "mean_motion_ddot": "0.00005397874",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 34653
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0002472",
+      "mean_motion_ddot": "0.000053979"
+     },
+     "fields": {
+      "catalog_field": "27153",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "01049CZ ",
+      "epoch_field": "26263.59214797",
+      "two_digit_year": "26",
+      "ndot_field": " .00366783",
+      "nddot_field": " 53979-4",
+      "bstar_field": " 10684-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002472",
+      "rev_field": "34653",
+      "checksum_written": [
+       "6",
+       "4"
+      ],
+      "checksum_computed": [
+       6,
+       4
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 39473,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 39473,
+    "object_name": "TACSAT 6",
+    "object_id": "2013-072M",
+    "epoch": "2026-09-20T10:50:53.829888",
+    "mean_motion": "16.27919336",
+    "eccentricity": "0.00064483",
+    "inclination": "120.4357",
+    "ra_of_asc_node": "178.6536",
+    "arg_of_pericenter": "147.4681",
+    "mean_anomaly": "212.6841",
+    "bstar": "0.0012545399",
+    "mean_motion_dot": "0.04794794",
+    "mean_motion_ddot": "0.00001383147",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 13442
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0006448",
+      "bstar": "0.0012545",
+      "mean_motion_ddot": "0.000013831"
+     },
+     "fields": {
+      "catalog_field": "39473",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "13072M  ",
+      "epoch_field": "26263.45201192",
+      "two_digit_year": "26",
+      "ndot_field": " .04794794",
+      "nddot_field": " 13831-4",
+      "bstar_field": " 12545-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0006448",
+      "rev_field": "13442",
+      "checksum_written": [
+       "5",
+       "4"
+      ],
+      "checksum_computed": [
+       5,
+       4
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 41892,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 41892,
+    "object_name": "PEGASUS R/B",
+    "object_id": "2016-078J",
+    "epoch": "2026-09-20T08:04:52.015296",
+    "mean_motion": "16.01956617",
+    "eccentricity": "0.00063057",
+    "inclination": "34.9208",
+    "ra_of_asc_node": "236.0532",
+    "arg_of_pericenter": "205.259",
+    "mean_anomaly": "154.784",
+    "bstar": "0.00049338168",
+    "mean_motion_dot": "0.00298321",
+    "mean_motion_ddot": "0.000038065363",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 54483
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0006305",
+      "bstar": "0.00049338",
+      "mean_motion_ddot": "0.000038065"
+     },
+     "fields": {
+      "catalog_field": "41892",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "16078J  ",
+      "epoch_field": "26263.33671314",
+      "two_digit_year": "26",
+      "ndot_field": " .00298321",
+      "nddot_field": " 38065-4",
+      "bstar_field": " 49338-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0006305",
+      "rev_field": "54483",
+      "checksum_written": [
+       "4",
+       "5"
+      ],
+      "checksum_computed": [
+       4,
+       5
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 43879,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 43879,
+    "object_name": "ISAT",
+    "object_id": "2018-111D",
+    "epoch": "2026-09-19T02:33:49.223808",
+    "mean_motion": "16.00711699",
+    "eccentricity": "0.00094288",
+    "inclination": "97.5724",
+    "ra_of_asc_node": "206.3379",
+    "arg_of_pericenter": "140.9659",
+    "mean_anomaly": "219.2301",
+    "bstar": "0.0011229269",
+    "mean_motion_dot": "0.00593785",
+    "mean_motion_ddot": "0.0001605379",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 42597
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0009428",
+      "bstar": "0.0011229",
+      "mean_motion_ddot": "0.00016054"
+     },
+     "fields": {
+      "catalog_field": "43879",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "18111D  ",
+      "epoch_field": "26262.10681972",
+      "two_digit_year": "26",
+      "ndot_field": " .00593785",
+      "nddot_field": " 16054-3",
+      "bstar_field": " 11229-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0009428",
+      "rev_field": "42597",
+      "checksum_written": [
+       "8",
+       "9"
+      ],
+      "checksum_computed": [
+       8,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 44772,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 44772,
+    "object_name": "STARLINK-1068",
+    "object_id": "2019-074BM",
+    "epoch": "2026-09-20T12:48:49.062816",
+    "mean_motion": "16.11639536",
+    "eccentricity": "0.00036551",
+    "inclination": "53.0277",
+    "ra_of_asc_node": "283.6782",
+    "arg_of_pericenter": "67.7943",
+    "mean_anomaly": "292.3479",
+    "bstar": "0.00057593679",
+    "mean_motion_dot": "0.006195",
+    "mean_motion_ddot": "0.00021839552",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 37962
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003655",
+      "bstar": "0.00057594",
+      "mean_motion_ddot": "0.0002184"
+     },
+     "fields": {
+      "catalog_field": "44772",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "19074BM ",
+      "epoch_field": "26263.53390119",
+      "two_digit_year": "26",
+      "ndot_field": " .00619500",
+      "nddot_field": " 21840-3",
+      "bstar_field": " 57594-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003655",
+      "rev_field": "37962",
+      "checksum_written": [
+       "7",
+       "5"
+      ],
+      "checksum_computed": [
+       7,
+       5
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45062,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45062,
+    "object_name": "STARLINK-1171",
+    "object_id": "2020-006U",
+    "epoch": "2026-09-20T10:50:08.361888",
+    "mean_motion": "16.01790038",
+    "eccentricity": "0.00025512",
+    "inclination": "53.0319",
+    "ra_of_asc_node": "356.0913",
+    "arg_of_pericenter": "66.6709",
+    "mean_anomaly": "293.4589",
+    "bstar": "0.001619345",
+    "mean_motion_dot": "0.00935965",
+    "mean_motion_ddot": "0.00044436104",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 36772
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0002551",
+      "bstar": "0.0016193",
+      "mean_motion_ddot": "0.00044436"
+     },
+     "fields": {
+      "catalog_field": "45062",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20006U  ",
+      "epoch_field": "26263.45148567",
+      "two_digit_year": "26",
+      "ndot_field": " .00935965",
+      "nddot_field": " 44436-3",
+      "bstar_field": " 16193-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002551",
+      "rev_field": "36772",
+      "checksum_written": [
+       "7",
+       "4"
+      ],
+      "checksum_computed": [
+       7,
+       4
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45377,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45377,
+    "object_name": "STARLINK-1305",
+    "object_id": "2020-019T",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "15.94635652",
+    "eccentricity": "0.00058249",
+    "inclination": "53.0283",
+    "ra_of_asc_node": "244.8425",
+    "arg_of_pericenter": "70.7733",
+    "mean_anomaly": "217.0569",
+    "bstar": "0.00049355751",
+    "mean_motion_dot": "0.00189749",
+    "mean_motion_ddot": "0.000025059536",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 603
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0005824",
+      "bstar": "0.00049356",
+      "mean_motion_ddot": "0.00002506"
+     },
+     "fields": {
+      "catalog_field": "45377",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20019T  ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .00189749",
+      "nddot_field": " 25060-4",
+      "bstar_field": " 49356-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0005824",
+      "rev_field": "  603",
+      "checksum_written": [
+       "2",
+       "9"
+      ],
+      "checksum_computed": [
+       2,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45386,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45386,
+    "object_name": "STARLINK-1272",
+    "object_id": "2020-019AC",
+    "epoch": "2026-09-20T08:00:01.999872",
+    "mean_motion": "16.00271294",
+    "eccentricity": "0.00015197",
+    "inclination": "53.0282",
+    "ra_of_asc_node": "221.5976",
+    "arg_of_pericenter": "116.8164",
+    "mean_anomaly": "73.3929",
+    "bstar": "0.0021600992",
+    "mean_motion_dot": "0.01139712",
+    "mean_motion_ddot": "0.00067230683",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 599
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0001519",
+      "bstar": "0.0021601",
+      "mean_motion_ddot": "0.00067231"
+     },
+     "fields": {
+      "catalog_field": "45386",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20019AC ",
+      "epoch_field": "26263.33335648",
+      "two_digit_year": "26",
+      "ndot_field": " .01139712",
+      "nddot_field": " 67231-3",
+      "bstar_field": " 21601-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0001519",
+      "rev_field": "  599",
+      "checksum_written": [
+       "0",
+       "1"
+      ],
+      "checksum_computed": [
+       0,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45395,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45395,
+    "object_name": "STARLINK-1297",
+    "object_id": "2020-019AM",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "15.93723307",
+    "eccentricity": "0.00064289",
+    "inclination": "53.0315",
+    "ra_of_asc_node": "243.4262",
+    "arg_of_pericenter": "58.8263",
+    "mean_anomaly": "316.7091",
+    "bstar": "0.0005552508",
+    "mean_motion_dot": "0.0020365",
+    "mean_motion_ddot": "0.000026971517",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 603
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0006428",
+      "bstar": "0.00055525",
+      "mean_motion_ddot": "0.000026972"
+     },
+     "fields": {
+      "catalog_field": "45395",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20019AM ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .00203650",
+      "nddot_field": " 26972-4",
+      "bstar_field": " 55525-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0006428",
+      "rev_field": "  603",
+      "checksum_written": [
+       "8",
+       "6"
+      ],
+      "checksum_computed": [
+       8,
+       6
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45408,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45408,
+    "object_name": "STARLINK-1278",
+    "object_id": "2020-019BA",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "15.99201443",
+    "eccentricity": "0.00015712",
+    "inclination": "53.0281",
+    "ra_of_asc_node": "241.2179",
+    "arg_of_pericenter": "95.6192",
+    "mean_anomaly": "308.541",
+    "bstar": "0.0021988227",
+    "mean_motion_dot": "0.01092575",
+    "mean_motion_ddot": "0.00060038456",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 603
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0001571",
+      "bstar": "0.0021988",
+      "mean_motion_ddot": "0.00060038"
+     },
+     "fields": {
+      "catalog_field": "45408",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20019BA ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .01092575",
+      "nddot_field": " 60038-3",
+      "bstar_field": " 21988-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0001571",
+      "rev_field": "  603",
+      "checksum_written": [
+       "1",
+       "2"
+      ],
+      "checksum_computed": [
+       1,
+       2
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45531,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45531,
+    "object_name": "STARLINK-1329",
+    "object_id": "2020-025A",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "15.99071512",
+    "eccentricity": "0.00010758",
+    "inclination": "53.0303",
+    "ra_of_asc_node": "189.4998",
+    "arg_of_pericenter": "109.2452",
+    "mean_anomaly": "255.3429",
+    "bstar": "0.0022682913",
+    "mean_motion_dot": "0.0111831",
+    "mean_motion_ddot": "0.00063135482",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 588
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0001075",
+      "bstar": "0.0022683",
+      "mean_motion_ddot": "0.00063135"
+     },
+     "fields": {
+      "catalog_field": "45531",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20025A  ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .01118310",
+      "nddot_field": " 63135-3",
+      "bstar_field": " 22683-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0001075",
+      "rev_field": "  588",
+      "checksum_written": [
+       "5",
+       "9"
+      ],
+      "checksum_computed": [
+       5,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45582,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45582,
+    "object_name": "STARLINK-1337",
+    "object_id": "2020-025BD",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "16.00030406",
+    "eccentricity": "0.0004386",
+    "inclination": "53.0328",
+    "ra_of_asc_node": "168.6542",
+    "arg_of_pericenter": "131.3135",
+    "mean_anomaly": "276.6945",
+    "bstar": "0.00055671161",
+    "mean_motion_dot": "0.00290162",
+    "mean_motion_ddot": "0.00004647839",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 606
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "bstar": "0.00055671",
+      "mean_motion_ddot": "0.000046478"
+     },
+     "fields": {
+      "catalog_field": "45582",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20025BD ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .00290162",
+      "nddot_field": " 46478-4",
+      "bstar_field": " 55671-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004386",
+      "rev_field": "  606",
+      "checksum_written": [
+       "2",
+       "8"
+      ],
+      "checksum_computed": [
+       2,
+       8
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45665,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45665,
+    "object_name": "STARLINK-1448",
+    "object_id": "2020-035J",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "15.97510382",
+    "eccentricity": "0.00012805",
+    "inclination": "53.0315",
+    "ra_of_asc_node": "166.0442",
+    "arg_of_pericenter": "115.8841",
+    "mean_anomaly": "198.0512",
+    "bstar": "0.0024170556",
+    "mean_motion_dot": "0.01092668",
+    "mean_motion_ddot": "0.00058444603",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 604
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.000128",
+      "bstar": "0.0024171",
+      "mean_motion_ddot": "0.00058445"
+     },
+     "fields": {
+      "catalog_field": "45665",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20035J  ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .01092668",
+      "nddot_field": " 58445-3",
+      "bstar_field": " 24171-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0001280",
+      "rev_field": "  604",
+      "checksum_written": [
+       "3",
+       "4"
+      ],
+      "checksum_computed": [
+       3,
+       4
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45670,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45670,
+    "object_name": "STARLINK-1453",
+    "object_id": "2020-035P",
+    "epoch": "2026-09-20T14:52:24.544992",
+    "mean_motion": "16.07645096",
+    "eccentricity": "0.00027877",
+    "inclination": "53.0254",
+    "ra_of_asc_node": "124.754",
+    "arg_of_pericenter": "254.1521",
+    "mean_anomaly": "105.9205",
+    "bstar": "0.00061817609",
+    "mean_motion_dot": "0.00511723",
+    "mean_motion_ddot": "0.00013956727",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 35005
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0002787",
+      "bstar": "0.00061818",
+      "mean_motion_ddot": "0.00013957"
+     },
+     "fields": {
+      "catalog_field": "45670",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20035P  ",
+      "epoch_field": "26263.61972853",
+      "two_digit_year": "26",
+      "ndot_field": " .00511723",
+      "nddot_field": " 13957-3",
+      "bstar_field": " 61818-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002787",
+      "rev_field": "35005",
+      "checksum_written": [
+       "6",
+       "9"
+      ],
+      "checksum_computed": [
+       6,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45703,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45703,
+    "object_name": "STARLINK-1407",
+    "object_id": "2020-035AY",
+    "epoch": "2026-09-20T03:47:23.948448",
+    "mean_motion": "16.01912088",
+    "eccentricity": "0.00043829",
+    "inclination": "53.0165",
+    "ra_of_asc_node": "63.9879",
+    "arg_of_pericenter": "316.8475",
+    "mean_anomaly": "43.2211",
+    "bstar": "0.00055369313",
+    "mean_motion_dot": "0.00322247",
+    "mean_motion_ddot": "0.00005610967",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 35097
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0004382",
+      "bstar": "0.00055369",
+      "mean_motion_ddot": "0.00005611"
+     },
+     "fields": {
+      "catalog_field": "45703",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20035AY ",
+      "epoch_field": "26263.15791607",
+      "two_digit_year": "26",
+      "ndot_field": " .00322247",
+      "nddot_field": " 56110-4",
+      "bstar_field": " 55369-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004382",
+      "rev_field": "35097",
+      "checksum_written": [
+       "2",
+       "7"
+      ],
+      "checksum_computed": [
+       2,
+       7
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 45711,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 45711,
+    "object_name": "STARLINK-1433",
+    "object_id": "2020-035BG",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "15.99800775",
+    "eccentricity": "0.00009936",
+    "inclination": "53.0336",
+    "ra_of_asc_node": "132.17",
+    "arg_of_pericenter": "119.7455",
+    "mean_anomaly": "25.2827",
+    "bstar": "0.0021537127",
+    "mean_motion_dot": "0.01106779",
+    "mean_motion_ddot": "0.00062419978",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 594
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0000993",
+      "bstar": "0.0021537",
+      "mean_motion_ddot": "0.0006242"
+     },
+     "fields": {
+      "catalog_field": "45711",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20035BG ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .01106779",
+      "nddot_field": " 62420-3",
+      "bstar_field": " 21537-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0000993",
+      "rev_field": "  594",
+      "checksum_written": [
+       "5",
+       "2"
+      ],
+      "checksum_computed": [
+       5,
+       2
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 46375,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 46375,
+    "object_name": "STARLINK-1724",
+    "object_id": "2020-062BC",
+    "epoch": "2026-09-20T18:22:15.671424",
+    "mean_motion": "16.38607988",
+    "eccentricity": "0.0010147",
+    "inclination": "52.9963",
+    "ra_of_asc_node": "34.9742",
+    "arg_of_pericenter": "304.3786",
+    "mean_anomaly": "55.6299",
+    "bstar": "0.00065487",
+    "mean_motion_dot": "0.07779263",
+    "mean_motion_ddot": "0.000012412",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 33630
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {},
+     "fields": {
+      "catalog_field": "46375",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20062BC ",
+      "epoch_field": "26263.76545916",
+      "two_digit_year": "26",
+      "ndot_field": " .07779263",
+      "nddot_field": " 12412-4",
+      "bstar_field": " 65487-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0010147",
+      "rev_field": "33630",
+      "checksum_written": [
+       "5",
+       "1"
+      ],
+      "checksum_computed": [
+       5,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 46459,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 46459,
+    "object_name": "JILIN-1 GAOFEN 3G",
+    "object_id": "2020-065F",
+    "epoch": "2026-09-20T01:39:13.828320",
+    "mean_motion": "16.14469501",
+    "eccentricity": "0.00057737",
+    "inclination": "97.2106",
+    "ra_of_asc_node": "324.9314",
+    "arg_of_pericenter": "240.3959",
+    "mean_anomaly": "119.6753",
+    "bstar": "0.00090447945",
+    "mean_motion_dot": "0.01118243",
+    "mean_motion_ddot": "0.00085282122",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 33496
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0005773",
+      "bstar": "0.00090448",
+      "mean_motion_ddot": "0.00085282"
+     },
+     "fields": {
+      "catalog_field": "46459",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20065F  ",
+      "epoch_field": "26263.06891005",
+      "two_digit_year": "26",
+      "ndot_field": " .01118243",
+      "nddot_field": " 85282-3",
+      "bstar_field": " 90448-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0005773",
+      "rev_field": "33496",
+      "checksum_written": [
+       "5",
+       "9"
+      ],
+      "checksum_computed": [
+       5,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 46537,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 46537,
+    "object_name": "STARLINK-1672",
+    "object_id": "2020-070F",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "15.98436744",
+    "eccentricity": "0.00020108",
+    "inclination": "53.0285",
+    "ra_of_asc_node": "257.8692",
+    "arg_of_pericenter": "99.3736",
+    "mean_anomaly": "229.5704",
+    "bstar": "0.0023268541",
+    "mean_motion_dot": "0.01107399",
+    "mean_motion_ddot": "0.00061123067",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 587
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.000201",
+      "bstar": "0.0023269",
+      "mean_motion_ddot": "0.00061123"
+     },
+     "fields": {
+      "catalog_field": "46537",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20070F  ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .01107399",
+      "nddot_field": " 61123-3",
+      "bstar_field": " 23269-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002010",
+      "rev_field": "  587",
+      "checksum_written": [
+       "3",
+       "9"
+      ],
+      "checksum_computed": [
+       3,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 46698,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 46698,
+    "object_name": "STARLINK-1797",
+    "object_id": "2020-073AE",
+    "epoch": "2026-09-20T12:43:43.128192",
+    "mean_motion": "16.01167371",
+    "eccentricity": "0.00033919",
+    "inclination": "53.0282",
+    "ra_of_asc_node": "322.7993",
+    "arg_of_pericenter": "28.9909",
+    "mean_anomaly": "331.1309",
+    "bstar": "0.0018206908",
+    "mean_motion_dot": "0.01014126",
+    "mean_motion_ddot": "0.0005249477",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 32823
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003391",
+      "bstar": "0.0018207",
+      "mean_motion_ddot": "0.00052495"
+     },
+     "fields": {
+      "catalog_field": "46698",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20073AE ",
+      "epoch_field": "26263.53036028",
+      "two_digit_year": "26",
+      "ndot_field": " .01014126",
+      "nddot_field": " 52495-3",
+      "bstar_field": " 18207-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003391",
+      "rev_field": "32823",
+      "checksum_written": [
+       "4",
+       "4"
+      ],
+      "checksum_computed": [
+       4,
+       4
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 46725,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 46725,
+    "object_name": "STARLINK-1828",
+    "object_id": "2020-073BH",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "15.96253269",
+    "eccentricity": "0.00033165",
+    "inclination": "53.0395",
+    "ra_of_asc_node": "350.7778",
+    "arg_of_pericenter": "11.2955",
+    "mean_anomaly": "119.257",
+    "bstar": "0.0018830832",
+    "mean_motion_dot": "0.00797298",
+    "mean_motion_ddot": "0.00028987177",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 592
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003316",
+      "bstar": "0.0018831",
+      "mean_motion_ddot": "0.00028987"
+     },
+     "fields": {
+      "catalog_field": "46725",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20073BH ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .00797298",
+      "nddot_field": " 28987-3",
+      "bstar_field": " 18831-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003316",
+      "rev_field": "  592",
+      "checksum_written": [
+       "7",
+       "3"
+      ],
+      "checksum_computed": [
+       7,
+       3
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 47122,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 47122,
+    "object_name": "STARLINK-1777",
+    "object_id": "2020-088A",
+    "epoch": "2026-09-20T12:29:02.248224",
+    "mean_motion": "16.09240909",
+    "eccentricity": "0.00042064",
+    "inclination": "53.0332",
+    "ra_of_asc_node": "37.407",
+    "arg_of_pericenter": "352.8344",
+    "mean_anomaly": "7.2628",
+    "bstar": "0.00081117208",
+    "mean_motion_dot": "0.00744084",
+    "mean_motion_ddot": "0.00030716793",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 32273
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0004206",
+      "bstar": "0.00081117",
+      "mean_motion_ddot": "0.00030717"
+     },
+     "fields": {
+      "catalog_field": "47122",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20088A  ",
+      "epoch_field": "26263.52016491",
+      "two_digit_year": "26",
+      "ndot_field": " .00744084",
+      "nddot_field": " 30717-3",
+      "bstar_field": " 81117-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004206",
+      "rev_field": "32273",
+      "checksum_written": [
+       "0",
+       "8"
+      ],
+      "checksum_computed": [
+       0,
+       8
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 47143,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 47143,
+    "object_name": "STARLINK-1856",
+    "object_id": "2020-088X",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "16.00257823",
+    "eccentricity": "0.00083727",
+    "inclination": "53.0352",
+    "ra_of_asc_node": "27.9643",
+    "arg_of_pericenter": "329.028",
+    "mean_anomaly": "239.7483",
+    "bstar": "0.00087551429",
+    "mean_motion_dot": "0.00465426",
+    "mean_motion_ddot": "0.0001049343",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 598
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0008372",
+      "bstar": "0.00087551",
+      "mean_motion_ddot": "0.00010493"
+     },
+     "fields": {
+      "catalog_field": "47143",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20088X  ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .00465426",
+      "nddot_field": " 10493-3",
+      "bstar_field": " 87551-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0008372",
+      "rev_field": "  598",
+      "checksum_written": [
+       "2",
+       "6"
+      ],
+      "checksum_computed": [
+       2,
+       6
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 47171,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 47171,
+    "object_name": "STARLINK-1888",
+    "object_id": "2020-088BB",
+    "epoch": "2026-09-20T14:39:41.071392",
+    "mean_motion": "16.36502802",
+    "eccentricity": "0.0007489",
+    "inclination": "53.0255",
+    "ra_of_asc_node": "33.1699",
+    "arg_of_pericenter": "315.1246",
+    "mean_anomaly": "44.9192",
+    "bstar": "0.00068465",
+    "mean_motion_dot": "0.06307439",
+    "mean_motion_ddot": "0.000012333",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 32280
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {},
+     "fields": {
+      "catalog_field": "47171",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "20088BB ",
+      "epoch_field": "26263.61089203",
+      "two_digit_year": "26",
+      "ndot_field": " .06307439",
+      "nddot_field": " 12333-4",
+      "bstar_field": " 68465-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0007489",
+      "rev_field": "32280",
+      "checksum_written": [
+       "6",
+       "0"
+      ],
+      "checksum_computed": [
+       6,
+       0
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 47596,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 47596,
+    "object_name": "STARLINK-2001",
+    "object_id": "2021-009BA",
+    "epoch": "2026-09-20T12:38:21.465312",
+    "mean_motion": "16.37335629",
+    "eccentricity": "0.00084545",
+    "inclination": "53.0124",
+    "ra_of_asc_node": "132.6605",
+    "arg_of_pericenter": "260.8238",
+    "mean_anomaly": "99.1851",
+    "bstar": "0.00070771272",
+    "mean_motion_dot": "0.07190064",
+    "mean_motion_ddot": "0.000012269557",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 31147
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0008454",
+      "bstar": "0.00070771",
+      "mean_motion_ddot": "0.00001227"
+     },
+     "fields": {
+      "catalog_field": "47596",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "21009BA ",
+      "epoch_field": "26263.52663733",
+      "two_digit_year": "26",
+      "ndot_field": " .07190064",
+      "nddot_field": " 12270-4",
+      "bstar_field": " 70771-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0008454",
+      "rev_field": "31147",
+      "checksum_written": [
+       "5",
+       "5"
+      ],
+      "checksum_computed": [
+       5,
+       5
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 47767,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 47767,
+    "object_name": "STARLINK-2185",
+    "object_id": "2021-017AX",
+    "epoch": "2026-09-20T14:10:32.777760",
+    "mean_motion": "16.02220551",
+    "eccentricity": "0.00117892",
+    "inclination": "53.1413",
+    "ra_of_asc_node": "334.2461",
+    "arg_of_pericenter": "356.4586",
+    "mean_anomaly": "3.636",
+    "bstar": "0.00078047832",
+    "mean_motion_dot": "0.0046715",
+    "mean_motion_ddot": "0.00010845859",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 30834
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0011789",
+      "bstar": "0.00078048",
+      "mean_motion_ddot": "0.00010846"
+     },
+     "fields": {
+      "catalog_field": "47767",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "21017AX ",
+      "epoch_field": "26263.59065715",
+      "two_digit_year": "26",
+      "ndot_field": " .00467150",
+      "nddot_field": " 10846-3",
+      "bstar_field": " 78048-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0011789",
+      "rev_field": "30834",
+      "checksum_written": [
+       "4",
+       "6"
+      ],
+      "checksum_computed": [
+       4,
+       6
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 47993,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 47993,
+    "object_name": "STARLINK-2273",
+    "object_id": "2021-024S",
+    "epoch": "2026-09-20T16:00:01.999584",
+    "mean_motion": "15.98708746",
+    "eccentricity": "0.00008108",
+    "inclination": "53.1396",
+    "ra_of_asc_node": "69.0895",
+    "arg_of_pericenter": "18.9182",
+    "mean_anomaly": "182.652",
+    "bstar": "0.0020038431",
+    "mean_motion_dot": "0.00969824",
+    "mean_motion_ddot": "0.00045740001",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 602
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.000081",
+      "bstar": "0.0020038",
+      "mean_motion_ddot": "0.0004574"
+     },
+     "fields": {
+      "catalog_field": "47993",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "21024S  ",
+      "epoch_field": "26263.66668981",
+      "two_digit_year": "26",
+      "ndot_field": " .00969824",
+      "nddot_field": " 45740-3",
+      "bstar_field": " 20038-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0000810",
+      "rev_field": "  602",
+      "checksum_written": [
+       "6",
+       "3"
+      ],
+      "checksum_computed": [
+       6,
+       3
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 48909,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 48909,
+    "object_name": "PACE-1",
+    "object_id": "2021-059AG",
+    "epoch": "2026-09-20T08:10:09.981984",
+    "mean_motion": "16.23537889",
+    "eccentricity": "0.00048999",
+    "inclination": "97.6642",
+    "ra_of_asc_node": "114.173",
+    "arg_of_pericenter": "248.0869",
+    "mean_anomaly": "111.99",
+    "bstar": "0.00058107365",
+    "mean_motion_dot": "0.01442523",
+    "mean_motion_ddot": "0.000002614732",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 29294
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0004899",
+      "bstar": "0.00058107",
+      "mean_motion_ddot": "0.0000026147"
+     },
+     "fields": {
+      "catalog_field": "48909",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "21059AG ",
+      "epoch_field": "26263.34039331",
+      "two_digit_year": "26",
+      "ndot_field": " .01442523",
+      "nddot_field": " 26147-5",
+      "bstar_field": " 58107-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004899",
+      "rev_field": "29294",
+      "checksum_written": [
+       "2",
+       "9"
+      ],
+      "checksum_computed": [
+       2,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 48964,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 48964,
+    "object_name": "SPARTAN",
+    "object_id": "2021-059CP",
+    "epoch": "2026-09-19T09:00:22.581504",
+    "mean_motion": "16.16050015",
+    "eccentricity": "0.00031974",
+    "inclination": "97.6567",
+    "ra_of_asc_node": "115.3222",
+    "arg_of_pericenter": "239.475",
+    "mean_anomaly": "120.6221",
+    "bstar": "0.00054458785",
+    "mean_motion_dot": "0.00758004",
+    "mean_motion_ddot": "0.00035860565",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 29291
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003197",
+      "bstar": "0.00054459",
+      "mean_motion_ddot": "0.00035861"
+     },
+     "fields": {
+      "catalog_field": "48964",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "21059CP ",
+      "epoch_field": "26262.37526136",
+      "two_digit_year": "26",
+      "ndot_field": " .00758004",
+      "nddot_field": " 35861-3",
+      "bstar_field": " 54459-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003197",
+      "rev_field": "29291",
+      "checksum_written": [
+       "9",
+       "1"
+      ],
+      "checksum_computed": [
+       9,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 49158,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 49158,
+    "object_name": "STARLINK-3083",
+    "object_id": "2021-082AE",
+    "epoch": "2026-09-20T13:24:12.995136",
+    "mean_motion": "16.09412246",
+    "eccentricity": "0.00078915",
+    "inclination": "69.9484",
+    "ra_of_asc_node": "336.7469",
+    "arg_of_pericenter": "291.3881",
+    "mean_anomaly": "68.6492",
+    "bstar": "0.00054400963",
+    "mean_motion_dot": "0.00493654",
+    "mean_motion_ddot": "0.00012671904",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 28082
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0007891",
+      "bstar": "0.00054401",
+      "mean_motion_ddot": "0.00012672"
+     },
+     "fields": {
+      "catalog_field": "49158",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "21082AE ",
+      "epoch_field": "26263.55848374",
+      "two_digit_year": "26",
+      "ndot_field": " .00493654",
+      "nddot_field": " 12672-3",
+      "bstar_field": " 54401-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0007891",
+      "rev_field": "28082",
+      "checksum_written": [
+       "2",
+       "4"
+      ],
+      "checksum_computed": [
+       2,
+       4
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 49176,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 49176,
+    "object_name": "STARLINK-3069",
+    "object_id": "2021-082AY",
+    "epoch": "2026-09-20T14:49:43.605120",
+    "mean_motion": "16.20740547",
+    "eccentricity": "0.00073476",
+    "inclination": "69.991",
+    "ra_of_asc_node": "100",
+    "arg_of_pericenter": "267.2606",
+    "mean_anomaly": "92.7774",
+    "bstar": "0.00054462027",
+    "mean_motion_dot": "0.0110746",
+    "mean_motion_ddot": "0.000004198412",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 27672
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0007347",
+      "bstar": "0.00054462",
+      "mean_motion_ddot": "0.0000041984"
+     },
+     "fields": {
+      "catalog_field": "49176",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "21082AY ",
+      "epoch_field": "26263.61786580",
+      "two_digit_year": "26",
+      "ndot_field": " .01107460",
+      "nddot_field": " 41984-5",
+      "bstar_field": " 54462-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0007347",
+      "rev_field": "27672",
+      "checksum_written": [
+       "4",
+       "0"
+      ],
+      "checksum_computed": [
+       4,
+       0
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 49321,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 49321,
+    "object_name": "OBJECT G",
+    "object_id": "2021-091G",
+    "epoch": "2026-09-20T13:06:30.189600",
+    "mean_motion": "15.95707976",
+    "eccentricity": "0.00028318",
+    "inclination": "97.3371",
+    "ra_of_asc_node": "134.8211",
+    "arg_of_pericenter": "133.8317",
+    "mean_anomaly": "226.3194",
+    "bstar": "0.00041106522",
+    "mean_motion_dot": "0.00163814",
+    "mean_motion_ddot": "0.000012517308",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 27672
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0002831",
+      "bstar": "0.00041107",
+      "mean_motion_ddot": "0.000012517"
+     },
+     "fields": {
+      "catalog_field": "49321",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "21091G  ",
+      "epoch_field": "26263.54618275",
+      "two_digit_year": "26",
+      "ndot_field": " .00163814",
+      "nddot_field": " 12517-4",
+      "bstar_field": " 41107-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002831",
+      "rev_field": "27672",
+      "checksum_written": [
+       "8",
+       "8"
+      ],
+      "checksum_computed": [
+       8,
+       8
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 50058,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 50058,
+    "object_name": "COSMOS 1408 DEB",
+    "object_id": "1982-092SW",
+    "epoch": "2026-09-19T22:19:05.801664",
+    "mean_motion": "15.97906313",
+    "eccentricity": "0.0008259",
+    "inclination": "82.6017",
+    "ra_of_asc_node": "128.9371",
+    "arg_of_pericenter": "110.3619",
+    "mean_anomaly": "249.8546",
+    "bstar": "0.00030583",
+    "mean_motion_dot": "0.00138687",
+    "mean_motion_ddot": "0.0000062567",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 27237
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {},
+     "fields": {
+      "catalog_field": "50058",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "82092SW ",
+      "epoch_field": "26262.92992826",
+      "two_digit_year": "26",
+      "ndot_field": " .00138687",
+      "nddot_field": " 62567-5",
+      "bstar_field": " 30583-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0008259",
+      "rev_field": "27237",
+      "checksum_written": [
+       "0",
+       "3"
+      ],
+      "checksum_computed": [
+       0,
+       3
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 51659,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 51659,
+    "object_name": "PSLV R/B",
+    "object_id": "2022-013D",
+    "epoch": "2026-09-20T14:20:48.792480",
+    "mean_motion": "15.98924378",
+    "eccentricity": "0.00039051",
+    "inclination": "97.4139",
+    "ra_of_asc_node": "330.8233",
+    "arg_of_pericenter": "137.833",
+    "mean_anomaly": "222.3248",
+    "bstar": "0.00054396008",
+    "mean_motion_dot": "0.00258992",
+    "mean_motion_ddot": "0.000029529263",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 25781
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003905",
+      "bstar": "0.00054396",
+      "mean_motion_ddot": "0.000029529"
+     },
+     "fields": {
+      "catalog_field": "51659",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22013D  ",
+      "epoch_field": "26263.59778695",
+      "two_digit_year": "26",
+      "ndot_field": " .00258992",
+      "nddot_field": " 29529-4",
+      "bstar_field": " 54396-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003905",
+      "rev_field": "25781",
+      "checksum_written": [
+       "5",
+       "7"
+      ],
+      "checksum_computed": [
+       5,
+       7
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 51827,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 51827,
+    "object_name": "OBJECT D",
+    "object_id": "2022-019D",
+    "epoch": "2026-09-20T14:25:10.746912",
+    "mean_motion": "15.95122501",
+    "eccentricity": "0.00040848",
+    "inclination": "97.3577",
+    "ra_of_asc_node": "2.6576",
+    "arg_of_pericenter": "212.9517",
+    "mean_anomaly": "147.1505",
+    "bstar": "0.00069734833",
+    "mean_motion_dot": "0.00269833",
+    "mean_motion_ddot": "0.000030406529",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 25477
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0004084",
+      "bstar": "0.00069735",
+      "mean_motion_ddot": "0.000030407"
+     },
+     "fields": {
+      "catalog_field": "51827",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22019D  ",
+      "epoch_field": "26263.60081883",
+      "two_digit_year": "26",
+      "ndot_field": " .00269833",
+      "nddot_field": " 30407-4",
+      "bstar_field": " 69735-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004084",
+      "rev_field": "25477",
+      "checksum_written": [
+       "2",
+       "1"
+      ],
+      "checksum_computed": [
+       2,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 52295,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 52295,
+    "object_name": "STARLINK-3765",
+    "object_id": "2022-041AL",
+    "epoch": "2026-09-20T13:44:43.484928",
+    "mean_motion": "16.01252816",
+    "eccentricity": "0.0000788",
+    "inclination": "53.1561",
+    "ra_of_asc_node": "278.716",
+    "arg_of_pericenter": "100.8404",
+    "mean_anomaly": "259.2717",
+    "bstar": "0.0013914855",
+    "mean_motion_dot": "0.00780206",
+    "mean_motion_ddot": "0.00029805541",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 24427
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "bstar": "0.0013915",
+      "mean_motion_ddot": "0.00029806"
+     },
+     "fields": {
+      "catalog_field": "52295",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22041AL ",
+      "epoch_field": "26263.57272552",
+      "two_digit_year": "26",
+      "ndot_field": " .00780206",
+      "nddot_field": " 29806-3",
+      "bstar_field": " 13915-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0000788",
+      "rev_field": "24427",
+      "checksum_written": [
+       "8",
+       "1"
+      ],
+      "checksum_computed": [
+       8,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 52989,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 52989,
+    "object_name": "STARLINK-4293",
+    "object_id": "2022-076D",
+    "epoch": "2026-09-20T13:42:16.598016",
+    "mean_motion": "16.01124889",
+    "eccentricity": "0.0001983",
+    "inclination": "53.2106",
+    "ra_of_asc_node": "258.2454",
+    "arg_of_pericenter": "60.9386",
+    "mean_anomaly": "299.1845",
+    "bstar": "0.00072757214",
+    "mean_motion_dot": "0.00404643",
+    "mean_motion_ddot": "0.000082135266",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 23284
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "bstar": "0.00072757",
+      "mean_motion_ddot": "0.000082135"
+     },
+     "fields": {
+      "catalog_field": "52989",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22076D  ",
+      "epoch_field": "26263.57102544",
+      "two_digit_year": "26",
+      "ndot_field": " .00404643",
+      "nddot_field": " 82135-4",
+      "bstar_field": " 72757-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0001983",
+      "rev_field": "23284",
+      "checksum_written": [
+       "2",
+       "2"
+      ],
+      "checksum_computed": [
+       2,
+       2
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53152,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53152,
+    "object_name": "STARLINK-4045",
+    "object_id": "2022-083W",
+    "epoch": "2026-09-20T12:17:11.031072",
+    "mean_motion": "16.13950769",
+    "eccentricity": "0.00027803",
+    "inclination": "53.2101",
+    "ra_of_asc_node": "312.787",
+    "arg_of_pericenter": "36.6776",
+    "mean_anomaly": "323.4451",
+    "bstar": "0.00056243244",
+    "mean_motion_dot": "0.00707942",
+    "mean_motion_ddot": "0.00030113087",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 23156
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.000278",
+      "bstar": "0.00056243",
+      "mean_motion_ddot": "0.00030113"
+     },
+     "fields": {
+      "catalog_field": "53152",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22083W  ",
+      "epoch_field": "26263.51193323",
+      "two_digit_year": "26",
+      "ndot_field": " .00707942",
+      "nddot_field": " 30113-3",
+      "bstar_field": " 56243-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002780",
+      "rev_field": "23156",
+      "checksum_written": [
+       "0",
+       "6"
+      ],
+      "checksum_computed": [
+       0,
+       6
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53206,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53206,
+    "object_name": "STARLINK-4408",
+    "object_id": "2022-084T",
+    "epoch": "2026-09-20T14:37:19.353792",
+    "mean_motion": "16.03323026",
+    "eccentricity": "0.00014373",
+    "inclination": "97.2716",
+    "ra_of_asc_node": "323.5013",
+    "arg_of_pericenter": "49.073",
+    "mean_anomaly": "311.0674",
+    "bstar": "0.0016215797",
+    "mean_motion_dot": "0.00987535",
+    "mean_motion_ddot": "0.00050857327",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 22904
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0001437",
+      "bstar": "0.0016216",
+      "mean_motion_ddot": "0.00050857"
+     },
+     "fields": {
+      "catalog_field": "53206",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22084T  ",
+      "epoch_field": "26263.60925178",
+      "two_digit_year": "26",
+      "ndot_field": " .00987535",
+      "nddot_field": " 50857-3",
+      "bstar_field": " 16216-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0001437",
+      "rev_field": "22904",
+      "checksum_written": [
+       "2",
+       "0"
+      ],
+      "checksum_computed": [
+       2,
+       0
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53444,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53444,
+    "object_name": "DONGPO 07",
+    "object_id": "2022-098A",
+    "epoch": "2026-09-20T12:54:00.070848",
+    "mean_motion": "16.06224318",
+    "eccentricity": "0.00060035",
+    "inclination": "97.5581",
+    "ra_of_asc_node": "44.1809",
+    "arg_of_pericenter": "274.883",
+    "mean_anomaly": "85.1766",
+    "bstar": "0.00074435808",
+    "mean_motion_dot": "0.00544142",
+    "mean_motion_ddot": "0.00014556204",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 22984
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0006003",
+      "bstar": "0.00074436",
+      "mean_motion_ddot": "0.00014556"
+     },
+     "fields": {
+      "catalog_field": "53444",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22098A  ",
+      "epoch_field": "26263.53750082",
+      "two_digit_year": "26",
+      "ndot_field": " .00544142",
+      "nddot_field": " 14556-3",
+      "bstar_field": " 74436-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0006003",
+      "rev_field": "22984",
+      "checksum_written": [
+       "1",
+       "5"
+      ],
+      "checksum_computed": [
+       1,
+       5
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53448,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53448,
+    "object_name": "JILIN-1 GAOFEN 03D43",
+    "object_id": "2022-098E",
+    "epoch": "2026-09-20T13:45:25.140096",
+    "mean_motion": "15.92509905",
+    "eccentricity": "0.00033818",
+    "inclination": "97.5695",
+    "ra_of_asc_node": "43.3264",
+    "arg_of_pericenter": "271.987",
+    "mean_anomaly": "88.1017",
+    "bstar": "0.00064770038",
+    "mean_motion_dot": "0.00218304",
+    "mean_motion_ddot": "0.000020035684",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 22974
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003381",
+      "bstar": "0.0006477",
+      "mean_motion_ddot": "0.000020036"
+     },
+     "fields": {
+      "catalog_field": "53448",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22098E  ",
+      "epoch_field": "26263.57320764",
+      "two_digit_year": "26",
+      "ndot_field": " .00218304",
+      "nddot_field": " 20036-4",
+      "bstar_field": " 64770-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003381",
+      "rev_field": "22974",
+      "checksum_written": [
+       "8",
+       "2"
+      ],
+      "checksum_computed": [
+       8,
+       2
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53453,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53453,
+    "object_name": "DONGPO 01",
+    "object_id": "2022-098K",
+    "epoch": "2026-09-20T14:36:46.924416",
+    "mean_motion": "16.11063115",
+    "eccentricity": "0.00080498",
+    "inclination": "97.5788",
+    "ra_of_asc_node": "45.4298",
+    "arg_of_pericenter": "265.3941",
+    "mean_anomaly": "94.6423",
+    "bstar": "0.00079955212",
+    "mean_motion_dot": "0.00794513",
+    "mean_motion_ddot": "0.00035985116",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 22987
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0008049",
+      "bstar": "0.00079955",
+      "mean_motion_ddot": "0.00035985"
+     },
+     "fields": {
+      "catalog_field": "53453",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22098K  ",
+      "epoch_field": "26263.60887644",
+      "two_digit_year": "26",
+      "ndot_field": " .00794513",
+      "nddot_field": " 35985-3",
+      "bstar_field": " 79955-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0008049",
+      "rev_field": "22987",
+      "checksum_written": [
+       "3",
+       "0"
+      ],
+      "checksum_computed": [
+       3,
+       0
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53480,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53480,
+    "object_name": "STARLINK-4442",
+    "object_id": "2022-099R",
+    "epoch": "2026-09-20T11:58:20.406720",
+    "mean_motion": "16.14178539",
+    "eccentricity": "0.0004873",
+    "inclination": "97.6071",
+    "ra_of_asc_node": "36.6639",
+    "arg_of_pericenter": "319.2807",
+    "mean_anomaly": "40.8113",
+    "bstar": "0.00053880354",
+    "mean_motion_dot": "0.00659732",
+    "mean_motion_ddot": "0.00025374614",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 22621
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "bstar": "0.0005388",
+      "mean_motion_ddot": "0.00025375"
+     },
+     "fields": {
+      "catalog_field": "53480",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22099R  ",
+      "epoch_field": "26263.49884730",
+      "two_digit_year": "26",
+      "ndot_field": " .00659732",
+      "nddot_field": " 25375-3",
+      "bstar_field": " 53880-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004873",
+      "rev_field": "22621",
+      "checksum_written": [
+       "8",
+       "2"
+      ],
+      "checksum_computed": [
+       8,
+       2
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53490,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53490,
+    "object_name": "STARLINK-4387",
+    "object_id": "2022-099AB",
+    "epoch": "2026-09-20T14:00:01.999872",
+    "mean_motion": "15.96038979",
+    "eccentricity": "0.00014672",
+    "inclination": "97.6066",
+    "ra_of_asc_node": "32.4467",
+    "arg_of_pericenter": "66.4843",
+    "mean_anomaly": "168.6112",
+    "bstar": "0.0020866873",
+    "mean_motion_dot": "0.00845438",
+    "mean_motion_ddot": "0.00031991806",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 593
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0001467",
+      "bstar": "0.0020867",
+      "mean_motion_ddot": "0.00031992"
+     },
+     "fields": {
+      "catalog_field": "53490",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22099AB ",
+      "epoch_field": "26263.58335648",
+      "two_digit_year": "26",
+      "ndot_field": " .00845438",
+      "nddot_field": " 31992-3",
+      "bstar_field": " 20867-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0001467",
+      "rev_field": "  593",
+      "checksum_written": [
+       "8",
+       "1"
+      ],
+      "checksum_computed": [
+       8,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53492,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53492,
+    "object_name": "STARLINK-4451",
+    "object_id": "2022-099AD",
+    "epoch": "2026-09-20T10:47:05.690688",
+    "mean_motion": "16.33191219",
+    "eccentricity": "0.00100512",
+    "inclination": "97.5864",
+    "ra_of_asc_node": "34.2907",
+    "arg_of_pericenter": "291.6827",
+    "mean_anomaly": "68.3397",
+    "bstar": "0.00067362144",
+    "mean_motion_dot": "0.04031472",
+    "mean_motion_ddot": "0.000002612576",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 22606
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0010051",
+      "bstar": "0.00067362",
+      "mean_motion_ddot": "0.0000026126"
+     },
+     "fields": {
+      "catalog_field": "53492",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22099AD ",
+      "epoch_field": "26263.44937142",
+      "two_digit_year": "26",
+      "ndot_field": " .04031472",
+      "nddot_field": " 26126-5",
+      "bstar_field": " 67362-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0010051",
+      "rev_field": "22606",
+      "checksum_written": [
+       "8",
+       "9"
+      ],
+      "checksum_computed": [
+       8,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53499,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53499,
+    "object_name": "STARLINK-4454",
+    "object_id": "2022-099AL",
+    "epoch": "2026-09-20T14:00:01.999872",
+    "mean_motion": "15.91489441",
+    "eccentricity": "0.00013797",
+    "inclination": "97.6011",
+    "ra_of_asc_node": "33.0785",
+    "arg_of_pericenter": "86.8204",
+    "mean_anomaly": "295.8098",
+    "bstar": "0.0012173795",
+    "mean_motion_dot": "0.00389522",
+    "mean_motion_ddot": "0.00005967603",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 576
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0001379",
+      "bstar": "0.0012174",
+      "mean_motion_ddot": "0.000059676"
+     },
+     "fields": {
+      "catalog_field": "53499",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22099AL ",
+      "epoch_field": "26263.58335648",
+      "two_digit_year": "26",
+      "ndot_field": " .00389522",
+      "nddot_field": " 59676-4",
+      "bstar_field": " 12174-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0001379",
+      "rev_field": "  576",
+      "checksum_written": [
+       "6",
+       "5"
+      ],
+      "checksum_computed": [
+       6,
+       5
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53505,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53505,
+    "object_name": "STARLINK-4446",
+    "object_id": "2022-099AS",
+    "epoch": "2026-09-20T11:47:54.835296",
+    "mean_motion": "16.09785914",
+    "eccentricity": "0.00064766",
+    "inclination": "97.6019",
+    "ra_of_asc_node": "45.7844",
+    "arg_of_pericenter": "254.0324",
+    "mean_anomaly": "106.0246",
+    "bstar": "0.00052271443",
+    "mean_motion_dot": "0.00478778",
+    "mean_motion_ddot": "0.00011815176",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 22679
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0006476",
+      "bstar": "0.00052271",
+      "mean_motion_ddot": "0.00011815"
+     },
+     "fields": {
+      "catalog_field": "53505",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22099AS ",
+      "epoch_field": "26263.49160689",
+      "two_digit_year": "26",
+      "ndot_field": " .00478778",
+      "nddot_field": " 11815-3",
+      "bstar_field": " 52271-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0006476",
+      "rev_field": "22679",
+      "checksum_written": [
+       "2",
+       "2"
+      ],
+      "checksum_computed": [
+       2,
+       2
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53649,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53649,
+    "object_name": "STARLINK-4386",
+    "object_id": "2022-105B",
+    "epoch": "2026-09-20T14:05:50.059680",
+    "mean_motion": "16.07439878",
+    "eccentricity": "0.00028445",
+    "inclination": "97.5805",
+    "ra_of_asc_node": "156.1084",
+    "arg_of_pericenter": "161.1665",
+    "mean_anomaly": "198.9722",
+    "bstar": "0.0005409744",
+    "mean_motion_dot": "0.00425859",
+    "mean_motion_ddot": "0.000089217843",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 22344
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0002844",
+      "bstar": "0.00054097",
+      "mean_motion_ddot": "0.000089218"
+     },
+     "fields": {
+      "catalog_field": "53649",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22105B  ",
+      "epoch_field": "26263.58738495",
+      "two_digit_year": "26",
+      "ndot_field": " .00425859",
+      "nddot_field": " 89218-4",
+      "bstar_field": " 54097-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002844",
+      "rev_field": "22344",
+      "checksum_written": [
+       "8",
+       "8"
+      ],
+      "checksum_computed": [
+       8,
+       8
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53653,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53653,
+    "object_name": "STARLINK-4390",
+    "object_id": "2022-105F",
+    "epoch": "2026-09-20T11:50:03.094368",
+    "mean_motion": "16.08329189",
+    "eccentricity": "0.00021139",
+    "inclination": "97.5874",
+    "ra_of_asc_node": "154.8338",
+    "arg_of_pericenter": "161.6505",
+    "mean_anomaly": "198.4853",
+    "bstar": "0.00055481016",
+    "mean_motion_dot": "0.00461692",
+    "mean_motion_ddot": "0.00010691296",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 22335
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0002113",
+      "bstar": "0.00055481",
+      "mean_motion_ddot": "0.00010691"
+     },
+     "fields": {
+      "catalog_field": "53653",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22105F  ",
+      "epoch_field": "26263.49309137",
+      "two_digit_year": "26",
+      "ndot_field": " .00461692",
+      "nddot_field": " 10691-3",
+      "bstar_field": " 55481-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002113",
+      "rev_field": "22335",
+      "checksum_written": [
+       "1",
+       "7"
+      ],
+      "checksum_computed": [
+       1,
+       7
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53669,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53669,
+    "object_name": "STARLINK-4464",
+    "object_id": "2022-105X",
+    "epoch": "2026-09-20T14:00:01.999872",
+    "mean_motion": "15.99996713",
+    "eccentricity": "0.00035251",
+    "inclination": "97.5849",
+    "ra_of_asc_node": "155.1023",
+    "arg_of_pericenter": "145.8614",
+    "mean_anomaly": "107.3631",
+    "bstar": "0.00066380267",
+    "mean_motion_dot": "0.0033577",
+    "mean_motion_ddot": "0.000049590093",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 595
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003525",
+      "bstar": "0.0006638",
+      "mean_motion_ddot": "0.00004959"
+     },
+     "fields": {
+      "catalog_field": "53669",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22105X  ",
+      "epoch_field": "26263.58335648",
+      "two_digit_year": "26",
+      "ndot_field": " .00335770",
+      "nddot_field": " 49590-4",
+      "bstar_field": " 66380-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003525",
+      "rev_field": "  595",
+      "checksum_written": [
+       "2",
+       "3"
+      ],
+      "checksum_computed": [
+       2,
+       3
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 53891,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 53891,
+    "object_name": "STARLINK-5041",
+    "object_id": "2022-119F",
+    "epoch": "2026-09-20T14:00:01.999872",
+    "mean_motion": "15.91812329",
+    "eccentricity": "0.00011455",
+    "inclination": "53.2135",
+    "ra_of_asc_node": "120.1355",
+    "arg_of_pericenter": "104.4815",
+    "mean_anomaly": "82.2254",
+    "bstar": "0.0012173965",
+    "mean_motion_dot": "0.00406203",
+    "mean_motion_ddot": "0.000074090008",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 599
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0001145",
+      "bstar": "0.0012174",
+      "mean_motion_ddot": "0.00007409"
+     },
+     "fields": {
+      "catalog_field": "53891",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22119F  ",
+      "epoch_field": "26263.58335648",
+      "two_digit_year": "26",
+      "ndot_field": " .00406203",
+      "nddot_field": " 74090-4",
+      "bstar_field": " 12174-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0001145",
+      "rev_field": "  599",
+      "checksum_written": [
+       "8",
+       "5"
+      ],
+      "checksum_computed": [
+       8,
+       5
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 54015,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 54015,
+    "object_name": "STARLINK-5055",
+    "object_id": "2022-125BD",
+    "epoch": "2026-09-20T11:57:11.854368",
+    "mean_motion": "16.42165872",
+    "eccentricity": "0.00049162",
+    "inclination": "53.2005",
+    "ra_of_asc_node": "15.8216",
+    "arg_of_pericenter": "291.2485",
+    "mean_anomaly": "68.8039",
+    "bstar": "0.0004562032",
+    "mean_motion_dot": "0.08251091",
+    "mean_motion_ddot": "0.000012437724",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 21948
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0004916",
+      "bstar": "0.0004562",
+      "mean_motion_ddot": "0.000012438"
+     },
+     "fields": {
+      "catalog_field": "54015",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "22125BD ",
+      "epoch_field": "26263.49805387",
+      "two_digit_year": "26",
+      "ndot_field": " .08251091",
+      "nddot_field": " 12438-4",
+      "bstar_field": " 45620-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004916",
+      "rev_field": "21948",
+      "checksum_written": [
+       "8",
+       "6"
+      ],
+      "checksum_computed": [
+       8,
+       6
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 56746,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 56746,
+    "object_name": "OBJECT D",
+    "object_id": "2023-072D",
+    "epoch": "2026-09-20T05:29:37.790304",
+    "mean_motion": "16.13545135",
+    "eccentricity": "0.00032151",
+    "inclination": "97.4565",
+    "ra_of_asc_node": "128.1166",
+    "arg_of_pericenter": "216.2214",
+    "mean_anomaly": "143.8854",
+    "bstar": "0.001052628",
+    "mean_motion_dot": "0.01215282",
+    "mean_motion_ddot": "0.0010218863",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 18590
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003215",
+      "bstar": "0.0010526",
+      "mean_motion_ddot": "0.0010219"
+     },
+     "fields": {
+      "catalog_field": "56746",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "23072D  ",
+      "epoch_field": "26263.22890961",
+      "two_digit_year": "26",
+      "ndot_field": " .01215282",
+      "nddot_field": " 10219-2",
+      "bstar_field": " 10526-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003215",
+      "rev_field": "18590",
+      "checksum_written": [
+       "0",
+       "0"
+      ],
+      "checksum_computed": [
+       0,
+       0
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 57047,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 57047,
+    "object_name": "SHIYAN-25 (SY-25)",
+    "object_id": "2023-087A",
+    "epoch": "2026-09-20T13:08:07.374912",
+    "mean_motion": "16.00985733",
+    "eccentricity": "0.00113593",
+    "inclination": "96.906",
+    "ra_of_asc_node": "328.473",
+    "arg_of_pericenter": "226.3497",
+    "mean_anomaly": "133.6842",
+    "bstar": "0.0002905357",
+    "mean_motion_dot": "0.00156287",
+    "mean_motion_ddot": "0.000012043945",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 19005
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0011359",
+      "bstar": "0.00029054",
+      "mean_motion_ddot": "0.000012044"
+     },
+     "fields": {
+      "catalog_field": "57047",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "23087A  ",
+      "epoch_field": "26263.54730758",
+      "two_digit_year": "26",
+      "ndot_field": " .00156287",
+      "nddot_field": " 12044-4",
+      "bstar_field": " 29054-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0011359",
+      "rev_field": "19005",
+      "checksum_written": [
+       "8",
+       "8"
+      ],
+      "checksum_computed": [
+       8,
+       8
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 57422,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 57422,
+    "object_name": "QIANKUN-1",
+    "object_id": "2023-103B",
+    "epoch": "2026-09-18T08:43:23.052000",
+    "mean_motion": "16.04074311",
+    "eccentricity": "0.00068626",
+    "inclination": "96.12",
+    "ra_of_asc_node": "299.3206",
+    "arg_of_pericenter": "280.5458",
+    "mean_anomaly": "79.5053",
+    "bstar": "-0.000002741413",
+    "mean_motion_dot": "-0.00002283",
+    "mean_motion_ddot": "0.000001637739",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 18225
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0006862",
+      "bstar": "-0.0000027414",
+      "mean_motion_ddot": "0.0000016377"
+     },
+     "fields": {
+      "catalog_field": "57422",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "23103B  ",
+      "epoch_field": "26261.36346125",
+      "two_digit_year": "26",
+      "ndot_field": "-.00002283",
+      "nddot_field": " 16377-5",
+      "bstar_field": "-27414-5",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0006862",
+      "rev_field": "18225",
+      "checksum_written": [
+       "5",
+       "9"
+      ],
+      "checksum_computed": [
+       5,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 58286,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 58286,
+    "object_name": "FLOCK 4Q-30",
+    "object_id": "2023-174AG",
+    "epoch": "2026-09-20T06:33:41.233824",
+    "mean_motion": "16.09168209",
+    "eccentricity": "0.00098258",
+    "inclination": "97.3687",
+    "ra_of_asc_node": "1.7093",
+    "arg_of_pericenter": "279.96",
+    "mean_anomaly": "80.0574",
+    "bstar": "0.001687487",
+    "mean_motion_dot": "0.01458187",
+    "mean_motion_ddot": "0.0014530989",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 16076
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0009825",
+      "bstar": "0.0016875",
+      "mean_motion_ddot": "0.0014531"
+     },
+     "fields": {
+      "catalog_field": "58286",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "23174AG ",
+      "epoch_field": "26263.27339391",
+      "two_digit_year": "26",
+      "ndot_field": " .01458187",
+      "nddot_field": " 14531-2",
+      "bstar_field": " 16875-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0009825",
+      "rev_field": "16076",
+      "checksum_written": [
+       "1",
+       "4"
+      ],
+      "checksum_computed": [
+       1,
+       4
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 58306,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 58306,
+    "object_name": "FLOCK 4Q-22",
+    "object_id": "2023-174BC",
+    "epoch": "2026-09-20T13:41:53.251008",
+    "mean_motion": "16.23757729",
+    "eccentricity": "0.00140026",
+    "inclination": "97.3484",
+    "ra_of_asc_node": "1.9678",
+    "arg_of_pericenter": "289.7188",
+    "mean_anomaly": "70.2592",
+    "bstar": "0.0015858204",
+    "mean_motion_dot": "0.04093596",
+    "mean_motion_ddot": "0.000002425084",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 16089
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0014002",
+      "bstar": "0.0015858",
+      "mean_motion_ddot": "0.0000024251"
+     },
+     "fields": {
+      "catalog_field": "58306",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "23174BC ",
+      "epoch_field": "26263.57075522",
+      "two_digit_year": "26",
+      "ndot_field": " .04093596",
+      "nddot_field": " 24251-5",
+      "bstar_field": " 15858-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0014002",
+      "rev_field": "16089",
+      "checksum_written": [
+       "5",
+       "8"
+      ],
+      "checksum_computed": [
+       5,
+       8
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 58435,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 58435,
+    "object_name": "COSMOS 2572",
+    "object_id": "2023-182A",
+    "epoch": "2026-09-20T14:33:26.849664",
+    "mean_motion": "16.01317546",
+    "eccentricity": "0.0002273",
+    "inclination": "96.6729",
+    "ra_of_asc_node": "6.3813",
+    "arg_of_pericenter": "212.7852",
+    "mean_anomaly": "147.3288",
+    "bstar": "0.00042073029",
+    "mean_motion_dot": "0.00229263",
+    "mean_motion_ddot": "0.000023811029",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 16363
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "bstar": "0.00042073",
+      "mean_motion_ddot": "0.000023811"
+     },
+     "fields": {
+      "catalog_field": "58435",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "23182A  ",
+      "epoch_field": "26263.60656076",
+      "two_digit_year": "26",
+      "ndot_field": " .00229263",
+      "nddot_field": " 23811-4",
+      "bstar_field": " 42073-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002273",
+      "rev_field": "16363",
+      "checksum_written": [
+       "8",
+       "4"
+      ],
+      "checksum_computed": [
+       8,
+       4
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 58598,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 58598,
+    "object_name": "STARLINK-31079",
+    "object_id": "2023-200K",
+    "epoch": "2026-09-20T13:50:47.551200",
+    "mean_motion": "16.01926129",
+    "eccentricity": "0.00282046",
+    "inclination": "42.9632",
+    "ra_of_asc_node": "55.8297",
+    "arg_of_pericenter": "312.855",
+    "mean_anomaly": "46.996",
+    "bstar": "0.0051949335",
+    "mean_motion_dot": "0.02867737",
+    "mean_motion_ddot": "0.0087740584",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 15447
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0028204",
+      "bstar": "0.0051949",
+      "mean_motion_ddot": "0.0087741"
+     },
+     "fields": {
+      "catalog_field": "58598",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "23200K  ",
+      "epoch_field": "26263.57693925",
+      "two_digit_year": "26",
+      "ndot_field": " .02867737",
+      "nddot_field": " 87741-2",
+      "bstar_field": " 51949-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0028204",
+      "rev_field": "15447",
+      "checksum_written": [
+       "6",
+       "1"
+      ],
+      "checksum_computed": [
+       6,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 58720,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 58720,
+    "object_name": "STARLINK-31027",
+    "object_id": "2024-002R",
+    "epoch": "2026-09-20T13:12:05.304960",
+    "mean_motion": "16.09502058",
+    "eccentricity": "0.00120407",
+    "inclination": "53.1264",
+    "ra_of_asc_node": "341.3825",
+    "arg_of_pericenter": "343.9332",
+    "mean_anomaly": "16.1319",
+    "bstar": "0.00083838243",
+    "mean_motion_dot": "0.0078949",
+    "mean_motion_ddot": "0.00035028673",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 15272
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.001204",
+      "bstar": "0.00083838",
+      "mean_motion_ddot": "0.00035029"
+     },
+     "fields": {
+      "catalog_field": "58720",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "24002R  ",
+      "epoch_field": "26263.55006140",
+      "two_digit_year": "26",
+      "ndot_field": " .00789490",
+      "nddot_field": " 35029-3",
+      "bstar_field": " 83838-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0012040",
+      "rev_field": "15272",
+      "checksum_written": [
+       "2",
+       "9"
+      ],
+      "checksum_computed": [
+       2,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 59322,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 59322,
+    "object_name": "STARLINK-31530",
+    "object_id": "2024-057C",
+    "epoch": "2026-09-20T13:54:33.118272",
+    "mean_motion": "16.16656279",
+    "eccentricity": "0.00234522",
+    "inclination": "42.9705",
+    "ra_of_asc_node": "95.2349",
+    "arg_of_pericenter": "285.1034",
+    "mean_anomaly": "74.7256",
+    "bstar": "0.0024998089",
+    "mean_motion_dot": "0.04147496",
+    "mean_motion_ddot": "0.000008815",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 14045
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0023452",
+      "bstar": "0.0024998"
+     },
+     "fields": {
+      "catalog_field": "59322",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "24057C  ",
+      "epoch_field": "26263.57954998",
+      "two_digit_year": "26",
+      "ndot_field": " .04147496",
+      "nddot_field": " 88150-5",
+      "bstar_field": " 24998-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0023452",
+      "rev_field": "14045",
+      "checksum_written": [
+       "0",
+       "5"
+      ],
+      "checksum_computed": [
+       0,
+       5
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 60508,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 60508,
+    "object_name": "EAGLEEYE",
+    "object_id": "2024-149AS",
+    "epoch": "2026-09-20T13:24:13.495392",
+    "mean_motion": "16.20683987",
+    "eccentricity": "0.00107067",
+    "inclination": "97.3471",
+    "ra_of_asc_node": "4.2053",
+    "arg_of_pericenter": "272.2319",
+    "mean_anomaly": "87.7744",
+    "bstar": "0.0009168176",
+    "mean_motion_dot": "0.01833374",
+    "mean_motion_ddot": "0.00000240647",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 11804
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0010706",
+      "bstar": "0.00091682",
+      "mean_motion_ddot": "0.0000024065"
+     },
+     "fields": {
+      "catalog_field": "60508",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "24149AS ",
+      "epoch_field": "26263.55848953",
+      "two_digit_year": "26",
+      "ndot_field": " .01833374",
+      "nddot_field": " 24065-5",
+      "bstar_field": " 91682-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0010706",
+      "rev_field": "11804",
+      "checksum_written": [
+       "5",
+       "7"
+      ],
+      "checksum_computed": [
+       5,
+       7
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 61748,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 61748,
+    "object_name": "SITRO-AIS 44",
+    "object_id": "2024-199P",
+    "epoch": "2026-09-20T14:49:40.221696",
+    "mean_motion": "15.96711949",
+    "eccentricity": "0.00039885",
+    "inclination": "97.2628",
+    "ra_of_asc_node": "147.8996",
+    "arg_of_pericenter": "161.7742",
+    "mean_anomaly": "198.3679",
+    "bstar": "0.00087417057",
+    "mean_motion_dot": "0.00368585",
+    "mean_motion_ddot": "0.000056900033",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 15284
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003988",
+      "bstar": "0.00087417",
+      "mean_motion_ddot": "0.0000569"
+     },
+     "fields": {
+      "catalog_field": "61748",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "24199P  ",
+      "epoch_field": "26263.61782664",
+      "two_digit_year": "26",
+      "ndot_field": " .00368585",
+      "nddot_field": " 56900-4",
+      "bstar_field": " 87417-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003988",
+      "rev_field": "15284",
+      "checksum_written": [
+       "9",
+       "7"
+      ],
+      "checksum_computed": [
+       9,
+       7
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 61755,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 61755,
+    "object_name": "SITRO-AIS 43",
+    "object_id": "2024-199W",
+    "epoch": "2026-09-20T14:37:49.735488",
+    "mean_motion": "16.00526381",
+    "eccentricity": "0.00045282",
+    "inclination": "97.2675",
+    "ra_of_asc_node": "148.2797",
+    "arg_of_pericenter": "166.5804",
+    "mean_anomaly": "193.5596",
+    "bstar": "0.00087402045",
+    "mean_motion_dot": "0.0045575",
+    "mean_motion_ddot": "0.00009215287",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 15286
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0004528",
+      "bstar": "0.00087402",
+      "mean_motion_ddot": "0.000092153"
+     },
+     "fields": {
+      "catalog_field": "61755",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "24199W  ",
+      "epoch_field": "26263.60960342",
+      "two_digit_year": "26",
+      "ndot_field": " .00455750",
+      "nddot_field": " 92153-4",
+      "bstar_field": " 87402-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004528",
+      "rev_field": "15286",
+      "checksum_written": [
+       "2",
+       "1"
+      ],
+      "checksum_computed": [
+       2,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 61756,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 61756,
+    "object_name": "SITRO-AIS 42",
+    "object_id": "2024-199X",
+    "epoch": "2026-09-20T10:24:37.958688",
+    "mean_motion": "15.92706914",
+    "eccentricity": "0.00023444",
+    "inclination": "97.2646",
+    "ra_of_asc_node": "147.7436",
+    "arg_of_pericenter": "129.2304",
+    "mean_anomaly": "230.9179",
+    "bstar": "0.00084938988",
+    "mean_motion_dot": "0.00289326",
+    "mean_motion_ddot": "0.000033683775",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 15281
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0002344",
+      "bstar": "0.00084939",
+      "mean_motion_ddot": "0.000033684"
+     },
+     "fields": {
+      "catalog_field": "61756",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "24199X  ",
+      "epoch_field": "26263.43377267",
+      "two_digit_year": "26",
+      "ndot_field": " .00289326",
+      "nddot_field": " 33684-4",
+      "bstar_field": " 84939-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002344",
+      "rev_field": "15281",
+      "checksum_written": [
+       "2",
+       "9"
+      ],
+      "checksum_computed": [
+       2,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 61760,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 61760,
+    "object_name": "SITRO-AIS 41",
+    "object_id": "2024-199AB",
+    "epoch": "2026-09-20T14:29:37.344480",
+    "mean_motion": "15.93098978",
+    "eccentricity": "0.00037597",
+    "inclination": "97.267",
+    "ra_of_asc_node": "147.6184",
+    "arg_of_pericenter": "151.8776",
+    "mean_anomaly": "208.2702",
+    "bstar": "0.00085138685",
+    "mean_motion_dot": "0.00296109",
+    "mean_motion_ddot": "0.000035386134",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 15281
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003759",
+      "bstar": "0.00085139",
+      "mean_motion_ddot": "0.000035386"
+     },
+     "fields": {
+      "catalog_field": "61760",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "24199AB ",
+      "epoch_field": "26263.60390445",
+      "two_digit_year": "26",
+      "ndot_field": " .00296109",
+      "nddot_field": " 35386-4",
+      "bstar_field": " 85139-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003759",
+      "rev_field": "15281",
+      "checksum_written": [
+       "0",
+       "0"
+      ],
+      "checksum_computed": [
+       0,
+       0
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 62459,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 62459,
+    "object_name": "SDX01",
+    "object_id": "2024-253A",
+    "epoch": "2026-09-20T12:58:24.086784",
+    "mean_motion": "15.94440016",
+    "eccentricity": "0.00084646",
+    "inclination": "54.9901",
+    "ra_of_asc_node": "251.4338",
+    "arg_of_pericenter": "64.836",
+    "mean_anomaly": "295.3569",
+    "bstar": "0.00058740217",
+    "mean_motion_dot": "0.00223956",
+    "mean_motion_ddot": "0.000030256559",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 9760
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0008464",
+      "bstar": "0.0005874",
+      "mean_motion_ddot": "0.000030257"
+     },
+     "fields": {
+      "catalog_field": "62459",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "24253A  ",
+      "epoch_field": "26263.54055656",
+      "two_digit_year": "26",
+      "ndot_field": " .00223956",
+      "nddot_field": " 30257-4",
+      "bstar_field": " 58740-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0008464",
+      "rev_field": " 9760",
+      "checksum_written": [
+       "2",
+       "6"
+      ],
+      "checksum_computed": [
+       2,
+       6
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 62460,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 62460,
+    "object_name": "SDX02",
+    "object_id": "2024-253B",
+    "epoch": "2026-09-20T13:05:51.366624",
+    "mean_motion": "15.94251544",
+    "eccentricity": "0.0008523",
+    "inclination": "54.9905",
+    "ra_of_asc_node": "251.4763",
+    "arg_of_pericenter": "65.9295",
+    "mean_anomaly": "294.2649",
+    "bstar": "0.00059881699",
+    "mean_motion_dot": "0.00226062",
+    "mean_motion_ddot": "0.000030573721",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 9759
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "bstar": "0.00059882",
+      "mean_motion_ddot": "0.000030574"
+     },
+     "fields": {
+      "catalog_field": "62460",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "24253B  ",
+      "epoch_field": "26263.54573341",
+      "two_digit_year": "26",
+      "ndot_field": " .00226062",
+      "nddot_field": " 30574-4",
+      "bstar_field": " 59882-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0008523",
+      "rev_field": " 9759",
+      "checksum_written": [
+       "1",
+       "0"
+      ],
+      "checksum_computed": [
+       1,
+       0
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 62618,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 62618,
+    "object_name": "AE1D",
+    "object_id": "2025-009K",
+    "epoch": "2026-09-20T05:52:53.998752",
+    "mean_motion": "16.06902434",
+    "eccentricity": "0.0011635",
+    "inclination": "97.3828",
+    "ra_of_asc_node": "359.278",
+    "arg_of_pericenter": "275.9105",
+    "mean_anomaly": "84.0851",
+    "bstar": "0.0014018791",
+    "mean_motion_dot": "0.01067418",
+    "mean_motion_ddot": "0.0006498879",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 9441
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "bstar": "0.0014019",
+      "mean_motion_ddot": "0.00064989"
+     },
+     "fields": {
+      "catalog_field": "62618",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "25009K  ",
+      "epoch_field": "26263.24506943",
+      "two_digit_year": "26",
+      "ndot_field": " .01067418",
+      "nddot_field": " 64989-3",
+      "bstar_field": " 14019-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0011635",
+      "rev_field": " 9441",
+      "checksum_written": [
+       "4",
+       "0"
+      ],
+      "checksum_computed": [
+       4,
+       0
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 62620,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 62620,
+    "object_name": "TRANSPORTER-12 OBJECT M",
+    "object_id": "2025-009M",
+    "epoch": "2026-09-20T12:02:24.427968",
+    "mean_motion": "16.14474937",
+    "eccentricity": "0.00140005",
+    "inclination": "97.3718",
+    "ra_of_asc_node": "359.7917",
+    "arg_of_pericenter": "276.867",
+    "mean_anomaly": "83.1023",
+    "bstar": "0.0016733919",
+    "mean_motion_dot": "0.0198325",
+    "mean_motion_ddot": "0.0040094803",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 9447
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0014",
+      "bstar": "0.0016734",
+      "mean_motion_ddot": "0.0040095"
+     },
+     "fields": {
+      "catalog_field": "62620",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "25009M  ",
+      "epoch_field": "26263.50167162",
+      "two_digit_year": "26",
+      "ndot_field": " .01983250",
+      "nddot_field": " 40095-2",
+      "bstar_field": " 16734-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0014000",
+      "rev_field": " 9447",
+      "checksum_written": [
+       "0",
+       "2"
+      ],
+      "checksum_computed": [
+       0,
+       2
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 64243,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 64243,
+    "object_name": "STARLINK-11694 [DTC]",
+    "object_id": "2025-119L",
+    "epoch": "2026-09-20T14:00:01.999872",
+    "mean_motion": "16.05434985",
+    "eccentricity": "0.00179098",
+    "inclination": "42.9809",
+    "ra_of_asc_node": "102.9702",
+    "arg_of_pericenter": "279.281",
+    "mean_anomaly": "12.1301",
+    "bstar": "0.00074293227",
+    "mean_motion_dot": "0.00556837",
+    "mean_motion_ddot": "0.00015464315",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 598
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0017909",
+      "bstar": "0.00074293",
+      "mean_motion_ddot": "0.00015464"
+     },
+     "fields": {
+      "catalog_field": "64243",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "25119L  ",
+      "epoch_field": "26263.58335648",
+      "two_digit_year": "26",
+      "ndot_field": " .00556837",
+      "nddot_field": " 15464-3",
+      "bstar_field": " 74293-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0017909",
+      "rev_field": "  598",
+      "checksum_written": [
+       "3",
+       "4"
+      ],
+      "checksum_computed": [
+       3,
+       4
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 65267,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 65267,
+    "object_name": "COSMOS 2591",
+    "object_id": "2025-182A",
+    "epoch": "2026-09-20T03:18:49.878720",
+    "mean_motion": "15.96418864",
+    "eccentricity": "0.00079937",
+    "inclination": "96.578",
+    "ra_of_asc_node": "192.2885",
+    "arg_of_pericenter": "118.6678",
+    "mean_anomaly": "241.5405",
+    "bstar": "0.00015331114",
+    "mean_motion_dot": "0.00063346",
+    "mean_motion_ddot": "0.000003372892",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 6284
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0007993",
+      "bstar": "0.00015331",
+      "mean_motion_ddot": "0.0000033729"
+     },
+     "fields": {
+      "catalog_field": "65267",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "25182A  ",
+      "epoch_field": "26263.13807730",
+      "two_digit_year": "26",
+      "ndot_field": " .00063346",
+      "nddot_field": " 33729-5",
+      "bstar_field": " 15331-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0007993",
+      "rev_field": " 6284",
+      "checksum_written": [
+       "9",
+       "6"
+      ],
+      "checksum_computed": [
+       9,
+       6
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 65268,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 65268,
+    "object_name": "COSMOS 2592",
+    "object_id": "2025-182B",
+    "epoch": "2026-09-20T05:11:39.596928",
+    "mean_motion": "15.96433461",
+    "eccentricity": "0.00076435",
+    "inclination": "96.5773",
+    "ra_of_asc_node": "192.2886",
+    "arg_of_pericenter": "107.4708",
+    "mean_anomaly": "252.7407",
+    "bstar": "0.00013519373",
+    "mean_motion_dot": "0.0005582",
+    "mean_motion_ddot": "0.000003031322",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 6285
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0007643",
+      "bstar": "0.00013519",
+      "mean_motion_ddot": "0.0000030313"
+     },
+     "fields": {
+      "catalog_field": "65268",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "25182B  ",
+      "epoch_field": "26263.21643052",
+      "two_digit_year": "26",
+      "ndot_field": " .00055820",
+      "nddot_field": " 30313-5",
+      "bstar_field": " 13519-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0007643",
+      "rev_field": " 6285",
+      "checksum_written": [
+       "4",
+       "9"
+      ],
+      "checksum_computed": [
+       4,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 65269,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 65269,
+    "object_name": "COSMOS 2593",
+    "object_id": "2025-182C",
+    "epoch": "2026-09-20T14:35:26.371104",
+    "mean_motion": "15.96125267",
+    "eccentricity": "0.00065622",
+    "inclination": "96.5828",
+    "ra_of_asc_node": "192.6679",
+    "arg_of_pericenter": "113.4805",
+    "mean_anomaly": "246.7164",
+    "bstar": "0.0001652485",
+    "mean_motion_dot": "0.00067162",
+    "mean_motion_ddot": "0.000003558235",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 6291
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0006562",
+      "bstar": "0.00016525",
+      "mean_motion_ddot": "0.0000035582"
+     },
+     "fields": {
+      "catalog_field": "65269",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "25182C  ",
+      "epoch_field": "26263.60794411",
+      "two_digit_year": "26",
+      "ndot_field": " .00067162",
+      "nddot_field": " 35582-5",
+      "bstar_field": " 16525-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0006562",
+      "rev_field": " 6291",
+      "checksum_written": [
+       "9",
+       "1"
+      ],
+      "checksum_computed": [
+       9,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 65270,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 65270,
+    "object_name": "COSMOS 2594",
+    "object_id": "2025-182D",
+    "epoch": "2026-09-20T14:57:57.920256",
+    "mean_motion": "15.96059167",
+    "eccentricity": "0.0006165",
+    "inclination": "96.5825",
+    "ra_of_asc_node": "192.686",
+    "arg_of_pericenter": "111.7201",
+    "mean_anomaly": "248.4734",
+    "bstar": "0.00015626444",
+    "mean_motion_dot": "0.00063234",
+    "mean_motion_ddot": "0.000003362464",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 6293
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "bstar": "0.00015626",
+      "mean_motion_ddot": "0.0000033625"
+     },
+     "fields": {
+      "catalog_field": "65270",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "25182D  ",
+      "epoch_field": "26263.62358704",
+      "two_digit_year": "26",
+      "ndot_field": " .00063234",
+      "nddot_field": " 33625-5",
+      "bstar_field": " 15626-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0006165",
+      "rev_field": " 6293",
+      "checksum_written": [
+       "7",
+       "1"
+      ],
+      "checksum_computed": [
+       7,
+       1
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 66052,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 66052,
+    "object_name": "HRC MONOBLOCK CAMERA",
+    "object_id": "1998-067XR",
+    "epoch": "2026-09-20T09:27:04.677696",
+    "mean_motion": "15.97139539",
+    "eccentricity": "0.00049382",
+    "inclination": "51.6132",
+    "ra_of_asc_node": "143.4577",
+    "arg_of_pericenter": "186.6957",
+    "mean_anomaly": "173.3987",
+    "bstar": "0.00059376514",
+    "mean_motion_dot": "0.00263314",
+    "mean_motion_ddot": "0.00003900204",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 5308
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0004938",
+      "bstar": "0.00059377",
+      "mean_motion_ddot": "0.000039002"
+     },
+     "fields": {
+      "catalog_field": "66052",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "98067XR ",
+      "epoch_field": "26263.39380414",
+      "two_digit_year": "26",
+      "ndot_field": " .00263314",
+      "nddot_field": " 39002-4",
+      "bstar_field": " 59377-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004938",
+      "rev_field": " 5308",
+      "checksum_written": [
+       "1",
+       "2"
+      ],
+      "checksum_computed": [
+       1,
+       2
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 66377,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 66377,
+    "object_name": "CZ-11 DEB",
+    "object_id": "2025-255B",
+    "epoch": "2026-09-20T08:21:29.423808",
+    "mean_motion": "15.92413439",
+    "eccentricity": "0.00032246",
+    "inclination": "52.9803",
+    "ra_of_asc_node": "241.7687",
+    "arg_of_pericenter": "82.2289",
+    "mean_anomaly": "277.9102",
+    "bstar": "0.00092369954",
+    "mean_motion_dot": "0.00317588",
+    "mean_motion_ddot": "0.000049401522",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 4920
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0003224",
+      "bstar": "0.0009237",
+      "mean_motion_ddot": "0.000049402"
+     },
+     "fields": {
+      "catalog_field": "66377",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "25255B  ",
+      "epoch_field": "26263.34825722",
+      "two_digit_year": "26",
+      "ndot_field": " .00317588",
+      "nddot_field": " 49402-4",
+      "bstar_field": " 92370-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0003224",
+      "rev_field": " 4920",
+      "checksum_written": [
+       "9",
+       "9"
+      ],
+      "checksum_computed": [
+       9,
+       9
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 69792,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 69792,
+    "object_name": "LINK",
+    "object_id": "2026-152A",
+    "epoch": "2026-09-19T23:16:44.126688",
+    "mean_motion": "16.01198011",
+    "eccentricity": "0.00027867",
+    "inclination": "20.5826",
+    "ra_of_asc_node": "164.3612",
+    "arg_of_pericenter": "7.2634",
+    "mean_anomaly": "352.7859",
+    "bstar": "0.0023192187",
+    "mean_motion_dot": "0.01342099",
+    "mean_motion_ddot": "0.00092320396",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1242
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "decaying-recapture.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0002786",
+      "bstar": "0.0023192",
+      "mean_motion_ddot": "0.0009232"
+     },
+     "fields": {
+      "catalog_field": "69792",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "26152A  ",
+      "epoch_field": "26262.96995517",
+      "two_digit_year": "26",
+      "ndot_field": " .01342099",
+      "nddot_field": " 92320-3",
+      "bstar_field": " 23192-2",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0002786",
+      "rev_field": " 1242",
+      "checksum_written": [
+       "4",
+       "2"
+      ],
+      "checksum_computed": [
+       4,
+       2
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  },
+  {
+   "norad_cat_id": 100083,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 100083,
+    "object_name": "RASSVET-3 17",
+    "object_id": "2026-165A",
+    "epoch": "2026-09-20T01:26:11.571360",
+    "mean_motion": "15.99761103",
+    "eccentricity": "0.00205186",
+    "inclination": "82.2977",
+    "ra_of_asc_node": "160.1635",
+    "arg_of_pericenter": "176.9636",
+    "mean_anomaly": "183.177",
+    "bstar": "0.00045923325",
+    "mean_motion_dot": "0.00235419",
+    "mean_motion_ddot": "0.000021334833",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 990
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true
+  },
+  {
+   "norad_cat_id": 100089,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 100089,
+    "object_name": "RASSVET-3 23",
+    "object_id": "2026-165G",
+    "epoch": "2026-09-20T11:49:48.538560",
+    "mean_motion": "15.99619106",
+    "eccentricity": "0.00200074",
+    "inclination": "82.2971",
+    "ra_of_asc_node": "159.6487",
+    "arg_of_pericenter": "174.6437",
+    "mean_anomaly": "185.5058",
+    "bstar": "0.00027234245",
+    "mean_motion_dot": "0.00138502",
+    "mean_motion_ddot": "0.000006455383",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 997
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true
+  },
+  {
+   "norad_cat_id": 100142,
+   "set": "decaying",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 100142,
+    "object_name": "FREGAT R/B",
+    "object_id": "2026-165S",
+    "epoch": "2026-09-20T15:14:03.493824",
+    "mean_motion": "16.16776256",
+    "eccentricity": "0.00155653",
+    "inclination": "82.2765",
+    "ra_of_asc_node": "158.9155",
+    "arg_of_pericenter": "177.3674",
+    "mean_anomaly": "182.7697",
+    "bstar": "0.00051450561",
+    "mean_motion_dot": "0.00777328",
+    "mean_motion_ddot": "-0.000001167834",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1002
+   },
+   "canonical_source": "decaying.csv",
+   "present_in": {
+    "decaying.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true
+  },
+  {
+   "norad_cat_id": 69999,
+   "set": "gp-69999-first",
+   "tier": "stable",
+   "canonical": {
+    "norad_cat_id": 69999,
+    "object_name": "VANGUARD DEB",
+    "object_id": "1958-002D",
+    "epoch": "2026-07-08T17:02:16.167840",
+    "mean_motion": "11.62373363",
+    "eccentricity": "0.14870041",
+    "inclination": "34.2417",
+    "ra_of_asc_node": "341.8745",
+    "arg_of_pericenter": "19.9191",
+    "mean_anomaly": "345.3718",
+    "bstar": "-0.00000705174",
+    "mean_motion_dot": "-0.00000023",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 18930
+   },
+   "canonical_source": "gp-69999-first.csv",
+   "present_in": {
+    "gp-69999-first.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "gp-69999-first.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.1487004",
+      "bstar": "-0.0000070517"
+     },
+     "fields": {
+      "catalog_field": "69999",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "58002D  ",
+      "epoch_field": "26189.70990935",
+      "two_digit_year": "26",
+      "ndot_field": "-.00000023",
+      "nddot_field": " 00000+0",
+      "bstar_field": "-70517-5",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "1487004",
+      "rev_field": "18930",
+      "checksum_written": [
+       "6",
+       "8"
+      ],
+      "checksum_computed": [
+       6,
+       8
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "checks": [
+  {
+   "id": "bstar-implied-decimal-exponent",
+   "description": "TLE BSTAR and second-derivative fields are +/-NNNNN+/-E with an implied leading decimal point: ' 15975-3' is 0.15975e-3; zero is written ' 00000+0'."
+  },
+  {
+   "id": "negative-bstar-and-ndot",
+   "description": "BSTAR and the first derivative can be negative; parsers must keep the sign."
+  },
+  {
+   "id": "mmdot-is-tle-field-value",
+   "description": "OMM MEAN_MOTION_DOT equals the TLE first-derivative field as printed (the TLE 'ndot/2' convention); MEAN_MOTION_DDOT likewise equals the TLE second-derivative field."
+  },
+  {
+   "id": "tle-values-match-omm-within-tle-precision",
+   "description": "The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution."
+  },
+  {
+   "id": "tle-checksums-valid",
+   "description": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0)."
+  },
+  {
+   "id": "tle-count-equals-omm-count-below-100000",
+   "description": "The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query."
+  }
+ ],
+ "tests": [
+  "bstar-implicit-decimal",
+  "negative-bstar",
+  "negative-ndot",
+  "nonzero-nddot"
+ ],
+ "coverage": {
+  "provides": [
+   "79 decaying objects with non-zero second derivative",
+   "negative BSTAR (69999: -70517-5) and negative first derivative",
+   "BSTAR up to 0.0052 (51949-2)"
+  ],
+  "gaps": [
+   "no BSTAR with a positive exponent (>= 1.0 Earth radii^-1) exists in any fetched data; that encoding ('NNNNN+1') is untested",
+   "no second derivative with a positive exponent"
+  ]
+ },
+ "ambiguities": [
+  {
+   "id": "ecc-truncation-vs-mantissa-rounding",
+   "text": "CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304/304 CelesTrak records reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0."
+  },
+  {
+   "id": "mmdot-convention",
+   "text": "CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (301/301 records), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6."
+  }
+ ],
+ "notes": [],
+ "sets": {
+  "decaying": {
+   "tier": "live",
+   "files": [
+    "decaying.tle",
+    "decaying.csv",
+    "decaying-recapture.tle"
+   ],
+   "record_count": 82,
+   "record_filter": null,
+   "metadata_by_format": {
+    "decaying.csv": {
+     "ccsds_omm_vers": null,
+     "center_name": null,
+     "creation_date": null,
+     "mean_element_theory": null,
+     "originator": null,
+     "ref_frame": null,
+     "time_system": null
+    }
+   },
+   "metadata_uniform_across_records": true
+  },
+  "gp-69999-first": {
+   "tier": "stable",
+   "files": [
+    "gp-69999-first.tle",
+    "gp-69999-first.csv"
+   ],
+   "record_count": 1,
+   "record_filter": null,
+   "metadata_by_format": {
+    "gp-69999-first.csv": {
+     "ccsds_omm_vers": null,
+     "center_name": null,
+     "creation_date": null,
+     "mean_element_theory": null,
+     "originator": null,
+     "ref_frame": null,
+     "time_system": null
+    }
+   },
+   "metadata_uniform_across_records": true
+  }
+ },
+ "case_specific": {}
+}

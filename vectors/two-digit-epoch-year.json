@@ -1,0 +1,54 @@
+{
+ "vector_set": "two-digit-epoch-year",
+ "provenance": "specification",
+ "sources": [
+  "T.S. Kelso, 'Frequently Asked Questions: Two-Line Element Set Format', Satellite Times, January 1998: 'Two-digit years from 57-99 correspond to 1957-1999 and those from 00-56 correspond to 2000-2056.' https://celestrak.org/columns/v04n03/",
+  "python-sgp4 io.py implements the same pivot (year < 57 -> +2000)"
+ ],
+ "pivot": 57,
+ "vectors": [
+  {
+   "yy": "57",
+   "year": 1957
+  },
+  {
+   "yy": "58",
+   "year": 1958
+  },
+  {
+   "yy": "99",
+   "year": 1999
+  },
+  {
+   "yy": "00",
+   "year": 2000
+  },
+  {
+   "yy": "26",
+   "year": 2026
+  },
+  {
+   "yy": "56",
+   "year": 2056
+  },
+  {
+   "yy": "98",
+   "year": 1998,
+   "note": "real: ISS first record epoch 98324.28472222"
+  }
+ ],
+ "epoch_field_examples": [
+  {
+   "tle_epoch_field": "98324.28472222",
+   "iso": "1998-11-20T06:49:59.999808",
+   "source": "fixtures/epoch-year-19xx (gp-first 25544)"
+  },
+  {
+   "tle_epoch_field": "26263.52959654",
+   "iso": "2026-09-20T12:42:37.141056",
+   "source": "fixtures/baseline-iss-five-formats snapshot"
+  }
+ ],
+ "resolution_note": "1e-8 day = 0.000864 s; an 8-decimal day fraction always converts to an exact whole number of microseconds.",
+ "international_designator_note": "The TLE international designator also carries a two-digit launch year (columns 10-11); no document defines its century mapping. This corpus applies the same 57 pivot (see ambiguity object-id-launch-year-pivot)."
+}

@@ -1,0 +1,327 @@
+{
+ "case": "satcat-70000-cutoff",
+ "title": "SATCAT on both sides of 70000: CSV/JSON records for 25544, 69999 and 100000; legacy fixed-width file stops at 69999",
+ "schema_version": "1.0",
+ "generated_at": "2026-09-21T03:54:07Z",
+ "generator": "tools/make_expected.py",
+ "kind": "satcat",
+ "sources": {
+  "fixtures/satcat-70000-cutoff/raw/satcat-25544.json": {
+   "tier": "live",
+   "format": "satcat-json",
+   "url": "https://celestrak.org/satcat/records.php?CATNR=25544&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:11:54Z",
+   "http_status": 200,
+   "bytes": 337,
+   "sha256": "44efb326be9e9b25d3cee375d7232431793a68b6cce2c9e7f04770bd2a6cd07c",
+   "provenance": "live",
+   "record_count": 1
+  },
+  "fixtures/satcat-70000-cutoff/raw/satcat-25544.csv": {
+   "tier": "live",
+   "format": "satcat-csv",
+   "url": "https://celestrak.org/satcat/records.php?CATNR=25544&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:11:56Z",
+   "http_status": 200,
+   "bytes": 278,
+   "sha256": "529a3f2dbb60c5420441c692adf1803aebd047c95d513a7c36bef712c0e6d797",
+   "provenance": "live",
+   "record_count": 1
+  },
+  "fixtures/satcat-70000-cutoff/raw/satcat-69999.json": {
+   "tier": "live",
+   "format": "satcat-json",
+   "url": "https://celestrak.org/satcat/records.php?CATNR=69999&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:14:30Z",
+   "http_status": 200,
+   "bytes": 334,
+   "sha256": "f464efdf6d869c25721df1c7c11a7749fa6d13ebdb67e5f058158cbba06ce62d",
+   "provenance": "live",
+   "record_count": 1
+  },
+  "fixtures/satcat-70000-cutoff/raw/satcat-69999.csv": {
+   "tier": "live",
+   "format": "satcat-csv",
+   "url": "https://celestrak.org/satcat/records.php?CATNR=69999&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:14:32Z",
+   "http_status": 200,
+   "bytes": 271,
+   "sha256": "269f8a194368e3f3a9c4f5bc7d43b9e8f1a3d5eec39e2080ddc777cc24579bdd",
+   "provenance": "live",
+   "record_count": 1
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.satcat.json": {
+   "tier": "live",
+   "format": "satcat-json",
+   "url": "https://celestrak.org/satcat/records.php?CATNR=100000&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:10:02Z",
+   "http_status": 200,
+   "bytes": 332,
+   "sha256": "235cf52e5287a8b36453ddba3f18d7e0839271658ad31cee8e10135ed62ad13b",
+   "provenance": "live",
+   "record_count": 1
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.satcat.csv": {
+   "tier": "live",
+   "format": "satcat-csv",
+   "url": "https://celestrak.org/satcat/records.php?CATNR=100000&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:10:04Z",
+   "http_status": 200,
+   "bytes": 269,
+   "sha256": "ad32c117b2a0ad4ca42a334e025b77444152fee8cab7ab767810643102cf010f",
+   "provenance": "live",
+   "record_count": 1
+  },
+  "fixtures/satcat-70000-cutoff/raw/satcat.txt": {
+   "tier": "live",
+   "format": "satcat-legacy-fixed-width",
+   "url": "https://celestrak.org/pub/satcat.txt",
+   "retrieved_at": "2026-09-21T00:12:02Z",
+   "http_status": 200,
+   "bytes": 9379866,
+   "sha256": "8dbf69297f6c451387dd18e1baa0b049c229a073e15481d6e52a12ff471ece24",
+   "provenance": "live",
+   "record_count": 69999,
+   "facts": {
+    "line_count": 69999,
+    "numeric_id_lines": 69999,
+    "min_id": 1,
+    "max_id": 69999,
+    "ids_at_or_above_70000": 0,
+    "contiguous_1_to_max": true,
+    "line_endings": {
+     "crlf": 69999,
+     "lf": 0,
+     "bom": false
+    },
+    "column_layout_source": "https://celestrak.org/satcat/satcat-format.php (Legacy Text Data Format)"
+   }
+  }
+ },
+ "records": [],
+ "checks": [
+  {
+   "id": "satcat-legacy-below-70000",
+   "description": "The legacy fixed-width SATCAT contains only NORAD ids below 70000; the CSV/JSON SATCAT contains ids on both sides."
+  },
+  {
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN."
+  }
+ ],
+ "tests": [
+  "legacy-satcat-cutoff-70000"
+ ],
+ "coverage": {
+  "provides": [
+   "legacy file: 69,999 lines, ids 1..69999 contiguous, none >= 70000",
+   "records.php JSON/CSV for 25544, 69999 (VANGUARD DEB, 1958-002D) and 100000"
+  ],
+  "gaps": [
+   "the 9.4 MB legacy file is not shipped; users fetch it once and the check recomputes the facts"
+  ]
+ },
+ "ambiguities": [
+  {
+   "id": "satcat-record-drift",
+   "text": "SATCAT records for existing objects change when an object decays or its orbit summary is updated; records.php sources are treated as live for checksum purposes even though most fields are stable."
+  }
+ ],
+ "notes": [],
+ "sets": {},
+ "case_specific": {
+  "satcat_records": [
+   {
+    "norad_cat_id": 25544,
+    "source": "satcat-25544.json",
+    "record": {
+     "OBJECT_NAME": "ISS (ZARYA)",
+     "OBJECT_ID": "1998-067A",
+     "NORAD_CAT_ID": 25544,
+     "OBJECT_TYPE": "PAY",
+     "OPS_STATUS_CODE": "+",
+     "OWNER": "ISS",
+     "LAUNCH_DATE": "1998-11-20",
+     "LAUNCH_SITE": "TYMSC",
+     "DECAY_DATE": "",
+     "PERIOD": "92.95",
+     "INCLINATION": "51.63",
+     "APOGEE": 422,
+     "PERIGEE": 416,
+     "RCS": "399.0524",
+     "DATA_STATUS_CODE": "",
+     "ORBIT_CENTER": "EA",
+     "ORBIT_TYPE": "ORB"
+    }
+   },
+   {
+    "norad_cat_id": 25544,
+    "source": "satcat-25544.csv",
+    "record": {
+     "OBJECT_NAME": "ISS (ZARYA)",
+     "OBJECT_ID": "1998-067A",
+     "NORAD_CAT_ID": "25544",
+     "OBJECT_TYPE": "PAY",
+     "OPS_STATUS_CODE": "+",
+     "OWNER": "ISS",
+     "LAUNCH_DATE": "1998-11-20",
+     "LAUNCH_SITE": "TYMSC",
+     "DECAY_DATE": "",
+     "PERIOD": "92.95",
+     "INCLINATION": "51.63",
+     "APOGEE": "422",
+     "PERIGEE": "416",
+     "RCS": "399.0524",
+     "DATA_STATUS_CODE": "",
+     "ORBIT_CENTER": "EA",
+     "ORBIT_TYPE": "ORB"
+    }
+   },
+   {
+    "norad_cat_id": 69999,
+    "source": "satcat-69999.json",
+    "record": {
+     "OBJECT_NAME": "VANGUARD DEB",
+     "OBJECT_ID": "1958-002D",
+     "NORAD_CAT_ID": 69999,
+     "OBJECT_TYPE": "DEB",
+     "OPS_STATUS_CODE": "",
+     "OWNER": "US",
+     "LAUNCH_DATE": "1958-03-17",
+     "LAUNCH_SITE": "AFETR",
+     "DECAY_DATE": "",
+     "PERIOD": "123.88",
+     "INCLINATION": "34.24",
+     "APOGEE": 3076,
+     "PERIGEE": 632,
+     "RCS": null,
+     "DATA_STATUS_CODE": "",
+     "ORBIT_CENTER": "EA",
+     "ORBIT_TYPE": "ORB"
+    }
+   },
+   {
+    "norad_cat_id": 69999,
+    "source": "satcat-69999.csv",
+    "record": {
+     "OBJECT_NAME": "VANGUARD DEB",
+     "OBJECT_ID": "1958-002D",
+     "NORAD_CAT_ID": "69999",
+     "OBJECT_TYPE": "DEB",
+     "OPS_STATUS_CODE": "",
+     "OWNER": "US",
+     "LAUNCH_DATE": "1958-03-17",
+     "LAUNCH_SITE": "AFETR",
+     "DECAY_DATE": "",
+     "PERIOD": "123.88",
+     "INCLINATION": "34.24",
+     "APOGEE": "3076",
+     "PERIGEE": "632",
+     "RCS": "",
+     "DATA_STATUS_CODE": "",
+     "ORBIT_CENTER": "EA",
+     "ORBIT_TYPE": "ORB"
+    }
+   },
+   {
+    "norad_cat_id": 100000,
+    "source": "saramago.satcat.json",
+    "record": {
+     "OBJECT_NAME": "SARAMAGO",
+     "OBJECT_ID": "2026-067CY",
+     "NORAD_CAT_ID": 100000,
+     "OBJECT_TYPE": "PAY",
+     "OPS_STATUS_CODE": "+",
+     "OWNER": "POR",
+     "LAUNCH_DATE": "2026-03-30",
+     "LAUNCH_SITE": "AFWTR",
+     "DECAY_DATE": "",
+     "PERIOD": "94.65",
+     "INCLINATION": "97.47",
+     "APOGEE": 508,
+     "PERIGEE": 495,
+     "RCS": null,
+     "DATA_STATUS_CODE": "",
+     "ORBIT_CENTER": "EA",
+     "ORBIT_TYPE": "ORB"
+    }
+   },
+   {
+    "norad_cat_id": 100000,
+    "source": "saramago.satcat.csv",
+    "record": {
+     "OBJECT_NAME": "SARAMAGO",
+     "OBJECT_ID": "2026-067CY",
+     "NORAD_CAT_ID": "100000",
+     "OBJECT_TYPE": "PAY",
+     "OPS_STATUS_CODE": "+",
+     "OWNER": "POR",
+     "LAUNCH_DATE": "2026-03-30",
+     "LAUNCH_SITE": "AFWTR",
+     "DECAY_DATE": "",
+     "PERIOD": "94.65",
+     "INCLINATION": "97.47",
+     "APOGEE": "508",
+     "PERIGEE": "495",
+     "RCS": "",
+     "DATA_STATUS_CODE": "",
+     "ORBIT_CENTER": "EA",
+     "ORBIT_TYPE": "ORB"
+    }
+   }
+  ],
+  "legacy_parsed_records": {
+   "25544": {
+    "intl_designator": "1998-067A",
+    "norad_cat_id": "25544",
+    "multiple_name_flag": "",
+    "payload_flag": "*",
+    "ops_status_code": "+",
+    "name": "ISS (ZARYA)",
+    "owner": "ISS",
+    "launch_date": "1998-11-20",
+    "launch_site": "TYMSC",
+    "decay_date": "",
+    "period_min": "93.0",
+    "inclination_deg": "51.6",
+    "apogee_km": "422",
+    "perigee_km": "416",
+    "rcs_m2": "399.0524",
+    "orbital_status_code": ""
+   },
+   "69999": {
+    "intl_designator": "1958-002D",
+    "norad_cat_id": "69999",
+    "multiple_name_flag": "",
+    "payload_flag": "",
+    "ops_status_code": "",
+    "name": "VANGUARD DEB",
+    "owner": "US",
+    "launch_date": "1958-03-17",
+    "launch_site": "AFETR",
+    "decay_date": "",
+    "period_min": "123.9",
+    "inclination_deg": "34.2",
+    "apogee_km": "3076",
+    "perigee_km": "632",
+    "rcs_m2": "N/A",
+    "orbital_status_code": ""
+   }
+  },
+  "legacy_has_100000": false,
+  "legacy_facts": {
+   "line_count": 69999,
+   "numeric_id_lines": 69999,
+   "min_id": 1,
+   "max_id": 69999,
+   "ids_at_or_above_70000": 0,
+   "contiguous_1_to_max": true,
+   "line_endings": {
+    "crlf": 69999,
+    "lf": 0,
+    "bom": false
+   },
+   "column_layout_source": "https://celestrak.org/satcat/satcat-format.php (Legacy Text Data Format)"
+  }
+ }
+}

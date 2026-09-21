@@ -1,0 +1,27 @@
+CCSDS_OMM_VERS      = 2.0
+CREATION_DATE       = 
+ORIGINATOR          = 
+
+OBJECT_NAME         = ISS (ZARYA)
+OBJECT_ID           = 1998-067A
+CENTER_NAME         = EARTH
+REF_FRAME           = TEME
+TIME_SYSTEM         = UTC
+MEAN_ELEMENT_THEORY = SGP4
+
+EPOCH               = 1998-11-20T06:49:59.999808
+MEAN_MOTION         = 16.05064833 [rev/day]
+ECCENTRICITY        = 0.0125362
+INCLINATION         = 51.5908 [deg]
+RA_OF_ASC_NODE      = 168.3788 [deg]
+ARG_OF_PERICENTER   = 86.4185 [deg]
+MEAN_ANOMALY        = 359.7454 [deg]
+
+EPHEMERIS_TYPE      = 0
+CLASSIFICATION_TYPE = U
+NORAD_CAT_ID        = 25544
+ELEMENT_SET_NO      = 1
+REV_AT_EPOCH        = 0
+BSTAR               = 0 [1/ER]
+MEAN_MOTION_DOT     = -0.00003657 [rev/day**2]
+MEAN_MOTION_DDOT    = 0.000011563 [rev/day**3]

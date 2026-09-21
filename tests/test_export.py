@@ -1,0 +1,81 @@
+"""Export guard: the public release must contain no raw provider files, no Space-Track-named
+paths and no SupGP-derived snapshot values (DECISIONS D-049)."""
+import os
+import re
+import subprocess
+import sys
+import tempfile
+import unittest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+from public_scrub import SUPGP_CASES, supgp_value_strings  # noqa: E402
+
+TEXT_EXT = (".json", ".md", ".py", ".txt", ".csv", ".kvn", ".xml", ".tle", ".2le", ".yml", ".toml", ".xsd", ".log", "")
+
+
+class ExportGuardTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.dest = os.path.join(cls.tmp.name, "public")
+        p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "export_public.py"), "--dest", cls.dest], capture_output=True, text=True)
+        assert p.returncode == 0, p.stderr
+        cls.files = []
+        for d, _, fs in os.walk(cls.dest):
+            for f in fs:
+                cls.files.append(os.path.join(d, f))
+        cls.values = supgp_value_strings(ROOT)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def test_no_raw_and_no_spacetrack_paths(self):
+        rels = [os.path.relpath(f, self.dest) for f in self.files]
+        self.assertFalse([r for r in rels if re.search(r"(^|/)fixtures/[^/]+/raw(/|$)", r)])
+        # the verification TOOL is the single named exception to the Space-Track name guard (D-069)
+        self.assertEqual([r for r in rels if re.search(r"space[-_ .]?track", r, re.I)], ["tools/verify_against_spacetrack.py"])
+
+    def test_supgp_records_withheld(self):
+        import json
+        for case in SUPGP_CASES:
+            p = os.path.join(self.dest, "fixtures", case, "expected.json")
+            self.assertTrue(os.path.exists(p), case)
+            with open(p) as fh:
+                exp = json.load(fh)
+            self.assertEqual(exp["records"], [], case)
+            self.assertIn("records_withheld", exp, case)
+
+    def test_public_audit_copy_states_what_is_withheld(self):
+        p = os.path.join(self.dest, "AUDIT.md")
+        if not os.path.exists(p):
+            self.skipTest("AUDIT.md not in the export")
+        text = open(p, encoding="utf-8").read()
+        private = open(os.path.join(ROOT, "AUDIT.md"), encoding="utf-8").read()
+        if text == private:
+            return  # nothing withheld in this checkout
+        self.assertIn("Public-copy notice.", text)
+        self.assertIn("private original, which is intact", text)
+        self.assertNotIn("nine-digit-supgp-launch-nominals |", text)  # no appendix row from the SupGP case
+
+    def test_no_supgp_values_anywhere(self):
+        if not self.values:
+            self.skipTest("no private SupGP snapshot values in this checkout (already public)")
+        hits = []
+        for f in self.files:
+            if not f.endswith(TEXT_EXT):
+                continue
+            try:
+                with open(f, encoding="utf-8", errors="replace") as fh:
+                    text = fh.read()
+            except OSError:
+                continue
+            for v in self.values:
+                if v in text:
+                    hits.append((os.path.relpath(f, self.dest), v))
+        self.assertEqual(hits, [], f"SupGP-derived values found in the export: {hits[:10]}")
+
+
+if __name__ == "__main__":
+    unittest.main()

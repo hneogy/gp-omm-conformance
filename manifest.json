@@ -1,0 +1,2217 @@
+{
+ "corpus": "gp-omm-conformance",
+ "corpus_version": "0.1.0",
+ "generated_at": "2026-09-21T04:07:27Z",
+ "generator": "tools/make_manifest.py",
+ "design": {
+  "raw_provider_files_shipped": false,
+  "what_is_shipped": [
+   "specification vectors (vectors/)",
+   "derived, labelled re-encodings of provider records (derived/)",
+   "expected values and structural checks per case (fixtures/<case>/expected.json)",
+   "SHA-256, URL and retrieval time of every source file tested",
+   "the fetch script and static fetch list that rebuild fixtures/<case>/raw/ on the user's machine under CelesTrak's own usage policy (tools/fetch.py, tools/fetchlist.json)"
+  ],
+  "tiers": {
+   "stable": "source whose bytes should not change (gp-first.php first records, derived files, vectors): if the user's fetched bytes match the recorded SHA-256 the frozen expected values apply exactly",
+   "live": "rolling or current query: our snapshot's values are a dated reference; structural checks apply to whatever the user fetched"
+  },
+  "provider_policy": {
+   "celestrak_gp_update_cadence_hours": 2,
+   "one_request_per_url_per_update": true,
+   "policy_url": "https://celestrak.org/usage-policy.php",
+   "documentation_url": "https://celestrak.org/NORAD/documentation/gp-data-formats.php"
+  },
+  "audit_trail": "DECISIONS.md"
+ },
+ "checks": {
+  "omm-formats-agree": "For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them.",
+  "tle-values-match-omm-within-tle-precision": "The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution.",
+  "tle-checksums-valid": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0).",
+  "catalog-number-is-integer": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN.",
+  "tle-catalog-field-decodes": "Columns 3-7 of TLE lines 1 and 2 decode to the same integer (five digits, or Alpha-5 letter + four digits).",
+  "two-digit-year-pivot": "TLE epoch years 57-99 map to 1957-1999 and 00-56 to 2000-2056; the resulting ISO epoch equals the OMM EPOCH string.",
+  "object-id-may-be-empty": "OBJECT_ID (and in principle OBJECT_NAME) can be empty; parsers must not fail, and must not invent a value.",
+  "object-name-unknown-literal": "OBJECT_NAME may be the literal UNKNOWN (CCSDS-recommended) rather than empty.",
+  "csv-json-omit-constant-metadata": "CelesTrak CSV/JSON carry no CENTER_NAME, REF_FRAME, TIME_SYSTEM or MEAN_ELEMENT_THEORY; parsers must default them (EARTH, TEME, UTC, SGP4) rather than fail.",
+  "xml-ndm-wrapper-omm-2.0": "CelesTrak XML has an <ndm> root containing one <omm> per record with id=CCSDS_OMM_VERS and version=2.0; CREATION_DATE and ORIGINATOR elements are present but empty.",
+  "kvn-blank-mandatory-values": "CelesTrak KVN writes CREATION_DATE and ORIGINATOR with blank values and blank OBJECT_ID for analyst objects; MEAN_ELEMENT_THEORY is 'SGP/SGP4'.",
+  "leading-dot-decimals": "CSV, KVN and XML values may start with '.' or '-.' (no leading zero) and use 'E' exponents; JSON carries numbers.",
+  "tle-format-omits-ids-above-99999": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'.",
+  "tle-count-equals-omm-count-below-100000": "The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query.",
+  "nine-digit-ids-parse": "NORAD_CAT_ID values >= 100000000 parse and round-trip as integers in CSV, JSON, XML and KVN.",
+  "supgp-extra-keys-tolerated": "SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail.",
+  "classification-c": "CLASSIFICATION_TYPE may be 'C' (CelesTrak supplemental) rather than 'U'.",
+  "element-set-zero-and-rev-one": "ELEMENT_SET_NO may be 0 and REV_AT_EPOCH may be 1 or 0.",
+  "mmdot-is-tle-field-value": "OMM MEAN_MOTION_DOT equals the TLE first-derivative field as printed (the TLE 'ndot/2' convention); MEAN_MOTION_DDOT likewise equals the TLE second-derivative field.",
+  "bstar-implied-decimal-exponent": "TLE BSTAR and second-derivative fields are +/-NNNNN+/-E with an implied leading decimal point: ' 15975-3' is 0.15975e-3; zero is written ' 00000+0'.",
+  "negative-bstar-and-ndot": "BSTAR and the first derivative can be negative; parsers must keep the sign.",
+  "alpha5-decode": "An Alpha-5 catalog field decodes as (letter value)*10000 + digits with A=10 ... Z=33 and I, O unused; 'I', 'O' and lowercase are invalid.",
+  "alpha5-encode": "Integers 100000-339999 encode to the Alpha-5 table; below 100000 encode as five digits with leading zeros; above 339999 cannot be encoded.",
+  "satcat-legacy-below-70000": "The legacy fixed-width SATCAT contains only NORAD ids below 70000; the CSV/JSON SATCAT contains ids on both sides.",
+  "kvn-syntax-tolerance": "KVN parsers accept blank lines, COMMENT lines at allowed positions, arbitrary whitespace around '=', bracketed units, day-of-year epochs, an optional trailing Z, signed integers, lowercase 'e' exponents, LF or CRLF endings.",
+  "optional-tle-parameters-may-be-absent": "EPHEMERIS_TYPE, CLASSIFICATION_TYPE, NORAD_CAT_ID, ELEMENT_SET_NO and REV_AT_EPOCH are Optional in CCSDS Table 4-3 and may be missing from a valid OMM.",
+  "omm-version-3-accepted": "CCSDS_OMM_VERS 3.0 messages (with CLASSIFICATION and MESSAGE_ID in the header) are accepted alongside 2.0.",
+  "sha256-matches-tested-snapshot": "If the user's fetched bytes hash to the recorded SHA-256, the frozen expected values apply exactly; otherwise only structural checks apply and the tool says so."
+ },
+ "ambiguities": {
+  "unknown-vs-blank": "CCSDS 502.0-B-3 Table 4-2 says an unknown OBJECT_NAME/OBJECT_ID 'should be set to UNKNOWN' and 7.5.1 requires a non-empty value for mandatory keywords; CelesTrak writes an empty OBJECT_ID (empty string in CSV/JSON/KVN, empty element in XML) while the first-ever analyst records carry OBJECT_NAME 'UNKNOWN'. The corpus expects the provider's actual output and records the spec text.",
+  "empty-mandatory-header": "CCSDS Table 4-1 makes CREATION_DATE and ORIGINATOR mandatory; CelesTrak emits them empty in XML and blank in KVN. The 2.0 schema's epochType pattern accepts an empty string, so schema validation may pass; the KVN rule 7.5.1 is still violated.",
+  "omm-version-2-vs-3": "CelesTrak declares OMM version 2.0 (Silver Book 2009) although the current standard is 3.0 (Blue Book 2023). The 2.0 XML schema set is still downloadable from SANA by direct URL; against the current 4.0.0/3.0 set the documents fail on the fixed version attribute.",
+  "met-sgp-sgp4-vs-sgp4": "For the same record CelesTrak writes MEAN_ELEMENT_THEORY = SGP/SGP4 in KVN and SGP4 in XML. Both appear in CCSDS examples; parsers should accept both.",
+  "leading-dot-decimals": "CCSDS 7.5.6 requires at least one digit before and after the decimal point in KVN fixed-point values; CelesTrak writes '.00048259' and '.15975118E-3'. Most decimal parsers accept this; strict KVN validators may not.",
+  "mmdot-convention": "CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (301/301 records), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6.",
+  "ecc-truncation-vs-mantissa-rounding": "CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304/304 CelesTrak records reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0.",
+  "object-id-launch-year-pivot": "No document defines how a two-digit launch year in the TLE international designator maps to a century. The corpus applies the same 57 pivot as the epoch year (python-sgp4 export_omm does the same); CelesTrak's OMM OBJECT_ID carries four-digit years, so the mapping matters only for TLE input.",
+  "tle-epoch-resolution": "The TLE epoch has 1e-8 day (864 microsecond) resolution. CelesTrak GP epochs convert exactly between the two representations; SupGP epochs do not (86 microsecond difference observed), so a TLE->OMM epoch comparison needs a tolerance of half the TLE resolution.",
+  "supgp-extra-keys": "SupGP CSV/JSON carry RMS and DATA_SOURCE, which are not OMM keywords (CCSDS 7.9.2.2 allows only Table 4-x keywords in an OMM); CelesTrak's CSV/JSON are OMM-keyword-based formats, not OMM instances, so this is a format extension rather than a violation. Parsers must tolerate unknown keys.",
+  "gp-first-stability": "The corpus assumes CelesTrak's gp-first.php ('first GP data available') returns the same record for a given catalog number indefinitely. This was not verified over time. tools/fetch.py compares every fetched file with the SHA-256 recorded in manifest.json after each run (and on demand with --check-drift) and prints a DRIFT line for any stable-tier source whose bytes differ; the runner independently labels such a source 'live' and stops applying the frozen values to it. Related observation (D-070, D-074): gp-first records are historical in their elements but can carry metadata assigned after first publication. For catalog 100000, Space-Track's earliest record has a blank international designator, Space-Track's current record carries the same designator as CelesTrak, and CelesTrak's gp-first record shows that designator back-filled; the line-2 elements are identical. Treat OBJECT_NAME and OBJECT_ID in a gp-first record as current metadata, not as the values first published.",
+  "analyst-number-reuse": "Space-Track states analyst numbers 'can be constantly reused for different objects'; gp-first.php for an analyst id therefore returns whichever object first carried that number, which may differ from the object currently using it.",
+  "satcat-record-drift": "SATCAT records for existing objects change when an object decays or its orbit summary is updated; records.php sources are treated as live for checksum purposes even though most fields are stable.",
+  "supgp-redistribution": "SupGP data derives from operator-provided data (some explicitly 'with permission' to CelesTrak). Under the corpus design no raw bytes are shipped; the snapshot values for one SupGP record are published as a dated reference and may be removed by the owner before publication."
+ },
+ "cases": [
+  {
+   "id": "epoch-year-19xx",
+   "title": "ISS first GP record (1998): two-digit epoch year 98, seven renderings of one record",
+   "kind": "gp",
+   "tests": [
+    "2-digit-epoch-year",
+    "same-object-all-formats",
+    "bstar-implicit-decimal",
+    "negative-ndot",
+    "nonzero-nddot"
+   ],
+   "checks": [
+    "omm-formats-agree",
+    "tle-values-match-omm-within-tle-precision",
+    "tle-checksums-valid",
+    "two-digit-year-pivot",
+    "csv-json-omit-constant-metadata",
+    "xml-ndm-wrapper-omm-2.0",
+    "kvn-blank-mandatory-values",
+    "leading-dot-decimals",
+    "negative-bstar-and-ndot",
+    "sha256-matches-tested-snapshot"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "two-digit year in the 57-99 branch (98 -> 1998)",
+     "negative first derivative",
+     "non-zero second derivative (11563-4)",
+     "BSTAR zero written 00000+0",
+     "element set number 1, revolution number 0"
+    ],
+    "gaps": [
+     "the 00-56 branch is covered only by 2026 records elsewhere; no record near the 56/57 boundary exists"
+    ]
+   },
+   "ambiguities": [
+    "mmdot-convention",
+    "empty-mandatory-header",
+    "leading-dot-decimals",
+    "met-sgp-sgp4-vs-sgp4",
+    "omm-version-2-vs-3",
+    "gp-first-stability"
+   ],
+   "library_findings": [],
+   "expected": "fixtures/epoch-year-19xx/expected.json",
+   "case_doc": "fixtures/epoch-year-19xx/case.md",
+   "record_count": 1,
+   "sources": [
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:11:49Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "274de71dc147837c977a27f289a06768a92d093396ae73b524fd88be6b76042f",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.2le",
+     "tier": "stable",
+     "format": "2le",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=2LE",
+     "retrieved_at": "2026-09-21T00:43:47Z",
+     "http_status": 200,
+     "bytes": 142,
+     "sha256": "a3c757af5751a3f2a6f468257af916fe0ce08f60810d23166f4b8b50348fbb9b",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+     "tier": "stable",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:43:39Z",
+     "http_status": 200,
+     "bytes": 368,
+     "sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.json",
+     "tier": "stable",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:11:51Z",
+     "http_status": 200,
+     "bytes": 414,
+     "sha256": "e18ebbe14d38ae617b0506e79230d51df539704dbd0ff1fd9d6f9d8f15e13dd5",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.pretty.json",
+     "tier": "stable",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=JSON-PRETTY",
+     "retrieved_at": "2026-09-21T00:43:50Z",
+     "http_status": 200,
+     "bytes": 517,
+     "sha256": "481ea9ae0881f58a6f14ee0adab6058a8104188e63eb9e36f7348dc07e0bd815",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.xml",
+     "tier": "stable",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:43:41Z",
+     "http_status": 200,
+     "bytes": 1198,
+     "sha256": "cdcfd5fbd9e8b4766c7c09b360f0a44e4709172f7e6a58ce5e2b621a77dac13c",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=KVN",
+     "retrieved_at": "2026-09-21T00:43:45Z",
+     "http_status": 200,
+     "bytes": 626,
+     "sha256": "b23fb2823e24b7f9c29f3a790fd71a85d44fd13386baff6dd1c7d40df5daac90",
+     "provenance": "live",
+     "record_count": 1
+    }
+   ]
+  },
+  {
+   "id": "baseline-iss-five-formats",
+   "title": "ISS current GP record: the same object in TLE, 2LE, CSV, JSON, JSON-PRETTY, XML and KVN (live)",
+   "kind": "gp",
+   "tests": [
+    "same-object-all-formats",
+    "2-digit-epoch-year",
+    "bstar-implicit-decimal"
+   ],
+   "checks": [
+    "omm-formats-agree",
+    "tle-values-match-omm-within-tle-precision",
+    "tle-checksums-valid",
+    "two-digit-year-pivot",
+    "csv-json-omit-constant-metadata",
+    "xml-ndm-wrapper-omm-2.0",
+    "kvn-blank-mandatory-values",
+    "leading-dot-decimals"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "a current 5-digit object in every rendering",
+     "eccentricity with 8 OMM digits truncated to 7 in the TLE",
+     "BSTAR with 8 OMM digits rounded to 5 in the TLE"
+    ],
+    "gaps": [
+     "live source: a user's fetch returns a different epoch; only structural checks apply unless the SHA-256 matches"
+    ]
+   },
+   "ambiguities": [
+    "ecc-truncation-vs-mantissa-rounding",
+    "mmdot-convention"
+   ],
+   "library_findings": [],
+   "expected": "fixtures/baseline-iss-five-formats/expected.json",
+   "case_doc": "fixtures/baseline-iss-five-formats/case.md",
+   "record_count": 1,
+   "sources": [
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:09:33Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "674ea527c1ff8a7054903861e4899509bcf9ed946441ae1342d2649837e2d698",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.2le",
+     "tier": "live",
+     "format": "2le",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=2LE",
+     "retrieved_at": "2026-09-21T00:09:35Z",
+     "http_status": 200,
+     "bytes": 142,
+     "sha256": "8800ed02add033afaa63a66a27639704d52763b83c9553caf7dd8c475688c7a1",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.csv",
+     "tier": "live",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:09:37Z",
+     "http_status": 200,
+     "bytes": 378,
+     "sha256": "643c0d9a52417f27e0ada849f439bd3459bb02fec0ffe3e3afb1f3041018eab2",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.json",
+     "tier": "live",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:09:40Z",
+     "http_status": 200,
+     "bytes": 425,
+     "sha256": "d84b9c1d500d16131495855719eae29c858ef692c475095aa45705353406728d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.pretty.json",
+     "tier": "live",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=JSON-PRETTY",
+     "retrieved_at": "2026-09-21T00:09:42Z",
+     "http_status": 200,
+     "bytes": 528,
+     "sha256": "cf4e1c6d118e322f9358b35bd2d83ebf8b5a645652ee2929259935ae08bd211e",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.xml",
+     "tier": "live",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:09:45Z",
+     "http_status": 200,
+     "bytes": 1208,
+     "sha256": "1aea7dbbba3f0ce879b6588e87e24539ef2f9069e6ba6873c6ac1697f4e0a508",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.kvn",
+     "tier": "live",
+     "format": "kvn",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=KVN",
+     "retrieved_at": "2026-09-21T00:09:47Z",
+     "http_status": 200,
+     "bytes": 636,
+     "sha256": "cc31f171ca83f1b7e0cc6209e13c2adeea863ed90bcc7d6cd94ce05930acec64",
+     "provenance": "live",
+     "record_count": 1
+    }
+   ]
+  },
+  {
+   "id": "six-digit-omm-saramago",
+   "title": "Catalog number 100000 (SARAMAGO): first 6-digit object, OMM formats only, TLE unavailable",
+   "kind": "gp",
+   "tests": [
+    "6-digit-catalog-number",
+    "tle-unavailable-above-99999",
+    "same-object-all-omm-formats"
+   ],
+   "checks": [
+    "catalog-number-is-integer",
+    "omm-formats-agree",
+    "tle-format-omits-ids-above-99999",
+    "csv-json-omit-constant-metadata",
+    "xml-ndm-wrapper-omm-2.0",
+    "sha256-matches-tested-snapshot"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "the first 6-digit catalog number, stable (gp-first) and live",
+     "HTTP 404 'No GP data found' for the TLE request, stable and live",
+     "SATCAT record verifying designator 2026-067CY and launch 2026-03-30"
+    ],
+    "gaps": [
+     "only one object; other 6-digit objects are in last-30-days and analyst cases"
+    ]
+   },
+   "ambiguities": [
+    "gp-first-stability",
+    "satcat-record-drift"
+   ],
+   "library_findings": [],
+   "expected": "fixtures/six-digit-omm-saramago/expected.json",
+   "case_doc": "fixtures/six-digit-omm-saramago/case.md",
+   "record_count": 2,
+   "sources": [
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago-first.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:43:53Z",
+     "http_status": 404,
+     "bytes": 16,
+     "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+     "provenance": "live",
+     "record_count": 0
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+     "tier": "stable",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:43:55Z",
+     "http_status": 200,
+     "bytes": 374,
+     "sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago-first.json",
+     "tier": "stable",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:43:58Z",
+     "http_status": 200,
+     "bytes": 420,
+     "sha256": "1d04dc3b4e49d6f7162c69b2f86b6132302bf302265f912a312dcee7b5585b0a",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago-first.xml",
+     "tier": "stable",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:44:00Z",
+     "http_status": 200,
+     "bytes": 1204,
+     "sha256": "c2523a59549f0e95e0573630b50626cc15089bfeb5d9486f033aa6d54702d71b",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago-first.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=KVN",
+     "retrieved_at": "2026-09-21T00:44:03Z",
+     "http_status": 200,
+     "bytes": 632,
+     "sha256": "bb9073b3b323e25961ef7a4012aadc252abb46653c011b8806a205e7044d719e",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.csv",
+     "tier": "live",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:09:50Z",
+     "http_status": 200,
+     "bytes": 375,
+     "sha256": "650bde1c540e16369ecda939338bbebe6ddd03081b0a1c25cfd8c46fa38a0c40",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.json",
+     "tier": "live",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:09:52Z",
+     "http_status": 200,
+     "bytes": 421,
+     "sha256": "7d06887037002ed0eddfe638173b800e41b18fefd7e37cc4a399ec0de245c133",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.xml",
+     "tier": "live",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:09:55Z",
+     "http_status": 200,
+     "bytes": 1205,
+     "sha256": "763990333a9a4f4805b2ae8d6de60b709658e1f498807034ae9a641ace967c0b",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.kvn",
+     "tier": "live",
+     "format": "kvn",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=KVN",
+     "retrieved_at": "2026-09-21T00:09:57Z",
+     "http_status": 200,
+     "bytes": 633,
+     "sha256": "8e9591ef376a57d80a77b675358f136e2d9f1e229d3f77d8cf3a16e703fc5168",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:09:59Z",
+     "http_status": 404,
+     "bytes": 16,
+     "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+     "provenance": "live",
+     "record_count": 0
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.satcat.json",
+     "tier": "live",
+     "format": "satcat-json",
+     "url": "https://celestrak.org/satcat/records.php?CATNR=100000&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:10:02Z",
+     "http_status": 200,
+     "bytes": 332,
+     "sha256": "235cf52e5287a8b36453ddba3f18d7e0839271658ad31cee8e10135ed62ad13b",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.satcat.csv",
+     "tier": "live",
+     "format": "satcat-csv",
+     "url": "https://celestrak.org/satcat/records.php?CATNR=100000&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:10:04Z",
+     "http_status": 200,
+     "bytes": 269,
+     "sha256": "ad32c117b2a0ad4ca42a334e025b77444152fee8cab7ab767810643102cf010f",
+     "provenance": "live",
+     "record_count": 1
+    }
+   ]
+  },
+  {
+   "id": "tle-omits-six-digit-objects",
+   "title": "A group with only 6-digit objects: OMM formats return 256 records, the TLE request returns HTTP 404",
+   "kind": "gp",
+   "tests": [
+    "tle-unavailable-above-99999",
+    "6-digit-catalog-number"
+   ],
+   "checks": [
+    "tle-format-omits-ids-above-99999",
+    "tle-count-equals-omm-count-below-100000",
+    "catalog-number-is-integer"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "256 six-digit ids 100404-100789 in CSV",
+     "TLE request -> 404 with body 'No GP data found' (captured twice, 00:10Z hand-recorded and 00:41Z clean)",
+     "11 records with non-zero second derivative",
+     "negative BSTAR values"
+    ],
+    "gaps": [
+     "window-dependent: once objects below 100000 re-enter the 30-day window the TLE request will return data again; the structural check covers both outcomes"
+    ]
+   },
+   "ambiguities": [],
+   "library_findings": [],
+   "expected": "fixtures/tle-omits-six-digit-objects/expected.json",
+   "case_doc": "fixtures/tle-omits-six-digit-objects/case.md",
+   "record_count": 256,
+   "sources": [
+    {
+     "path": "fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv",
+     "tier": "live",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:10:07Z",
+     "http_status": 200,
+     "bytes": 39336,
+     "sha256": "bc9a5dff288a26d30ec7371b7894be8d313f93fd19033c063df382cff1ff6e8c",
+     "provenance": "live",
+     "record_count": 256
+    },
+    {
+     "path": "fixtures/tle-omits-six-digit-objects/raw/last-30-days.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:10:10Z",
+     "http_status": 404,
+     "bytes": 16,
+     "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+     "provenance": "live",
+     "record_count": 0,
+     "superseded_for_citation_by": "last-30-days-recapture.tle.meta.json"
+    },
+    {
+     "path": "fixtures/tle-omits-six-digit-objects/raw/last-30-days-recapture.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=tle",
+     "retrieved_at": "2026-09-21T00:41:28Z",
+     "http_status": 404,
+     "bytes": 16,
+     "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+     "provenance": "live",
+     "record_count": 0,
+     "recapture_of": "last-30-days.tle"
+    }
+   ]
+  },
+  {
+   "id": "analyst-objects",
+   "title": "Analyst objects: empty OBJECT_ID, OBJECT_NAME UNKNOWN, 8xxxx and 27xxxx ids, TLE keeps only the 5-digit ones",
+   "kind": "gp",
+   "tests": [
+    "analyst-objects-no-object-id",
+    "6-digit-catalog-number",
+    "tle-unavailable-above-99999"
+   ],
+   "checks": [
+    "object-id-may-be-empty",
+    "object-name-unknown-literal",
+    "catalog-number-is-integer",
+    "tle-format-omits-ids-above-99999",
+    "tle-count-equals-omm-count-below-100000",
+    "omm-formats-agree",
+    "xml-ndm-wrapper-omm-2.0",
+    "kvn-blank-mandatory-values"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "565 analyst objects (219 in 80000-89999, 346 in 270000-270449) at the snapshot",
+     "563 of 565 with an empty OBJECT_ID; all 565 carry the literal OBJECT_NAME 'UNKNOWN' (no analyst object in the group has a real name)",
+     "stable first records for 270449 (6-digit, letter T) and 81011, also with OBJECT_NAME UNKNOWN and empty OBJECT_ID",
+     "TLE rendering of the 81011 record with eight blank international-designator columns"
+    ],
+    "gaps": [
+     "no analyst record with an empty OBJECT_NAME was observed; that variant is untested",
+     "the 90000 block is not observed"
+    ]
+   },
+   "ambiguities": [
+    "unknown-vs-blank",
+    "analyst-number-reuse",
+    "gp-first-stability"
+   ],
+   "library_findings": [
+    "python-sgp4 2.27 sgp4.omm.parse_xml returns None for an empty <OBJECT_ID/> element and initialize() then raises TypeError; 564 of 566 XML analyst records fail, while the same records in CSV pass."
+   ],
+   "expected": "fixtures/analyst-objects/expected.json",
+   "case_doc": "fixtures/analyst-objects/case.md",
+   "record_count": 567,
+   "sources": [
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:11:41Z",
+     "http_status": 200,
+     "bytes": 36792,
+     "sha256": "3d3aac4567f7f709d222f0c5c4854376bbbd771f985d09499c9d2b732c2d7247",
+     "provenance": "live",
+     "record_count": 219
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.csv",
+     "tier": "live",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:30Z",
+     "http_status": 200,
+     "bytes": 76633,
+     "sha256": "e1d437ebf2a53ed9db7f02d99a51a05bcc8519cc0ee0e84b17327cb381c7ec36",
+     "provenance": "live",
+     "record_count": 565
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.json",
+     "tier": "live",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:11:33Z",
+     "http_status": 200,
+     "bytes": 228966,
+     "sha256": "f3a4773680d66ed3aa58ed18c22a119df4d3600f45a9ec4bb4e8c2527908bd5d",
+     "provenance": "live",
+     "record_count": 565
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.xml",
+     "tier": "live",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:11:35Z",
+     "http_status": 200,
+     "bytes": 552351,
+     "sha256": "8c76a7863573b288143fab7b87d3be17801003d5d66a9b8af7fac8024a05d1a8",
+     "provenance": "live",
+     "record_count": 565
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.kvn",
+     "tier": "live",
+     "format": "kvn",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=KVN",
+     "retrieved_at": "2026-09-21T00:11:38Z",
+     "http_status": 200,
+     "bytes": 350431,
+     "sha256": "6d8c57c5260854d25814b248d67892c21ba53359442ea4f140ddff8d63ac7855",
+     "provenance": "live",
+     "record_count": 565
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-recapture.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=tle",
+     "retrieved_at": "2026-09-21T00:41:30Z",
+     "http_status": 200,
+     "bytes": 36792,
+     "sha256": "3d3aac4567f7f709d222f0c5c4854376bbbd771f985d09499c9d2b732c2d7247",
+     "provenance": "live",
+     "record_count": 219,
+     "recapture_of": "analyst.tle"
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-270449-first.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:44:05Z",
+     "http_status": 404,
+     "bytes": 16,
+     "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+     "provenance": "live",
+     "record_count": 0
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-270449-first.csv",
+     "tier": "stable",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:44:08Z",
+     "http_status": 200,
+     "bytes": 363,
+     "sha256": "f9caeec84ba49dc0ae95e1f493193724f875b1b7c25cdd607fb7af9e37d1a050",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-270449-first.json",
+     "tier": "stable",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:44:11Z",
+     "http_status": 200,
+     "bytes": 409,
+     "sha256": "c50e3ee57a0108411bd844e1d0af5fe91386a458c0c6daf9460a6164f6fa4263",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-270449-first.xml",
+     "tier": "stable",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:44:15Z",
+     "http_status": 200,
+     "bytes": 1193,
+     "sha256": "94c54614780dbe36b3a6394f9b9ba8c01eb19e737e886a5f302e0a7ae4b01f02",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-270449-first.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=KVN",
+     "retrieved_at": "2026-09-21T00:44:17Z",
+     "http_status": 200,
+     "bytes": 621,
+     "sha256": "e90632bbe787b917248c91dea641df65bb2a3e4b23cb46752ba25f2f95804613",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-81011-first.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:44:20Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "f06539e94675d87b1b5f4958e7b918ffb67cf10204da1f3bb966acb529c004e2",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-81011-first.csv",
+     "tier": "stable",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:44:23Z",
+     "http_status": 200,
+     "bytes": 357,
+     "sha256": "339ed35b58d6300d12d42c66cc981d636ae9bfaee9df74f7c3d41f3f9a878703",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-81011-first.json",
+     "tier": "stable",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:44:26Z",
+     "http_status": 200,
+     "bytes": 402,
+     "sha256": "742bd531a42360d694b5d99603fa66e8686ed3ecdae18c02e7d42485ee031906",
+     "provenance": "live",
+     "record_count": 1
+    }
+   ]
+  },
+  {
+   "id": "nine-digit-supgp-launch-nominals",
+   "title": "Nine-digit catalog numbers: 18 SDS launch nominals (7995016xx) in CelesTrak SupGP data",
+   "kind": "gp",
+   "tests": [
+    "9-digit-catalog-number",
+    "tle-unavailable-above-99999"
+   ],
+   "checks": [
+    "nine-digit-ids-parse",
+    "catalog-number-is-integer",
+    "omm-formats-agree",
+    "tle-format-omits-ids-above-99999",
+    "supgp-extra-keys-tolerated",
+    "classification-c"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "one 9-digit object (799501621) in CSV, JSON, XML and KVN; TLE request -> 404 'No SupGP data found'",
+     "27 nine-digit ids 799501621-799501647 in the full Starlink SupGP file at the snapshot"
+    ],
+    "gaps": [
+     "perishable: nominals exist only for roughly 5-8 days after a launch (CelesTrak); a user's fetch may contain none, in which case the case reports 'no 9-digit ids available now' rather than failing",
+     "no 9-digit id exists in 18 SDS GP data; only SupGP"
+    ]
+   },
+   "ambiguities": [
+    "supgp-extra-keys",
+    "supgp-redistribution",
+    "tle-epoch-resolution"
+   ],
+   "library_findings": [
+    "python-sgp4 2.27 sgp4.omm.initialize and Skyfield 1.55 EarthSatellite.from_omm raise ValueError('satellite number cannot exceed 339999') for every nine-digit record: 28 distinct records (27 in the full Starlink SupGP file plus one single-object query), 29 file-records counting that object's CSV and XML renderings separately."
+   ],
+   "expected": "fixtures/nine-digit-supgp-launch-nominals/expected.json",
+   "case_doc": "fixtures/nine-digit-supgp-launch-nominals/case.md",
+   "record_count": 28,
+   "sources": [
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.csv",
+     "tier": "live",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:14:18Z",
+     "http_status": 200,
+     "bytes": 407,
+     "sha256": "6a44cde5358a4e3039871a6aeca1f417ad53ef0d3e69fd7d0fdd8ea81283a135",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.json",
+     "tier": "live",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:14:20Z",
+     "http_status": 200,
+     "bytes": 462,
+     "sha256": "d8fdca20c5e39499c74c9403664f69a12dc630e28a2552102f5287702f68bf8c",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.xml",
+     "tier": "live",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:14:23Z",
+     "http_status": 200,
+     "bytes": 1206,
+     "sha256": "60322eac8ef71de2868e5afe6d696cb3b079fe9735853bdb4bb15911d243af4d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.kvn",
+     "tier": "live",
+     "format": "kvn",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=KVN",
+     "retrieved_at": "2026-09-21T00:14:25Z",
+     "http_status": 200,
+     "bytes": 634,
+     "sha256": "9bb04dc1bdcedb217966c48bb2af78c8440a8b0168720e141ca2ffbe999fa17d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:14:27Z",
+     "http_status": 404,
+     "bytes": 19,
+     "sha256": "08ed5e8c54339ed19fa9e3ce6b46c54a805d0db12ecb3cb7c4455e6bef84a3c9",
+     "provenance": "live",
+     "record_count": 0
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-all.csv",
+     "tier": "live",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:59Z",
+     "http_status": 200,
+     "bytes": 1802376,
+     "sha256": "762cac2d33b68de66f63e58257153c3dddb3ae8d072a16b8b51f24e4025bfb4a",
+     "provenance": "live",
+     "record_count": 11141
+    }
+   ]
+  },
+  {
+   "id": "supgp-celestrak-classification-c",
+   "title": "CelesTrak supplemental GP: classification C, element set 0, RMS/DATA_SOURCE columns, 72000-series ids",
+   "kind": "gp",
+   "tests": [
+    "supgp-extra-fields",
+    "classification-c"
+   ],
+   "checks": [
+    "supgp-extra-keys-tolerated",
+    "classification-c",
+    "element-set-zero-and-rev-one",
+    "omm-formats-agree",
+    "tle-values-match-omm-within-tle-precision",
+    "tle-checksums-valid"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "two SupGP records (stack 72000 and single 72001) in five formats",
+     "TLE epoch rounded to 1e-8 day (86 us from the CSV epoch)",
+     "OBJECT_ID 2026-219A shared by the stack nominal and a per-satellite nominal (799501621)"
+    ],
+    "gaps": [
+     "perishable: this post-deployment file is replaced after cataloguing",
+     "the meaning of the 72000-series ids (the 70000-79999 block) is described only by a secondary source (RESEARCH.md \u00a71); primary sources cover only the 80000-89999 analyst range and the 69999 end of the legacy range"
+    ]
+   },
+   "ambiguities": [
+    "supgp-extra-keys",
+    "tle-epoch-resolution",
+    "supgp-redistribution"
+   ],
+   "library_findings": [
+    "python-sgp4 2.27 sgp4.omm.initialize assigns CLASSIFICATION_TYPE and then calls sgp4init, which resets classification to 'U'; SupGP records with classification 'C' come back as 'U' (twoline2rv preserves it)."
+   ],
+   "expected": "fixtures/supgp-celestrak-classification-c/expected.json",
+   "case_doc": "fixtures/supgp-celestrak-classification-c/case.md",
+   "record_count": 2,
+   "sources": [
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.csv",
+     "tier": "live",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:08:23Z",
+     "http_status": 200,
+     "bytes": 577,
+     "sha256": "bedd85824461412b271336f5dd6539496716d1a9eeb05e655a0f62211c1702da",
+     "provenance": "live",
+     "record_count": 2
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.json",
+     "tier": "live",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:08:25Z",
+     "http_status": 200,
+     "bytes": 926,
+     "sha256": "97926cbbe07f35179039650212fbf48593bbbf95591848bee65f4881d424fae5",
+     "provenance": "live",
+     "record_count": 2
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.xml",
+     "tier": "live",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:08:27Z",
+     "http_status": 200,
+     "bytes": 2201,
+     "sha256": "92e227468743d56cd6fd4f79f67afce594c60dc3d3ba95316ec41f78ae1a6e29",
+     "provenance": "live",
+     "record_count": 2
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.kvn",
+     "tier": "live",
+     "format": "kvn",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=KVN",
+     "retrieved_at": "2026-09-21T00:08:30Z",
+     "http_status": 200,
+     "bytes": 1272,
+     "sha256": "40e31f9ccaab24f1fbbdd7f2b21226535d97edbc3eafa72fef3103a904cabf08",
+     "provenance": "live",
+     "record_count": 2
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:08:32Z",
+     "http_status": 200,
+     "bytes": 336,
+     "sha256": "4c606834f41b486de22b0a51006c867a12b9b50b95860dbffaf7e3791b99c919",
+     "provenance": "live",
+     "record_count": 2
+    }
+   ]
+  },
+  {
+   "id": "bstar-and-derivative-forms",
+   "title": "Drag terms: negative BSTAR, negative first derivative, non-zero second derivative, implied-decimal exponent fields",
+   "kind": "gp",
+   "tests": [
+    "bstar-implicit-decimal",
+    "negative-bstar",
+    "negative-ndot",
+    "nonzero-nddot"
+   ],
+   "checks": [
+    "bstar-implied-decimal-exponent",
+    "negative-bstar-and-ndot",
+    "mmdot-is-tle-field-value",
+    "tle-values-match-omm-within-tle-precision",
+    "tle-checksums-valid",
+    "tle-count-equals-omm-count-below-100000"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "79 decaying objects with non-zero second derivative",
+     "negative BSTAR (69999: -70517-5) and negative first derivative",
+     "BSTAR up to 0.0052 (51949-2)"
+    ],
+    "gaps": [
+     "no BSTAR with a positive exponent (>= 1.0 Earth radii^-1) exists in any fetched data; that encoding ('NNNNN+1') is untested",
+     "no second derivative with a positive exponent"
+    ]
+   },
+   "ambiguities": [
+    "ecc-truncation-vs-mantissa-rounding",
+    "mmdot-convention"
+   ],
+   "library_findings": [],
+   "expected": "fixtures/bstar-and-derivative-forms/expected.json",
+   "case_doc": "fixtures/bstar-and-derivative-forms/case.md",
+   "record_count": 83,
+   "sources": [
+    {
+     "path": "fixtures/bstar-and-derivative-forms/raw/decaying.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:11:44Z",
+     "http_status": 200,
+     "bytes": 13272,
+     "sha256": "90b5925c40cec7ac2853563c8b1b65d4685f975a8526270022eef665d52d2576",
+     "provenance": "live",
+     "record_count": 79
+    },
+    {
+     "path": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+     "tier": "live",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:46Z",
+     "http_status": 200,
+     "bytes": 13599,
+     "sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79",
+     "provenance": "live",
+     "record_count": 82
+    },
+    {
+     "path": "fixtures/bstar-and-derivative-forms/raw/decaying-recapture.tle",
+     "tier": "live",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=tle",
+     "retrieved_at": "2026-09-21T00:41:33Z",
+     "http_status": 200,
+     "bytes": 13272,
+     "sha256": "90b5925c40cec7ac2853563c8b1b65d4685f975a8526270022eef665d52d2576",
+     "provenance": "live",
+     "record_count": 79,
+     "recapture_of": "decaying.tle"
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:44:29Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "b7f96c3912c2445c1ba94cd9a061e4b270f5f58bd4fb27fd188cc838c645700d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+     "tier": "stable",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:44:33Z",
+     "http_status": 200,
+     "bytes": 376,
+     "sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+     "provenance": "live",
+     "record_count": 1
+    }
+   ]
+  },
+  {
+   "id": "satcat-70000-cutoff",
+   "title": "SATCAT on both sides of 70000: CSV/JSON records for 25544, 69999 and 100000; legacy fixed-width file stops at 69999",
+   "kind": "satcat",
+   "tests": [
+    "legacy-satcat-cutoff-70000"
+   ],
+   "checks": [
+    "satcat-legacy-below-70000",
+    "catalog-number-is-integer"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "legacy file: 69,999 lines, ids 1..69999 contiguous, none >= 70000",
+     "records.php JSON/CSV for 25544, 69999 (VANGUARD DEB, 1958-002D) and 100000"
+    ],
+    "gaps": [
+     "the 9.4 MB legacy file is not shipped; users fetch it once and the check recomputes the facts"
+    ]
+   },
+   "ambiguities": [
+    "satcat-record-drift"
+   ],
+   "library_findings": [],
+   "expected": "fixtures/satcat-70000-cutoff/expected.json",
+   "case_doc": "fixtures/satcat-70000-cutoff/case.md",
+   "record_count": 0,
+   "sources": [
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/satcat-25544.json",
+     "tier": "live",
+     "format": "satcat-json",
+     "url": "https://celestrak.org/satcat/records.php?CATNR=25544&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:11:54Z",
+     "http_status": 200,
+     "bytes": 337,
+     "sha256": "44efb326be9e9b25d3cee375d7232431793a68b6cce2c9e7f04770bd2a6cd07c",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/satcat-25544.csv",
+     "tier": "live",
+     "format": "satcat-csv",
+     "url": "https://celestrak.org/satcat/records.php?CATNR=25544&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:56Z",
+     "http_status": 200,
+     "bytes": 278,
+     "sha256": "529a3f2dbb60c5420441c692adf1803aebd047c95d513a7c36bef712c0e6d797",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/satcat-69999.json",
+     "tier": "live",
+     "format": "satcat-json",
+     "url": "https://celestrak.org/satcat/records.php?CATNR=69999&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:14:30Z",
+     "http_status": 200,
+     "bytes": 334,
+     "sha256": "f464efdf6d869c25721df1c7c11a7749fa6d13ebdb67e5f058158cbba06ce62d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/satcat-69999.csv",
+     "tier": "live",
+     "format": "satcat-csv",
+     "url": "https://celestrak.org/satcat/records.php?CATNR=69999&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:14:32Z",
+     "http_status": 200,
+     "bytes": 271,
+     "sha256": "269f8a194368e3f3a9c4f5bc7d43b9e8f1a3d5eec39e2080ddc777cc24579bdd",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.satcat.json",
+     "tier": "live",
+     "format": "satcat-json",
+     "url": "https://celestrak.org/satcat/records.php?CATNR=100000&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:10:02Z",
+     "http_status": 200,
+     "bytes": 332,
+     "sha256": "235cf52e5287a8b36453ddba3f18d7e0839271658ad31cee8e10135ed62ad13b",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.satcat.csv",
+     "tier": "live",
+     "format": "satcat-csv",
+     "url": "https://celestrak.org/satcat/records.php?CATNR=100000&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:10:04Z",
+     "http_status": 200,
+     "bytes": 269,
+     "sha256": "ad32c117b2a0ad4ca42a334e025b77444152fee8cab7ab767810643102cf010f",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/satcat.txt",
+     "tier": "live",
+     "format": "satcat-legacy-fixed-width",
+     "url": "https://celestrak.org/pub/satcat.txt",
+     "retrieved_at": "2026-09-21T00:12:02Z",
+     "http_status": 200,
+     "bytes": 9379866,
+     "sha256": "8dbf69297f6c451387dd18e1baa0b049c229a073e15481d6e52a12ff471ece24",
+     "provenance": "live",
+     "record_count": 69999
+    }
+   ]
+  },
+  {
+   "id": "csv-json-omitted-mandatory-fields",
+   "title": "CelesTrak CSV and JSON omit the constant mandatory metadata keywords",
+   "kind": "facts",
+   "tests": [
+    "csv-json-defaults"
+   ],
+   "checks": [
+    "csv-json-omit-constant-metadata",
+    "supgp-extra-keys-tolerated"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "every CelesTrak CSV/JSON file lacks CENTER_NAME, REF_FRAME, TIME_SYSTEM, MEAN_ELEMENT_THEORY and the header keywords",
+     "SupGP files add RMS and DATA_SOURCE"
+    ],
+    "gaps": []
+   },
+   "ambiguities": [
+    "supgp-extra-keys"
+   ],
+   "library_findings": [],
+   "expected": "fixtures/csv-json-omitted-mandatory-fields/expected.json",
+   "case_doc": "fixtures/csv-json-omitted-mandatory-fields/case.md",
+   "record_count": 0,
+   "sources": [
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:43:39Z",
+     "http_status": 200,
+     "bytes": 368,
+     "sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.json",
+     "tier": "mixed",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:11:51Z",
+     "http_status": 200,
+     "bytes": 414,
+     "sha256": "e18ebbe14d38ae617b0506e79230d51df539704dbd0ff1fd9d6f9d8f15e13dd5",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:09:37Z",
+     "http_status": 200,
+     "bytes": 378,
+     "sha256": "643c0d9a52417f27e0ada849f439bd3459bb02fec0ffe3e3afb1f3041018eab2",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.json",
+     "tier": "mixed",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:09:40Z",
+     "http_status": 200,
+     "bytes": 425,
+     "sha256": "d84b9c1d500d16131495855719eae29c858ef692c475095aa45705353406728d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:43:55Z",
+     "http_status": 200,
+     "bytes": 374,
+     "sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago-first.json",
+     "tier": "mixed",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:43:58Z",
+     "http_status": 200,
+     "bytes": 420,
+     "sha256": "1d04dc3b4e49d6f7162c69b2f86b6132302bf302265f912a312dcee7b5585b0a",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:30Z",
+     "http_status": 200,
+     "bytes": 76633,
+     "sha256": "e1d437ebf2a53ed9db7f02d99a51a05bcc8519cc0ee0e84b17327cb381c7ec36",
+     "provenance": "live",
+     "record_count": 565
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.json",
+     "tier": "mixed",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:11:33Z",
+     "http_status": 200,
+     "bytes": 228966,
+     "sha256": "f3a4773680d66ed3aa58ed18c22a119df4d3600f45a9ec4bb4e8c2527908bd5d",
+     "provenance": "live",
+     "record_count": 565
+    },
+    {
+     "path": "fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:10:07Z",
+     "http_status": 200,
+     "bytes": 39336,
+     "sha256": "bc9a5dff288a26d30ec7371b7894be8d313f93fd19033c063df382cff1ff6e8c",
+     "provenance": "live",
+     "record_count": 256
+    },
+    {
+     "path": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:46Z",
+     "http_status": 200,
+     "bytes": 13599,
+     "sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79",
+     "provenance": "live",
+     "record_count": 82
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:14:18Z",
+     "http_status": 200,
+     "bytes": 407,
+     "sha256": "6a44cde5358a4e3039871a6aeca1f417ad53ef0d3e69fd7d0fdd8ea81283a135",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.json",
+     "tier": "mixed",
+     "format": "json",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=JSON",
+     "retrieved_at": "2026-09-21T00:14:20Z",
+     "http_status": 200,
+     "bytes": 462,
+     "sha256": "d8fdca20c5e39499c74c9403664f69a12dc630e28a2552102f5287702f68bf8c",
+     "provenance": "live",
+     "record_count": 1
+    }
+   ]
+  },
+  {
+   "id": "mean-motion-derivative-convention",
+   "title": "MEAN_MOTION_DOT / MEAN_MOTION_DDOT in the OMM equal the TLE fields as printed",
+   "kind": "pairs",
+   "tests": [
+    "mmdot-convention"
+   ],
+   "checks": [
+    "mmdot-is-tle-field-value"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "304 TLE/OMM record pairs compared"
+    ],
+    "gaps": [
+     "no record with a non-zero second derivative whose OMM text has more than 5 significant digits was observed, so the DDOT comparison is exact-equality only"
+    ]
+   },
+   "ambiguities": [
+    "mmdot-convention"
+   ],
+   "library_findings": [],
+   "expected": "fixtures/mean-motion-derivative-convention/expected.json",
+   "case_doc": "fixtures/mean-motion-derivative-convention/case.md",
+   "record_count": 0,
+   "sources": [
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:11:49Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "274de71dc147837c977a27f289a06768a92d093396ae73b524fd88be6b76042f",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:43:39Z",
+     "http_status": 200,
+     "bytes": 368,
+     "sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:09:33Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "674ea527c1ff8a7054903861e4899509bcf9ed946441ae1342d2649837e2d698",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:09:37Z",
+     "http_status": 200,
+     "bytes": 378,
+     "sha256": "643c0d9a52417f27e0ada849f439bd3459bb02fec0ffe3e3afb1f3041018eab2",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:11:41Z",
+     "http_status": 200,
+     "bytes": 36792,
+     "sha256": "3d3aac4567f7f709d222f0c5c4854376bbbd771f985d09499c9d2b732c2d7247",
+     "provenance": "live",
+     "record_count": 219
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:30Z",
+     "http_status": 200,
+     "bytes": 76633,
+     "sha256": "e1d437ebf2a53ed9db7f02d99a51a05bcc8519cc0ee0e84b17327cb381c7ec36",
+     "provenance": "live",
+     "record_count": 565
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-81011-first.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:44:20Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "f06539e94675d87b1b5f4958e7b918ffb67cf10204da1f3bb966acb529c004e2",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-81011-first.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:44:23Z",
+     "http_status": 200,
+     "bytes": 357,
+     "sha256": "339ed35b58d6300d12d42c66cc981d636ae9bfaee9df74f7c3d41f3f9a878703",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/bstar-and-derivative-forms/raw/decaying.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:11:44Z",
+     "http_status": 200,
+     "bytes": 13272,
+     "sha256": "90b5925c40cec7ac2853563c8b1b65d4685f975a8526270022eef665d52d2576",
+     "provenance": "live",
+     "record_count": 79
+    },
+    {
+     "path": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:46Z",
+     "http_status": 200,
+     "bytes": 13599,
+     "sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79",
+     "provenance": "live",
+     "record_count": 82
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:44:29Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "b7f96c3912c2445c1ba94cd9a061e4b270f5f58bd4fb27fd188cc838c645700d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:44:33Z",
+     "http_status": 200,
+     "bytes": 376,
+     "sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:08:32Z",
+     "http_status": 200,
+     "bytes": 336,
+     "sha256": "4c606834f41b486de22b0a51006c867a12b9b50b95860dbffaf7e3791b99c919",
+     "provenance": "live",
+     "record_count": 2
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:08:23Z",
+     "http_status": 200,
+     "bytes": 577,
+     "sha256": "bedd85824461412b271336f5dd6539496716d1a9eeb05e655a0f62211c1702da",
+     "provenance": "live",
+     "record_count": 2
+    }
+   ]
+  },
+  {
+   "id": "tle-vs-omm-precision-loss",
+   "title": "The TLE is a lossy rendering of the OMM record: eccentricity truncated, BSTAR/DDOT mantissa rounded, epoch quantised",
+   "kind": "pairs",
+   "tests": [
+    "precision-loss",
+    "round-trip-lossiness"
+   ],
+   "checks": [
+    "tle-values-match-omm-within-tle-precision"
+   ],
+   "evidence_basis": [
+    "The rendering rule stated by this case (eccentricity truncated to 7 digits; BSTAR and second-derivative mantissa rounded half up to 5 digits) was derived empirically from a sample of 304 CelesTrak TLE/OMM record pairs fetched 2026-09-21 (219 analyst, 79 decaying, 2 SupGP, 4 single objects). It is not documented in any specification or provider document we located (CCSDS 502.0-B-3, CelesTrak TLE format documentation, Space-Track TLE documentation); it is observed provider behaviour, and the sample is what supports it.",
+    "With these rules the renderer in gpconf/tle.py reproduced 304 of 304 records byte for byte; with eccentricity rounded instead, 257 of 304; with the mantissa truncated instead, 251 of 304.",
+    "The rule is CelesTrak's, not the TLE format's. Space-Track rounds the eccentricity: confirmed by prediction (D-071). From the CelesTrak OMM sources of the 21 records whose epochs matched in the owner's Space-Track run, rounding to 7 digits differs from truncation for exactly 8 (T0000, T0003, T0008, T0011, T0016, T0018, T0020, T0449; three of them with a carry into the sixth digit), and exactly those 8 Space-Track lines differed from the CelesTrak-rendered lines at column 33 (the three carries at columns 32-33); the other 13, where rounding equals truncation, matched. All 21 derived lines carry a zero second derivative, so the column-51 difference present on every one of them is the +0 (CelesTrak) versus -0 (Space-Track) sign of that field. A parser comparing a TLE to its OMM must therefore know which provider rendered the TLE."
+   ],
+   "coverage": {
+    "provides": [
+     "eccentricity: OMM has up to 8 decimals, TLE keeps the first 7 (truncation)",
+     "BSTAR / DDOT: OMM has up to 8 significant digits, TLE keeps 5, rounded half up",
+     "epoch: GP records convert exactly; SupGP records differ by up to half the 864 us TLE resolution",
+     "TLE -> OMM -> TLE round trip through these rules is byte-exact (tests/test_roundtrip.py, every CelesTrak TLE record in the corpus plus the 604 derived lines)"
+    ],
+    "gaps": [
+     "no rounding tie (mantissa digit 6 exactly 5 followed by zeros) was observed, so half-up versus half-even at the tie is not distinguished",
+     "the 24-character limit of TLE line 0 is a rule of the CelesTrak format document, not an observation: no name longer than 24 characters occurs in the 304 provider pairs; the cut appears only in one derived line (catalog 100465)"
+    ]
+   },
+   "ambiguities": [
+    "ecc-truncation-vs-mantissa-rounding",
+    "tle-epoch-resolution"
+   ],
+   "library_findings": [
+    "python-sgp4 2.27 export_tle writes a zero second derivative as ' 00000-0', matching Space-Track's rendering; CelesTrak writes ' 00000+0', so a byte-exact round trip of a CelesTrak line succeeds only when the second derivative is non-zero. The values are identical; this is a provider divergence (D-072), not a library defect."
+   ],
+   "expected": "fixtures/tle-vs-omm-precision-loss/expected.json",
+   "case_doc": "fixtures/tle-vs-omm-precision-loss/case.md",
+   "record_count": 0,
+   "sources": [
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:11:49Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "274de71dc147837c977a27f289a06768a92d093396ae73b524fd88be6b76042f",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:43:39Z",
+     "http_status": 200,
+     "bytes": 368,
+     "sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:09:33Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "674ea527c1ff8a7054903861e4899509bcf9ed946441ae1342d2649837e2d698",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:09:37Z",
+     "http_status": 200,
+     "bytes": 378,
+     "sha256": "643c0d9a52417f27e0ada849f439bd3459bb02fec0ffe3e3afb1f3041018eab2",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:11:41Z",
+     "http_status": 200,
+     "bytes": 36792,
+     "sha256": "3d3aac4567f7f709d222f0c5c4854376bbbd771f985d09499c9d2b732c2d7247",
+     "provenance": "live",
+     "record_count": 219
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:30Z",
+     "http_status": 200,
+     "bytes": 76633,
+     "sha256": "e1d437ebf2a53ed9db7f02d99a51a05bcc8519cc0ee0e84b17327cb381c7ec36",
+     "provenance": "live",
+     "record_count": 565
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-81011-first.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:44:20Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "f06539e94675d87b1b5f4958e7b918ffb67cf10204da1f3bb966acb529c004e2",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-81011-first.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:44:23Z",
+     "http_status": 200,
+     "bytes": 357,
+     "sha256": "339ed35b58d6300d12d42c66cc981d636ae9bfaee9df74f7c3d41f3f9a878703",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/bstar-and-derivative-forms/raw/decaying.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:11:44Z",
+     "http_status": 200,
+     "bytes": 13272,
+     "sha256": "90b5925c40cec7ac2853563c8b1b65d4685f975a8526270022eef665d52d2576",
+     "provenance": "live",
+     "record_count": 79
+    },
+    {
+     "path": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:11:46Z",
+     "http_status": 200,
+     "bytes": 13599,
+     "sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79",
+     "provenance": "live",
+     "record_count": 82
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:44:29Z",
+     "http_status": 200,
+     "bytes": 168,
+     "sha256": "b7f96c3912c2445c1ba94cd9a061e4b270f5f58bd4fb27fd188cc838c645700d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:44:33Z",
+     "http_status": 200,
+     "bytes": 376,
+     "sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.tle",
+     "tier": "mixed",
+     "format": "tle",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=TLE",
+     "retrieved_at": "2026-09-21T00:08:32Z",
+     "http_status": 200,
+     "bytes": 336,
+     "sha256": "4c606834f41b486de22b0a51006c867a12b9b50b95860dbffaf7e3791b99c919",
+     "provenance": "live",
+     "record_count": 2
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.csv",
+     "tier": "mixed",
+     "format": "csv",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=CSV",
+     "retrieved_at": "2026-09-21T00:08:23Z",
+     "http_status": 200,
+     "bytes": 577,
+     "sha256": "bedd85824461412b271336f5dd6539496716d1a9eeb05e655a0f62211c1702da",
+     "provenance": "live",
+     "record_count": 2
+    }
+   ]
+  },
+  {
+   "id": "omm-xml-schema",
+   "title": "CelesTrak OMM XML against the SANA schemas: valid as NDM/XML 2.0, invalid as 3.0 on the version attribute",
+   "kind": "xml",
+   "tests": [
+    "xml-schema"
+   ],
+   "checks": [
+    "xml-ndm-wrapper-omm-2.0",
+    "omm-version-3-accepted"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "8 XML files validated against ndmxml-2.0.0 and ndmxml-4.0.0"
+    ],
+    "gaps": [
+     "no CelesTrak XML with units attributes, comments or covariance exists; those constructs are covered only by the CCSDS examples and derived variants"
+    ]
+   },
+   "ambiguities": [
+    "omm-version-2-vs-3",
+    "empty-mandatory-header"
+   ],
+   "library_findings": [],
+   "expected": "fixtures/omm-xml-schema/expected.json",
+   "case_doc": "fixtures/omm-xml-schema/case.md",
+   "record_count": 0,
+   "sources": [
+    {
+     "path": "fixtures/epoch-year-19xx/raw/iss-first.xml",
+     "tier": "mixed",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:43:41Z",
+     "http_status": 200,
+     "bytes": 1198,
+     "sha256": "cdcfd5fbd9e8b4766c7c09b360f0a44e4709172f7e6a58ce5e2b621a77dac13c",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/baseline-iss-five-formats/raw/iss.xml",
+     "tier": "mixed",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:09:45Z",
+     "http_status": 200,
+     "bytes": 1208,
+     "sha256": "1aea7dbbba3f0ce879b6588e87e24539ef2f9069e6ba6873c6ac1697f4e0a508",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago-first.xml",
+     "tier": "mixed",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:44:00Z",
+     "http_status": 200,
+     "bytes": 1204,
+     "sha256": "c2523a59549f0e95e0573630b50626cc15089bfeb5d9486f033aa6d54702d71b",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/six-digit-omm-saramago/raw/saramago.xml",
+     "tier": "mixed",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:09:55Z",
+     "http_status": 200,
+     "bytes": 1205,
+     "sha256": "763990333a9a4f4805b2ae8d6de60b709658e1f498807034ae9a641ace967c0b",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst.xml",
+     "tier": "mixed",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:11:35Z",
+     "http_status": 200,
+     "bytes": 552351,
+     "sha256": "8c76a7863573b288143fab7b87d3be17801003d5d66a9b8af7fac8024a05d1a8",
+     "provenance": "live",
+     "record_count": 565
+    },
+    {
+     "path": "fixtures/analyst-objects/raw/analyst-270449-first.xml",
+     "tier": "mixed",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:44:15Z",
+     "http_status": 200,
+     "bytes": 1193,
+     "sha256": "94c54614780dbe36b3a6394f9b9ba8c01eb19e737e886a5f302e0a7ae4b01f02",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.xml",
+     "tier": "mixed",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:14:23Z",
+     "http_status": 200,
+     "bytes": 1206,
+     "sha256": "60322eac8ef71de2868e5afe6d696cb3b079fe9735853bdb4bb15911d243af4d",
+     "provenance": "live",
+     "record_count": 1
+    },
+    {
+     "path": "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.xml",
+     "tier": "mixed",
+     "format": "xml",
+     "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=XML",
+     "retrieved_at": "2026-09-21T00:08:27Z",
+     "http_status": 200,
+     "bytes": 2201,
+     "sha256": "92e227468743d56cd6fd4f79f67afce594c60dc3d3ba95316ec41f78ae1a6e29",
+     "provenance": "live",
+     "record_count": 2
+    }
+   ]
+  },
+  {
+   "id": "alpha5-encoding-vectors",
+   "title": "Alpha-5 encode/decode vectors from the Space-Track table, with boundaries and invalid inputs",
+   "kind": "vectors",
+   "tests": [
+    "alpha5-letter-skip-rules",
+    "alpha5-range",
+    "9-digit-catalog-number",
+    "2-digit-epoch-year"
+   ],
+   "checks": [
+    "alpha5-decode",
+    "alpha5-encode",
+    "catalog-number-is-integer",
+    "two-digit-year-pivot"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "all 24 letters and both skips, the six official examples, range boundaries, invalid letters and lowercase"
+    ],
+    "gaps": [
+     "vectors are not element sets; they test the mapping only"
+    ]
+   },
+   "ambiguities": [],
+   "library_findings": [
+    "python-sgp4 2.27 sgp4.alpha5.from_alpha5 is lenient: it accepts I0000 (as 180000), O1234, lowercase and four-character fields that the Space-Track definition excludes; to_alpha5(-1) returns '-0001'."
+   ],
+   "expected": "fixtures/alpha5-encoding-vectors/expected.json",
+   "case_doc": "fixtures/alpha5-encoding-vectors/case.md",
+   "record_count": 0,
+   "sources": [
+    {
+     "path": "vectors/alpha5.json",
+     "tier": "stable",
+     "format": "vectors-json",
+     "bytes": 9000,
+     "sha256": "9df250841f0667a5466c24d806002b857abb80065fa9fc4641014339dda0933e",
+     "provenance": "specification"
+    },
+    {
+     "path": "vectors/norad-cat-id-text.json",
+     "tier": "stable",
+     "format": "vectors-json",
+     "bytes": 1449,
+     "sha256": "58a4ae4413e161bd4687bcaad64b82985b6581bc2def166d7015e806171dadeb",
+     "provenance": "specification"
+    },
+    {
+     "path": "vectors/two-digit-epoch-year.json",
+     "tier": "stable",
+     "format": "vectors-json",
+     "bytes": 1475,
+     "sha256": "c3c2f54967174770e20de636f18a85e013a51f685caab97f05701b7032248220",
+     "provenance": "specification"
+    },
+    {
+     "path": "vectors/ccsds-epoch-strings.json",
+     "tier": "stable",
+     "format": "vectors-json",
+     "bytes": 1557,
+     "sha256": "b1049c1fc6362c387898d909b4ea987d6a3be5478046d1593431c0bc4e2a671f",
+     "provenance": "specification"
+    }
+   ]
+  },
+  {
+   "id": "alpha5-tle-derived",
+   "title": "Derived Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T)",
+   "kind": "derived-tle",
+   "tests": [
+    "alpha5-tle-parsing",
+    "alpha5-letter-skip-rules"
+   ],
+   "checks": [
+    "alpha5-decode",
+    "tle-catalog-field-decodes",
+    "tle-checksums-valid",
+    "tle-values-match-omm-within-tle-precision"
+   ],
+   "evidence_basis": [
+    "The renderer that produced these lines applies a rendering rule (eccentricity truncated to 7 digits; BSTAR and second-derivative mantissa rounded half up to 5 digits) that was derived empirically from 304 CelesTrak TLE/OMM record pairs and is not documented in any specification we located. See case tle-vs-omm-precision-loss.",
+    "The renderer was validated only against CelesTrak output for catalog numbers below 100000, because CelesTrak emits no Alpha-5 TLE at all. The Alpha-5 encoding step itself is corroborated by python-sgp4's independent implementation (all 604 derived lines decode to the source catalog number) and by the official Space-Track vectors.",
+    "Provider corroboration of the encoding (D-070): on 2026-09-21 the project owner ran tools/verify_against_spacetrack.py against their own Space-Track account (44 records: current GP for 100000-100020 and 270000-270020, and the first historical record of 100000 and of 270449). Zero defects: every Alpha-5 field decoded to the queried catalog number, every line-2 field equalled line 1, and both observed letters (A and T) matched the derived encoding; where epochs matched, the international designator and elements agreed. No line was byte-identical, for rendering reasons that are not encoding differences: Space-Track writes a zero second derivative as 00000-0 (column 51, plus the checksum) where CelesTrak writes 00000+0, and Space-Track's line-2 eccentricity differs in its last one or two digits (columns 32-33) from CelesTrak's truncated rendering. No Space-Track data is in this repository; this paragraph describes the verification, not the data."
+   ],
+   "coverage": {
+    "provides": [
+     "604 Alpha-5 lines: 257 with letter A (ids 100000-100789), 347 with letter T (ids 270000-270449)"
+    ],
+    "gaps": [
+     "letters B-H, J-N, P-S and U-Z appear in no real catalog number yet (the catalog is at ~100789 and the only other 6-digit block is 27xxxx); those letters are covered by vectors only",
+     "these lines are derived, not provider output: CelesTrak serves no Alpha-5 and Space-Track data is not used",
+     "renderer validation gap: the byte-for-byte validation (304/304) used only sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding step has since been corroborated against Space-Track output by the project owner (D-070: 44 records, 0 defects, letters A and T), but the derived lines are CelesTrak-style renderings and differ from Space-Track's own TLE lines in two conventions (zero second-derivative sign at column 51; eccentricity rounding versus truncation at columns 32-33), so they are not byte-identical to Space-Track output. No Space-Track data enters this repository; the public claim describes that verification, not the data."
+    ]
+   },
+   "ambiguities": [
+    "ecc-truncation-vs-mantissa-rounding"
+   ],
+   "library_findings": [
+    "python-sgp4 2.27 twoline2rv decodes all 604 derived Alpha-5 lines to the correct integer (from_alpha5)."
+   ],
+   "expected": "fixtures/alpha5-tle-derived/expected.json",
+   "case_doc": "fixtures/alpha5-tle-derived/case.md",
+   "record_count": 604,
+   "sources": [
+    {
+     "path": "derived/alpha5-tle/alpha5-A-100000-saramago-first.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-09-21T01:01:34Z",
+     "http_status": null,
+     "bytes": 168,
+     "sha256": "686824ecd57ff4bc659fa73cd125af5ed1bd422a8de9033c8cef019e622beee1",
+     "provenance": "derived",
+     "record_count": 1,
+     "provenance_file": "derived/alpha5-tle/alpha5-A-100000-saramago-first.provenance.json"
+    },
+    {
+     "path": "derived/alpha5-tle/alpha5-T-270449-analyst-first.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-09-21T01:01:34Z",
+     "http_status": null,
+     "bytes": 168,
+     "sha256": "74a8c9e508c0b062c4bff6af55fa32a6b48b375dd63fc9ce0ccd42663118db89",
+     "provenance": "derived",
+     "record_count": 1,
+     "provenance_file": "derived/alpha5-tle/alpha5-T-270449-analyst-first.provenance.json"
+    },
+    {
+     "path": "derived/alpha5-tle/alpha5-A-last-30-days-snapshot.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-09-21T01:01:34Z",
+     "http_status": null,
+     "bytes": 43008,
+     "sha256": "72e2845cdb484932d0b669680060b08be196eb4c0249f91e6ba6db52c47eab34",
+     "provenance": "derived",
+     "record_count": 256,
+     "provenance_file": "derived/alpha5-tle/alpha5-A-last-30-days-snapshot.provenance.json"
+    },
+    {
+     "path": "derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-09-21T01:01:34Z",
+     "http_status": null,
+     "bytes": 58128,
+     "sha256": "f4868060a6ab61d37e30a53f7b8ebb86924609430654a953c71e6ebdb61b26b0",
+     "provenance": "derived",
+     "record_count": 346,
+     "provenance_file": "derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.provenance.json"
+    }
+   ]
+  },
+  {
+   "id": "kvn-syntax-variants",
+   "title": "CCSDS-legal KVN renderings of one record that CelesTrak never emits",
+   "kind": "derived-kvn",
+   "tests": [
+    "kvn-syntax"
+   ],
+   "checks": [
+    "kvn-syntax-tolerance",
+    "optional-tle-parameters-may-be-absent",
+    "omm-version-3-accepted"
+   ],
+   "evidence_basis": [],
+   "coverage": {
+    "provides": [
+     "day-of-year epoch with Z",
+     "bracketed units",
+     "COMMENT and blank lines, irregular whitespace, TAB, LF endings",
+     "OMM 3.0 header with optional TLE parameters omitted",
+     "signed integers and lowercase exponent"
+    ],
+    "gaps": [
+     "lowercase normative text values (7.5.3) and the 254-character line limit are not exercised",
+     "no XML variants in this version"
+    ]
+   },
+   "ambiguities": [
+    "leading-dot-decimals",
+    "met-sgp-sgp4-vs-sgp4"
+   ],
+   "library_findings": [],
+   "expected": "fixtures/kvn-syntax-variants/expected.json",
+   "case_doc": "fixtures/kvn-syntax-variants/case.md",
+   "record_count": 6,
+   "sources": [
+    {
+     "path": "derived/kvn-variants/v01-baseline-reserialised.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": null,
+     "retrieved_at": "2026-09-21T00:50:18Z",
+     "http_status": null,
+     "bytes": 728,
+     "sha256": "97450978821f04d3953b19886be9f75ad1724a4bd4c39d23e9fdccf8b783daac",
+     "provenance": "derived",
+     "record_count": 1,
+     "provenance_file": "derived/kvn-variants/v01-baseline-reserialised.provenance.json"
+    },
+    {
+     "path": "derived/kvn-variants/v02-day-of-year-epoch-Z.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": null,
+     "retrieved_at": "2026-09-21T00:50:18Z",
+     "http_status": null,
+     "bytes": 727,
+     "sha256": "a06629aa3044698cda0fd5312f6f2fd7e81d8375b9c09b7ffa9828d34ef461ec",
+     "provenance": "derived",
+     "record_count": 1,
+     "provenance_file": "derived/kvn-variants/v02-day-of-year-epoch-Z.provenance.json"
+    },
+    {
+     "path": "derived/kvn-variants/v03-units-brackets-leading-zeros.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": null,
+     "retrieved_at": "2026-09-21T00:50:18Z",
+     "http_status": null,
+     "bytes": 796,
+     "sha256": "3c9e9d9aa6190ac4b948b50e188d4ffb38ab2610327ce874846972f2696ab265",
+     "provenance": "derived",
+     "record_count": 1,
+     "provenance_file": "derived/kvn-variants/v03-units-brackets-leading-zeros.provenance.json"
+    },
+    {
+     "path": "derived/kvn-variants/v04-comments-blank-lines-whitespace-LF.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": null,
+     "retrieved_at": "2026-09-21T00:50:18Z",
+     "http_status": null,
+     "bytes": 677,
+     "sha256": "1cae8ec648cc88672647c5e5f65d1aae0096126d1d4595c0da3a6231a0844074",
+     "provenance": "derived",
+     "record_count": 1,
+     "provenance_file": "derived/kvn-variants/v04-comments-blank-lines-whitespace-LF.provenance.json"
+    },
+    {
+     "path": "derived/kvn-variants/v05-omm-3.0-header-optional-keywords-omitted.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": null,
+     "retrieved_at": "2026-09-21T00:50:18Z",
+     "http_status": null,
+     "bytes": 728,
+     "sha256": "10e02122947f3c7d639636b4bea13f2a9d4b3f32d2fecbb7219b3cd20f9e804f",
+     "provenance": "derived",
+     "record_count": 1,
+     "provenance_file": "derived/kvn-variants/v05-omm-3.0-header-optional-keywords-omitted.provenance.json"
+    },
+    {
+     "path": "derived/kvn-variants/v06-signed-integers-lowercase-exponent.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": null,
+     "retrieved_at": "2026-09-21T00:50:18Z",
+     "http_status": null,
+     "bytes": 733,
+     "sha256": "dff1329a94b59bc806dcf74965c3b106dd498bc90c7fdea377e8981491927cfd",
+     "provenance": "derived",
+     "record_count": 1,
+     "provenance_file": "derived/kvn-variants/v06-signed-integers-lowercase-exponent.provenance.json"
+    }
+   ]
+  }
+ ]
+}

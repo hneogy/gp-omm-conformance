@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gpconf"
+version = "0.1.0"
+description = "Runner for the GP/OMM conformance corpus (Alpha-5, 6- and 9-digit catalog numbers, OMM formats)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+dependencies = []
+
+[project.optional-dependencies]
+crosscheck = ["sgp4", "skyfield", "xmlschema", "lxml"]
+
+[project.scripts]
+gpconf = "gpconf.__main__:main"
+
+[tool.setuptools]
+packages = ["gpconf"]

@@ -1,0 +1,435 @@
+{
+ "case": "omm-xml-schema",
+ "title": "CelesTrak OMM XML against the SANA schemas: valid as NDM/XML 2.0, invalid as 3.0 on the version attribute",
+ "schema_version": "1.0",
+ "generated_at": "2026-09-21T03:54:07Z",
+ "generator": "tools/make_expected.py",
+ "kind": "xml",
+ "sources": {
+  "fixtures/epoch-year-19xx/raw/iss-first.xml": {
+   "tier": "mixed",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:43:41Z",
+   "http_status": 200,
+   "bytes": 1198,
+   "sha256": "cdcfd5fbd9e8b4766c7c09b360f0a44e4709172f7e6a58ce5e2b621a77dac13c",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1198
+   }
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.xml": {
+   "tier": "mixed",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:09:45Z",
+   "http_status": 200,
+   "bytes": 1208,
+   "sha256": "1aea7dbbba3f0ce879b6588e87e24539ef2f9069e6ba6873c6ac1697f4e0a508",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1208
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.xml": {
+   "tier": "mixed",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:44:00Z",
+   "http_status": 200,
+   "bytes": 1204,
+   "sha256": "c2523a59549f0e95e0573630b50626cc15089bfeb5d9486f033aa6d54702d71b",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1204
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.xml": {
+   "tier": "mixed",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:09:55Z",
+   "http_status": 200,
+   "bytes": 1205,
+   "sha256": "763990333a9a4f4805b2ae8d6de60b709658e1f498807034ae9a641ace967c0b",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1205
+   }
+  },
+  "fixtures/analyst-objects/raw/analyst.xml": {
+   "tier": "mixed",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:11:35Z",
+   "http_status": 200,
+   "bytes": 552351,
+   "sha256": "8c76a7863573b288143fab7b87d3be17801003d5d66a9b8af7fac8024a05d1a8",
+   "provenance": "live",
+   "record_count": 565,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 565,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 565,
+    "line_endings": {
+     "crlf": 1133,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 552351
+   }
+  },
+  "fixtures/analyst-objects/raw/analyst-270449-first.xml": {
+   "tier": "mixed",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:44:15Z",
+   "http_status": 200,
+   "bytes": 1193,
+   "sha256": "94c54614780dbe36b3a6394f9b9ba8c01eb19e737e886a5f302e0a7ae4b01f02",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1193
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.xml": {
+   "tier": "mixed",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:14:23Z",
+   "http_status": 200,
+   "bytes": 1206,
+   "sha256": "60322eac8ef71de2868e5afe6d696cb3b079fe9735853bdb4bb15911d243af4d",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1206
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.xml": {
+   "tier": "mixed",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:08:27Z",
+   "http_status": 200,
+   "bytes": 2201,
+   "sha256": "92e227468743d56cd6fd4f79f67afce594c60dc3d3ba95316ec41f78ae1a6e29",
+   "provenance": "live",
+   "record_count": 2,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 2,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 2,
+    "line_endings": {
+     "crlf": 7,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 2201
+   }
+  }
+ },
+ "records": [],
+ "checks": [
+  {
+   "id": "xml-ndm-wrapper-omm-2.0",
+   "description": "CelesTrak XML has an <ndm> root containing one <omm> per record with id=CCSDS_OMM_VERS and version=2.0; CREATION_DATE and ORIGINATOR elements are present but empty."
+  },
+  {
+   "id": "omm-version-3-accepted",
+   "description": "CCSDS_OMM_VERS 3.0 messages (with CLASSIFICATION and MESSAGE_ID in the header) are accepted alongside 2.0."
+  }
+ ],
+ "tests": [
+  "xml-schema"
+ ],
+ "coverage": {
+  "provides": [
+   "8 XML files validated against ndmxml-2.0.0 and ndmxml-4.0.0"
+  ],
+  "gaps": [
+   "no CelesTrak XML with units attributes, comments or covariance exists; those constructs are covered only by the CCSDS examples and derived variants"
+  ]
+ },
+ "ambiguities": [
+  {
+   "id": "omm-version-2-vs-3",
+   "text": "CelesTrak declares OMM version 2.0 (Silver Book 2009) although the current standard is 3.0 (Blue Book 2023). The 2.0 XML schema set is still downloadable from SANA by direct URL; against the current 4.0.0/3.0 set the documents fail on the fixed version attribute."
+  },
+  {
+   "id": "empty-mandatory-header",
+   "text": "CCSDS Table 4-1 makes CREATION_DATE and ORIGINATOR mandatory; CelesTrak emits them empty in XML and blank in KVN. The 2.0 schema's epochType pattern accepts an empty string, so schema validation may pass; the KVN rule 7.5.1 is still violated."
+  }
+ ],
+ "notes": [],
+ "sets": {},
+ "case_specific": {
+  "fixtures/epoch-year-19xx/raw/iss-first.xml": {
+   "validation": {
+    "ndmxml-2.0.0 (OMM 2.0, what CelesTrak declares)": {
+     "valid": true,
+     "errors": []
+    },
+    "ndmxml-4.0.0 (OMM 3.0, current CCSDS 505.0-B-3)": {
+     "valid": false,
+     "errors": [
+      "failed validating '2.0' with XsdAttribute(name='version'):"
+     ]
+    }
+   },
+   "header_empty_elements": [
+    "creation_date",
+    "originator"
+   ]
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.xml": {
+   "validation": {
+    "ndmxml-2.0.0 (OMM 2.0, what CelesTrak declares)": {
+     "valid": true,
+     "errors": []
+    },
+    "ndmxml-4.0.0 (OMM 3.0, current CCSDS 505.0-B-3)": {
+     "valid": false,
+     "errors": [
+      "failed validating '2.0' with XsdAttribute(name='version'):"
+     ]
+    }
+   },
+   "header_empty_elements": [
+    "creation_date",
+    "originator"
+   ]
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.xml": {
+   "validation": {
+    "ndmxml-2.0.0 (OMM 2.0, what CelesTrak declares)": {
+     "valid": true,
+     "errors": []
+    },
+    "ndmxml-4.0.0 (OMM 3.0, current CCSDS 505.0-B-3)": {
+     "valid": false,
+     "errors": [
+      "failed validating '2.0' with XsdAttribute(name='version'):"
+     ]
+    }
+   },
+   "header_empty_elements": [
+    "creation_date",
+    "originator"
+   ]
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.xml": {
+   "validation": {
+    "ndmxml-2.0.0 (OMM 2.0, what CelesTrak declares)": {
+     "valid": true,
+     "errors": []
+    },
+    "ndmxml-4.0.0 (OMM 3.0, current CCSDS 505.0-B-3)": {
+     "valid": false,
+     "errors": [
+      "failed validating '2.0' with XsdAttribute(name='version'):"
+     ]
+    }
+   },
+   "header_empty_elements": [
+    "creation_date",
+    "originator"
+   ]
+  },
+  "fixtures/analyst-objects/raw/analyst.xml": {
+   "validation": {
+    "ndmxml-2.0.0 (OMM 2.0, what CelesTrak declares)": {
+     "valid": true,
+     "errors": []
+    },
+    "ndmxml-4.0.0 (OMM 3.0, current CCSDS 505.0-B-3)": {
+     "valid": false,
+     "errors": [
+      "failed validating '2.0' with XsdAttribute(name='version'):",
+      "failed validating '2.0' with XsdAttribute(name='version'):",
+      "failed validating '2.0' with XsdAttribute(name='version'):",
+      "failed validating '2.0' with XsdAttribute(name='version'):",
+      "failed validating '2.0' with XsdAttribute(name='version'):"
+     ]
+    }
+   },
+   "header_empty_elements": [
+    "creation_date",
+    "originator"
+   ]
+  },
+  "fixtures/analyst-objects/raw/analyst-270449-first.xml": {
+   "validation": {
+    "ndmxml-2.0.0 (OMM 2.0, what CelesTrak declares)": {
+     "valid": true,
+     "errors": []
+    },
+    "ndmxml-4.0.0 (OMM 3.0, current CCSDS 505.0-B-3)": {
+     "valid": false,
+     "errors": [
+      "failed validating '2.0' with XsdAttribute(name='version'):"
+     ]
+    }
+   },
+   "header_empty_elements": [
+    "creation_date",
+    "originator"
+   ]
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.xml": {
+   "validation": {
+    "ndmxml-2.0.0 (OMM 2.0, what CelesTrak declares)": {
+     "valid": true,
+     "errors": []
+    },
+    "ndmxml-4.0.0 (OMM 3.0, current CCSDS 505.0-B-3)": {
+     "valid": false,
+     "errors": [
+      "failed validating '2.0' with XsdAttribute(name='version'):"
+     ]
+    }
+   },
+   "header_empty_elements": [
+    "creation_date",
+    "originator"
+   ]
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.xml": {
+   "validation": {
+    "ndmxml-2.0.0 (OMM 2.0, what CelesTrak declares)": {
+     "valid": true,
+     "errors": []
+    },
+    "ndmxml-4.0.0 (OMM 3.0, current CCSDS 505.0-B-3)": {
+     "valid": false,
+     "errors": [
+      "failed validating '2.0' with XsdAttribute(name='version'):",
+      "failed validating '2.0' with XsdAttribute(name='version'):"
+     ]
+    }
+   },
+   "header_empty_elements": [
+    "creation_date",
+    "originator"
+   ]
+  }
+ }
+}

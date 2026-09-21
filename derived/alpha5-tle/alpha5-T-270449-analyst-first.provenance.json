@@ -1,0 +1,34 @@
+{
+  "file": "derived/alpha5-tle/alpha5-T-270449-analyst-first.tle",
+  "provenance": "derived",
+  "label": "DERIVED: Alpha-5 TLE lines rendered from CelesTrak OMM records; not served by CelesTrak",
+  "description": "First GP record of Space Fence analyst id 270449 (stable source, gp-first.php)",
+  "source_file": "fixtures/analyst-objects/raw/analyst-270449-first.csv",
+  "source_sha256": "f9caeec84ba49dc0ae95e1f493193724f875b1b7c25cdd607fb7af9e37d1a050",
+  "source_url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=CSV",
+  "source_retrieved_at": "2026-09-21T00:44:08Z",
+  "generator": "tools/derive_alpha5.py",
+  "renderer": "tools/tlerender.py",
+  "renderer_settings": {
+    "mantissa_mode": "round",
+    "ecc_mode": "truncate",
+    "epoch_rounding": "ROUND_HALF_UP"
+  },
+  "renderer_validation": "tools/validate_render.py: 304/304 CelesTrak TLE records reproduced exactly (lines 0, 1, 2) with these settings on 2026-09-21",
+  "catalog_field_encoding": "Alpha-5 (Space-Track table: A=10 ... Z=33, I and O skipped)",
+  "record_count": 1,
+  "norad_cat_ids": [
+    270449
+  ],
+  "alpha5_letters": {
+    "T": 1
+  },
+  "line_endings": "CRLF",
+  "output_sha256": "74a8c9e508c0b062c4bff6af55fa32a6b48b375dd63fc9ce0ccd42663118db89",
+  "generated_at": "2026-09-21T01:01:34Z",
+  "line0_rule": "OBJECT_NAME is padded or cut to 24 characters (CelesTrak TLE format documentation: 'twenty-four character name'); one source name in the last-30-days snapshot (100465, 27 characters) is cut, a case that could not be checked against CelesTrak output because six-digit objects have no CelesTrak TLE",
+  "known_differences_from_a_celestrak_tle": [
+    "columns 3-7 of lines 1 and 2 hold an Alpha-5 code instead of five digits",
+    "the checksum is computed over the Alpha-5 line (letters count 0, minus signs count 1)"
+  ]
+}

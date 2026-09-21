@@ -1,0 +1,402 @@
+{
+ "case": "nine-digit-supgp-launch-nominals",
+ "title": "Nine-digit catalog numbers: 18 SDS launch nominals (7995016xx) in CelesTrak SupGP data",
+ "schema_version": "1.0",
+ "generated_at": "2026-09-21T03:54:07Z",
+ "generator": "tools/make_expected.py",
+ "kind": "gp",
+ "sources": {
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.csv": {
+   "tier": "live",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:14:18Z",
+   "http_status": 200,
+   "bytes": 407,
+   "sha256": "6a44cde5358a4e3039871a6aeca1f417ad53ef0d3e69fd7d0fdd8ea81283a135",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT",
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "format": "csv",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 407
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.json": {
+   "tier": "live",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:14:20Z",
+   "http_status": 200,
+   "bytes": 462,
+   "sha256": "d8fdca20c5e39499c74c9403664f69a12dc630e28a2552102f5287702f68bf8c",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT",
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "int"
+     ],
+     "RMS": [
+      "str"
+     ],
+     "DATA_SOURCE": [
+      "str"
+     ]
+    },
+    "format": "json",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 462
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.xml": {
+   "tier": "live",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:14:23Z",
+   "http_status": 200,
+   "bytes": 1206,
+   "sha256": "60322eac8ef71de2868e5afe6d696cb3b079fe9735853bdb4bb15911d243af4d",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1206
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.kvn": {
+   "tier": "live",
+   "format": "kvn",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=KVN",
+   "retrieved_at": "2026-09-21T00:14:25Z",
+   "http_status": 200,
+   "bytes": 634,
+   "sha256": "9bb04dc1bdcedb217966c48bb2af78c8440a8b0168720e141ca2ffbe999fa17d",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "message_count": 1,
+    "max_line_length": 43,
+    "keyword_order_first_message": [
+     "CCSDS_OMM_VERS",
+     "CREATION_DATE",
+     "ORIGINATOR",
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "format": "kvn",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 28,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 634
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.tle": {
+   "tier": "live",
+   "format": "tle",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:14:27Z",
+   "http_status": 404,
+   "bytes": 19,
+   "sha256": "08ed5e8c54339ed19fa9e3ce6b46c54a805d0db12ecb3cb7c4455e6bef84a3c9",
+   "provenance": "live",
+   "record_count": 0,
+   "facts": {
+    "response_body": "No SupGP data found"
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-all.csv": {
+   "tier": "live",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:11:59Z",
+   "http_status": 200,
+   "bytes": 1802376,
+   "sha256": "762cac2d33b68de66f63e58257153c3dddb3ae8d072a16b8b51f24e4025bfb4a",
+   "provenance": "live",
+   "record_count": 11141,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT",
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "format": "csv",
+    "record_count": 11141,
+    "line_endings": {
+     "crlf": 11142,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1802376
+   }
+  }
+ },
+ "records": [],
+ "checks": [
+  {
+   "id": "nine-digit-ids-parse",
+   "description": "NORAD_CAT_ID values >= 100000000 parse and round-trip as integers in CSV, JSON, XML and KVN."
+  },
+  {
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN."
+  },
+  {
+   "id": "omm-formats-agree",
+   "description": "For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them."
+  },
+  {
+   "id": "tle-format-omits-ids-above-99999",
+   "description": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'."
+  },
+  {
+   "id": "supgp-extra-keys-tolerated",
+   "description": "SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail."
+  },
+  {
+   "id": "classification-c",
+   "description": "CLASSIFICATION_TYPE may be 'C' (CelesTrak supplemental) rather than 'U'."
+  }
+ ],
+ "tests": [
+  "9-digit-catalog-number",
+  "tle-unavailable-above-99999"
+ ],
+ "coverage": {
+  "provides": [
+   "one 9-digit object (799501621) in CSV, JSON, XML and KVN; TLE request -> 404 'No SupGP data found'",
+   "27 nine-digit ids 799501621-799501647 in the full Starlink SupGP file at the snapshot"
+  ],
+  "gaps": [
+   "perishable: nominals exist only for roughly 5-8 days after a launch (CelesTrak); a user's fetch may contain none, in which case the case reports 'no 9-digit ids available now' rather than failing",
+   "no 9-digit id exists in 18 SDS GP data; only SupGP"
+  ]
+ },
+ "ambiguities": [
+  {
+   "id": "supgp-extra-keys",
+   "text": "SupGP CSV/JSON carry RMS and DATA_SOURCE, which are not OMM keywords (CCSDS 7.9.2.2 allows only Table 4-x keywords in an OMM); CelesTrak's CSV/JSON are OMM-keyword-based formats, not OMM instances, so this is a format extension rather than a violation. Parsers must tolerate unknown keys."
+  },
+  {
+   "id": "supgp-redistribution",
+   "text": "SupGP data derives from operator-provided data (some explicitly 'with permission' to CelesTrak). Under the corpus design no raw bytes are shipped; the snapshot values for one SupGP record are published as a dated reference and may be removed by the owner before publication."
+  },
+  {
+   "id": "tle-epoch-resolution",
+   "text": "The TLE epoch has 1e-8 day (864 microsecond) resolution. CelesTrak GP epochs convert exactly between the two representations; SupGP epochs do not (86 microsecond difference observed), so a TLE->OMM epoch comparison needs a tolerance of half the TLE resolution."
+  }
+ ],
+ "notes": [
+  "set starlink-all: only records with NORAD_CAT_ID >= 100000000 are listed (27 of 11141)."
+ ],
+ "sets": {
+  "starlink-38381": {
+   "tier": "live",
+   "files": [
+    "starlink-38381-799501621.csv",
+    "starlink-38381-799501621.json",
+    "starlink-38381-799501621.xml",
+    "starlink-38381-799501621.kvn",
+    "starlink-38381-799501621.tle"
+   ],
+   "record_count": 1,
+   "record_filter": null,
+   "metadata_uniform_across_records": true
+  },
+  "starlink-all": {
+   "tier": "live",
+   "files": [
+    "starlink-all.csv"
+   ],
+   "record_count": 27,
+   "record_filter": "nine-digit",
+   "metadata_uniform_across_records": true
+  }
+ },
+ "case_specific": {},
+ "records_withheld": "SupGP-derived snapshot values withheld from the public release (DECISIONS D-049); structural checks apply to your own fetch; 28 record(s) removed"
+}

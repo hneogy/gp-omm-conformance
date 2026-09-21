@@ -1,0 +1,65 @@
+{
+ "vector_set": "norad-cat-id-text",
+ "provenance": "specification",
+ "sources": [
+  "CCSDS 502.0-B-3 Table 4-3: NORAD_CAT_ID 'an integer of up to nine digits'",
+  "CCSDS 502.0-B-3 7.5.4: integers may have a leading sign and leading zeroes",
+  "SANA ndmxml-4.0.0-omm-3.0.xsd and ndmxml-2.0.0-omm-2.0.xsd: NORAD_CAT_ID is xsd:integer",
+  "https://www.space-track.org/documentation (FAQ 'What is Alpha-5?' and TLE page 'Alpha 5' section; read 2026-09-20)"
+ ],
+ "valid": [
+  {
+   "text": "25544",
+   "value": 25544
+  },
+  {
+   "text": "00964",
+   "value": 964,
+   "note": "leading zeros allowed (7.5.4)"
+  },
+  {
+   "text": "964",
+   "value": 964
+  },
+  {
+   "text": "+25544",
+   "value": 25544,
+   "note": "explicit plus allowed in KVN integers (7.5.4)"
+  },
+  {
+   "text": "100000",
+   "value": 100000
+  },
+  {
+   "text": "270449",
+   "value": 270449
+  },
+  {
+   "text": "799501621",
+   "value": 799501621
+  },
+  {
+   "text": "999999999",
+   "value": 999999999,
+   "note": "largest nine-digit value"
+  }
+ ],
+ "invalid_in_omm": [
+  {
+   "text": "A0000",
+   "reason": "Alpha-5 is a TLE-only encoding; OMM NORAD_CAT_ID is an integer"
+  },
+  {
+   "text": "1000000000",
+   "reason": "ten digits exceed 'up to nine digits'; schema xsd:integer would accept it, the standard's text does not"
+  },
+  {
+   "text": "25544.0",
+   "reason": "not an integer"
+  },
+  {
+   "text": "",
+   "reason": "empty; keyword is Optional and should be omitted instead"
+  }
+ ]
+}

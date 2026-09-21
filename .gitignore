@@ -1,0 +1,29 @@
+# Owner decision D-002: supplemental (operator-sourced) launch-nominal data stays out of git
+# until redistribution terms are settled.
+fixtures/nine-digit-supgp-launch-nominals/raw/
+
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+tools/_scratch/
+
+# Full legacy SATCAT (9.4 MB); an excerpt plus the full-file hash is committed instead (Phase 3).
+fixtures/satcat-70000-cutoff/raw/satcat.txt
+
+# Generated intermediates (results are folded into expected.json and docs/CROSSCHECK.md)
+tools/_out/
+
+# Owner rule (D-001, D-035): no Space-Track data may ever enter this repository.
+# Guard placed before any Space-Track account exists. Matches any path component containing
+# "space-track", "space_track", "space track", "space.track" or "spacetrack" in any letter case.
+*[Ss][Pp][Aa][Cc][Ee][-_ .][Tt][Rr][Aa][Cc][Kk]*
+*[Ss][Pp][Aa][Cc][Ee][Tt][Rr][Aa][Cc][Kk]*
+**/spacetrack/
+**/space-track/
+**/space_track/
+
+# Output of tools/verify_against_spacetrack.py (never inside the repository anyway)
+spacetrack-verify/
+# The verification TOOL is source code, not data: the only exception to the guard above.
+!tools/verify_against_spacetrack.py

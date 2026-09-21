@@ -1,0 +1,400 @@
+{
+ "vector_set": "alpha5",
+ "provenance": "specification",
+ "sources": [
+  "https://www.space-track.org/documentation (FAQ 'What is Alpha-5?' and TLE page 'Alpha 5' section; read 2026-09-20)",
+  "CelesTrak GP formats FAQ (CelesTrak itself does not emit Alpha-5): https://celestrak.org/NORAD/documentation/gp-data-formats.php"
+ ],
+ "rule": "Objects 100000-339999: first character is a letter with value 10-33 (A=10, B=11, ... skipping I and O ... Z=33) followed by the last four digits. Objects below 100000: five digits, leading zeros retained. Alpha-5 appears only in TLE/3LE columns 3-7 of lines 1 and 2; OMM NORAD_CAT_ID is always an integer.",
+ "letter_table": {
+  "A": 10,
+  "B": 11,
+  "C": 12,
+  "D": 13,
+  "E": 14,
+  "F": 15,
+  "G": 16,
+  "H": 17,
+  "J": 18,
+  "K": 19,
+  "L": 20,
+  "M": 21,
+  "N": 22,
+  "P": 23,
+  "Q": 24,
+  "R": 25,
+  "S": 26,
+  "T": 27,
+  "U": 28,
+  "V": 29,
+  "W": 30,
+  "X": 31,
+  "Y": 32,
+  "Z": 33
+ },
+ "letters_never_used": [
+  "I",
+  "O"
+ ],
+ "official_examples": [
+  {
+   "norad_cat_id": 100000,
+   "field": "A0000",
+   "source": "Space-Track 'Examples'"
+  },
+  {
+   "norad_cat_id": 148493,
+   "field": "E8493",
+   "source": "Space-Track 'Examples'"
+  },
+  {
+   "norad_cat_id": 182931,
+   "field": "J2931",
+   "source": "Space-Track 'Examples'"
+  },
+  {
+   "norad_cat_id": 234018,
+   "field": "P4018",
+   "source": "Space-Track 'Examples'"
+  },
+  {
+   "norad_cat_id": 301928,
+   "field": "W1928",
+   "source": "Space-Track 'Examples'"
+  },
+  {
+   "norad_cat_id": 339999,
+   "field": "Z9999",
+   "source": "Space-Track 'Examples'"
+  }
+ ],
+ "boundaries": [
+  {
+   "norad_cat_id": 100000,
+   "field": "A0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 109999,
+   "field": "A9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 110000,
+   "field": "B0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 119999,
+   "field": "B9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 120000,
+   "field": "C0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 129999,
+   "field": "C9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 130000,
+   "field": "D0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 139999,
+   "field": "D9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 140000,
+   "field": "E0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 149999,
+   "field": "E9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 150000,
+   "field": "F0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 159999,
+   "field": "F9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 160000,
+   "field": "G0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 169999,
+   "field": "G9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 170000,
+   "field": "H0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 179999,
+   "field": "H9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 180000,
+   "field": "J0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 189999,
+   "field": "J9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 190000,
+   "field": "K0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 199999,
+   "field": "K9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 200000,
+   "field": "L0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 209999,
+   "field": "L9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 210000,
+   "field": "M0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 219999,
+   "field": "M9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 220000,
+   "field": "N0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 229999,
+   "field": "N9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 230000,
+   "field": "P0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 239999,
+   "field": "P9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 240000,
+   "field": "Q0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 249999,
+   "field": "Q9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 250000,
+   "field": "R0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 259999,
+   "field": "R9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 260000,
+   "field": "S0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 269999,
+   "field": "S9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 270000,
+   "field": "T0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 279999,
+   "field": "T9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 280000,
+   "field": "U0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 289999,
+   "field": "U9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 290000,
+   "field": "V0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 299999,
+   "field": "V9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 300000,
+   "field": "W0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 309999,
+   "field": "W9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 310000,
+   "field": "X0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 319999,
+   "field": "X9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 320000,
+   "field": "Y0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 329999,
+   "field": "Y9999",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 330000,
+   "field": "Z0000",
+   "source": "derived arithmetically from the published table"
+  },
+  {
+   "norad_cat_id": 339999,
+   "field": "Z9999",
+   "source": "derived arithmetically from the published table"
+  }
+ ],
+ "skip_boundaries": [
+  {
+   "norad_cat_id": 179999,
+   "field": "H9999"
+  },
+  {
+   "norad_cat_id": 180000,
+   "field": "J0000",
+   "note": "I is skipped"
+  },
+  {
+   "norad_cat_id": 229999,
+   "field": "N9999"
+  },
+  {
+   "norad_cat_id": 230000,
+   "field": "P0000",
+   "note": "O is skipped"
+  }
+ ],
+ "below_100000": [
+  {
+   "norad_cat_id": 5,
+   "field": "00005"
+  },
+  {
+   "norad_cat_id": 964,
+   "field": "00964"
+  },
+  {
+   "norad_cat_id": 25544,
+   "field": "25544"
+  },
+  {
+   "norad_cat_id": 69999,
+   "field": "69999"
+  },
+  {
+   "norad_cat_id": 81011,
+   "field": "81011"
+  },
+  {
+   "norad_cat_id": 99999,
+   "field": "99999"
+  }
+ ],
+ "decode_invalid": [
+  {
+   "field": "I0000",
+   "reason": "letter I is never used"
+  },
+  {
+   "field": "O1234",
+   "reason": "letter O is never used"
+  },
+  {
+   "field": "a0000",
+   "reason": "lowercase is not defined by Space-Track; a lenient decoder that accepts it disagrees with a strict one"
+  },
+  {
+   "field": "AA000",
+   "reason": "only the first character may be a letter"
+  },
+  {
+   "field": "A000",
+   "reason": "field must be five characters"
+  },
+  {
+   "field": "1A000",
+   "reason": "letter only in the first position"
+  }
+ ],
+ "encode_unrepresentable": [
+  {
+   "norad_cat_id": 340000,
+   "reason": "above the Alpha-5 ceiling 339999"
+  },
+  {
+   "norad_cat_id": 799501621,
+   "reason": "nine-digit ids cannot be encoded; OMM formats required"
+  },
+  {
+   "norad_cat_id": -1,
+   "reason": "negative"
+  }
+ ],
+ "checksum_note": "In a TLE checksum the Alpha-5 letter counts 0 (letters, blanks, periods and plus signs count 0; minus signs count 1), per Space-Track and CelesTrak."
+}

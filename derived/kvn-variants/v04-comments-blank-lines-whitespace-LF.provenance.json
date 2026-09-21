@@ -1,0 +1,24 @@
+{
+  "file": "derived/kvn-variants/v04-comments-blank-lines-whitespace-LF.kvn",
+  "provenance": "derived",
+  "label": "DERIVED: CCSDS-legal KVN re-serialisation of a CelesTrak record; not served by CelesTrak",
+  "description": "COMMENT lines at the allowed positions, blank lines, irregular whitespace around '=', a TAB, LF line endings.",
+  "ccsds_502_0_b3_clauses": [
+    "7.3.5",
+    "7.3.7",
+    "7.4.5",
+    "7.4.6",
+    "7.8.5",
+    "7.8.8"
+  ],
+  "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+  "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+  "source_url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+  "source_retrieved_at": "2026-09-21T00:43:39Z",
+  "source_norad_cat_id": 25544,
+  "generator": "tools/derive_kvn_variants.py",
+  "generated_at": "2026-09-21T00:50:18Z",
+  "orbital_values_identical_to_source": true,
+  "header_values_note": "Any CREATION_DATE/ORIGINATOR/MESSAGE_ID/CLASSIFICATION values describe this derived message, not the provider.",
+  "output_sha256": "1cae8ec648cc88672647c5e5f65d1aae0096126d1d4595c0da3a6231a0844074"
+}

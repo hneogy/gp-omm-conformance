@@ -1,0 +1,19 @@
+{
+  "file": "derived/kvn-variants/v01-baseline-reserialised.kvn",
+  "provenance": "derived",
+  "label": "DERIVED: CCSDS-legal KVN re-serialisation of a CelesTrak record; not served by CelesTrak",
+  "description": "Control: CelesTrak's own KVN shape re-serialised from the CSV record.",
+  "ccsds_502_0_b3_clauses": [
+    "7.4"
+  ],
+  "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+  "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+  "source_url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+  "source_retrieved_at": "2026-09-21T00:43:39Z",
+  "source_norad_cat_id": 25544,
+  "generator": "tools/derive_kvn_variants.py",
+  "generated_at": "2026-09-21T00:50:18Z",
+  "orbital_values_identical_to_source": true,
+  "header_values_note": "Any CREATION_DATE/ORIGINATOR/MESSAGE_ID/CLASSIFICATION values describe this derived message, not the provider.",
+  "output_sha256": "97450978821f04d3953b19886be9f75ad1724a4bd4c39d23e9fdccf8b783daac"
+}

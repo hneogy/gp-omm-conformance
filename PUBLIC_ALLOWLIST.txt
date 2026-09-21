@@ -1,0 +1,35 @@
+# Paths (glob patterns, relative to the repository root) that make up the PUBLIC release.
+# Everything not listed here stays in the private repository. In particular fixtures/*/raw/
+# (raw provider bytes) is never exported; tools/export_public.py refuses it even if listed, and
+# scrubs SupGP-derived snapshot values out of expected.json on the way out (tools/public_scrub.py).
+LICENSE
+README.md
+AUDIT.md
+CITATION.cff
+CLAUDE.md
+DECISIONS.md
+MANIFEST.md
+manifest.json
+PUBLIC_ALLOWLIST.txt
+pyproject.toml
+.gitignore
+.github/workflows/ci.yml
+docs/CROSSCHECK.md
+docs/FAILURES.md
+docs/PLAN.md
+docs/RESEARCH.md
+# docs/README-draft-ai-assistance.md is NOT exported: superseded by the README section (AUDIT.md M8).
+# docs/INVENTORY.md is NOT exported: it quotes SupGP field values (D-049); the manifest carries hashes and counts.
+docs/upstream/*.md
+fixtures/*/expected.json
+fixtures/*/case.md
+derived/**/*
+vectors/*.json
+schemas/**/*
+gpconf/*.py
+tests/*.py
+tests/adapters/*.py
+tools/*.py
+tools/fetchlist.json
+tools/crosscheck-requirements.lock.txt
+# tools/_fetch-run-*.log are NOT exported: build-time run logs stay private (audit minor item).

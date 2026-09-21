@@ -1,0 +1,21 @@
+{
+  "file": "derived/kvn-variants/v05-omm-3.0-header-optional-keywords-omitted.kvn",
+  "provenance": "derived",
+  "label": "DERIVED: CCSDS-legal KVN re-serialisation of a CelesTrak record; not served by CelesTrak",
+  "description": "CCSDS_OMM_VERS 3.0; header CLASSIFICATION, CREATION_DATE, ORIGINATOR, MESSAGE_ID filled (describing this derived message); EPHEMERIS_TYPE, CLASSIFICATION_TYPE, NORAD_CAT_ID, ELEMENT_SET_NO and REV_AT_EPOCH omitted, which Table 4-3 permits (all Optional).",
+  "ccsds_502_0_b3_clauses": [
+    "Table 4-1",
+    "Table 4-3",
+    "7.9.1"
+  ],
+  "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+  "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+  "source_url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+  "source_retrieved_at": "2026-09-21T00:43:39Z",
+  "source_norad_cat_id": 25544,
+  "generator": "tools/derive_kvn_variants.py",
+  "generated_at": "2026-09-21T00:50:18Z",
+  "orbital_values_identical_to_source": true,
+  "header_values_note": "Any CREATION_DATE/ORIGINATOR/MESSAGE_ID/CLASSIFICATION values describe this derived message, not the provider.",
+  "output_sha256": "10e02122947f3c7d639636b4bea13f2a9d4b3f32d2fecbb7219b3cd20f9e804f"
+}

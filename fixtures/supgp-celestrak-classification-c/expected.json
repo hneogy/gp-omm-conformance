@@ -1,0 +1,347 @@
+{
+ "case": "supgp-celestrak-classification-c",
+ "title": "CelesTrak supplemental GP: classification C, element set 0, RMS/DATA_SOURCE columns, 72000-series ids",
+ "schema_version": "1.0",
+ "generated_at": "2026-09-21T03:54:07Z",
+ "generator": "tools/make_expected.py",
+ "kind": "gp",
+ "sources": {
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.csv": {
+   "tier": "live",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:08:23Z",
+   "http_status": 200,
+   "bytes": 577,
+   "sha256": "bedd85824461412b271336f5dd6539496716d1a9eeb05e655a0f62211c1702da",
+   "provenance": "live",
+   "record_count": 2,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT",
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "format": "csv",
+    "record_count": 2,
+    "line_endings": {
+     "crlf": 3,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 577
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.json": {
+   "tier": "live",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:08:25Z",
+   "http_status": 200,
+   "bytes": 926,
+   "sha256": "97926cbbe07f35179039650212fbf48593bbbf95591848bee65f4881d424fae5",
+   "provenance": "live",
+   "record_count": 2,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT",
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "int"
+     ],
+     "RMS": [
+      "str"
+     ],
+     "DATA_SOURCE": [
+      "str"
+     ]
+    },
+    "format": "json",
+    "record_count": 2,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 926
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.xml": {
+   "tier": "live",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:08:27Z",
+   "http_status": 200,
+   "bytes": 2201,
+   "sha256": "92e227468743d56cd6fd4f79f67afce594c60dc3d3ba95316ec41f78ae1a6e29",
+   "provenance": "live",
+   "record_count": 2,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 2,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 2,
+    "line_endings": {
+     "crlf": 7,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 2201
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.kvn": {
+   "tier": "live",
+   "format": "kvn",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=KVN",
+   "retrieved_at": "2026-09-21T00:08:30Z",
+   "http_status": 200,
+   "bytes": 1272,
+   "sha256": "40e31f9ccaab24f1fbbdd7f2b21226535d97edbc3eafa72fef3103a904cabf08",
+   "provenance": "live",
+   "record_count": 2,
+   "facts": {
+    "message_count": 2,
+    "max_line_length": 43,
+    "keyword_order_first_message": [
+     "CCSDS_OMM_VERS",
+     "CREATION_DATE",
+     "ORIGINATOR",
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "format": "kvn",
+    "record_count": 2,
+    "line_endings": {
+     "crlf": 56,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1272
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.tle": {
+   "tier": "live",
+   "format": "tle",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:08:32Z",
+   "http_status": 200,
+   "bytes": 336,
+   "sha256": "4c606834f41b486de22b0a51006c867a12b9b50b95860dbffaf7e3791b99c919",
+   "provenance": "live",
+   "record_count": 2,
+   "facts": {
+    "format": "tle",
+    "record_count": 2,
+    "line_endings": {
+     "crlf": 6,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 336
+   }
+  }
+ },
+ "records": [],
+ "checks": [
+  {
+   "id": "supgp-extra-keys-tolerated",
+   "description": "SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail."
+  },
+  {
+   "id": "classification-c",
+   "description": "CLASSIFICATION_TYPE may be 'C' (CelesTrak supplemental) rather than 'U'."
+  },
+  {
+   "id": "element-set-zero-and-rev-one",
+   "description": "ELEMENT_SET_NO may be 0 and REV_AT_EPOCH may be 1 or 0."
+  },
+  {
+   "id": "omm-formats-agree",
+   "description": "For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them."
+  },
+  {
+   "id": "tle-values-match-omm-within-tle-precision",
+   "description": "The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution."
+  },
+  {
+   "id": "tle-checksums-valid",
+   "description": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0)."
+  }
+ ],
+ "tests": [
+  "supgp-extra-fields",
+  "classification-c"
+ ],
+ "coverage": {
+  "provides": [
+   "two SupGP records (stack 72000 and single 72001) in five formats",
+   "TLE epoch rounded to 1e-8 day (86 us from the CSV epoch)",
+   "OBJECT_ID 2026-219A shared by the stack nominal and a per-satellite nominal (799501621)"
+  ],
+  "gaps": [
+   "perishable: this post-deployment file is replaced after cataloguing",
+   "the meaning of the 72000-series ids (the 70000-79999 block) is described only by a secondary source (RESEARCH.md \u00a71); primary sources cover only the 80000-89999 analyst range and the 69999 end of the legacy range"
+  ]
+ },
+ "ambiguities": [
+  {
+   "id": "supgp-extra-keys",
+   "text": "SupGP CSV/JSON carry RMS and DATA_SOURCE, which are not OMM keywords (CCSDS 7.9.2.2 allows only Table 4-x keywords in an OMM); CelesTrak's CSV/JSON are OMM-keyword-based formats, not OMM instances, so this is a format extension rather than a violation. Parsers must tolerate unknown keys."
+  },
+  {
+   "id": "tle-epoch-resolution",
+   "text": "The TLE epoch has 1e-8 day (864 microsecond) resolution. CelesTrak GP epochs convert exactly between the two representations; SupGP epochs do not (86 microsecond difference observed), so a TLE->OMM epoch comparison needs a tolerance of half the TLE resolution."
+  },
+  {
+   "id": "supgp-redistribution",
+   "text": "SupGP data derives from operator-provided data (some explicitly 'with permission' to CelesTrak). Under the corpus design no raw bytes are shipped; the snapshot values for one SupGP record are published as a dated reference and may be removed by the owner before publication."
+  }
+ ],
+ "notes": [],
+ "sets": {
+  "starlink-g15-27": {
+   "tier": "live",
+   "files": [
+    "starlink-g15-27.csv",
+    "starlink-g15-27.json",
+    "starlink-g15-27.xml",
+    "starlink-g15-27.kvn",
+    "starlink-g15-27.tle"
+   ],
+   "record_count": 2,
+   "record_filter": null,
+   "metadata_uniform_across_records": true
+  }
+ },
+ "case_specific": {},
+ "records_withheld": "SupGP-derived snapshot values withheld from the public release (DECISIONS D-049); structural checks apply to your own fetch; 2 record(s) removed"
+}

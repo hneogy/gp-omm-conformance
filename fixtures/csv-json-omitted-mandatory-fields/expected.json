@@ -1,0 +1,887 @@
+{
+ "case": "csv-json-omitted-mandatory-fields",
+ "title": "CelesTrak CSV and JSON omit the constant mandatory metadata keywords",
+ "schema_version": "1.0",
+ "generated_at": "2026-09-21T03:54:07Z",
+ "generator": "tools/make_expected.py",
+ "kind": "facts",
+ "sources": {
+  "fixtures/epoch-year-19xx/raw/iss-first.csv": {
+   "tier": "mixed",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:43:39Z",
+   "http_status": 200,
+   "bytes": 368,
+   "sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 368
+   }
+  },
+  "fixtures/epoch-year-19xx/raw/iss-first.json": {
+   "tier": "mixed",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:11:51Z",
+   "http_status": 200,
+   "bytes": 414,
+   "sha256": "e18ebbe14d38ae617b0506e79230d51df539704dbd0ff1fd9d6f9d8f15e13dd5",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "int"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "Decimal"
+     ]
+    },
+    "format": "json",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 414
+   }
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.csv": {
+   "tier": "mixed",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:09:37Z",
+   "http_status": 200,
+   "bytes": 378,
+   "sha256": "643c0d9a52417f27e0ada849f439bd3459bb02fec0ffe3e3afb1f3041018eab2",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 378
+   }
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.json": {
+   "tier": "mixed",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:09:40Z",
+   "http_status": 200,
+   "bytes": 425,
+   "sha256": "d84b9c1d500d16131495855719eae29c858ef692c475095aa45705353406728d",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "int"
+     ]
+    },
+    "format": "json",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 425
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.csv": {
+   "tier": "mixed",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:43:55Z",
+   "http_status": 200,
+   "bytes": 374,
+   "sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 374
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.json": {
+   "tier": "mixed",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:43:58Z",
+   "http_status": 200,
+   "bytes": 420,
+   "sha256": "1d04dc3b4e49d6f7162c69b2f86b6132302bf302265f912a312dcee7b5585b0a",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "int"
+     ]
+    },
+    "format": "json",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 420
+   }
+  },
+  "fixtures/analyst-objects/raw/analyst.csv": {
+   "tier": "mixed",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:11:30Z",
+   "http_status": 200,
+   "bytes": 76633,
+   "sha256": "e1d437ebf2a53ed9db7f02d99a51a05bcc8519cc0ee0e84b17327cb381c7ec36",
+   "provenance": "live",
+   "record_count": 565,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 565,
+    "line_endings": {
+     "crlf": 566,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 76633
+   }
+  },
+  "fixtures/analyst-objects/raw/analyst.json": {
+   "tier": "mixed",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:11:33Z",
+   "http_status": 200,
+   "bytes": 228966,
+   "sha256": "f3a4773680d66ed3aa58ed18c22a119df4d3600f45a9ec4bb4e8c2527908bd5d",
+   "provenance": "live",
+   "record_count": 565,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal",
+      "int"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "Decimal",
+      "int"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ]
+    },
+    "format": "json",
+    "record_count": 565,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 228966
+   }
+  },
+  "fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv": {
+   "tier": "mixed",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:10:07Z",
+   "http_status": 200,
+   "bytes": 39336,
+   "sha256": "bc9a5dff288a26d30ec7371b7894be8d313f93fd19033c063df382cff1ff6e8c",
+   "provenance": "live",
+   "record_count": 256,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 256,
+    "line_endings": {
+     "crlf": 257,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 39336
+   }
+  },
+  "fixtures/bstar-and-derivative-forms/raw/decaying.csv": {
+   "tier": "mixed",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:11:46Z",
+   "http_status": 200,
+   "bytes": 13599,
+   "sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79",
+   "provenance": "live",
+   "record_count": 82,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 82,
+    "line_endings": {
+     "crlf": 83,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 13599
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.csv": {
+   "tier": "mixed",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:14:18Z",
+   "http_status": 200,
+   "bytes": 407,
+   "sha256": "6a44cde5358a4e3039871a6aeca1f417ad53ef0d3e69fd7d0fdd8ea81283a135",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT",
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "format": "csv",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 407
+   }
+  },
+  "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.json": {
+   "tier": "mixed",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:14:20Z",
+   "http_status": 200,
+   "bytes": 462,
+   "sha256": "d8fdca20c5e39499c74c9403664f69a12dc630e28a2552102f5287702f68bf8c",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT",
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [
+     "RMS",
+     "DATA_SOURCE"
+    ],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "int"
+     ],
+     "RMS": [
+      "str"
+     ],
+     "DATA_SOURCE": [
+      "str"
+     ]
+    },
+    "format": "json",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 462
+   }
+  }
+ },
+ "records": [],
+ "checks": [
+  {
+   "id": "csv-json-omit-constant-metadata",
+   "description": "CelesTrak CSV/JSON carry no CENTER_NAME, REF_FRAME, TIME_SYSTEM or MEAN_ELEMENT_THEORY; parsers must default them (EARTH, TEME, UTC, SGP4) rather than fail."
+  },
+  {
+   "id": "supgp-extra-keys-tolerated",
+   "description": "SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail."
+  }
+ ],
+ "tests": [
+  "csv-json-defaults"
+ ],
+ "coverage": {
+  "provides": [
+   "every CelesTrak CSV/JSON file lacks CENTER_NAME, REF_FRAME, TIME_SYSTEM, MEAN_ELEMENT_THEORY and the header keywords",
+   "SupGP files add RMS and DATA_SOURCE"
+  ],
+  "gaps": []
+ },
+ "ambiguities": [
+  {
+   "id": "supgp-extra-keys",
+   "text": "SupGP CSV/JSON carry RMS and DATA_SOURCE, which are not OMM keywords (CCSDS 7.9.2.2 allows only Table 4-x keywords in an OMM); CelesTrak's CSV/JSON are OMM-keyword-based formats, not OMM instances, so this is a format extension rather than a violation. Parsers must tolerate unknown keys."
+  }
+ ],
+ "notes": [],
+ "sets": {},
+ "case_specific": {}
+}

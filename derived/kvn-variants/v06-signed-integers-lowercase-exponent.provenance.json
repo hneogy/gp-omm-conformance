@@ -1,0 +1,20 @@
+{
+  "file": "derived/kvn-variants/v06-signed-integers-lowercase-exponent.kvn",
+  "provenance": "derived",
+  "label": "DERIVED: CCSDS-legal KVN re-serialisation of a CelesTrak record; not served by CelesTrak",
+  "description": "Integers with explicit '+' sign; MEAN_MOTION_DDOT in floating-point notation with lowercase 'e'.",
+  "ccsds_502_0_b3_clauses": [
+    "7.5.4",
+    "7.5.7"
+  ],
+  "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+  "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+  "source_url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+  "source_retrieved_at": "2026-09-21T00:43:39Z",
+  "source_norad_cat_id": 25544,
+  "generator": "tools/derive_kvn_variants.py",
+  "generated_at": "2026-09-21T00:50:18Z",
+  "orbital_values_identical_to_source": true,
+  "header_values_note": "Any CREATION_DATE/ORIGINATOR/MESSAGE_ID/CLASSIFICATION values describe this derived message, not the provider.",
+  "output_sha256": "dff1329a94b59bc806dcf74965c3b106dd498bc90c7fdea377e8981491927cfd"
+}

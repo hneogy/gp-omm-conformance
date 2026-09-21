@@ -1,0 +1,658 @@
+{
+ "case": "alpha5-encoding-vectors",
+ "title": "Alpha-5 encode/decode vectors from the Space-Track table, with boundaries and invalid inputs",
+ "schema_version": "1.0",
+ "generated_at": "2026-09-21T03:54:07Z",
+ "generator": "tools/make_expected.py",
+ "kind": "vectors",
+ "sources": {
+  "vectors/alpha5.json": {
+   "tier": "stable",
+   "format": "vectors-json",
+   "bytes": 9000,
+   "sha256": "9df250841f0667a5466c24d806002b857abb80065fa9fc4641014339dda0933e",
+   "provenance": "specification"
+  },
+  "vectors/norad-cat-id-text.json": {
+   "tier": "stable",
+   "format": "vectors-json",
+   "bytes": 1449,
+   "sha256": "58a4ae4413e161bd4687bcaad64b82985b6581bc2def166d7015e806171dadeb",
+   "provenance": "specification"
+  },
+  "vectors/two-digit-epoch-year.json": {
+   "tier": "stable",
+   "format": "vectors-json",
+   "bytes": 1475,
+   "sha256": "c3c2f54967174770e20de636f18a85e013a51f685caab97f05701b7032248220",
+   "provenance": "specification"
+  },
+  "vectors/ccsds-epoch-strings.json": {
+   "tier": "stable",
+   "format": "vectors-json",
+   "bytes": 1557,
+   "sha256": "b1049c1fc6362c387898d909b4ea987d6a3be5478046d1593431c0bc4e2a671f",
+   "provenance": "specification"
+  }
+ },
+ "records": [],
+ "checks": [
+  {
+   "id": "alpha5-decode",
+   "description": "An Alpha-5 catalog field decodes as (letter value)*10000 + digits with A=10 ... Z=33 and I, O unused; 'I', 'O' and lowercase are invalid."
+  },
+  {
+   "id": "alpha5-encode",
+   "description": "Integers 100000-339999 encode to the Alpha-5 table; below 100000 encode as five digits with leading zeros; above 339999 cannot be encoded."
+  },
+  {
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN."
+  },
+  {
+   "id": "two-digit-year-pivot",
+   "description": "TLE epoch years 57-99 map to 1957-1999 and 00-56 to 2000-2056; the resulting ISO epoch equals the OMM EPOCH string."
+  }
+ ],
+ "tests": [
+  "alpha5-letter-skip-rules",
+  "alpha5-range",
+  "9-digit-catalog-number",
+  "2-digit-epoch-year"
+ ],
+ "coverage": {
+  "provides": [
+   "all 24 letters and both skips, the six official examples, range boundaries, invalid letters and lowercase"
+  ],
+  "gaps": [
+   "vectors are not element sets; they test the mapping only"
+  ]
+ },
+ "ambiguities": [],
+ "notes": [],
+ "sets": {},
+ "case_specific": {
+  "vectors/alpha5.json": {
+   "vector_set": "alpha5",
+   "provenance": "specification",
+   "sources": [
+    "https://www.space-track.org/documentation (FAQ 'What is Alpha-5?' and TLE page 'Alpha 5' section; read 2026-09-20)",
+    "CelesTrak GP formats FAQ (CelesTrak itself does not emit Alpha-5): https://celestrak.org/NORAD/documentation/gp-data-formats.php"
+   ],
+   "rule": "Objects 100000-339999: first character is a letter with value 10-33 (A=10, B=11, ... skipping I and O ... Z=33) followed by the last four digits. Objects below 100000: five digits, leading zeros retained. Alpha-5 appears only in TLE/3LE columns 3-7 of lines 1 and 2; OMM NORAD_CAT_ID is always an integer.",
+   "letter_table": {
+    "A": 10,
+    "B": 11,
+    "C": 12,
+    "D": 13,
+    "E": 14,
+    "F": 15,
+    "G": 16,
+    "H": 17,
+    "J": 18,
+    "K": 19,
+    "L": 20,
+    "M": 21,
+    "N": 22,
+    "P": 23,
+    "Q": 24,
+    "R": 25,
+    "S": 26,
+    "T": 27,
+    "U": 28,
+    "V": 29,
+    "W": 30,
+    "X": 31,
+    "Y": 32,
+    "Z": 33
+   },
+   "letters_never_used": [
+    "I",
+    "O"
+   ],
+   "official_examples": [
+    {
+     "norad_cat_id": 100000,
+     "field": "A0000",
+     "source": "Space-Track 'Examples'"
+    },
+    {
+     "norad_cat_id": 148493,
+     "field": "E8493",
+     "source": "Space-Track 'Examples'"
+    },
+    {
+     "norad_cat_id": 182931,
+     "field": "J2931",
+     "source": "Space-Track 'Examples'"
+    },
+    {
+     "norad_cat_id": 234018,
+     "field": "P4018",
+     "source": "Space-Track 'Examples'"
+    },
+    {
+     "norad_cat_id": 301928,
+     "field": "W1928",
+     "source": "Space-Track 'Examples'"
+    },
+    {
+     "norad_cat_id": 339999,
+     "field": "Z9999",
+     "source": "Space-Track 'Examples'"
+    }
+   ],
+   "boundaries": [
+    {
+     "norad_cat_id": 100000,
+     "field": "A0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 109999,
+     "field": "A9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 110000,
+     "field": "B0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 119999,
+     "field": "B9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 120000,
+     "field": "C0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 129999,
+     "field": "C9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 130000,
+     "field": "D0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 139999,
+     "field": "D9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 140000,
+     "field": "E0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 149999,
+     "field": "E9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 150000,
+     "field": "F0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 159999,
+     "field": "F9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 160000,
+     "field": "G0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 169999,
+     "field": "G9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 170000,
+     "field": "H0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 179999,
+     "field": "H9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 180000,
+     "field": "J0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 189999,
+     "field": "J9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 190000,
+     "field": "K0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 199999,
+     "field": "K9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 200000,
+     "field": "L0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 209999,
+     "field": "L9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 210000,
+     "field": "M0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 219999,
+     "field": "M9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 220000,
+     "field": "N0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 229999,
+     "field": "N9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 230000,
+     "field": "P0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 239999,
+     "field": "P9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 240000,
+     "field": "Q0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 249999,
+     "field": "Q9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 250000,
+     "field": "R0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 259999,
+     "field": "R9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 260000,
+     "field": "S0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 269999,
+     "field": "S9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 270000,
+     "field": "T0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 279999,
+     "field": "T9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 280000,
+     "field": "U0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 289999,
+     "field": "U9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 290000,
+     "field": "V0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 299999,
+     "field": "V9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 300000,
+     "field": "W0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 309999,
+     "field": "W9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 310000,
+     "field": "X0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 319999,
+     "field": "X9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 320000,
+     "field": "Y0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 329999,
+     "field": "Y9999",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 330000,
+     "field": "Z0000",
+     "source": "derived arithmetically from the published table"
+    },
+    {
+     "norad_cat_id": 339999,
+     "field": "Z9999",
+     "source": "derived arithmetically from the published table"
+    }
+   ],
+   "skip_boundaries": [
+    {
+     "norad_cat_id": 179999,
+     "field": "H9999"
+    },
+    {
+     "norad_cat_id": 180000,
+     "field": "J0000",
+     "note": "I is skipped"
+    },
+    {
+     "norad_cat_id": 229999,
+     "field": "N9999"
+    },
+    {
+     "norad_cat_id": 230000,
+     "field": "P0000",
+     "note": "O is skipped"
+    }
+   ],
+   "below_100000": [
+    {
+     "norad_cat_id": 5,
+     "field": "00005"
+    },
+    {
+     "norad_cat_id": 964,
+     "field": "00964"
+    },
+    {
+     "norad_cat_id": 25544,
+     "field": "25544"
+    },
+    {
+     "norad_cat_id": 69999,
+     "field": "69999"
+    },
+    {
+     "norad_cat_id": 81011,
+     "field": "81011"
+    },
+    {
+     "norad_cat_id": 99999,
+     "field": "99999"
+    }
+   ],
+   "decode_invalid": [
+    {
+     "field": "I0000",
+     "reason": "letter I is never used"
+    },
+    {
+     "field": "O1234",
+     "reason": "letter O is never used"
+    },
+    {
+     "field": "a0000",
+     "reason": "lowercase is not defined by Space-Track; a lenient decoder that accepts it disagrees with a strict one"
+    },
+    {
+     "field": "AA000",
+     "reason": "only the first character may be a letter"
+    },
+    {
+     "field": "A000",
+     "reason": "field must be five characters"
+    },
+    {
+     "field": "1A000",
+     "reason": "letter only in the first position"
+    }
+   ],
+   "encode_unrepresentable": [
+    {
+     "norad_cat_id": 340000,
+     "reason": "above the Alpha-5 ceiling 339999"
+    },
+    {
+     "norad_cat_id": 799501621,
+     "reason": "nine-digit ids cannot be encoded; OMM formats required"
+    },
+    {
+     "norad_cat_id": -1,
+     "reason": "negative"
+    }
+   ],
+   "checksum_note": "In a TLE checksum the Alpha-5 letter counts 0 (letters, blanks, periods and plus signs count 0; minus signs count 1), per Space-Track and CelesTrak."
+  },
+  "vectors/norad-cat-id-text.json": {
+   "vector_set": "norad-cat-id-text",
+   "provenance": "specification",
+   "sources": [
+    "CCSDS 502.0-B-3 Table 4-3: NORAD_CAT_ID 'an integer of up to nine digits'",
+    "CCSDS 502.0-B-3 7.5.4: integers may have a leading sign and leading zeroes",
+    "SANA ndmxml-4.0.0-omm-3.0.xsd and ndmxml-2.0.0-omm-2.0.xsd: NORAD_CAT_ID is xsd:integer",
+    "https://www.space-track.org/documentation (FAQ 'What is Alpha-5?' and TLE page 'Alpha 5' section; read 2026-09-20)"
+   ],
+   "valid": [
+    {
+     "text": "25544",
+     "value": 25544
+    },
+    {
+     "text": "00964",
+     "value": 964,
+     "note": "leading zeros allowed (7.5.4)"
+    },
+    {
+     "text": "964",
+     "value": 964
+    },
+    {
+     "text": "+25544",
+     "value": 25544,
+     "note": "explicit plus allowed in KVN integers (7.5.4)"
+    },
+    {
+     "text": "100000",
+     "value": 100000
+    },
+    {
+     "text": "270449",
+     "value": 270449
+    },
+    {
+     "text": "799501621",
+     "value": 799501621
+    },
+    {
+     "text": "999999999",
+     "value": 999999999,
+     "note": "largest nine-digit value"
+    }
+   ],
+   "invalid_in_omm": [
+    {
+     "text": "A0000",
+     "reason": "Alpha-5 is a TLE-only encoding; OMM NORAD_CAT_ID is an integer"
+    },
+    {
+     "text": "1000000000",
+     "reason": "ten digits exceed 'up to nine digits'; schema xsd:integer would accept it, the standard's text does not"
+    },
+    {
+     "text": "25544.0",
+     "reason": "not an integer"
+    },
+    {
+     "text": "",
+     "reason": "empty; keyword is Optional and should be omitted instead"
+    }
+   ]
+  },
+  "vectors/two-digit-epoch-year.json": {
+   "vector_set": "two-digit-epoch-year",
+   "provenance": "specification",
+   "sources": [
+    "T.S. Kelso, 'Frequently Asked Questions: Two-Line Element Set Format', Satellite Times, January 1998: 'Two-digit years from 57-99 correspond to 1957-1999 and those from 00-56 correspond to 2000-2056.' https://celestrak.org/columns/v04n03/",
+    "python-sgp4 io.py implements the same pivot (year < 57 -> +2000)"
+   ],
+   "pivot": 57,
+   "vectors": [
+    {
+     "yy": "57",
+     "year": 1957
+    },
+    {
+     "yy": "58",
+     "year": 1958
+    },
+    {
+     "yy": "99",
+     "year": 1999
+    },
+    {
+     "yy": "00",
+     "year": 2000
+    },
+    {
+     "yy": "26",
+     "year": 2026
+    },
+    {
+     "yy": "56",
+     "year": 2056
+    },
+    {
+     "yy": "98",
+     "year": 1998,
+     "note": "real: ISS first record epoch 98324.28472222"
+    }
+   ],
+   "epoch_field_examples": [
+    {
+     "tle_epoch_field": "98324.28472222",
+     "iso": "1998-11-20T06:49:59.999808",
+     "source": "fixtures/epoch-year-19xx (gp-first 25544)"
+    },
+    {
+     "tle_epoch_field": "26263.52959654",
+     "iso": "2026-09-20T12:42:37.141056",
+     "source": "fixtures/baseline-iss-five-formats snapshot"
+    }
+   ],
+   "resolution_note": "1e-8 day = 0.000864 s; an 8-decimal day fraction always converts to an exact whole number of microseconds.",
+   "international_designator_note": "The TLE international designator also carries a two-digit launch year (columns 10-11); no document defines its century mapping. This corpus applies the same 57 pivot (see ambiguity object-id-launch-year-pivot)."
+  },
+  "vectors/ccsds-epoch-strings.json": {
+   "vector_set": "ccsds-epoch-strings",
+   "provenance": "specification",
+   "sources": [
+    "CCSDS 502.0-B-3 7.5.10: YYYY-MM-DDThh:mm:ss[.d->d][Z] or YYYY-DDDThh:mm:ss[.d->d][Z]; all fields with leading zeros; Z optional",
+    "SANA ndmxml-4.0.0-common-4.0.xsd epochType pattern"
+   ],
+   "valid": [
+    {
+     "text": "2020-064T10:34:41.4264",
+     "note": "CCSDS annex G example, day-of-year form"
+    },
+    {
+     "text": "2020-065T16:00:00",
+     "note": "no fractional seconds"
+    },
+    {
+     "text": "2002-204T15:56:23Z",
+     "note": "Table 4-1 example with Z"
+    },
+    {
+     "text": "2001-11-06T11:17:33",
+     "note": "calendar form, no fraction"
+    },
+    {
+     "text": "2026-09-20T12:42:37.141056",
+     "note": "CelesTrak form"
+    },
+    {
+     "text": "1998-11-20T06:49:59.999808Z"
+    },
+    {
+     "text": "2026-09-20T12:42:37.1"
+    },
+    {
+     "text": "2016-12-31T23:59:60",
+     "note": "leap second: ss = 60 permitted (7.5.10 NOTE)"
+    }
+   ],
+   "invalid": [
+    {
+     "text": "2026-9-20T12:42:37",
+     "reason": "month needs two digits"
+    },
+    {
+     "text": "2026-09-20 12:42:37",
+     "reason": "'T' is mandatory"
+    },
+    {
+     "text": "26263.52959654",
+     "reason": "TLE epoch field, not an OMM epoch"
+    },
+    {
+     "text": "2026-09-20T12:42:37.141056+00:00",
+     "reason": "only 'Z' is permitted as time-code terminator in 7.5.10 (the XSD pattern is more permissive)"
+    },
+    {
+     "text": "20260920T124237",
+     "reason": "separators required"
+    }
+   ],
+   "parser_hazard": "A parser hard-coded to '%Y-%m-%dT%H:%M:%S.%f' (for example python-sgp4's sgp4.omm.initialize) rejects five of the valid strings above."
+  }
+ }
+}

@@ -1,0 +1,832 @@
+{
+ "case": "six-digit-omm-saramago",
+ "title": "Catalog number 100000 (SARAMAGO): first 6-digit object, OMM formats only, TLE unavailable",
+ "schema_version": "1.0",
+ "generated_at": "2026-09-21T03:54:07Z",
+ "generator": "tools/make_expected.py",
+ "kind": "gp",
+ "sources": {
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.tle": {
+   "tier": "stable",
+   "format": "tle",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:43:53Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+   "provenance": "live",
+   "record_count": 0,
+   "facts": {
+    "response_body": "No GP data found"
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.csv": {
+   "tier": "stable",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:43:55Z",
+   "http_status": 200,
+   "bytes": 374,
+   "sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 374
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.json": {
+   "tier": "stable",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:43:58Z",
+   "http_status": 200,
+   "bytes": 420,
+   "sha256": "1d04dc3b4e49d6f7162c69b2f86b6132302bf302265f912a312dcee7b5585b0a",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "int"
+     ]
+    },
+    "format": "json",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 420
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.xml": {
+   "tier": "stable",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:44:00Z",
+   "http_status": 200,
+   "bytes": 1204,
+   "sha256": "c2523a59549f0e95e0573630b50626cc15089bfeb5d9486f033aa6d54702d71b",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1204
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.kvn": {
+   "tier": "stable",
+   "format": "kvn",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=KVN",
+   "retrieved_at": "2026-09-21T00:44:03Z",
+   "http_status": 200,
+   "bytes": 632,
+   "sha256": "bb9073b3b323e25961ef7a4012aadc252abb46653c011b8806a205e7044d719e",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "message_count": 1,
+    "max_line_length": 43,
+    "keyword_order_first_message": [
+     "CCSDS_OMM_VERS",
+     "CREATION_DATE",
+     "ORIGINATOR",
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "format": "kvn",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 28,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 632
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.csv": {
+   "tier": "live",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:09:50Z",
+   "http_status": 200,
+   "bytes": 375,
+   "sha256": "650bde1c540e16369ecda939338bbebe6ddd03081b0a1c25cfd8c46fa38a0c40",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 375
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.json": {
+   "tier": "live",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:09:52Z",
+   "http_status": 200,
+   "bytes": 421,
+   "sha256": "7d06887037002ed0eddfe638173b800e41b18fefd7e37cc4a399ec0de245c133",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "int"
+     ]
+    },
+    "format": "json",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 421
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.xml": {
+   "tier": "live",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:09:55Z",
+   "http_status": 200,
+   "bytes": 1205,
+   "sha256": "763990333a9a4f4805b2ae8d6de60b709658e1f498807034ae9a641ace967c0b",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1205
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.kvn": {
+   "tier": "live",
+   "format": "kvn",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=KVN",
+   "retrieved_at": "2026-09-21T00:09:57Z",
+   "http_status": 200,
+   "bytes": 633,
+   "sha256": "8e9591ef376a57d80a77b675358f136e2d9f1e229d3f77d8cf3a16e703fc5168",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "message_count": 1,
+    "max_line_length": 43,
+    "keyword_order_first_message": [
+     "CCSDS_OMM_VERS",
+     "CREATION_DATE",
+     "ORIGINATOR",
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "format": "kvn",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 28,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 633
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.tle": {
+   "tier": "live",
+   "format": "tle",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:09:59Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+   "provenance": "live",
+   "record_count": 0,
+   "facts": {
+    "response_body": "No GP data found"
+   }
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.satcat.json": {
+   "tier": "live",
+   "format": "satcat-json",
+   "url": "https://celestrak.org/satcat/records.php?CATNR=100000&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:10:02Z",
+   "http_status": 200,
+   "bytes": 332,
+   "sha256": "235cf52e5287a8b36453ddba3f18d7e0839271658ad31cee8e10135ed62ad13b",
+   "provenance": "live",
+   "record_count": 1
+  },
+  "fixtures/six-digit-omm-saramago/raw/saramago.satcat.csv": {
+   "tier": "live",
+   "format": "satcat-csv",
+   "url": "https://celestrak.org/satcat/records.php?CATNR=100000&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:10:04Z",
+   "http_status": 200,
+   "bytes": 269,
+   "sha256": "ad32c117b2a0ad4ca42a334e025b77444152fee8cab7ab767810643102cf010f",
+   "provenance": "live",
+   "record_count": 1
+  }
+ },
+ "records": [
+  {
+   "norad_cat_id": 100000,
+   "set": "saramago-first",
+   "tier": "stable",
+   "canonical": {
+    "norad_cat_id": 100000,
+    "object_name": "SARAMAGO",
+    "object_id": "2026-067CY",
+    "epoch": "2026-07-14T21:45:20.933856",
+    "mean_motion": "15.20467281",
+    "eccentricity": "0.00055903",
+    "inclination": "97.4593",
+    "ra_of_asc_node": "154.097",
+    "arg_of_pericenter": "270.5113",
+    "mean_anomaly": "89.5482",
+    "bstar": "0.00022159168",
+    "mean_motion_dot": "0.0000477",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1591
+   },
+   "canonical_source": "saramago-first.csv",
+   "present_in": {
+    "saramago-first.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "saramago-first.json": {
+     "format": "json",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "saramago-first.xml": {
+     "format": "xml",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "saramago-first.kvn": {
+     "format": "kvn",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true
+  },
+  {
+   "norad_cat_id": 100000,
+   "set": "saramago-live",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 100000,
+    "object_name": "SARAMAGO",
+    "object_id": "2026-067CY",
+    "epoch": "2026-09-20T11:22:17.431104",
+    "mean_motion": "15.21412834",
+    "eccentricity": "0.00091349",
+    "inclination": "97.468",
+    "ra_of_asc_node": "221.0418",
+    "arg_of_pericenter": "45.9287",
+    "mean_anomaly": "314.2699",
+    "bstar": "0.00028675278",
+    "mean_motion_dot": "0.00006373",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 2618
+   },
+   "canonical_source": "saramago.csv",
+   "present_in": {
+    "saramago.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "saramago.json": {
+     "format": "json",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "saramago.xml": {
+     "format": "xml",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "saramago.kvn": {
+     "format": "kvn",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true
+  }
+ ],
+ "checks": [
+  {
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN."
+  },
+  {
+   "id": "omm-formats-agree",
+   "description": "For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them."
+  },
+  {
+   "id": "tle-format-omits-ids-above-99999",
+   "description": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'."
+  },
+  {
+   "id": "csv-json-omit-constant-metadata",
+   "description": "CelesTrak CSV/JSON carry no CENTER_NAME, REF_FRAME, TIME_SYSTEM or MEAN_ELEMENT_THEORY; parsers must default them (EARTH, TEME, UTC, SGP4) rather than fail."
+  },
+  {
+   "id": "xml-ndm-wrapper-omm-2.0",
+   "description": "CelesTrak XML has an <ndm> root containing one <omm> per record with id=CCSDS_OMM_VERS and version=2.0; CREATION_DATE and ORIGINATOR elements are present but empty."
+  },
+  {
+   "id": "sha256-matches-tested-snapshot",
+   "description": "If the user's fetched bytes hash to the recorded SHA-256, the frozen expected values apply exactly; otherwise only structural checks apply and the tool says so."
+  }
+ ],
+ "tests": [
+  "6-digit-catalog-number",
+  "tle-unavailable-above-99999",
+  "same-object-all-omm-formats"
+ ],
+ "coverage": {
+  "provides": [
+   "the first 6-digit catalog number, stable (gp-first) and live",
+   "HTTP 404 'No GP data found' for the TLE request, stable and live",
+   "SATCAT record verifying designator 2026-067CY and launch 2026-03-30"
+  ],
+  "gaps": [
+   "only one object; other 6-digit objects are in last-30-days and analyst cases"
+  ]
+ },
+ "ambiguities": [
+  {
+   "id": "gp-first-stability",
+   "text": "The corpus assumes CelesTrak's gp-first.php ('first GP data available') returns the same record for a given catalog number indefinitely. This was not verified over time. tools/fetch.py compares every fetched file with the SHA-256 recorded in manifest.json after each run (and on demand with --check-drift) and prints a DRIFT line for any stable-tier source whose bytes differ; the runner independently labels such a source 'live' and stops applying the frozen values to it. Related observation (D-070, D-074): gp-first records are historical in their elements but can carry metadata assigned after first publication. For catalog 100000, Space-Track's earliest record has a blank international designator, Space-Track's current record carries the same designator as CelesTrak, and CelesTrak's gp-first record shows that designator back-filled; the line-2 elements are identical. Treat OBJECT_NAME and OBJECT_ID in a gp-first record as current metadata, not as the values first published."
+  },
+  {
+   "id": "satcat-record-drift",
+   "text": "SATCAT records for existing objects change when an object decays or its orbit summary is updated; records.php sources are treated as live for checksum purposes even though most fields are stable."
+  }
+ ],
+ "notes": [],
+ "sets": {
+  "saramago-first": {
+   "tier": "stable",
+   "files": [
+    "saramago-first.tle",
+    "saramago-first.csv",
+    "saramago-first.json",
+    "saramago-first.xml",
+    "saramago-first.kvn"
+   ],
+   "record_count": 1,
+   "record_filter": null,
+   "metadata_by_format": {
+    "saramago-first.csv": {
+     "ccsds_omm_vers": null,
+     "center_name": null,
+     "creation_date": null,
+     "mean_element_theory": null,
+     "originator": null,
+     "ref_frame": null,
+     "time_system": null
+    },
+    "saramago-first.json": {
+     "ccsds_omm_vers": null,
+     "center_name": null,
+     "creation_date": null,
+     "mean_element_theory": null,
+     "originator": null,
+     "ref_frame": null,
+     "time_system": null
+    },
+    "saramago-first.kvn": {
+     "ccsds_omm_vers": "2.0",
+     "center_name": "EARTH",
+     "creation_date": null,
+     "mean_element_theory": "SGP/SGP4",
+     "originator": null,
+     "ref_frame": "TEME",
+     "time_system": "UTC"
+    },
+    "saramago-first.xml": {
+     "ccsds_omm_vers": "2.0",
+     "center_name": "EARTH",
+     "creation_date": null,
+     "mean_element_theory": "SGP4",
+     "originator": null,
+     "ref_frame": "TEME",
+     "time_system": "UTC"
+    }
+   },
+   "metadata_uniform_across_records": true
+  },
+  "saramago-live": {
+   "tier": "live",
+   "files": [
+    "saramago.csv",
+    "saramago.json",
+    "saramago.xml",
+    "saramago.kvn",
+    "saramago.tle"
+   ],
+   "record_count": 1,
+   "record_filter": null,
+   "metadata_by_format": {
+    "saramago.csv": {
+     "ccsds_omm_vers": null,
+     "center_name": null,
+     "creation_date": null,
+     "mean_element_theory": null,
+     "originator": null,
+     "ref_frame": null,
+     "time_system": null
+    },
+    "saramago.json": {
+     "ccsds_omm_vers": null,
+     "center_name": null,
+     "creation_date": null,
+     "mean_element_theory": null,
+     "originator": null,
+     "ref_frame": null,
+     "time_system": null
+    },
+    "saramago.kvn": {
+     "ccsds_omm_vers": "2.0",
+     "center_name": "EARTH",
+     "creation_date": null,
+     "mean_element_theory": "SGP/SGP4",
+     "originator": null,
+     "ref_frame": "TEME",
+     "time_system": "UTC"
+    },
+    "saramago.xml": {
+     "ccsds_omm_vers": "2.0",
+     "center_name": "EARTH",
+     "creation_date": null,
+     "mean_element_theory": "SGP4",
+     "originator": null,
+     "ref_frame": "TEME",
+     "time_system": "UTC"
+    }
+   },
+   "metadata_uniform_across_records": true
+  }
+ },
+ "case_specific": {
+  "satcat_records": [
+   {
+    "norad_cat_id": 100000,
+    "source": "saramago.satcat.json",
+    "record": {
+     "OBJECT_NAME": "SARAMAGO",
+     "OBJECT_ID": "2026-067CY",
+     "NORAD_CAT_ID": 100000,
+     "OBJECT_TYPE": "PAY",
+     "OPS_STATUS_CODE": "+",
+     "OWNER": "POR",
+     "LAUNCH_DATE": "2026-03-30",
+     "LAUNCH_SITE": "AFWTR",
+     "DECAY_DATE": "",
+     "PERIOD": "94.65",
+     "INCLINATION": "97.47",
+     "APOGEE": 508,
+     "PERIGEE": 495,
+     "RCS": null,
+     "DATA_STATUS_CODE": "",
+     "ORBIT_CENTER": "EA",
+     "ORBIT_TYPE": "ORB"
+    }
+   },
+   {
+    "norad_cat_id": 100000,
+    "source": "saramago.satcat.csv",
+    "record": {
+     "OBJECT_NAME": "SARAMAGO",
+     "OBJECT_ID": "2026-067CY",
+     "NORAD_CAT_ID": "100000",
+     "OBJECT_TYPE": "PAY",
+     "OPS_STATUS_CODE": "+",
+     "OWNER": "POR",
+     "LAUNCH_DATE": "2026-03-30",
+     "LAUNCH_SITE": "AFWTR",
+     "DECAY_DATE": "",
+     "PERIOD": "94.65",
+     "INCLINATION": "97.47",
+     "APOGEE": "508",
+     "PERIGEE": "495",
+     "RCS": "",
+     "DATA_STATUS_CODE": "",
+     "ORBIT_CENTER": "EA",
+     "ORBIT_TYPE": "ORB"
+    }
+   }
+  ]
+ }
+}

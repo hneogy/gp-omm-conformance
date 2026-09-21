@@ -1,0 +1,618 @@
+{
+ "case": "baseline-iss-five-formats",
+ "title": "ISS current GP record: the same object in TLE, 2LE, CSV, JSON, JSON-PRETTY, XML and KVN (live)",
+ "schema_version": "1.0",
+ "generated_at": "2026-09-21T03:54:07Z",
+ "generator": "tools/make_expected.py",
+ "kind": "gp",
+ "sources": {
+  "fixtures/baseline-iss-five-formats/raw/iss.tle": {
+   "tier": "live",
+   "format": "tle",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:09:33Z",
+   "http_status": 200,
+   "bytes": 168,
+   "sha256": "674ea527c1ff8a7054903861e4899509bcf9ed946441ae1342d2649837e2d698",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "format": "tle",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 3,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 168
+   }
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.2le": {
+   "tier": "live",
+   "format": "2le",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=2LE",
+   "retrieved_at": "2026-09-21T00:09:35Z",
+   "http_status": 200,
+   "bytes": 142,
+   "sha256": "8800ed02add033afaa63a66a27639704d52763b83c9553caf7dd8c475688c7a1",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "format": "2le",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 142
+   }
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.csv": {
+   "tier": "live",
+   "format": "csv",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=CSV",
+   "retrieved_at": "2026-09-21T00:09:37Z",
+   "http_status": 200,
+   "bytes": 378,
+   "sha256": "643c0d9a52417f27e0ada849f439bd3459bb02fec0ffe3e3afb1f3041018eab2",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "columns": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_columns": [],
+    "format": "csv",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 2,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 378
+   }
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.json": {
+   "tier": "live",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=JSON",
+   "retrieved_at": "2026-09-21T00:09:40Z",
+   "http_status": 200,
+   "bytes": 425,
+   "sha256": "d84b9c1d500d16131495855719eae29c858ef692c475095aa45705353406728d",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "int"
+     ]
+    },
+    "format": "json",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 425
+   }
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.pretty.json": {
+   "tier": "live",
+   "format": "json",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=JSON-PRETTY",
+   "retrieved_at": "2026-09-21T00:09:42Z",
+   "http_status": 200,
+   "bytes": 528,
+   "sha256": "cf4e1c6d118e322f9358b35bd2d83ebf8b5a645652ee2929259935ae08bd211e",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "keys": [
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "omm_mandatory_metadata_absent": [
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY"
+    ],
+    "non_omm_keys": [],
+    "json_value_types": {
+     "OBJECT_NAME": [
+      "str"
+     ],
+     "OBJECT_ID": [
+      "str"
+     ],
+     "EPOCH": [
+      "str"
+     ],
+     "MEAN_MOTION": [
+      "Decimal"
+     ],
+     "ECCENTRICITY": [
+      "Decimal"
+     ],
+     "INCLINATION": [
+      "Decimal"
+     ],
+     "RA_OF_ASC_NODE": [
+      "Decimal"
+     ],
+     "ARG_OF_PERICENTER": [
+      "Decimal"
+     ],
+     "MEAN_ANOMALY": [
+      "Decimal"
+     ],
+     "EPHEMERIS_TYPE": [
+      "int"
+     ],
+     "CLASSIFICATION_TYPE": [
+      "str"
+     ],
+     "NORAD_CAT_ID": [
+      "int"
+     ],
+     "ELEMENT_SET_NO": [
+      "int"
+     ],
+     "REV_AT_EPOCH": [
+      "int"
+     ],
+     "BSTAR": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DOT": [
+      "Decimal"
+     ],
+     "MEAN_MOTION_DDOT": [
+      "int"
+     ]
+    },
+    "format": "json",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 1,
+     "lf": 18,
+     "bom": false
+    },
+    "bytes": 528
+   }
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.xml": {
+   "tier": "live",
+   "format": "xml",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=XML",
+   "retrieved_at": "2026-09-21T00:09:45Z",
+   "http_status": 200,
+   "bytes": 1208,
+   "sha256": "1aea7dbbba3f0ce879b6588e87e24539ef2f9069e6ba6873c6ac1697f4e0a508",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "root_element": "ndm",
+    "root_attributes": {
+     "noNamespaceSchemaLocation": "https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd"
+    },
+    "omm_count": 1,
+    "version_attributes": [
+     "2.0"
+    ],
+    "units_attributes_seen": {},
+    "format": "xml",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 5,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 1208
+   }
+  },
+  "fixtures/baseline-iss-five-formats/raw/iss.kvn": {
+   "tier": "live",
+   "format": "kvn",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=KVN",
+   "retrieved_at": "2026-09-21T00:09:47Z",
+   "http_status": 200,
+   "bytes": 636,
+   "sha256": "cc31f171ca83f1b7e0cc6209e13c2adeea863ed90bcc7d6cd94ce05930acec64",
+   "provenance": "live",
+   "record_count": 1,
+   "facts": {
+    "message_count": 1,
+    "max_line_length": 43,
+    "keyword_order_first_message": [
+     "CCSDS_OMM_VERS",
+     "CREATION_DATE",
+     "ORIGINATOR",
+     "OBJECT_NAME",
+     "OBJECT_ID",
+     "CENTER_NAME",
+     "REF_FRAME",
+     "TIME_SYSTEM",
+     "MEAN_ELEMENT_THEORY",
+     "EPOCH",
+     "MEAN_MOTION",
+     "ECCENTRICITY",
+     "INCLINATION",
+     "RA_OF_ASC_NODE",
+     "ARG_OF_PERICENTER",
+     "MEAN_ANOMALY",
+     "EPHEMERIS_TYPE",
+     "CLASSIFICATION_TYPE",
+     "NORAD_CAT_ID",
+     "ELEMENT_SET_NO",
+     "REV_AT_EPOCH",
+     "BSTAR",
+     "MEAN_MOTION_DOT",
+     "MEAN_MOTION_DDOT"
+    ],
+    "format": "kvn",
+    "record_count": 1,
+    "line_endings": {
+     "crlf": 28,
+     "lf": 0,
+     "bom": false
+    },
+    "bytes": 636
+   }
+  }
+ },
+ "records": [
+  {
+   "norad_cat_id": 25544,
+   "set": "iss-live",
+   "tier": "live",
+   "canonical": {
+    "norad_cat_id": 25544,
+    "object_name": "ISS (ZARYA)",
+    "object_id": "1998-067A",
+    "epoch": "2026-09-20T12:42:37.141056",
+    "mean_motion": "15.49196792",
+    "eccentricity": "0.00048259",
+    "inclination": "51.6308",
+    "ra_of_asc_node": "188.2246",
+    "arg_of_pericenter": "162.2847",
+    "mean_anomaly": "197.8311",
+    "bstar": "0.00015975118",
+    "mean_motion_dot": "0.00008422",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 58653
+   },
+   "canonical_source": "iss.csv",
+   "present_in": {
+    "iss.tle": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "iss.2le": {
+     "format": "tle",
+     "presence": {
+      "OBJECT_NAME": "empty",
+      "OBJECT_ID": "value"
+     }
+    },
+    "iss.csv": {
+     "format": "csv",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "iss.json": {
+     "format": "json",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "iss.pretty.json": {
+     "format": "json",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "iss.xml": {
+     "format": "xml",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    },
+    "iss.kvn": {
+     "format": "kvn",
+     "presence": {
+      "OBJECT_NAME": "value",
+      "OBJECT_ID": "value"
+     }
+    }
+   },
+   "omm_formats_agree": true,
+   "by_format": {
+    "tle": {
+     "differs_from_omm": {
+      "eccentricity": "0.0004825",
+      "bstar": "0.00015975"
+     },
+     "fields": {
+      "catalog_field": "25544",
+      "catalog_field_is_alpha5": false,
+      "intl_designator_field": "98067A  ",
+      "epoch_field": "26263.52959654",
+      "two_digit_year": "26",
+      "ndot_field": " .00008422",
+      "nddot_field": " 00000+0",
+      "bstar_field": " 15975-3",
+      "ephemeris_type_field": "0",
+      "element_set_field": " 999",
+      "ecc_field": "0004825",
+      "rev_field": "58653",
+      "checksum_written": [
+       "9",
+       "5"
+      ],
+      "checksum_computed": [
+       9,
+       5
+      ],
+      "checksums_valid": true,
+      "line_lengths": [
+       24,
+       69,
+       69
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "checks": [
+  {
+   "id": "omm-formats-agree",
+   "description": "For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them."
+  },
+  {
+   "id": "tle-values-match-omm-within-tle-precision",
+   "description": "The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution."
+  },
+  {
+   "id": "tle-checksums-valid",
+   "description": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0)."
+  },
+  {
+   "id": "two-digit-year-pivot",
+   "description": "TLE epoch years 57-99 map to 1957-1999 and 00-56 to 2000-2056; the resulting ISO epoch equals the OMM EPOCH string."
+  },
+  {
+   "id": "csv-json-omit-constant-metadata",
+   "description": "CelesTrak CSV/JSON carry no CENTER_NAME, REF_FRAME, TIME_SYSTEM or MEAN_ELEMENT_THEORY; parsers must default them (EARTH, TEME, UTC, SGP4) rather than fail."
+  },
+  {
+   "id": "xml-ndm-wrapper-omm-2.0",
+   "description": "CelesTrak XML has an <ndm> root containing one <omm> per record with id=CCSDS_OMM_VERS and version=2.0; CREATION_DATE and ORIGINATOR elements are present but empty."
+  },
+  {
+   "id": "kvn-blank-mandatory-values",
+   "description": "CelesTrak KVN writes CREATION_DATE and ORIGINATOR with blank values and blank OBJECT_ID for analyst objects; MEAN_ELEMENT_THEORY is 'SGP/SGP4'."
+  },
+  {
+   "id": "leading-dot-decimals",
+   "description": "CSV, KVN and XML values may start with '.' or '-.' (no leading zero) and use 'E' exponents; JSON carries numbers."
+  }
+ ],
+ "tests": [
+  "same-object-all-formats",
+  "2-digit-epoch-year",
+  "bstar-implicit-decimal"
+ ],
+ "coverage": {
+  "provides": [
+   "a current 5-digit object in every rendering",
+   "eccentricity with 8 OMM digits truncated to 7 in the TLE",
+   "BSTAR with 8 OMM digits rounded to 5 in the TLE"
+  ],
+  "gaps": [
+   "live source: a user's fetch returns a different epoch; only structural checks apply unless the SHA-256 matches"
+  ]
+ },
+ "ambiguities": [
+  {
+   "id": "ecc-truncation-vs-mantissa-rounding",
+   "text": "CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304/304 CelesTrak records reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0."
+  },
+  {
+   "id": "mmdot-convention",
+   "text": "CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (301/301 records), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6."
+  }
+ ],
+ "notes": [],
+ "sets": {
+  "iss-live": {
+   "tier": "live",
+   "files": [
+    "iss.tle",
+    "iss.2le",
+    "iss.csv",
+    "iss.json",
+    "iss.pretty.json",
+    "iss.xml",
+    "iss.kvn"
+   ],
+   "record_count": 1,
+   "record_filter": null,
+   "metadata_by_format": {
+    "iss.csv": {
+     "ccsds_omm_vers": null,
+     "center_name": null,
+     "creation_date": null,
+     "mean_element_theory": null,
+     "originator": null,
+     "ref_frame": null,
+     "time_system": null
+    },
+    "iss.json": {
+     "ccsds_omm_vers": null,
+     "center_name": null,
+     "creation_date": null,
+     "mean_element_theory": null,
+     "originator": null,
+     "ref_frame": null,
+     "time_system": null
+    },
+    "iss.kvn": {
+     "ccsds_omm_vers": "2.0",
+     "center_name": "EARTH",
+     "creation_date": null,
+     "mean_element_theory": "SGP/SGP4",
+     "originator": null,
+     "ref_frame": "TEME",
+     "time_system": "UTC"
+    },
+    "iss.pretty.json": {
+     "ccsds_omm_vers": null,
+     "center_name": null,
+     "creation_date": null,
+     "mean_element_theory": null,
+     "originator": null,
+     "ref_frame": null,
+     "time_system": null
+    },
+    "iss.xml": {
+     "ccsds_omm_vers": "2.0",
+     "center_name": "EARTH",
+     "creation_date": null,
+     "mean_element_theory": "SGP4",
+     "originator": null,
+     "ref_frame": "TEME",
+     "time_system": "UTC"
+    }
+   },
+   "metadata_uniform_across_records": true
+  }
+ },
+ "case_specific": {}
+}
