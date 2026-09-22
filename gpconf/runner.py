@@ -16,6 +16,9 @@ Parser protocol (duck-typed):
         alpha5_encode(n: int) -> str              raise for unencodable input
         two_digit_year(yy: str) -> int
         parse_epoch(text: str) -> datetime        raise for invalid input
+    optional hook used by the writer case (see gpconf/writer.py):
+        write_tle(record: dict) -> (line1, line2) | (line0, line1, line2)
+                                                  raise to refuse; refusing a number above 339999 is correct
 
 Two tiers: if the bytes on disk hash to the SHA-256 recorded when the corpus was built, the
 frozen expected values are the oracle ("snapshot"). Otherwise the oracle is the corpus's own
@@ -31,6 +34,7 @@ from decimal import Decimal, InvalidOperation, ROUND_DOWN
 
 from . import reference as ref
 from . import tle as tlemod
+from . import writer as W
 
 CORE_FIELDS = ["norad_cat_id", "epoch", "mean_motion", "eccentricity", "inclination", "ra_of_asc_node",
                "arg_of_pericenter", "mean_anomaly", "bstar", "mean_motion_dot", "mean_motion_ddot"]
@@ -707,6 +711,101 @@ class Runner:
         elif cid:
             res.add("catalog-number-is-integer", "skip", "vectors/norad-cat-id-text.json", "parser exposes no parse_catalog_id hook")
 
+    def run_writer(self, case, exp, res):
+        """Writer case: every record in expected.json is an input to write_tle; inputs the TLE format cannot
+        represent must be refused (that is the correct output); the rest must produce valid, decodable,
+        round-tripping lines. Inputs are inline, so the case runs without any fetched file."""
+        hook = getattr(self.parser, "write_tle", None)
+        if hook is None:
+            res.add("tle-writer-catalog-field", "skip", None, "parser exposes no write_tle hook")
+            return
+        lines_bad, cat_bad, rt_bad, emitted_bad, refused_ok = [], [], [], [], []
+        conv, sec, signs, prov = {}, {}, {}, {}
+        written, refused_real, rt_checked = 0, 0, 0
+        for it in exp["records"]:
+            cat, rec, ok_id = it["norad_cat_id"], it["canonical"], it["representable_in_tle"]
+            try:
+                out = hook(dict(rec))
+            except Unsupported:
+                res.add("tle-writer-catalog-field", "skip", None, "parser reports TLE writing unsupported")
+                return
+            except Exception as e:
+                if ok_id:
+                    refused_real += 1
+                    cat_bad.append(f"id {cat} refused although the TLE field can carry it: {type(e).__name__}: {str(e)[:120]}")
+                else:
+                    refused_ok.append(cat)
+                continue
+            try:
+                l0, l1, l2 = W.normalise_lines(out)
+            except Exception as e:
+                (lines_bad if ok_id else emitted_bad).append(f"id {cat}: {e}")
+                continue
+            if not ok_id:
+                emitted_bad.append(f"id {cat}: lines written instead of a refusal (line 1 columns 3-7 {l1[2:7]!r}, {len(l1)} characters)")
+                continue
+            written += 1
+            problems = W.check_lines(l1, l2)
+            if problems:
+                lines_bad.append(f"id {cat}: " + "; ".join(problems))
+            ok, detail = W.check_catalog_field(l1, l2, cat)
+            if not ok:
+                cat_bad.append(f"id {cat}: {detail}")
+            if len(l1) != 69 or len(l2) != 69:
+                continue  # the reader needs well-formed lines; the length failure is already recorded
+            rt_checked += 1
+            try:
+                mism, c = W.round_trip(l0, l1, l2, rec)
+                s = W.secondary_fields(l0, l1, l2, rec)
+            except Exception as e:
+                rt_bad.append(f"id {cat}: reference reader raised {type(e).__name__}: {str(e)[:120]}")
+                continue
+            if mism:
+                rt_bad.append(f"id {cat}: " + "; ".join(mism))
+            for f, k in c.items():
+                conv.setdefault(f, {})[k] = conv.setdefault(f, {}).get(k, 0) + 1
+            for f in W.SECONDARY_FIELDS:
+                sec.setdefault(f, {})[s[f]] = sec.setdefault(f, {}).get(s[f], 0) + 1
+            if s["zero_ddot_sign"]:
+                signs[s["zero_ddot_sign"]] = signs.get(s["zero_ddot_sign"], 0) + 1
+            if it.get("reference_tle_fields"):
+                for f, same in W.provider_field_matches(l1, l2, it["reference_tle_fields"]).items():
+                    p = prov.setdefault(f, [0, 0])
+                    p[0] += bool(same)
+                    p[1] += 1
+
+        def summary(fails, ok_text, n_ok, n_all, unit="record(s)"):
+            # a failing detail opens with what passed, so a failure confined to a few inputs cannot read as a general one
+            if not fails:
+                return ok_text
+            return f"{n_ok} of {n_all} {unit} correct; " + "; ".join(fails[:8]) + (" ..." if len(fails) > 8 else "")
+
+        n_real = written + refused_real
+        res.add("tle-checksums-valid", "fail" if lines_bad else "pass", None,
+                summary(lines_bad, f"{written} record(s) written as two 69-character lines with valid checksums", written - len(lines_bad), written))
+        res.add("tle-writer-catalog-field", "fail" if cat_bad else "pass", None,
+                summary(cat_bad, f"{written} catalog field(s) written correctly (five digits below 100000, Alpha-5 from 100000)",
+                        n_real - len(cat_bad), n_real, "catalog field(s)"))
+        conv_text = "; ".join(f"{f}: " + ", ".join(f"{k} {n}" for k, n in sorted(v.items())) for f, v in conv.items())
+        res.add("tle-writer-round-trip", "fail" if rt_bad else "pass", None,
+                summary(rt_bad, f"{written} record(s) read back at the TLE field resolution (rendering observed per field: {conv_text})",
+                        rt_checked - len(rt_bad), rt_checked))
+        unrep = [it["norad_cat_id"] for it in exp["records"] if not it["representable_in_tle"]]
+        if unrep:
+            head = f"{len(refused_ok)} of {len(unrep)} number(s) the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused"
+            if emitted_bad:
+                detail = head + (f" ({', '.join(map(str, refused_ok))})" if refused_ok else "") + "; written instead of refused: " + "; ".join(emitted_bad[:8])
+            else:
+                detail = head + f" ({', '.join(map(str, refused_ok))}); a refusal is the right output here, and such numbers belong in the OMM formats"
+            res.add("tle-writer-refuses-unencodable", "fail" if emitted_bad else "pass", None, detail)
+        if sec:
+            sec_text = "; ".join(f"{f}: " + ", ".join(f"{k} {n}" for k, n in sorted(v.items())) for f, v in sec.items())
+            sign_text = ", ".join(f"'{k}' {n}" for k, n in sorted(signs.items())) or "no zero second derivative written"
+            res.add("tle-writer-secondary-fields", "info", None, f"{sec_text}; zero second-derivative exponent sign: {sign_text} (CelesTrak writes +, Space-Track -)")
+        if prov:
+            res.add("tle-writer-matches-provider-rendering", "info", None,
+                    "byte-identical to the provider's or derived rendering: " + ", ".join(f"{f} {a}/{n}" for f, (a, n) in prov.items()))
+
     def run_case(self, case):
         exp = json.load(open(os.path.join(self.root, "fixtures", case["id"], "expected.json")))
         res = CaseResult(case["id"], case["title"])
@@ -724,6 +823,8 @@ class Runner:
                 self.run_satcat(case, exp, res)
             elif kind == "vectors":
                 self.run_vectors(case, exp, res)
+            elif kind == "writer":
+                self.run_writer(case, exp, res)
         except Exception as e:
             res.add("runner", "fail", None, f"internal error in runner: {type(e).__name__}: {e}")
         return res
@@ -742,12 +843,16 @@ class Runner:
 # --------------------------------------------------------------------------- external command adapter
 class CommandParser:
     """Runs an external program per file: raw bytes on stdin, JSON array of records on stdout.
-    The command may contain {fmt} and {path}. Non-zero exit or invalid JSON = parse failure."""
+    The command may contain {fmt} and {path}. Non-zero exit or invalid JSON = parse failure.
+    write_cmd (optional): one JSON record on stdin, the TLE lines on stdout (2 or 3 lines); exit 0 =
+    written, exit 3 = writing unsupported, any other non-zero exit = the record was refused."""
 
-    def __init__(self, cmd, vectors_cmd=None, timeout=120):
-        self.cmd, self.vectors_cmd, self.timeout = cmd, vectors_cmd, timeout
+    def __init__(self, cmd, vectors_cmd=None, timeout=120, write_cmd=None):
+        self.cmd, self.vectors_cmd, self.timeout, self.write_cmd = cmd, vectors_cmd, timeout, write_cmd
 
     def parse(self, raw, fmt):
+        if not self.cmd:
+            raise Unsupported(fmt)
         cmd = self.cmd.replace("{fmt}", fmt)
         p = subprocess.run(cmd, shell=True, input=raw, capture_output=True, timeout=self.timeout)
         if p.returncode == 3:
@@ -758,6 +863,16 @@ class CommandParser:
         if not isinstance(data, list):
             raise RuntimeError("stdout must be a JSON array of records")
         return data
+
+    def write_tle(self, record):
+        if not self.write_cmd:
+            raise Unsupported("tle-writing")
+        p = subprocess.run(self.write_cmd, shell=True, input=json.dumps(record, default=str).encode(), capture_output=True, timeout=self.timeout)
+        if p.returncode == 3:
+            raise Unsupported("tle-writing")
+        if p.returncode != 0:
+            raise RuntimeError(f"exit {p.returncode}: {p.stderr.decode('utf-8', 'replace')[-300:]}")
+        return p.stdout.decode("utf-8")
 
     def _vec(self, op, value):
         if not self.vectors_cmd:

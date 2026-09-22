@@ -47,6 +47,11 @@ CHECKS = {
     "optional-tle-parameters-may-be-absent": "EPHEMERIS_TYPE, CLASSIFICATION_TYPE, NORAD_CAT_ID, ELEMENT_SET_NO and REV_AT_EPOCH are Optional in CCSDS Table 4-3 and may be missing from a valid OMM.",
     "omm-version-3-accepted": "CCSDS_OMM_VERS 3.0 messages (with CLASSIFICATION and MESSAGE_ID in the header) are accepted alongside 2.0.",
     "sha256-matches-tested-snapshot": "If the user's fetched bytes hash to the recorded SHA-256, the frozen expected values apply exactly; otherwise only structural checks apply and the tool says so.",
+    "tle-writer-catalog-field": "A TLE writer puts the catalog number in columns 3-7 of both lines as five digits with leading zeros below 100000 and, from 100000 to 339999, as Alpha-5 (letter value 10-33, A=10 ... Z=33 with I and O never used, then the last four digits); both lines carry the same field.",
+    "tle-writer-round-trip": "The written lines, read back by the corpus reference reader, reproduce the record's epoch, mean motion, eccentricity, inclination, RA of ascending node, argument of pericenter, mean anomaly and BSTAR at each field's resolution, quantised by truncation or by rounding half up (CelesTrak truncates the eccentricity, Space-Track rounds it; either is accepted and the convention observed is reported).",
+    "tle-writer-refuses-unencodable": "A TLE catalog field cannot represent a number above 339999 (Z9999) or below 0, so the correct output for such a record is a refusal: an error and no lines. Those numbers belong in the OMM formats. The check passes when the writer refuses and fails when it writes lines with a six-digit, blank or otherwise invalid field.",
+    "tle-writer-secondary-fields": "Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information, never failed: orbit-fitting tools regenerate these fields by design.",
+    "tle-writer-matches-provider-rendering": "Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's CelesTrak-style derived line). Information only: an equivalent rendering under the other provider's convention is not a defect.",
 }
 
 AMBIGUITIES = {
@@ -270,5 +275,36 @@ CASES = [
         "coverage": {"provides": ["day-of-year epoch with Z", "bracketed units", "COMMENT and blank lines, irregular whitespace, TAB, LF endings", "OMM 3.0 header with optional TLE parameters omitted", "signed integers and lowercase exponent"],
                      "gaps": ["lowercase normative text values (7.5.3) and the 254-character line limit are not exercised", "no XML variants in this version"]},
         "ambiguities": ["leading-dot-decimals", "met-sgp-sgp4-vs-sgp4"],
+    },
+    {
+        # Writer-side case (added after v0.1.0; DECISIONS D-095..D-097). Must stay last: it reads the other
+        # cases' expected.json files, which make_expected.py writes earlier in the same run.
+        "id": "tle-writer-alpha5",
+        "evidence_basis": [
+            "Inputs are records already frozen in this corpus (the v0.1.0 expected values of stable-tier sources): the 604 derived Alpha-5 records (603 distinct ids, letters A and T), the first ISS record (1998 epoch, negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative BSTAR and first derivative) and the first record of analyst 81011 (blank international designator, empty OBJECT_ID). No new provider request and no new raw bytes.",
+            "Three inputs are synthetic-derived (PLAN.md section 2.1; owner approval 2026-09-22, DECISIONS D-096): the SARAMAGO first record with NORAD_CAT_ID replaced by 340000, 799501621 and -1, the values of vectors/alpha5.json encode_unrepresentable. The elements are real; the ids are specification vectors that no catalogued object carries. The correct output for them is a refusal.",
+            "The precision rule (a written field equals the input quantised at the field's resolution by truncation or by rounding half up) rests on the evidence of tle-vs-omm-precision-loss: CelesTrak truncates the eccentricity and rounds the mantissas (304/304 records), Space-Track rounds the eccentricity (D-070, D-071). A writer may follow either provider; the corpus reports which convention it observed.",
+        ],
+        "title": "Writing TLEs across the five-digit boundary: Alpha-5 catalog field, valid lines, refusal of numbers the format cannot carry, round trip",
+        "kind": "writer",
+        "inputs_from": [
+            {"case": "alpha5-tle-derived"},
+            {"case": "epoch-year-19xx", "set": "iss-first"},
+            {"case": "bstar-and-derivative-forms", "set": "gp-69999-first"},
+            {"case": "analyst-objects", "set": "analyst-81011-first"},
+        ],
+        "unrepresentable": {"from_case": "six-digit-omm-saramago", "set": "saramago-first", "vectors": "vectors/alpha5.json"},
+        "tests": ["alpha5-tle-writing", "alpha5-range", "tle-checksum"],
+        "checks": ["tle-checksums-valid", "tle-writer-catalog-field", "tle-writer-round-trip", "tle-writer-refuses-unencodable",
+                   "tle-writer-secondary-fields", "tle-writer-matches-provider-rendering"],
+        "coverage": {"provides": ["606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived lines carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)",
+                                  "a 1998 epoch, a negative first derivative, a non-zero second derivative, zero and negative BSTAR, a blank international designator, an empty OBJECT_ID",
+                                  "three numbers the TLE catalog field cannot represent (340000, 799501621, -1), for which the correct output is a refusal",
+                                  "provider-rendered field substrings for the three five-digit records and the CelesTrak-style derived fields for the 604 Alpha-5 records, for an information-only byte comparison"],
+                     "gaps": ["letters B-S and U-Z occur in no real catalog number; a writer's encoding of those letters is covered by the alpha5_encode vectors only",
+                              "no input has a BSTAR or second derivative with a positive exponent",
+                              "no rounding tie at the last kept digit occurs in the inputs, so half-up versus half-even rounding is not distinguished for writers either",
+                              "no output of an external tool is shipped; strf's rffit was exercised only at function level outside this repository (DECISIONS D-097) and has no adapter because it is an interactive X11 program"]},
+        "ambiguities": ["ecc-truncation-vs-mantissa-rounding"],
     },
 ]

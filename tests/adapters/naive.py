@@ -7,6 +7,7 @@ shortcuts so the runner's failures document what breaks in the migration:
   * classification assumed to be 'U'
   * KVN parsed as strict 'KEY = value' with float() on the value
   * every CelesTrak CSV/JSON column assumed present
+  * TLE written with the catalog number through an integer format (five digits assumed, never refused)
 """
 import csv
 import datetime as dt
@@ -96,6 +97,33 @@ class Parser:
             "ephemeris_type": int(f["EPHEMERIS_TYPE"]), "classification_type": f["CLASSIFICATION_TYPE"],
             "element_set_no": int(f["ELEMENT_SET_NO"]), "rev_at_epoch": int(f["REV_AT_EPOCH"]),
         }
+
+    def write_tle(self, record):
+        """The writer many projects have: printf-style fields, the catalog number as an integer."""
+        r = record
+        sat = f"{int(r['norad_cat_id']):05d}"                       # six digits above 99999; '-0001' for -1; never refuses
+        t = dt.datetime.strptime(str(r["epoch"])[:26], "%Y-%m-%dT%H:%M:%S.%f")
+        doy = (t - dt.datetime(t.year, 1, 1)).total_seconds() / 86400.0 + 1
+        epoch = f"{t.year % 100:02d}{doy:012.8f}"
+        oid = r.get("object_id") or ""
+        desig = (oid[2:4] + oid[5:]) if oid else ""
+
+        def exp(v):
+            v = float(v or 0)
+            if v == 0:
+                return " 00000-0"
+            m, e = f"{abs(v):.4e}".split("e")
+            return ("-" if v < 0 else " ") + m.replace(".", "") + f"{int(e) + 1:+d}"
+
+        ndot = float(r.get("mean_motion_dot") or 0)
+        nd = ("-" if ndot < 0 else " ") + f"{abs(ndot):.8f}"[1:]          # ' .00004770' / '-.00003657'
+        l1 = f"1 {sat}U {desig:<8} {epoch} {nd} {exp(r.get('mean_motion_ddot'))} {exp(r.get('bstar'))} 0 {int(r.get('element_set_no') or 0):4d}"
+        l2 = (f"2 {sat} {float(r['inclination']):8.4f} {float(r['ra_of_asc_node']):8.4f} {float(r['eccentricity']) * 1e7:07.0f} "
+              f"{float(r['arg_of_pericenter']):8.4f} {float(r['mean_anomaly']):8.4f} {float(r['mean_motion']):11.8f}{int(r.get('rev_at_epoch') or 0):5d}")
+
+        def cs(l):
+            return str(sum(int(c) if c.isdigit() else (c == "-") for c in l) % 10)
+        return l1 + cs(l1), l2 + cs(l2)
 
     def alpha5_decode(self, field):
         return int(field)  # breaks on any letter

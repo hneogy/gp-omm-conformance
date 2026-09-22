@@ -6,10 +6,13 @@ Alpha-5 TLEs, six- and nine-digit `NORAD_CAT_ID`s, and the CCSDS Orbit Mean-Elem
 
 It answers one question for a developer: **does my parser survive the migration?** You point it
 at your parser; it tells you, case by case, what breaks and why, with every expected value
-traceable to a provider response whose URL, retrieval time and SHA-256 are recorded.
+traceable to a provider response whose URL, retrieval time and SHA-256 are recorded. One case
+(`tle-writer-alpha5`) asks the same of code that *writes* TLEs: Alpha-5 in the catalog field,
+valid lines, and a refusal for the numbers the format cannot carry.
 
-Status: version `0.1.0`, audited (see `AUDIT.md`), prepared for publication. Maintainer: Honorius Neogy
-(NEOGY LLC).
+Status: version `0.2.0`, which adds the writer-side case; the sixteen cases of v0.1.0 and their
+expected values are unchanged. The independent audit (`AUDIT.md`) covered v0.1.0; the writer-side case
+has not been separately audited. Maintainer: Honorius Neogy (NEOGY LLC).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22867654.svg)](https://doi.org/10.5281/zenodo.22867654) See `DECISIONS.md` for the full decision log and `MANIFEST.md` for every case,
 source and known gap.
@@ -52,19 +55,24 @@ default format has been CSV since 2026-05-09.
    (the ndot/2 convention).
 9. Storing the catalog number as an Alpha-5 string internally: python-sgp4 cannot load any
    nine-digit record, and such records are live (18 SDS launch nominals in CelesTrak SupGP).
+10. Writing a TLE with the catalog number through an integer format (`%05d`, `f"{n:05d}"`):
+    above 99999 that yields six digits, a 70-character line and a checksum over shifted columns.
+    The field must be Alpha-5 from 100000, and a number above 339999 cannot be written as a TLE
+    at all: the correct output is a refusal, and the record belongs in an OMM format.
 
 **What to change.** Parse the catalog number as an integer from any source; decode Alpha-5
 strictly (reject I, O, lowercase) if you read Space-Track TLEs; treat empty `OBJECT_ID` and
 `OBJECT_NAME` as legitimate; default the constant metadata; accept all CCSDS epoch forms;
 tolerate unknown keys and non-`U` classifications; compare TLE and OMM under the precision
 rules; treat a TLE 404 as "unrepresentable in this format", not as an outage; and prefer the
-OMM formats, which are what both providers say the future is.
+OMM formats, which are what both providers say the future is. When writing TLEs, encode the
+catalog number as Alpha-5 above 99999 and refuse numbers above 339999 (or below 0).
 
 ## What is in the corpus, and what is not
 
 | in the repository | not in the repository |
 |---|---|
-| `fixtures/<case>/expected.json`: frozen expected values and structural checks for 16 cases, all numbers as decimal strings | raw CelesTrak responses (`fixtures/<case>/raw/`): rebuilt on your machine by `tools/fetch.py` under CelesTrak's own usage policy |
+| `fixtures/<case>/expected.json`: frozen expected values and structural checks for 17 cases, all numbers as decimal strings | raw CelesTrak responses (`fixtures/<case>/raw/`): rebuilt on your machine by `tools/fetch.py` under CelesTrak's own usage policy |
 | `fixtures/<case>/case.md`: what the case tests, how to read a failure, coverage gaps stated per case | Space-Track data, in any form (a `.gitignore` guard refuses such paths) |
 | `derived/`: Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T only), six CCSDS-legal KVN variants, each with a provenance sidecar | invented element sets: none, anywhere |
 | `vectors/`: specification vectors (Alpha-5 table, catalog-id text forms, two-digit-year pivot, CCSDS epoch strings) | |
@@ -83,7 +91,7 @@ you whether you are looking at the exact bytes we tested.
 ```bash
 git clone https://github.com/hneogy/gp-omm-conformance.git && cd gp-omm-conformance
 python3 tools/fetch.py            # once: ~60 requests, ~12.6 MB, 2 s apart, cached, never repeated
-python3 -m gpconf run --adapter tests.adapters.reference:Parser   # the control: 16 cases pass
+python3 -m gpconf run --adapter tests.adapters.reference:Parser   # the control: 17 cases pass
 python3 -m gpconf run --adapter tests.adapters.naive:Parser       # the parser most projects have
 ```
 
@@ -99,6 +107,25 @@ stdout, `{fmt}` substituted, exit code 3 for an unsupported format):
 ```bash
 python3 -m gpconf run --cmd "mytool --input-format {fmt}"
 ```
+
+A TLE writer is driven the same way: `--write-cmd "mytool --emit-tle"` receives one JSON record
+on stdin and must print the two (or three) TLE lines; exit code 3 marks writing as unsupported,
+and any other non-zero exit is a refusal, which is the correct output for a catalog number the TLE
+field cannot represent.
+
+If the writer cannot be wrapped at all (an interactive program such as strf's `rffit`, which
+satno2tle drives), check the file it wrote instead. The format checks need nothing else; the
+round trip needs the source records the lines were written from:
+
+```bash
+python3 -m gpconf check-tle output.tle                          # lines, checksums, catalog field
+python3 -m gpconf check-tle output.tle --against records.csv    # plus the round trip, per record
+```
+
+Name lines, `#` comment lines (rffit's trailer) and LF or CRLF endings are accepted; a six-digit
+number in the catalog columns is reported with the Alpha-5 form it should have had, and a number the
+format cannot carry with the statement that a refusal was the correct output. Exit code 1 on any
+failure or when no record is found.
 
 `python3 -m gpconf list` prints the cases and their tags; `--case ID` and `--tag TAG` select.
 
@@ -131,8 +158,8 @@ Each source in the manifest is `stable` or `live`.
 
 ## Writing an adapter
 
-An adapter is any object with a `parse` method; the four hooks are optional and only feed the
-vector case.
+An adapter is any object with a `parse` method; the hooks are optional: four feed the vector
+case and `write_tle` feeds the writer case.
 
 ```python
 from gpconf.runner import Unsupported
@@ -159,13 +186,20 @@ class Parser:
     def alpha5_encode(self, n: int) -> str: ...
     def two_digit_year(self, yy: str) -> int: ...
     def parse_epoch(self, text: str): ...     # return a datetime, raise on invalid input
+    def write_tle(self, record: dict): ...    # -> (line1, line2) or (line0, line1, line2); raise to refuse
 ```
 
 Values may be strings, `Decimal`, `int` or `float`. The eleven core fields must be present in
 every record; optional fields are compared when you return them. `mean_motion_dot` and
 `mean_motion_ddot` are expected in the TLE convention (rev/day² and rev/day³ as printed). The
 fifth hook, `parse_catalog_id(text) -> int`, feeds the catalog-id text vectors, which include
-nine-digit values.
+nine-digit values. `write_tle(record)` receives a record with the same keys as `parse()` returns
+and must return the TLE lines it writes; raise for a record it cannot write. For a catalog number
+above 339999 or below 0 a refusal is the correct output, and the runner reports it as a pass. The
+written lines are read back by the corpus's reference reader and must equal the record at each
+field's resolution, by truncation or by rounding half up (both provider conventions exist); the
+runner reports which convention it saw, and reports separately, without failing, how the writer
+treated the derivatives, element set, revolution and name.
 
 ### Tolerances, and how they are reported
 
@@ -182,7 +216,7 @@ Everything else is exact. A check that passed only because of a tolerance is rep
 difference and maximum, so a systematic sub-tolerance bias is visible instead of hidden. The
 reference adapter must be exact; the test suite enforces that.
 
-## The sixteen cases
+## The seventeen cases
 
 | case | what it covers |
 |---|---|
@@ -202,6 +236,7 @@ reference adapter must be exact; the test suite enforces that.
 | `alpha5-encoding-vectors` | the Space-Track table, official examples, boundaries, invalid inputs |
 | `alpha5-tle-derived` | 604 derived Alpha-5 lines (letters A and T) from real CelesTrak records |
 | `kvn-syntax-variants` | six CCSDS-legal KVN renderings CelesTrak never emits |
+| `tle-writer-alpha5` | writer side: 606 frozen records (603 Alpha-5 ids, three five-digit) written through `write_tle`, plus three numbers the TLE field cannot carry, for which a refusal is the correct output |
 
 Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case>/case.md`.
 
@@ -225,6 +260,10 @@ Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case
 - Stability of CelesTrak's `gp-first.php` over time is assumed, not yet observed; `tools/fetch.py`
   compares every fetched file with the manifest after each run and reports `DRIFT` for stable
   sources whose bytes changed.
+- The writer case's inputs are the corpus's own frozen records; no output of an external tool is
+  shipped. strf's `rffit` (the writer behind satno2tle) was exercised at function level only, in a
+  scratch build outside the repository, and has no adapter because it is an interactive X11 program
+  (`DECISIONS.md` D-097).
 
 ## Library behaviour found while building the corpus
 
@@ -241,6 +280,46 @@ Documented in `docs/CROSSCHECK.md`, with draft upstream reports in `docs/upstrea
 - python-sgp4's `omm.initialize` sets the classification and then `sgp4init` resets it to `U`,
   so CelesTrak supplemental records (`C`) come back as `U`; and its Alpha-5 decoder accepts
   `I`, `O`, lowercase and four-character input that Space-Track's definition excludes.
+- As a writer, python-sgp4's `export_tle` encodes Alpha-5 correctly and `omm.initialize` refuses
+  340000 and nine-digit numbers, the correct output for a TLE writer; `to_alpha5(-1)` still yields
+  `-0001`, so a negative number is written rather than refused.
+
+## Writer-side tools
+
+The writer case (`tle-writer-alpha5`) and `check-tle` exist because every newly catalogued object
+needs an Alpha-5 field and amateur tools generate TLEs for new launches. Three writers were run
+(`docs/FAILURES.md`): the corpus's own renderer passes every check; a writer that formats the catalog
+number as an integer fails every Alpha-5 input; python-sgp4 2.27's `export_tle` passes every real
+record and refuses 340000 and nine-digit numbers, failing only the synthetic -1 vector.
+
+strf's `rffit`, the writer behind satno2tle, could not be built here and is interactive, so it has no
+adapter; its two formatting functions were exercised unmodified in an isolated build outside the
+repository. Tested at function level: correct Alpha-5 across the representable range and valid lines
+for real records; above 339999 no range check, so the lines carry a blank catalog field, on a route only
+the interactive Satellite ID entry takes and that no real catalog number reaches today. Labels, details
+and the reproduction recipe are in `docs/WRITERS.md`. No bug is claimed for the binary; a short
+hardening suggestion is drafted in `docs/upstream/strf-number-to-alpha5-range-check.md` and has not
+been sent. Users of rffit or satno2tle can check the file it wrote with `python3 -m gpconf check-tle`.
+
+## Upstream
+
+Status of the findings above with python-sgp4, as of 2026-09-21:
+
+- **Empty `<OBJECT_ID/>` import failure**: filed by the maintainer of this corpus as
+  [brandon-rhodes/python-sgp4#171](https://github.com/brandon-rhodes/python-sgp4/issues/171)
+  (draft and prepared patch in `docs/upstream/`).
+- **Nine-digit `NORAD_CAT_ID` rejected**: independently reported before this corpus existed as
+  [#169](https://github.com/brandon-rhodes/python-sgp4/issues/169), with
+  [PR #170](https://github.com/brandon-rhodes/python-sgp4/pull/170) open. Not filed again. PR #170
+  at head `5e4f308` was tested locally against all sixteen cases on both the accelerated and the
+  pure-Python build: it adds two tests and no library code change, the nine-digit reproducer still
+  raises, and the runner results are identical to the 2.27 baseline (0 fixed, 0 regressions). The
+  test report is in `docs/upstream/pr170-test-comment.md` (DECISIONS D-088).
+- **`export_tle` zero second derivative** (` 00000-0`): not a library defect, not filed (D-072).
+- **`omm.initialize` classification reset to `U`**: draft note only, not filed.
+
+For strf, `docs/upstream/strf-number-to-alpha5-range-check.md` holds a hardening suggestion, not a
+bug report, drafted 2026-09-22 and not sent (D-101).
 
 ## Verifying the derived Alpha-5 lines against Space-Track yourself
 
@@ -332,9 +411,10 @@ makes this data freely available; please respect its usage policy. Standards: CC
 Alpha-5 definition: Space-Track, https://www.space-track.org/documentation.
 
 To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, H. (NEOGY LLC).
-gp-omm-conformance, version 0.1.0, 2026-09-21, https://github.com/hneogy/gp-omm-conformance.*
+gp-omm-conformance, version 0.2.0, 2026-09-22, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655) refers to exactly v0.1.0; use
-it when your results depend on a specific set of expected values. Each later release gets its own
-version DOI under the same concept DOI.
+general. The **version DOI** [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655) refers to exactly v0.1.0; v0.2.0
+receives its own version DOI when the release is archived, and it is added here and to `CITATION.cff`
+then. Use a version DOI when your results depend on a specific set of expected values; each release
+gets its own under the same concept DOI.

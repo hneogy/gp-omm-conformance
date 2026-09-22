@@ -1,6 +1,12 @@
 # Draft bug report: `sgp4.omm.initialize` (and Skyfield `EarthSatellite.from_omm`) reject nine-digit NORAD_CAT_IDs that CelesTrak publishes
 
-Status: draft, not yet filed. Target: brandon-rhodes/python-sgp4 (Skyfield inherits the behaviour).
+Status: **superseded, not to be filed.** The same defect was independently reported upstream on 2026-08-20 as
+[brandon-rhodes/python-sgp4#169](https://github.com/brandon-rhodes/python-sgp4/issues/169) ("Support OMM NORAD catalog
+numbers beyond the Alpha-5 range"), and a pull request addressing it has been open since 2026-09-01:
+[brandon-rhodes/python-sgp4#170](https://github.com/brandon-rhodes/python-sgp4/pull/170). Discovered during the
+duplicate search before filing #171 (DECISIONS D-086, D-087). The text below is kept as the corpus's record of the
+evidence; the corpus's contribution upstream is a test report on PR #170 (`docs/upstream/pr170-test-comment.md`),
+not a new issue. Target was brandon-rhodes/python-sgp4 (Skyfield inherits the behaviour).
 
 ## Environment
 

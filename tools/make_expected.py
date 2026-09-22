@@ -368,13 +368,87 @@ def build_derived_kvn(case, out_sources, out_records):
                             "kvn": r.get("kvn")})
 
 
+REFERENCE_TLE_FIELD_KEYS = ["catalog_field", "epoch_field", "ndot_field", "nddot_field", "bstar_field", "ecc_field",
+                            "element_set_field", "rev_field", "intl_designator_field"]
+
+
+def build_writer(case, out_sources, out_records, out_notes, case_specific):
+    """Writer-case inputs: canonical records copied from the frozen expected.json of stable-tier sets of other
+    cases (no fetch, no raw bytes), plus the owner-approved synthetic-derived refusal inputs (D-096)."""
+    seen, letters, five_digit, files = set(), {}, [], {}
+    for spec in case["inputs_from"]:
+        e = json.load(open(os.path.join(ROOT, "fixtures", spec["case"], "expected.json")))
+        for r in e["records"]:
+            if spec.get("set") and r.get("set") != spec["set"]:
+                continue
+            if r.get("tier") != "stable":
+                PROBLEMS.append(f"writer input {spec['case']} id {r['norad_cat_id']}: not a stable-tier record; only frozen records may be inputs")
+                continue
+            cat = r["norad_cat_id"]
+            if cat in seen:
+                continue
+            seen.add(cat)
+            if r.get("derived_file"):
+                from_file = next(p for p in e["sources"] if os.path.basename(p) == r["derived_file"])
+                src_file, rendering = r["source_file"], "celestrak-style-derived-line"
+            else:
+                from_file = next(p for p in e["sources"] if os.path.basename(p) == r["canonical_source"])
+                src_file, rendering = from_file, "celestrak-tle"
+            files.setdefault(from_file, spec["case"])
+            files.setdefault(src_file, spec["case"])
+            entry = {"norad_cat_id": cat, "role": "input", "provenance": "derived", "tier": "stable",
+                     "derived_from": f"fixtures/{spec['case']}/expected.json: frozen canonical values of a stable-tier source (v0.1.0)",
+                     "from_case": spec["case"], "from_file": from_file, "source_file": src_file,
+                     "source_sha256": meta_for(src_file).get("sha256"), "canonical": r["canonical"],
+                     "representable_in_tle": True, "expected_catalog_field": R.to_alpha5(cat), "reference_rendering": rendering}
+            fields = (r.get("by_format") or {}).get("tle", {}).get("fields")
+            if fields:
+                entry["reference_tle_fields"] = {k: v for k, v in fields.items() if k in REFERENCE_TLE_FIELD_KEYS}
+            out_records.append(entry)
+            if cat >= 100000:
+                letters[entry["expected_catalog_field"][0]] = letters.get(entry["expected_catalog_field"][0], 0) + 1
+            else:
+                five_digit.append(cat)
+    n_frozen = len(out_records)
+    u = case["unrepresentable"]
+    e = json.load(open(os.path.join(ROOT, "fixtures", u["from_case"], "expected.json")))
+    base = next(r for r in e["records"] if r.get("set") == u["set"])
+    base_file = next(p for p in e["sources"] if os.path.basename(p) == base["canonical_source"])
+    files.setdefault(base_file, u["from_case"])
+    vec = json.load(open(os.path.join(ROOT, u["vectors"])))
+    for v in vec["encode_unrepresentable"]:
+        n = v["norad_cat_id"]
+        rec = dict(base["canonical"])
+        rec["norad_cat_id"] = n
+        out_records.append({"norad_cat_id": n, "role": "input", "provenance": "synthetic-derived", "tier": "stable",
+                            "from_case": u["from_case"], "from_file": base_file, "source_file": base_file,
+                            "source_sha256": e["sources"][base_file]["sha256"],
+                            "synthetic_change": {"field": "NORAD_CAT_ID", "from": base["norad_cat_id"], "to": n,
+                                                 "vector_source": f"{u['vectors']} encode_unrepresentable", "reason": v["reason"]},
+                            "canonical": rec, "representable_in_tle": False, "expected_catalog_field": None, "expected_behaviour": "refuse",
+                            "note": "The TLE catalog field cannot represent this number, so a refusal (an error, no lines) is the correct output; the OMM formats carry it. "
+                                    "Real elements with a vector id: no catalogued object carries this number. Owner approval 2026-09-22 (DECISIONS D-096)."})
+    for path in sorted(files):
+        fmt, recs, _ = gpref.read_file(os.path.join(ROOT, path))
+        out_sources[path] = source_entry(path, "stable", fmt=fmt, record_count=len(recs))
+    case_specific.update({
+        "inputs": {"frozen_records": n_frozen, "synthetic_derived": len(vec["encode_unrepresentable"]), "alpha5_letters": letters, "five_digit_ids": five_digit},
+        "writer_protocol": "write_tle(record) -> (line1, line2) or (line0, line1, line2); raise to refuse. External: --write-cmd, one JSON record on stdin, the lines on stdout, exit 3 = unsupported, other non-zero = refused.",
+        "precision_rule": "A written element field equals the input quantised at the TLE field's resolution (epoch 1e-8 day; mean motion 8 decimals; angles 4; eccentricity 7 digits; BSTAR 5-digit mantissa) by truncation or by rounding half up; the convention observed is reported per field. Refusing a catalog number above 339999 or below 0 is the correct output.",
+    })
+    out_notes.append(f"{n_frozen} frozen input records ({sum(letters.values())} Alpha-5, {len(five_digit)} five-digit) and {len(vec['encode_unrepresentable'])} synthetic-derived refusal inputs.")
+
+
 def main():
+    wanted = set(sys.argv[1:])  # optional case ids: rebuild only those files, leaving the others' frozen values untouched
     xmlval = {}
     xp = os.path.join(ROOT, "tools", "_out", "xml-validation.json")
     if os.path.exists(xp):
         xmlval = json.load(open(xp))
     mm_pairs = next(c for c in CASES if c["id"] == "mean-motion-derivative-convention")["pairs"]
     for case in CASES:
+        if wanted and case["id"] not in wanted:
+            continue
         out = {"case": case["id"], "title": case["title"], "schema_version": "1.0", "generated_at": NOW, "generator": "tools/make_expected.py",
                "kind": case["kind"], "sources": {}, "records": [], "checks": [{"id": c, "description": CHECKS[c]} for c in case["checks"]],
                "tests": case["tests"], "coverage": case["coverage"],
@@ -424,6 +498,8 @@ def main():
             build_derived_tle(case, out["sources"], out["records"])
         elif kind == "derived-kvn":
             build_derived_kvn(case, out["sources"], out["records"])
+        elif kind == "writer":
+            build_writer(case, out["sources"], out["records"], out["notes"], out["case_specific"])
         d = os.path.join(ROOT, "fixtures", case["id"])
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(d, "expected.json"), "w") as f:

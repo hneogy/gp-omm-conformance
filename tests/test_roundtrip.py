@@ -14,15 +14,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from gpconf import reference as ref  # noqa: E402
 from gpconf import tle as T  # noqa: E402
-
-
-def omm_fields(r):
-    return {"OBJECT_NAME": r["object_name"] or "", "OBJECT_ID": r["object_id"] or "", "EPOCH": r["epoch"],
-            "MEAN_MOTION": r["mean_motion"], "ECCENTRICITY": r["eccentricity"], "INCLINATION": r["inclination"],
-            "RA_OF_ASC_NODE": r["ra_of_asc_node"], "ARG_OF_PERICENTER": r["arg_of_pericenter"], "MEAN_ANOMALY": r["mean_anomaly"],
-            "EPHEMERIS_TYPE": str(r["ephemeris_type"]), "CLASSIFICATION_TYPE": r["classification_type"],
-            "NORAD_CAT_ID": str(r["norad_cat_id"]), "ELEMENT_SET_NO": str(r["element_set_no"]), "REV_AT_EPOCH": str(r["rev_at_epoch"]),
-            "BSTAR": r["bstar"], "MEAN_MOTION_DOT": r["mean_motion_dot"], "MEAN_MOTION_DDOT": r["mean_motion_ddot"]}
+from gpconf.tle import omm_fields_from_record as omm_fields  # noqa: E402  (shared with the writer case)
 
 
 def files():

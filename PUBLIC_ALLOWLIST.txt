@@ -4,6 +4,7 @@
 # scrubs SupGP-derived snapshot values out of expected.json on the way out (tools/public_scrub.py).
 LICENSE
 README.md
+CHANGELOG.md
 AUDIT.md
 CITATION.cff
 CLAUDE.md
@@ -15,6 +16,7 @@ pyproject.toml
 .gitignore
 .github/workflows/ci.yml
 docs/CROSSCHECK.md
+docs/WRITERS.md
 docs/FAILURES.md
 docs/PLAN.md
 docs/RESEARCH.md

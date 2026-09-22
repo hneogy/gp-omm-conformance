@@ -30,6 +30,11 @@ class Parser:
             out.append(d)
         return out
 
+    def write_tle(self, record):
+        # the corpus's own renderer (CelesTrak conventions: eccentricity truncated, mantissas rounded half up);
+        # to_alpha5 raises for a catalog number the TLE field cannot carry, which is the correct answer
+        return tlemod.render(tlemod.omm_fields_from_record(record), mantissa_mode="round", ecc_mode="truncate")
+
     def alpha5_decode(self, field):
         if len(field) != 5 or field != field.strip():
             raise ValueError("field must be five characters")

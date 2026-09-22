@@ -33,7 +33,7 @@ class ReferenceAdapterTests(unittest.TestCase):
     def test_offline_cases_pass_without_raw_files(self):
         # cases whose sources are all shipped (derived/, vectors/) must pass even when fixtures/*/raw is absent
         for r in self.results:
-            if r.case_id in ("alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants"):
+            if r.case_id in ("alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "tle-writer-alpha5"):
                 self.assertEqual(r.status, "pass", r.case_id)
 
 
@@ -45,7 +45,7 @@ class NaiveAdapterTests(unittest.TestCase):
 
     def test_expected_failures(self):
         must_fail = ["alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "six-digit-omm-saramago",
-                     "analyst-objects", "supgp-celestrak-classification-c"]
+                     "analyst-objects", "supgp-celestrak-classification-c", "tle-writer-alpha5"]
         for c in must_fail:
             if self.by_id[c].status == "skip":  # sources not fetched in this checkout
                 continue

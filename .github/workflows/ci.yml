@@ -14,5 +14,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m unittest discover -s tests -t . -v
-      - run: python -m gpconf run --adapter tests.adapters.reference:Parser --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants
-      - run: python -m gpconf run --adapter tests.adapters.naive:Parser --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants || test $? -eq 1
+      - run: python -m gpconf run --adapter tests.adapters.reference:Parser --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5
+      - run: python -m gpconf run --adapter tests.adapters.naive:Parser --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 || test $? -eq 1

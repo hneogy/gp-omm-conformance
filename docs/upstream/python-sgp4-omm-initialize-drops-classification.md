@@ -40,3 +40,14 @@ print(sat.classification)   # 'U'  (expected 'C')
 
 Assign `classification` (and any other descriptive attributes) after `sgp4init`, or make
 `sgp4init` leave them untouched.
+
+## Related: the TLE path differs between builds (added 2026-09-21)
+
+While testing PR #170 (D-088) the corpus was also run on a pure-Python build of 2.27
+(`PYTHON_SGP4_COMPILE=never`). There `Satrec.twoline2rv` shows the same behaviour as
+`omm.initialize`: `sgp4/io.py` sets `classification` from column 8 and `Satrec.sgp4init`
+(`sgp4/model.py`, `self.classification = 'U'`) resets it, so a `C` line comes back as `U`. The
+accelerated `twoline2rv` preserves the `C`. Result: the corpus's supplemental-classification case
+has 6 failing items on the accelerated build and 8 on the pure-Python build, for the same library
+version. The two builds should agree; whichever way this is resolved upstream, the OMM path and the
+pure-Python TLE path should keep the parsed value.

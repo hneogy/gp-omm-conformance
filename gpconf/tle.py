@@ -115,6 +115,31 @@ def intl_designator(object_id):
     return (yyyy[2:] + rest).ljust(8)[:8]
 
 
+RECORD_TO_OMM = [("object_name", "OBJECT_NAME"), ("object_id", "OBJECT_ID"), ("epoch", "EPOCH"),
+                 ("mean_motion", "MEAN_MOTION"), ("eccentricity", "ECCENTRICITY"), ("inclination", "INCLINATION"),
+                 ("ra_of_asc_node", "RA_OF_ASC_NODE"), ("arg_of_pericenter", "ARG_OF_PERICENTER"), ("mean_anomaly", "MEAN_ANOMALY"),
+                 ("ephemeris_type", "EPHEMERIS_TYPE"), ("classification_type", "CLASSIFICATION_TYPE"), ("norad_cat_id", "NORAD_CAT_ID"),
+                 ("element_set_no", "ELEMENT_SET_NO"), ("rev_at_epoch", "REV_AT_EPOCH"), ("bstar", "BSTAR"),
+                 ("mean_motion_dot", "MEAN_MOTION_DOT"), ("mean_motion_ddot", "MEAN_MOTION_DDOT")]
+
+
+def omm_fields_from_record(rec):
+    """A record in the runner's key names (parse() output, expected.json 'canonical') -> OMM keyword text
+    as an OMM producer would write it, ready for render(). None becomes ''; a datetime epoch becomes ISO text."""
+    out = {}
+    for key, kw in RECORD_TO_OMM:
+        v = rec.get(key)
+        if v is None:
+            out[kw] = ""
+        elif isinstance(v, dt.datetime):
+            out[kw] = v.strftime("%Y-%m-%dT%H:%M:%S.%f")
+        elif isinstance(v, float):
+            out[kw] = repr(v)
+        else:
+            out[kw] = str(v)
+    return out
+
+
 def render(rec, *, catnum_field=None, mantissa_mode="truncate", ecc_mode="truncate",
            epoch_rounding=ROUND_HALF_UP, name_mode="pad24"):
     """rec: dict of OMM keyword -> text (CSV/KVN/XML text values). Returns (line0, line1, line2)."""

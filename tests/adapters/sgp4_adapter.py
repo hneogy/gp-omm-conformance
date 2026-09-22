@@ -1,14 +1,16 @@
-"""python-sgp4 adapter (optional dependency). TLE via twoline2rv; CSV/XML/JSON via sgp4.omm; KVN unsupported.
+"""python-sgp4 adapter (optional dependency). TLE via twoline2rv; CSV/XML/JSON via sgp4.omm; KVN unsupported;
+TLE writing via omm.initialize + exporter.export_tle.
 Exposes the library's behaviour as-is, including the failures documented in docs/upstream/."""
 import io
 import json
 import math
 
 from gpconf.runner import Unsupported
+from gpconf import tle as tlemod
 
 try:
     from sgp4.api import Satrec
-    from sgp4 import omm
+    from sgp4 import omm, exporter
     from sgp4.conveniences import sat_epoch_datetime
     from sgp4.alpha5 import from_alpha5, to_alpha5
 except ImportError as e:  # pragma: no cover
@@ -52,6 +54,12 @@ class Parser:
             r["object_id"] = fields.get("OBJECT_ID") or None
             out.append(r)
         return out
+
+    def write_tle(self, record):
+        # omm.initialize raises ValueError for a catalog number above 339999: the correct answer for the writer case
+        s = Satrec()
+        omm.initialize(s, tlemod.omm_fields_from_record(record))
+        return exporter.export_tle(s)
 
     def alpha5_decode(self, field):
         return from_alpha5(field)

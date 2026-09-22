@@ -14,7 +14,7 @@ parsers were run:
 A failure here is a statement about the parser, not about the corpus: the reference parser
 passes every case. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
 
-Generated 2026-09-21T03:16:37Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-21T03:16:36Z with gpconf 0.1.0.dev0 on corpus 0.1.0.dev0 (parser tests.adapters.reference:Parser); naive: run 2026-09-21T03:16:36Z with gpconf 0.1.0.dev0 on corpus 0.1.0.dev0 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-21T03:16:37Z with gpconf 0.1.0.dev0 on corpus 0.1.0.dev0 (parser tests.adapters.sgp4_adapter:Parser).
+Generated 2026-09-22T23:31:15Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-22T23:31:13Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.reference:Parser); naive: run 2026-09-22T23:31:14Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-22T23:31:15Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.sgp4_adapter:Parser).
 
 ## Status by case
 
@@ -36,6 +36,7 @@ Generated 2026-09-21T03:16:37Z by `tools/make_failures.py` from the runner repor
 | `alpha5-encoding-vectors` | pass (0 fail) | fail (4 fail) | fail (2 fail) |
 | `alpha5-tle-derived` | pass (0 fail) | fail (4 fail) | pass-tolerance (0 fail) |
 | `kvn-syntax-variants` | pass (0 fail) | fail (4 fail) | skip (0 fail) |
+| `tle-writer-alpha5` | pass (0 fail) | fail (3 fail) | fail (1 fail) |
 
 ## Naive parser: what failed and why
 
@@ -115,6 +116,13 @@ Generated 2026-09-21T03:16:37Z by `tools/make_failures.py` from the runner repor
 - **parse** (v04-comments-blank-lines-whitespace-LF.kvn): parser raised ValueError: not enough values to unpack (expected 2, got 1)
 - **parse** (v05-omm-3.0-header-optional-keywords-omitted.kvn): parser raised KeyError: 'NORAD_CAT_ID'
 
+### `tle-writer-alpha5`
+
+- **tle-checksums-valid** (set): 3 of 606 record(s) correct; id 100000: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 270449: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100404: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100405: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100406: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100407: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100408: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100409: line 1 is 70 character
+- **tle-writer-catalog-field** (set): 3 of 606 catalog field(s) correct; id 100000: field '10000' written for 100000 (expected 'A0000'; decodes to 10000); id 270449: field '27044' written for 270449 (expected 'T0449'; decodes to 27044); id 100404: field '10040' written for 100404 (expected 'A0404'; decodes to 10040); id 100405: field '10040' written for 100405 (expected 'A0405'; decodes to 10040); id 100406: field '10040' written for 100406 (expected 'A0406'; decodes to 10040); id 100407: field '10040' written for 100407 (expected 'A0407'; decodes to 10040); id 100408: field '10040' written for 100408 (expected 'A0408'; decodes to
+- **tle-writer-refuses-unencodable** (set): 0 of 3 number(s) the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused; written instead of refused: id 340000: lines written instead of a refusal (line 1 columns 3-7 '34000', 70 characters); id 799501621: lines written instead of a refusal (line 1 columns 3-7 '79950', 73 characters); id -1: lines written instead of a refusal (line 1 columns 3-7 '-0001', 69 characters)
+- passed: **tle-writer-round-trip** (606 record(s) read back at the TLE field resolution (rendering observed per field: epoch: exact 3; mean_motion: exact 3; eccentricity: exact 2, quantised 1; inclination: exact 3; ra_of_asc_node: exact 3; arg_of_pericente)
+
 
 ## python-sgp4 2.27 through sgp4.omm / twoline2rv: what failed and why
 
@@ -145,9 +153,15 @@ Generated 2026-09-21T03:16:37Z by `tools/make_failures.py` from the runner repor
 - **alpha5-decode** (alpha5.json): I0000 accepted as 180000 (should be rejected: letter I is never used); O1234 accepted as 231234 (should be rejected: letter O is never used); a0000 accepted as 400000 (should be rejected: lowercase is not defined by Space-Track; a lenient decoder that accepts it disagrees with a strict one); A000 accepted as 100000 (should be rejected: field must be five characters)
 - **alpha5-encode** (alpha5.json): -1 encoded as '-0001' (should be rejected: negative)
 
+### `tle-writer-alpha5`
+
+- **tle-writer-refuses-unencodable** (set): 2 of 3 number(s) the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused (340000, 799501621); written instead of refused: id -1: lines written instead of a refusal (line 1 columns 3-7 '-0001', 69 characters)
+- passed: **tle-checksums-valid** (606 record(s) written as two 69-character lines with valid checksums); **tle-writer-catalog-field** (606 catalog field(s) written correctly (five digits below 100000, Alpha-5 from 100000)); **tle-writer-round-trip** (606 record(s) read back at the TLE field resolution (rendering observed per field: epoch: exact 606; mean_motion: exact 606; eccentricity: exact 71, quantised 245, round 256, truncate 34; inclination: exact 606; ra_of_as)
+
 ## How to read this
 
 - `parse` failures mean the parser raised on real provider bytes; the detail carries the exception.
 - `values` failures list the first mismatching fields against the frozen expected values (snapshot) or the reference reader (live).
 - `not-exercised` means the data needed for that check was not present in the fetched snapshot (for example no nine-digit ids outside the days after a launch).
+- For the writer case (`tle-writer-alpha5`) each adapter's entry also lists the checks it passed, with their record counts, so a failure confined to the three synthetic refusal inputs (340000, 799501621, -1: numbers the TLE field cannot carry, for which a refusal is the correct output) cannot be read as a failure on real records.
 - Re-run for your own parser: `python -m gpconf run --adapter your.module:Parser` (see README).

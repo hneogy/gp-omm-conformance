@@ -8,7 +8,9 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 from public_scrub import SUPGP_CASES, is_supgp_source  # noqa: E402
+from cases import CASES  # noqa: E402
 OUT = os.path.join(ROOT, "docs", "FAILURES.md")
+KIND = {c["id"]: c["kind"] for c in CASES}
 
 INTRO = """# Parser breakage catalogue
 
@@ -69,11 +71,17 @@ def main():
                 if i["check"] == "values" and (r["case"] in SUPGP_CASES or is_supgp_source(i["file"])):
                     detail = "value mismatch (details withheld: SupGP-derived values are not published, D-049)"
                 md.append(f"- **{i['check']}** ({os.path.basename(i['file']) if i['file'] else 'set'}): {detail}")
+            if KIND.get(r["case"]) == "writer":
+                # so that a failure confined to the synthetic refusal inputs cannot be read as a failure on real records
+                passed = [i for i in r["items"] if i["status"] == "pass"]
+                if passed:
+                    md.append("- passed: " + "; ".join(f"**{i['check']}** ({i['detail'][:220]})" for i in passed))
             md.append("")
     md += ["## How to read this", "",
            "- `parse` failures mean the parser raised on real provider bytes; the detail carries the exception.",
            "- `values` failures list the first mismatching fields against the frozen expected values (snapshot) or the reference reader (live).",
            "- `not-exercised` means the data needed for that check was not present in the fetched snapshot (for example no nine-digit ids outside the days after a launch).",
+           "- For the writer case (`tle-writer-alpha5`) each adapter's entry also lists the checks it passed, with their record counts, so a failure confined to the three synthetic refusal inputs (340000, 799501621, -1: numbers the TLE field cannot carry, for which a refusal is the correct output) cannot be read as a failure on real records.",
            "- Re-run for your own parser: `python -m gpconf run --adapter your.module:Parser` (see README)."]
     open(OUT, "w").write("\n".join(md) + "\n")
     print(f"wrote {OUT}")
