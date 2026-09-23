@@ -272,7 +272,8 @@ Documented in `docs/CROSSCHECK.md`, with draft upstream reports in `docs/upstrea
 - python-sgp4 2.27 and Skyfield 1.55 raise `ValueError` for every nine-digit `NORAD_CAT_ID`
   loaded from OMM data.
 - python-sgp4's `sgp4.omm.parse_xml` turns an empty `<OBJECT_ID/>` into `None` and
-  `initialize()` raises `TypeError` (563 of 565 analyst XML records).
+  `initialize()` raises `TypeError` on 564 of the 566 analyst XML records in the case (563 of the 565
+  group records, plus the single 270449 first record).
 - python-sgp4's `export_tle` writes a zero second derivative as ` 00000-0`, which matches
   Space-Track's rendering; CelesTrak writes ` 00000+0`, so byte-exact round trips of CelesTrak
   lines fail while values agree. A provider divergence, not a library defect; documented in

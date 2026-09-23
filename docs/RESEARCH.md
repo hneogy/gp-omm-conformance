@@ -758,8 +758,9 @@ Generated evidence lives in `docs/INVENTORY.md` (raw files), `docs/CROSSCHECK.md
   HTTP 404 `No GP data found` as the live query: a stable 404.
 - **python-sgp4 2.27 / Skyfield 1.55:** cannot initialise a Satrec from any nine-digit
   record (`ValueError: satellite number cannot exceed 339999`); `sgp4.omm.parse_xml` turns
-  an empty `<OBJECT_ID/>` into `None` and `initialize()` raises `TypeError` (563 of 565
-  analyst XML records; the CSV path passes); `export_tle` writes a zero second derivative as
+  an empty `<OBJECT_ID/>` into `None` and `initialize()` raises `TypeError` (564 of the 566
+  analyst XML records in the case: 563 of the 565 group records, plus the single 270449 first
+  record; the CSV path passes); `export_tle` writes a zero second derivative as
   ` 00000-0` where CelesTrak writes ` 00000+0` (815 of 908 records differ only there and in
   the checksum). Otherwise both libraries agree with the reference readers on every record
   they can load, including all 604 derived Alpha-5 lines.

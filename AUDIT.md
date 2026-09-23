@@ -309,3 +309,13 @@ only analyst-group fetch on record, `fixtures/analyst-objects/raw/analyst.xml` r
 (SHA-256 `8c76a786…`, the same bytes at the Phase 3 commit and today), holds 565 records, 563 of them with an
 empty `OBJECT_ID`, as `docs/CROSSCHECK.md`'s per-file table and python-sgp4 issue #171 state. The README and
 `docs/RESEARCH.md` now say 563 of 565 (DECISIONS D-109).
+
+## Retraction of the correction above (maintainer, 2026-09-23)
+
+The correction appended earlier today was wrong and is left in place as a record. The audit's line "564/566 analyst
+XML records raise TypeError" was correct: the analyst case has two XML sources, `fixtures/analyst-objects/raw/analyst.xml`
+(565 records, 563 with an empty `OBJECT_ID`) and `fixtures/analyst-objects/raw/analyst-270449-first.xml` (1 record,
+empty `OBJECT_ID`), so python-sgp4 raises on 564 of the case's 566 XML records, as `docs/CROSSCHECK.md`'s per-file table
+states at its rows for the two files (lines 30 and 33). "563 of 565" is true only of the group file. The documentation now
+says "564 of the 566 analyst XML records in the case (563 of the 565 group records, plus the single 270449 first record)"
+(DECISIONS D-110).

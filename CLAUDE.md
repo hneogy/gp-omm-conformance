@@ -53,7 +53,9 @@ correcting entry. Mark such claims [untested] or [inferred] in the
 entry. List one under "Open questions" in the handoff file only when
 later work could rest on it or when evidence could settle it; an
 incidental inference that fails both tests carries the marker and
-nothing more.
+nothing more. A correction entry quotes the evidence it rests on and
+names what it checked; a correction that rests on a guess is the same
+failure again.
 
 Treat perishable evidence as urgent. Rolling windows, pre-catalog ids,
 live feeds and anything else that will not reproduce later must be
