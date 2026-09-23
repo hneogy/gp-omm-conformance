@@ -15,6 +15,7 @@ Column layout: CelesTrak TLE format documentation
 (https://celestrak.org/NORAD/documentation/tle-fmt.php) and Space-Track's TLE description.
 """
 import datetime as dt
+import re
 from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN
 
 ALPHA5_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ"  # I and O skipped (Space-Track)
@@ -33,13 +34,14 @@ def to_alpha5(n):
 
 
 def from_alpha5(field):
-    s = field.strip()
-    if not s[:1].isalpha():
-        return int(s)
-    c = s[0]
-    if c not in ALPHA5_LETTERS:
-        raise ValueError(f"invalid Alpha-5 letter {c!r} (I and O are never used; lowercase is not defined)")
-    return (ALPHA5_LETTERS.index(c) + 10) * 10000 + int(s[1:])
+    """Space-Track's definition, strictly: five characters, a digit or an uppercase letter other than I and O in the
+    first, four digits after. 'A-001', 'A 000', '+1234', lowercase and four- or six-character fields are errors (D-117)."""
+    if not isinstance(field, str) or not re.fullmatch(r"[0-9A-HJ-NP-Z][0-9]{4}", field):
+        raise ValueError(f"invalid Alpha-5 field {field!r}: one digit or uppercase letter (never I or O) followed by four digits")
+    c = field[0]
+    if c.isdigit():
+        return int(field)
+    return (ALPHA5_LETTERS.index(c) + 10) * 10000 + int(field[1:])
 
 
 def checksum(line):
@@ -69,10 +71,44 @@ def exp_field(text, mantissa_mode="truncate"):
     return f"{sign}{m5}{e:+d}"
 
 
+EPOCH_RE = re.compile(r"(\d{4})-(?:(\d{2})-(\d{2})|(\d{3}))T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})?")
+
+
+def iso_epoch(text):
+    """An epoch string in any form the corpus accepts -> canonical 'YYYY-MM-DDThh:mm:ss.ffffff' (UTC, naive).
+    Accepts the CCSDS 502.0-B-3 7.5.10 calendar and day-of-year forms, any number of fraction digits (quantised
+    to microseconds, half even), an optional 'Z', a '+HH:MM'/'-HH:MM' offset (converted to UTC: a parser under test
+    may return one) and second 60 (a leap second, mapped to :59 as the reference adapter does). Raises ValueError
+    for anything else, so a caller never sees a bare strptime failure (D-119)."""
+    s = str(text).strip()
+    m = EPOCH_RE.fullmatch(s)
+    if not m:
+        raise ValueError(f"not an ISO/CCSDS epoch: {text!r}")
+    year, mon, day, doy, hh, mi, ss, frac, zone = m.groups()
+    year = int(year)
+    if doy is not None:
+        leap = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+        if not 1 <= int(doy) <= (366 if leap else 365):
+            raise ValueError(f"day of year {doy} is outside the year in {text!r}")
+        date = dt.date(year, 1, 1) + dt.timedelta(days=int(doy) - 1)
+    else:
+        date = dt.date(year, int(mon), int(day))  # raises ValueError for month 13 or day 32
+    sec = int(ss)
+    if sec == 60:
+        sec = 59
+    elif sec > 60:
+        raise ValueError(f"second {ss} in {text!r}")
+    us = int((Decimal("0" + frac) * 1_000_000).quantize(Decimal(1), rounding=ROUND_HALF_EVEN)) if frac else 0
+    t = dt.datetime(date.year, date.month, date.day, int(hh), int(mi), sec) + dt.timedelta(microseconds=us)
+    if zone and zone != "Z":
+        sign = 1 if zone[0] == "+" else -1
+        t -= sign * dt.timedelta(hours=int(zone[1:3]), minutes=int(zone[4:6]))
+    return t.strftime("%Y-%m-%dT%H:%M:%S.%f")
+
+
 def epoch_field(iso, rounding=ROUND_HALF_UP):
-    """ISO epoch -> 'YYDDD.DDDDDDDD' (14 chars)."""
-    fmt = "%Y-%m-%dT%H:%M:%S.%f" if "." in iso else "%Y-%m-%dT%H:%M:%S"
-    t = dt.datetime.strptime(iso.rstrip("Z"), fmt)
+    """ISO epoch (calendar or day-of-year form, see iso_epoch) -> 'YYDDD.DDDDDDDD' (14 chars)."""
+    t = dt.datetime.strptime(iso_epoch(iso), "%Y-%m-%dT%H:%M:%S.%f")
     us = ((t.hour * 60 + t.minute) * 60 + t.second) * 1_000_000 + t.microsecond
     frac = (Decimal(us) / Decimal(86_400_000_000)).quantize(Decimal("0.00000001"), rounding=rounding)
     doy = t.timetuple().tm_yday
@@ -87,7 +123,9 @@ def epoch_field(iso, rounding=ROUND_HALF_UP):
 
 def ndot_field(text):
     d = Decimal((text or "0").strip() or "0")
-    s = f"{d.copy_abs():.8f}"  # 0.NNNNNNNN
+    s = str(d.copy_abs().quantize(Decimal("1e-8"), rounding=ROUND_HALF_UP))  # 0.NNNNNNNN, half up like the provider (D-118)
+    if "E" in s.upper():
+        s = format(Decimal(s), "f")
     if not s.startswith("0."):
         raise ValueError(f"MEAN_MOTION_DOT {text!r} too large for the TLE field")
     return ("-" if d < 0 else " ") + s[1:]

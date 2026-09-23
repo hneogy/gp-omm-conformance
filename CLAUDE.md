@@ -68,3 +68,7 @@ carry forward a weak result just because redoing it costs time.
 A step that gates a commit passes on its own exit code, never on the
 exit code of a filter after a pipe or on a line read from a log. Check
 the code, then commit; a suite that printed FAILED has not passed.
+In zsh write `${a}:Parser`, never `$a:Parser`: a colon after a bare
+variable is a modifier, and the loop silently runs the wrong thing. A
+loop that yields no output is a failure to look into, not an empty
+result.

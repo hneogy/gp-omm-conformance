@@ -65,11 +65,7 @@ def norm_epoch(v):
         if v.tzinfo is not None:
             v = v.astimezone(dt.timezone.utc).replace(tzinfo=None)
         return v.strftime("%Y-%m-%dT%H:%M:%S.%f")
-    s = str(v).strip().rstrip("Z")
-    date, _, time = s.partition("T")
-    fmt = "%Y-%jT" if len(date) == 8 else "%Y-%m-%dT"
-    fmt += "%H:%M:%S.%f" if "." in time else "%H:%M:%S"
-    return dt.datetime.strptime(s, fmt).strftime("%Y-%m-%dT%H:%M:%S.%f")
+    return tlemod.iso_epoch(v)  # calendar or day-of-year form, fraction, Z, offset, leap second (D-118, D-119)
 
 
 def norm_record(rec):
@@ -234,6 +230,21 @@ class CaseResult:
 
 
 # --------------------------------------------------------------------------- the runner
+def leading_dot_keywords(text, fmt):
+    """OMM keywords whose value is written without a leading zero ('.00048259', '-.15975118E-3') in a CSV, KVN or XML text."""
+    kws = set()
+    if fmt == "csv":
+        import csv as _csv
+        import io as _io
+        for row in _csv.DictReader(_io.StringIO(text)):
+            kws |= {k for k, v in row.items() if k and isinstance(v, str) and re.match(r"^-?\.\d", v.strip())}
+    elif fmt == "kvn":
+        kws |= set(re.findall(r"^\s*([A-Z][A-Z0-9_]*)\s*=\s*-?\.\d", text, re.M))
+    elif fmt == "xml":
+        kws |= set(re.findall(r"<([A-Z][A-Z0-9_]*)>\s*-?\.\d", text))
+    return kws
+
+
 def describe_bytes(raw, fmt=None, limit=48):
     """What a file the reference reader could not read looks like: size, first bytes, and a guess (D-113)."""
     n = len(raw)
@@ -301,6 +312,9 @@ class Runner:
             return "data", fmt, mode, None, None, None
         try:
             _, refrecs, reffacts = ref.read_file(full)
+        except ValueError as e:  # the reader rejected the file: a BOM, a namespace, a duplicate keyword, a bad day (D-117)
+            res.add("reference-reader", "fail", path, f"reference reader rejected the file: {e}")
+            return "parse-error", fmt, mode, None, None, None
         except Exception as e:  # the corpus's own reader failed: report, do not hide
             res.add("reference-reader", "fail", path, f"internal: reference reader raised {e!r}")
             return "parse-error", fmt, mode, None, None, None
@@ -395,6 +409,49 @@ class Runner:
                     vals[k] = Decimal(str(vals[k]))
             out[r["norad_cat_id"]] = vals
         return out, label
+
+    # ---- the three field-form checks the case documents list (D-118): targeted comparisons against the same oracle as `values`
+    def check_field_forms(self, res, path, fmt, parsed, oracle, active):
+        if not oracle or not parsed:
+            return
+
+        def compare(fields, ids=None):
+            n, bad, tol = 0, [], 0
+            for p in parsed:
+                cat = p.get("norad_cat_id")
+                if cat not in oracle or (ids is not None and cat not in ids):
+                    continue
+                for f in fields:
+                    want = oracle[cat].get(f)
+                    if want is None:
+                        continue
+                    n += 1
+                    r, _ = compare_value(f, p.get(f), want, note=(p.get("_notes") or {}).get(f))
+                    if r == "mismatch":
+                        bad.append(f"id {cat} {f}: got {p.get(f)!r}, want {want!r}")
+                    elif r == "tolerance":
+                        tol += 1
+            return n, bad, tol
+
+        def report(check, n, bad, tol, ok_text):
+            res.add(check, "fail" if bad else "pass", path, "; ".join(bad[:6]) + (f" … ({len(bad)} mismatches)" if len(bad) > 6 else "") if bad
+                    else ok_text + (f"; {tol} within tolerance" if tol else ""))
+
+        if "leading-dot-decimals" in active and fmt in ("csv", "kvn", "xml"):
+            kws = leading_dot_keywords(open(os.path.join(self.root, path), "rb").read().decode("utf-8", "replace"), fmt)
+            fields = sorted({ref.DECIMAL_KEYS[k] for k in kws if k in ref.DECIMAL_KEYS})  # only decimal keywords can start with '.'
+            if fields:
+                n, bad, tol = compare(fields)
+                report("leading-dot-decimals", n, bad, tol, f"{n} value(s) written without a leading zero ({', '.join(sorted(kws))}) parsed to the expected values")
+        if "bstar-implied-decimal-exponent" in active and fmt in ("tle", "2le"):
+            n, bad, tol = compare(["bstar", "mean_motion_ddot"])
+            if n:
+                report("bstar-implied-decimal-exponent", n, bad, tol, f"{n} BSTAR and second-derivative field(s) with an implied decimal point and exponent decoded to the expected values")
+        if "negative-bstar-and-ndot" in active:
+            ids = {cat for cat, o in oracle.items() if any(o.get(f) is not None and Decimal(str(o[f])) < 0 for f in ("bstar", "mean_motion_dot"))}
+            if ids:
+                n, bad, tol = compare(["bstar", "mean_motion_dot"], ids)
+                report("negative-bstar-and-ndot", n, bad, tol, f"{len(ids)} record(s) with a negative BSTAR or first derivative: sign and value preserved")
 
     # ---- structural checks
     def check_ints(self, res, path, parsed, active):
@@ -577,6 +634,7 @@ class Runner:
             if os.path.basename(p) not in assigned:
                 sets.setdefault("_ungrouped", []).append(os.path.basename(p))
         bypath = {os.path.basename(p): p for p in exp["sources"]}
+        read_any = False  # a case none of whose files is on disk is skipped, not "not exercised" (D-119)
         for set_name, basenames in sets.items():
             files = {}
             for b in basenames:
@@ -585,6 +643,7 @@ class Runner:
                     continue
                 src = exp["sources"][path]
                 state, fmt, mode, parsed, refrecs, reffacts = self.load_source(res, case, path, src)
+                read_any = read_any or state == "ok"
                 files[path] = (state, fmt, parsed, refrecs)
                 if state != "ok":
                     if state == "empty-404":
@@ -607,14 +666,22 @@ class Runner:
                     self.check_tle_lines(res, path, parsed, refrecs, active)
                 self.check_presence(res, path, parsed, refrecs, active)
                 self.check_format_facts(res, path, fmt, parsed, reffacts, active)
+                self.check_field_forms(res, path, fmt, parsed, oracle, active)
                 if exp["kind"] == "derived-kvn":
                     for c in ("kvn-syntax-tolerance", "optional-tle-parameters-may-be-absent", "omm-version-3-accepted"):
                         if c in active:
                             res.add(c, "pass", path, "variant parsed" + (f"; omitted keywords {sorted(exempt)}" if exempt and c == "optional-tle-parameters-may-be-absent" else ""))
             if any(v[0] in ("ok", "empty-404") for v in files.values()):
                 self.check_set_relations(res, exp, set_name, files, active)
+        if not read_any:
+            return  # nothing was parsed: "not exercised" would claim the data lacked the feature, when there was no data
         if "nine-digit-ids-parse" in active and not any(i.check == "nine-digit-ids-parse" for i in res.items):
             res.add("nine-digit-ids-parse", "not-exercised", None, "no nine-digit ids in the fetched data (launch nominals exist only ~5-8 days after a launch)")
+        for c, what in (("leading-dot-decimals", "no value written without a leading zero in the fetched OMM files"),
+                        ("bstar-implied-decimal-exponent", "no TLE file with an oracle in this run"),
+                        ("negative-bstar-and-ndot", "no negative BSTAR or first derivative in the fetched data")):
+            if c in active and not any(i.check == c for i in res.items):
+                res.add(c, "not-exercised", None, what)
 
     def run_pairs(self, case, exp, res):
         active = set(case["checks"])
@@ -715,7 +782,15 @@ class Runner:
         yy = next((v for k, v in vec.items() if k.endswith("two-digit-epoch-year.json")), None)
         if yy:
             if hooks["two_digit_year"]:
-                bad = [f"{v['yy']} -> {hooks['two_digit_year'](v['yy'])}" for v in yy["vectors"] if hooks["two_digit_year"](v["yy"]) != v["year"]]
+                bad = []
+                for v in yy["vectors"]:
+                    try:
+                        got = hooks["two_digit_year"](v["yy"])
+                    except Exception as e:  # a raising hook fails this vector, not the case (D-118)
+                        bad.append(f"{v['yy']} -> raised {type(e).__name__}: {e}")
+                        continue
+                    if got != v["year"]:
+                        bad.append(f"{v['yy']} -> {got}")
                 res.add("two-digit-year-pivot", "fail" if bad else "pass", "vectors/two-digit-epoch-year.json", "; ".join(bad) if bad else f"{len(yy['vectors'])} pivot vectors correct")
             else:
                 res.add("two-digit-year-pivot", "skip", "vectors/two-digit-epoch-year.json", "parser exposes no two_digit_year hook")
@@ -724,16 +799,28 @@ class Runner:
             bad = []
             for v in ep["valid"]:
                 try:
-                    hooks["parse_epoch"](v["text"])
+                    got = hooks["parse_epoch"](v["text"])
                 except Exception as e:
                     bad.append(f"valid {v['text']!r} rejected ({type(e).__name__})")
+                    continue
+                accepted = ([v["iso"]] + list(v.get("iso_alternatives", []))) if v.get("iso") else []
+                if not accepted:
+                    continue
+                try:  # the value is compared, not only that the hook returned (D-119): a constant-returning hook fails
+                    got_iso = norm_epoch(got)
+                except Exception as e:
+                    bad.append(f"valid {v['text']!r} -> {got!r} is not an epoch ({type(e).__name__})")
+                    continue
+                if all(compare_value("epoch", got_iso, a)[0] == "mismatch" for a in accepted):
+                    bad.append(f"valid {v['text']!r} -> {got_iso}, expected {' or '.join(accepted)}")
             for v in ep["invalid"]:
                 try:
                     hooks["parse_epoch"](v["text"])
                     bad.append(f"invalid {v['text']!r} accepted")
                 except Exception:
                     pass
-            res.add("ccsds-epoch-strings", "fail" if bad else "pass", "vectors/ccsds-epoch-strings.json", "; ".join(bad[:8]) if bad else f"{len(ep['valid'])} valid and {len(ep['invalid'])} invalid epoch strings handled")
+            res.add("ccsds-epoch-strings", "fail" if bad else "pass", "vectors/ccsds-epoch-strings.json", "; ".join(bad[:8]) if bad else
+                    f"{len(ep['valid'])} valid epoch strings parsed to the instants they denote (within {EPOCH_TOLERANCE_US} us) and {len(ep['invalid'])} invalid strings rejected")
         elif ep:
             res.add("ccsds-epoch-strings", "skip", "vectors/ccsds-epoch-strings.json", "parser exposes no parse_epoch hook")
         cid = next((v for k, v in vec.items() if k.endswith("norad-cat-id-text.json")), None)
@@ -766,7 +853,7 @@ class Runner:
         if hook is None:
             res.add("tle-writer-catalog-field", "skip", None, "parser exposes no write_tle hook")
             return
-        lines_bad, cat_bad, rt_bad, emitted_bad, refused_ok = [], [], [], [], []
+        lines_bad, cat_bad, rt_bad, emitted_bad, refused_ok, layout_bad = [], [], [], [], [], []
         conv, sec, signs, prov = {}, {}, {}, {}
         written, refused_real, rt_checked = 0, 0, 0
         for it in exp["records"]:
@@ -800,6 +887,9 @@ class Runner:
                 cat_bad.append(f"id {cat}: {detail}")
             if len(l1) != 69 or len(l2) != 69:
                 continue  # the reader needs well-formed lines; the length failure is already recorded
+            layout = W.check_layout(l1, l2)  # right length and checksum say nothing about where the fields sit (D-119)
+            if layout:
+                layout_bad.append(f"id {cat}: " + "; ".join(layout[:3]) + (f" … ({len(layout)} fields)" if len(layout) > 3 else ""))
             rt_checked += 1
             try:
                 mism, c = W.round_trip(l0, l1, l2, rec)
@@ -833,6 +923,8 @@ class Runner:
         res.add("tle-writer-catalog-field", "fail" if cat_bad else "pass", None,
                 summary(cat_bad, f"{written} catalog field(s) written correctly (five digits below 100000, Alpha-5 from 100000)",
                         n_real - len(cat_bad), n_real, "catalog field(s)"))
+        res.add("tle-writer-column-layout", "fail" if layout_bad else "pass", None,
+                summary(layout_bad, f"{rt_checked} record(s) with every field in its fixed columns", rt_checked - len(layout_bad), rt_checked))
         conv_text = "; ".join(f"{f}: " + ", ".join(f"{k} {n}" for k, n in sorted(v.items())) for f, v in conv.items())
         res.add("tle-writer-round-trip", "fail" if rt_bad else "pass", None,
                 summary(rt_bad, f"{written} record(s) read back at the TLE field resolution (rendering observed per field: {conv_text})",
@@ -906,7 +998,10 @@ class CommandParser:
             raise Unsupported(fmt)
         if p.returncode != 0:
             raise RuntimeError(f"exit {p.returncode}: {p.stderr.decode('utf-8', 'replace')[-300:]}")
-        data = json.loads(p.stdout.decode("utf-8"))
+        try:
+            data = json.loads(p.stdout.decode("utf-8"))
+        except ValueError as e:
+            raise RuntimeError(f"stdout is not JSON ({e}): {p.stdout.decode('utf-8', 'replace')[:120]!r}")
         if not isinstance(data, list):
             raise RuntimeError("stdout must be a JSON array of records")
         return data
@@ -925,13 +1020,18 @@ class CommandParser:
         if not self.vectors_cmd:
             raise AttributeError(op)
         p = subprocess.run(self.vectors_cmd, shell=True, input=json.dumps({"op": op, "input": value}).encode(), capture_output=True, timeout=self.timeout)
-        out = json.loads(p.stdout.decode("utf-8") or "{}")
+        try:
+            out = json.loads(p.stdout.decode("utf-8") or "{}")
+        except ValueError as e:
+            raise ValueError(f"the command's output is not JSON: {e}")
         if p.returncode != 0 or "error" in out:
             raise ValueError(out.get("error", f"exit {p.returncode}"))
+        if "result" not in out:  # a well-formed answer carries result or error (D-118)
+            raise ValueError("the command's answer carries neither 'result' nor 'error'")
         return out["result"]
 
     def __getattr__(self, name):
-        if name in ("alpha5_decode", "alpha5_encode", "two_digit_year", "parse_epoch") and self.vectors_cmd:
+        if name in ("alpha5_decode", "alpha5_encode", "two_digit_year", "parse_epoch", "parse_catalog_id") and self.vectors_cmd:
             def hook(value):
                 r = self._vec(name, value if not isinstance(value, dt.datetime) else value.isoformat())
                 return dt.datetime.fromisoformat(r) if name == "parse_epoch" else r

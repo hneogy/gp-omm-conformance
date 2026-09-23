@@ -14,7 +14,7 @@ parsers were run:
 A failure here is a statement about the parser, not about the corpus: the reference parser
 passes every case. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
 
-Generated 2026-09-22T23:31:15Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-22T23:31:13Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.reference:Parser); naive: run 2026-09-22T23:31:14Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-22T23:31:15Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.sgp4_adapter:Parser).
+Generated 2026-09-23T20:37:57Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-23T20:37:17Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.reference:Parser); naive: run 2026-09-23T20:37:18Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-23T20:37:19Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.sgp4_adapter:Parser).
 
 ## Status by case
 
@@ -121,7 +121,7 @@ Generated 2026-09-22T23:31:15Z by `tools/make_failures.py` from the runner repor
 - **tle-checksums-valid** (set): 3 of 606 record(s) correct; id 100000: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 270449: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100404: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100405: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100406: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100407: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100408: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100409: line 1 is 70 character
 - **tle-writer-catalog-field** (set): 3 of 606 catalog field(s) correct; id 100000: field '10000' written for 100000 (expected 'A0000'; decodes to 10000); id 270449: field '27044' written for 270449 (expected 'T0449'; decodes to 27044); id 100404: field '10040' written for 100404 (expected 'A0404'; decodes to 10040); id 100405: field '10040' written for 100405 (expected 'A0405'; decodes to 10040); id 100406: field '10040' written for 100406 (expected 'A0406'; decodes to 10040); id 100407: field '10040' written for 100407 (expected 'A0407'; decodes to 10040); id 100408: field '10040' written for 100408 (expected 'A0408'; decodes to
 - **tle-writer-refuses-unencodable** (set): 0 of 3 number(s) the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused; written instead of refused: id 340000: lines written instead of a refusal (line 1 columns 3-7 '34000', 70 characters); id 799501621: lines written instead of a refusal (line 1 columns 3-7 '79950', 73 characters); id -1: lines written instead of a refusal (line 1 columns 3-7 '-0001', 69 characters)
-- passed: **tle-writer-round-trip** (606 record(s) read back at the TLE field resolution (rendering observed per field: epoch: exact 3; mean_motion: exact 3; eccentricity: exact 2, quantised 1; inclination: exact 3; ra_of_asc_node: exact 3; arg_of_pericente)
+- passed: **tle-writer-column-layout** (3 record(s) with every field in its fixed columns); **tle-writer-round-trip** (606 record(s) read back at the TLE field resolution (rendering observed per field: epoch: exact 3; mean_motion: exact 3; eccentricity: exact 2, quantised 1; inclination: exact 3; ra_of_asc_node: exact 3; arg_of_pericente)
 
 
 ## python-sgp4 2.27 through sgp4.omm / twoline2rv: what failed and why
@@ -136,7 +136,7 @@ Generated 2026-09-22T23:31:15Z by `tools/make_failures.py` from the runner repor
 
 ### `supgp-celestrak-classification-c`
 
-- **values** (starlink-g15-27.csv): value mismatch (details withheld: SupGP-derived values are not published, D-049)
+- **values** (starlink-g15-27.csv): mismatch (details withheld: SupGP-derived values are not published, D-049)
 - **classification-c** (starlink-g15-27.csv): C not preserved for [72000, 72001]
 
 ### `csv-json-omitted-mandatory-fields`
@@ -156,7 +156,7 @@ Generated 2026-09-22T23:31:15Z by `tools/make_failures.py` from the runner repor
 ### `tle-writer-alpha5`
 
 - **tle-writer-refuses-unencodable** (set): 2 of 3 number(s) the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused (340000, 799501621); written instead of refused: id -1: lines written instead of a refusal (line 1 columns 3-7 '-0001', 69 characters)
-- passed: **tle-checksums-valid** (606 record(s) written as two 69-character lines with valid checksums); **tle-writer-catalog-field** (606 catalog field(s) written correctly (five digits below 100000, Alpha-5 from 100000)); **tle-writer-round-trip** (606 record(s) read back at the TLE field resolution (rendering observed per field: epoch: exact 606; mean_motion: exact 606; eccentricity: exact 71, quantised 245, round 256, truncate 34; inclination: exact 606; ra_of_as)
+- passed: **tle-checksums-valid** (606 record(s) written as two 69-character lines with valid checksums); **tle-writer-catalog-field** (606 catalog field(s) written correctly (five digits below 100000, Alpha-5 from 100000)); **tle-writer-column-layout** (606 record(s) with every field in its fixed columns); **tle-writer-round-trip** (606 record(s) read back at the TLE field resolution (rendering observed per field: epoch: exact 606; mean_motion: exact 606; eccentricity: exact 71, quantised 245, round 256, truncate 34; inclination: exact 606; ra_of_as)
 
 ## How to read this
 

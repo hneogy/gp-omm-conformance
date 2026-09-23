@@ -108,9 +108,13 @@ def tle_epoch_to_iso(field):
     yy, rest = field[:2], field[2:]
     day = Decimal(rest)
     doy = int(day)
+    year = two_digit_year(yy)
+    days_in_year = 366 if (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)) else 365
+    if not 1 <= doy <= days_in_year:  # day 000 used to land in the previous year and 367 in the next, silently (D-117)
+        raise ValueError(f"TLE epoch day of year {doy:03d} is outside 001..{days_in_year} for {year}")
     frac = day - doy
     us = (frac * Decimal(86_400_000_000)).quantize(Decimal(1), rounding=ROUND_HALF_EVEN)
-    base = dt.datetime(two_digit_year(yy), 1, 1) + dt.timedelta(days=doy - 1, microseconds=int(us))
+    base = dt.datetime(year, 1, 1) + dt.timedelta(days=doy - 1, microseconds=int(us))
     return base.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 
@@ -243,6 +247,8 @@ def _strip_ns(tag):
 
 def read_xml_text(text):
     root = ET.fromstring(text)
+    if root.tag.startswith('{'):  # a default namespace: the unqualified CelesTrak/SANA form has none, and the field lookups below would all miss (D-117)
+        raise ValueError(f"XML document declares a default namespace ({root.tag.split('}')[0][1:]}); the corpus reads the unqualified NDM/XML form only")
     rtag = _strip_ns(root.tag)
     omms = [root] if rtag == "omm" else [e for e in root if _strip_ns(e.tag) == "omm"]
     recs = []
@@ -320,6 +326,8 @@ def read_kvn_text(text):
         if um:
             v = um.group(1)
             cur["_units"][k] = um.group(2)
+        if k in cur["_fields"]:  # last-wins used to hide a repeated keyword (D-117)
+            raise ValueError(f"duplicate keyword {k} in one KVN message")
         cur["_fields"][k] = v
         cur["_order"].append(k)
     recs = []
@@ -339,6 +347,8 @@ def read_kvn_text(text):
 # --------------------------------------------------------------------------- dispatch
 def read_file(path):
     raw = open(path, "rb").read()
+    if raw.startswith(b"\xef\xbb\xbf"):  # a BOM used to be read as part of the first field or line and the record came back wrong (D-117)
+        raise ValueError("UTF-8 BOM at the start of the file; the provider formats carry none and the corpus does not read past one")
     text = raw.decode("utf-8")
     ext = path.rsplit(".", 1)[-1].lower()
     if ext in ("tle", "2le"):

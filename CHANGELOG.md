@@ -25,6 +25,20 @@ schema changes; the corpus stops reporting pass for outcomes that were never mea
 - A stable-tier source whose bytes no longer matched the recorded SHA-256 was silently treated as live, with the
   reference reader as oracle and only a hidden info item; the case now carries a failing `stable-source-drift`
   item, the JSON report a `drift` field, and the values item says the frozen values were not applied (D-115).
+- The reference readers returned wrong records silently for a BOM-prefixed CSV, KVN or 2LE file, an XML document
+  with a default namespace, a repeated KVN keyword and a TLE day of year outside the year, and `from_alpha5` accepted
+  fields outside Space-Track's definition; each is now a clear error (D-117).
+- Three checks listed in the manifest and case documents (`leading-dot-decimals`, `bstar-implied-decimal-exponent`,
+  `negative-bstar-and-ndot`) were never evaluated; they now produce items. `--vectors-cmd` reaches `parse_catalog_id`;
+  a raising vector hook fails that vector rather than the case; `norm_epoch` accepts UTC offsets and a leap second;
+  the JSON report names a `--write-cmd` parser; the failure catalogue withholds SupGP values for every
+  value-carrying check; `ndot_field` rounds half up (D-118).
+- `check-tle` dropped unpaired, indented and BOM-prefixed element lines silently and crashed on a day-of-year source
+  epoch; a writer whose fields were left-justified passed every check when the length and checksum were right
+  (new check `tle-writer-column-layout`); the epoch-string vectors accepted any hook that returned (they now carry
+  the instants, and `ccsds-epoch-strings` is listed in the manifest); `tools/fetch.py` could re-request a file whose
+  metadata was missing, request a re-capture endpoint twice in a fresh checkout and judged the two-hour rule by
+  mtime; negative tests added (D-119).
 
 ## [0.2.0] - 2026-09-22
 

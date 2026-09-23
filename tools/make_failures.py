@@ -35,12 +35,16 @@ def load(name):
     return json.load(open(p)) if os.path.exists(p) else None
 
 
-def main():
-    reps = {n: load(n) for n in ("reference", "naive", "sgp4")}
-    import datetime as dt
+VALUE_CHECKS = {"values", "omm-formats-agree", "tle-values-match-omm-within-tle-precision", "mmdot-is-tle-field-value",
+                "tle-writer-round-trip", "leading-dot-decimals", "bstar-implied-decimal-exponent", "negative-bstar-and-ndot"}
+
+
+def render(reps, generated_at):
+    """The catalogue text from the three reports (any may be None). Failing details of value-carrying checks on
+    SupGP-sourced files are withheld (D-049); structural details stay readable (D-118)."""
     ident = "; ".join(f"{n}: run {rep.get('generated_at', 'unknown time')} with gpconf {rep.get('gpconf')} on corpus {rep.get('corpus_version')} (parser {rep.get('parser')})"
                       for n, rep in reps.items() if rep)
-    md = [INTRO, f"Generated {dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')} by `tools/make_failures.py` from the runner reports "
+    md = [INTRO, f"Generated {generated_at} by `tools/make_failures.py` from the runner reports "
           f"`tools/_out/report-<adapter>.json` — {ident}.", "",
           "## Status by case", "", "| case | reference | naive | python-sgp4 |", "|---|---|---|---|"]
     cases = [r["case"] for r in reps["reference"]["results"]]
@@ -68,8 +72,8 @@ def main():
                     continue
                 seen.add(key)
                 detail = i["detail"][:600]
-                if i["check"] == "values" and (r["case"] in SUPGP_CASES or is_supgp_source(i["file"])):
-                    detail = "value mismatch (details withheld: SupGP-derived values are not published, D-049)"
+                if i["check"] in VALUE_CHECKS and (r["case"] in SUPGP_CASES or is_supgp_source(i["file"])):
+                    detail = "mismatch (details withheld: SupGP-derived values are not published, D-049)"
                 md.append(f"- **{i['check']}** ({os.path.basename(i['file']) if i['file'] else 'set'}): {detail}")
             if KIND.get(r["case"]) == "writer":
                 # so that a failure confined to the synthetic refusal inputs cannot be read as a failure on real records
@@ -83,7 +87,13 @@ def main():
            "- `not-exercised` means the data needed for that check was not present in the fetched snapshot (for example no nine-digit ids outside the days after a launch).",
            "- For the writer case (`tle-writer-alpha5`) each adapter's entry also lists the checks it passed, with their record counts, so a failure confined to the three synthetic refusal inputs (340000, 799501621, -1: numbers the TLE field cannot carry, for which a refusal is the correct output) cannot be read as a failure on real records.",
            "- Re-run for your own parser: `python -m gpconf run --adapter your.module:Parser` (see README)."]
-    open(OUT, "w").write("\n".join(md) + "\n")
+    return "\n".join(md) + "\n"
+
+
+def main():
+    import datetime as dt
+    reps = {n: load(n) for n in ("reference", "naive", "sgp4")}
+    open(OUT, "w").write(render(reps, dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")))
     print(f"wrote {OUT}")
 
 

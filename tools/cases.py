@@ -24,6 +24,7 @@ CHECKS = {
     "tle-checksums-valid": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0).",
     "catalog-number-is-integer": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN.",
     "tle-catalog-field-decodes": "Columns 3-7 of TLE lines 1 and 2 decode to the same integer (five digits, or Alpha-5 letter + four digits).",
+    "ccsds-epoch-strings": "parse_epoch accepts every CCSDS 502.0-B-3 7.5.10 epoch form in vectors/ccsds-epoch-strings.json (calendar and day-of-year, with or without a fraction and a Z, second 60) and returns the instant each denotes (within 2 us; a leap second may read as 23:59:59 or as the next midnight), and rejects the five invalid forms.",
     "two-digit-year-pivot": "TLE epoch years 57-99 map to 1957-1999 and 00-56 to 2000-2056; the resulting ISO epoch equals the OMM EPOCH string.",
     "object-id-may-be-empty": "OBJECT_ID (and in principle OBJECT_NAME) can be empty; parsers must not fail, and must not invent a value.",
     "object-name-unknown-literal": "OBJECT_NAME may be the literal UNKNOWN (CCSDS-recommended) rather than empty.",
@@ -51,6 +52,7 @@ CHECKS = {
     "tle-writer-round-trip": "The written lines, read back by the corpus reference reader, reproduce the record's epoch, mean motion, eccentricity, inclination, RA of ascending node, argument of pericenter, mean anomaly and BSTAR at each field's resolution, quantised by truncation or by rounding half up (CelesTrak truncates the eccentricity, Space-Track rounds it; either is accepted and the convention observed is reported).",
     "tle-writer-refuses-unencodable": "A TLE catalog field cannot represent a number above 339999 (Z9999) or below 0, so the correct output for such a record is a refusal: an error and no lines. Those numbers belong in the OMM formats. The check passes when the writer refuses and fails when it writes lines with a six-digit, blank or otherwise invalid field.",
     "tle-writer-secondary-fields": "Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information, never failed: orbit-fitting tools regenerate these fields by design.",
+    "tle-writer-column-layout": "Every field of a written TLE sits in its fixed columns: on line 1 the decimal points at columns 24 and 35 and the separators at 2, 9, 18, 33, 44, 53, 62 and 64; on line 2 the decimal points at 12, 21, 38, 47 and 55, the separators at 2, 8, 17, 26, 34, 43 and 52, seven eccentricity digits, right-justified element set and revolution numbers. A left-justified value with a recomputed checksum has the right length and checksum and still fails this check.",
     "tle-writer-matches-provider-rendering": "Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's CelesTrak-style derived line). Information only: an equivalent rendering under the other provider's convention is not a defect.",
 }
 
@@ -241,7 +243,7 @@ CASES = [
         "kind": "vectors",
         "files": ["vectors/alpha5.json", "vectors/norad-cat-id-text.json", "vectors/two-digit-epoch-year.json", "vectors/ccsds-epoch-strings.json"],
         "tests": ["alpha5-letter-skip-rules", "alpha5-range", "9-digit-catalog-number", "2-digit-epoch-year"],
-        "checks": ["alpha5-decode", "alpha5-encode", "catalog-number-is-integer", "two-digit-year-pivot"],
+        "checks": ["alpha5-decode", "alpha5-encode", "catalog-number-is-integer", "two-digit-year-pivot", "ccsds-epoch-strings"],
         "coverage": {"provides": ["all 24 letters and both skips, the six official examples, range boundaries, invalid letters and lowercase"],
                      "gaps": ["vectors are not element sets; they test the mapping only"]},
         "ambiguities": [],
@@ -295,7 +297,7 @@ CASES = [
         ],
         "unrepresentable": {"from_case": "six-digit-omm-saramago", "set": "saramago-first", "vectors": "vectors/alpha5.json"},
         "tests": ["alpha5-tle-writing", "alpha5-range", "tle-checksum"],
-        "checks": ["tle-checksums-valid", "tle-writer-catalog-field", "tle-writer-round-trip", "tle-writer-refuses-unencodable",
+        "checks": ["tle-checksums-valid", "tle-writer-catalog-field", "tle-writer-column-layout", "tle-writer-round-trip", "tle-writer-refuses-unencodable",
                    "tle-writer-secondary-fields", "tle-writer-matches-provider-rendering"],
         "coverage": {"provides": ["606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived lines carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)",
                                   "a 1998 epoch, a negative first derivative, a non-zero second derivative, zero and negative BSTAR, a blank international designator, an empty OBJECT_ID",

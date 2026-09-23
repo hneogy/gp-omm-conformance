@@ -2,7 +2,7 @@
  "case": "alpha5-encoding-vectors",
  "title": "Alpha-5 encode/decode vectors from the Space-Track table, with boundaries and invalid inputs",
  "schema_version": "1.0",
- "generated_at": "2026-09-21T03:54:07Z",
+ "generated_at": "2026-09-23T20:35:25Z",
  "generator": "tools/make_expected.py",
  "kind": "vectors",
  "sources": {
@@ -30,8 +30,8 @@
   "vectors/ccsds-epoch-strings.json": {
    "tier": "stable",
    "format": "vectors-json",
-   "bytes": 1557,
-   "sha256": "b1049c1fc6362c387898d909b4ea987d6a3be5478046d1593431c0bc4e2a671f",
+   "bytes": 2215,
+   "sha256": "0add8aa91d36b40d18426caed25b13674541bc7b9acd79ac2de7221a69282abc",
    "provenance": "specification"
   }
  },
@@ -52,6 +52,10 @@
   {
    "id": "two-digit-year-pivot",
    "description": "TLE epoch years 57-99 map to 1957-1999 and 00-56 to 2000-2056; the resulting ISO epoch equals the OMM EPOCH string."
+  },
+  {
+   "id": "ccsds-epoch-strings",
+   "description": "parse_epoch accepts every CCSDS 502.0-B-3 7.5.10 epoch form in vectors/ccsds-epoch-strings.json (calendar and day-of-year, with or without a fraction and a Z, second 60) and returns the instant each denotes (within 2 us; a leap second may read as 23:59:59 or as the next midnight), and rejects the five invalid forms."
   }
  ],
  "tests": [
@@ -596,38 +600,50 @@
    "provenance": "specification",
    "sources": [
     "CCSDS 502.0-B-3 7.5.10: YYYY-MM-DDThh:mm:ss[.d->d][Z] or YYYY-DDDThh:mm:ss[.d->d][Z]; all fields with leading zeros; Z optional",
-    "SANA ndmxml-4.0.0-common-4.0.xsd epochType pattern"
+    "SANA ndmxml-4.0.0-common-4.0.xsd epochType pattern",
+    "iso: the instant each valid string denotes, as 'YYYY-MM-DDThh:mm:ss.ffffff' UTC; a parse_epoch hook is compared with it within 2 us (D-119)"
    ],
    "valid": [
     {
      "text": "2020-064T10:34:41.4264",
-     "note": "CCSDS annex G example, day-of-year form"
+     "note": "CCSDS annex G example, day-of-year form",
+     "iso": "2020-03-04T10:34:41.426400"
     },
     {
      "text": "2020-065T16:00:00",
-     "note": "no fractional seconds"
+     "note": "no fractional seconds",
+     "iso": "2020-03-05T16:00:00.000000"
     },
     {
      "text": "2002-204T15:56:23Z",
-     "note": "Table 4-1 example with Z"
+     "note": "Table 4-1 example with Z",
+     "iso": "2002-07-23T15:56:23.000000"
     },
     {
      "text": "2001-11-06T11:17:33",
-     "note": "calendar form, no fraction"
+     "note": "calendar form, no fraction",
+     "iso": "2001-11-06T11:17:33.000000"
     },
     {
      "text": "2026-09-20T12:42:37.141056",
-     "note": "CelesTrak form"
+     "note": "CelesTrak form",
+     "iso": "2026-09-20T12:42:37.141056"
     },
     {
-     "text": "1998-11-20T06:49:59.999808Z"
+     "text": "1998-11-20T06:49:59.999808Z",
+     "iso": "1998-11-20T06:49:59.999808"
     },
     {
-     "text": "2026-09-20T12:42:37.1"
+     "text": "2026-09-20T12:42:37.1",
+     "iso": "2026-09-20T12:42:37.100000"
     },
     {
      "text": "2016-12-31T23:59:60",
-     "note": "leap second: ss = 60 permitted (7.5.10 NOTE)"
+     "note": "leap second: ss = 60 permitted (7.5.10 NOTE); a datetime cannot carry second 60, so the instant one second earlier (iso) or the next midnight (iso_alternatives) is accepted",
+     "iso": "2016-12-31T23:59:59.000000",
+     "iso_alternatives": [
+      "2017-01-01T00:00:00.000000"
+     ]
     }
    ],
    "invalid": [

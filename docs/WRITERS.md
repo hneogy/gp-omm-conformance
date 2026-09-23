@@ -27,10 +27,12 @@ reasoning is in `DECISIONS.md`, D-095 to D-101.
   text). Raise to refuse. The hook is optional; without it the case is skipped.
 - External writer: `python3 -m gpconf run --write-cmd "mytool --emit-tle"`: one JSON record on stdin,
   the lines on stdout, exit 3 for "writing unsupported", any other non-zero exit is a refusal.
-- A file a tool wrote: `python3 -m gpconf check-tle FILE... [--against RECORDS]`. Same checks, applied
-  to every `1 `/`2 ` line pair in the file whatever its length; name lines, `#` comment lines and LF or
-  CRLF endings are accepted; `--against` supplies the source records (CSV, JSON, XML, KVN or TLE) for
-  the round trip. A written record whose catalog number has no match in those records is a failure, not a
+- A file a tool wrote: `python3 -m gpconf check-tle FILE... [--against RECORDS]`. Same checks (length,
+  checksum, catalog field, column layout), applied to every `1 `/`2 ` line pair in the file whatever its
+  length; name lines, `#` comment lines and LF or CRLF endings are accepted; an element line without its
+  partner, an indented line and a byte-order mark are reported as failures, not skipped; `--against`
+  supplies the source records (CSV, JSON, XML, KVN or TLE, with the epoch in the calendar or the
+  day-of-year form) for the round trip. A written record whose catalog number has no match in those records is a failure, not a
   note: the line is about some other object, or about none. When the number is `00000` or `99999` the detail
   names the likely cause on the rffit path (an `-i` lookup that found no elements leaves rffit's orbit
   zero-initialised, and 99999 is its default). Exit 1 on any failing record or when no record is found.

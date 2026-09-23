@@ -30,10 +30,11 @@ def check_tle(args):
         with open(path, "rb") as f:
             text = f.read().decode("utf-8", "replace")
         results = W.check_file(text, against)
-        print(f"\n{path}: {len(results)} record(s)" + ("" if results else " (no '1 ' line followed by a '2 ' line found)"))
+        print(f"\n{path}: {len(results)} record(s)" + ("" if results else " (no element line found)"))
         for r in results:
             ident = repr(r["catalog_field"]) + (f" -> {r['norad_cat_id']}" if r["norad_cat_id"] is not None else "")
-            print(f"  [{r['status']}] line {r['line_number']}: {r['name'] or '(no name line)'} | catalog field {ident}")
+            head = "unpaired element line" if r.get("unpaired") else (r["name"] or "(no name line)")
+            print(f"  [{r['status']}] line {r['line_number']}: {head} | catalog field {ident}")
             for p in r["problems"]:
                 print(f"         {p}")
             for n in r["notes"]:
@@ -107,7 +108,7 @@ def main(argv=None):
     if args.json:
         import datetime as _dt
         with open(args.json, "w") as f:
-            json.dump({"gpconf": __version__, "corpus_version": manifest["corpus_version"], "parser": args.cmd or args.adapter,
+            json.dump({"gpconf": __version__, "corpus_version": manifest["corpus_version"], "parser": args.cmd or args.write_cmd or args.adapter,
                        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                        "results": [r.as_dict() for r in results]}, f, indent=1, default=str)
     failed = sum(1 for r in results if r.status == "fail")

@@ -118,7 +118,7 @@ satno2tle drives), check the file it wrote instead. The format checks need nothi
 round trip needs the source records the lines were written from:
 
 ```bash
-python3 -m gpconf check-tle output.tle                          # lines, checksums, catalog field
+python3 -m gpconf check-tle output.tle                          # lines, checksums, catalog field, column layout
 python3 -m gpconf check-tle output.tle --against records.csv    # plus the round trip, per record
 ```
 
@@ -136,10 +136,12 @@ failure or when no record is found.
 redirects followed, no retries, 2 s between requests, and it stops on the first unexpected
 response. The largest file is the 9.4 MB legacy SATCAT; leave it out with
 `--skip-case satcat-70000-cutoff` if you do not need the 70000-cutoff case. Do not run the fetch
-more than once per two hours; the tool never re-fetches a file it already has unless you pass
-`--force` and the copy is older than two hours. After each run it compares every file with the
-SHA-256 recorded in `manifest.json` and prints a `DRIFT` line for any stable-tier source whose bytes
-differ (`--check-drift` does the comparison without fetching). If you receive an HTTP 403 read the
+more than once per two hours; the tool never re-fetches a file it already has (with or without its
+metadata) unless you pass `--force` and the recorded `retrieved_at` is at least two hours old, and it
+never requests a URL twice in one run (a re-capture entry is requested only when its original is on
+disk and two hours old). After each run it compares every file with the SHA-256 recorded in
+`manifest.json`, prints a `DRIFT` line for any stable-tier source whose bytes differ and exits 2
+(`--check-drift` does the comparison without fetching). If you receive an HTTP 403 read the
 body: CelesTrak explains why.
 
 ### Two tiers: snapshot and live
@@ -185,7 +187,7 @@ class Parser:
     def alpha5_decode(self, field: str) -> int: ...
     def alpha5_encode(self, n: int) -> str: ...
     def two_digit_year(self, yy: str) -> int: ...
-    def parse_epoch(self, text: str): ...     # return a datetime, raise on invalid input
+    def parse_epoch(self, text: str): ...     # return a datetime for the instant (it is compared), raise on invalid input
     def write_tle(self, record: dict): ...    # -> (line1, line2) or (line0, line1, line2); raise to refuse
 ```
 

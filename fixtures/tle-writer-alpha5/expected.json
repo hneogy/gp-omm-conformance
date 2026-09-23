@@ -2,7 +2,7 @@
  "case": "tle-writer-alpha5",
  "title": "Writing TLEs across the five-digit boundary: Alpha-5 catalog field, valid lines, refusal of numbers the format cannot carry, round trip",
  "schema_version": "1.0",
- "generated_at": "2026-09-23T03:53:09Z",
+ "generated_at": "2026-09-23T20:35:25Z",
  "generator": "tools/make_expected.py",
  "kind": "writer",
  "sources": {
@@ -26926,6 +26926,10 @@
   {
    "id": "tle-writer-catalog-field",
    "description": "A TLE writer puts the catalog number in columns 3-7 of both lines as five digits with leading zeros below 100000 and, from 100000 to 339999, as Alpha-5 (letter value 10-33, A=10 ... Z=33 with I and O never used, then the last four digits); both lines carry the same field."
+  },
+  {
+   "id": "tle-writer-column-layout",
+   "description": "Every field of a written TLE sits in its fixed columns: on line 1 the decimal points at columns 24 and 35 and the separators at 2, 9, 18, 33, 44, 53, 62 and 64; on line 2 the decimal points at 12, 21, 38, 47 and 55, the separators at 2, 8, 17, 26, 34, 43 and 52, seven eccentricity digits, right-justified element set and revolution numbers. A left-justified value with a recomputed checksum has the right length and checksum and still fails this check."
   },
   {
    "id": "tle-writer-round-trip",

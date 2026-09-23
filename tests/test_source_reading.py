@@ -51,6 +51,11 @@ class LoadSourceTests(unittest.TestCase):
         for name, (data, fmt, words) in self.bad_inputs().items():
             with self.subTest(name):
                 state, fails = self.load(name, data, {"format": fmt, "sha256": "0" * 64, "record_count": 1})
+                if name == "bom.kvn":  # since D-117 the reader rejects a BOM outright, which is the clearer error
+                    self.assertEqual(state, "parse-error")
+                    self.assertEqual([i.check for i in fails], ["reference-reader"])
+                    self.assertIn("BOM", fails[0].detail)
+                    continue
                 self.assertEqual(state, "unreadable")
                 self.assertEqual([i.check for i in fails], ["source-readable"], fails)
                 detail = fails[0].detail
