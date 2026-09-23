@@ -5,10 +5,18 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 added cases; major: changed `expected.json` schema or check semantics). `DECISIONS.md` holds the
 reasoning behind every entry, by decision number.
 
-## [Unreleased]
+## [0.2.1] - 2026-09-23
 
-Fixes from the audit of 2026-09-23 (a patch under the rule above: no expected value, check text or
-schema changes; the corpus stops reporting pass for outcomes that were never meant to count as one).
+A patch release under the versioning rule: fixes to the runner, the reference readers, `check-tle` and
+the tooling, from the audit follow-up of 2026-09-23 (a read-only pass by a separate AI session under the
+maintainer's direction, not the independent audit of `AUDIT.md`). No frozen expected value and no
+schema changed; the seventeen cases are unchanged; one check was added to the writer case
+(`tle-writer-column-layout`) and one check the runner had always evaluated is now documented
+(`ccsds-epoch-strings`). The corpus stops reporting pass for outcomes that were never meant to count as
+one; what it reports about the naive and python-sgp4 adapters is unchanged, 14 and 7 of 17 cases
+failing. The independent audit in `AUDIT.md` covered v0.1.0; neither the writer-side case of v0.2.0 nor
+these fixes have been separately audited. The version DOI for this release is added to `CITATION.cff`
+and the README after Zenodo mints it.
 
 ### Fixed
 - The reference renderer wrote an exact-midnight epoch as `YYDDD.-8000000`; the writer judge therefore

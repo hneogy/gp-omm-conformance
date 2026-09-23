@@ -17,7 +17,7 @@ from cases import CASES, CHECKS, AMBIGUITIES  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NOW = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-CORPUS_VERSION = "0.2.0"
+CORPUS_VERSION = "0.2.1"
 
 INTERPRETATION = {
     "epoch-year-19xx": "A parser must turn epoch field 98324.28472222 into 1998-11-20T06:49:59.999808 (not 2098) and must read a negative first derivative, a non-zero second derivative and a zero BSTAR written 00000+0. All seven renderings must yield the same record. A failure on this case alone usually means a two-digit-year pivot bug or an implied-decimal sign bug.",

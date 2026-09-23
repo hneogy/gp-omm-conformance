@@ -14,7 +14,7 @@ parsers were run:
 A failure here is a statement about the parser, not about the corpus: the reference parser
 passes every case. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
 
-Generated 2026-09-23T20:37:57Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-23T20:37:17Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.reference:Parser); naive: run 2026-09-23T20:37:18Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-23T20:37:19Z with gpconf 0.2.0 on corpus 0.2.0 (parser tests.adapters.sgp4_adapter:Parser).
+Generated 2026-09-23T20:55:40Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-23T20:55:39Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.reference:Parser); naive: run 2026-09-23T20:55:39Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-23T20:55:40Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.sgp4_adapter:Parser).
 
 ## Status by case
 

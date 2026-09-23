@@ -10,9 +10,11 @@ traceable to a provider response whose URL, retrieval time and SHA-256 are recor
 (`tle-writer-alpha5`) asks the same of code that *writes* TLEs: Alpha-5 in the catalog field,
 valid lines, and a refusal for the numbers the format cannot carry.
 
-Status: version `0.2.0`, which adds the writer-side case; the sixteen cases of v0.1.0 and their
-expected values are unchanged. The independent audit (`AUDIT.md`) covered v0.1.0; the writer-side case
-has not been separately audited. Maintainer: Honorius Neogy (NEOGY LLC).
+Status: version `0.2.1`, a patch release: fixes to the runner, the reference readers, `check-tle` and
+the tooling from the audit follow-up of 2026-09-23; the seventeen cases and their frozen expected values
+are unchanged, and what the corpus reports about the naive and python-sgp4 adapters is unchanged. The
+independent audit (`AUDIT.md`) covered v0.1.0; neither the writer-side case of v0.2.0 nor the fixes of
+v0.2.1 have been separately audited. Maintainer: Honorius Neogy (NEOGY LLC).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22867654.svg)](https://doi.org/10.5281/zenodo.22867654) See `DECISIONS.md` for the full decision log and `MANIFEST.md` for every case,
 source and known gap.
@@ -409,7 +411,8 @@ project owner before the next began; the agent worked under a written decision p
   documentation and tooling defects; every finding's resolution is recorded at the end of `AUDIT.md`
   and in `DECISIONS.md` (D-054 onward). The public copy of `AUDIT.md` withholds one row of its
   appendix table (a sample entry from the SupGP case, per D-033/D-049) and says so in a notice; the
-  auditor's text is otherwise unchanged and the private original is intact.
+  auditor's text is otherwise unchanged and the private original is intact. It covered v0.1.0; neither
+  the writer-side case of v0.2.0 nor the fixes of v0.2.1 have been separately audited.
 
 If you find an error, the most useful report names the case id, the source file's SHA-256 and
 the field, so that the discrepancy can be traced to a specific fetched byte sequence.
@@ -426,11 +429,11 @@ makes this data freely available; please respect its usage policy. Standards: CC
 Alpha-5 definition: Space-Track, https://www.space-track.org/documentation.
 
 To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, H. (NEOGY LLC).
-gp-omm-conformance, version 0.2.0, 2026-09-22, https://github.com/hneogy/gp-omm-conformance.*
+gp-omm-conformance, version 0.2.1, 2026-09-23, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** for this release, v0.2.0, is
-[10.5281/zenodo.22906966](https://doi.org/10.5281/zenodo.22906966); v0.1.0, the release the independent
-audit covered, keeps its own, [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655). Use a
-version DOI when your results depend on a specific set of expected values; each release gets its own
-under the same concept DOI.
+general. The **version DOI** for this release, v0.2.1, is added here and to `CITATION.cff` after Zenodo
+mints it at the release; v0.2.0 keeps its own, [10.5281/zenodo.22906966](https://doi.org/10.5281/zenodo.22906966),
+and v0.1.0, the release the independent audit covered, keeps [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655).
+Use a version DOI when your results depend on a specific set of expected values; each release gets its
+own under the same concept DOI.
