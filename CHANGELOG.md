@@ -9,8 +9,8 @@ reasoning behind every entry, by decision number.
 
 A minor release under the versioning rule: one case added. The sixteen cases of v0.1.0 and their
 expected values are unchanged. The independent audit in `AUDIT.md` covered v0.1.0; the writer-side
-case has not been separately audited. The version DOI for this release is added to `CITATION.cff`
-and the README after Zenodo mints it.
+case has not been separately audited. Version DOI 10.5281/zenodo.22906966 (Zenodo record 22906966);
+the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
 
 ### Added
 

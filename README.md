@@ -414,7 +414,8 @@ To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, 
 gp-omm-conformance, version 0.2.0, 2026-09-22, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655) refers to exactly v0.1.0; v0.2.0
-receives its own version DOI when the release is archived, and it is added here and to `CITATION.cff`
-then. Use a version DOI when your results depend on a specific set of expected values; each release
-gets its own under the same concept DOI.
+general. The **version DOI** for this release, v0.2.0, is
+[10.5281/zenodo.22906966](https://doi.org/10.5281/zenodo.22906966); v0.1.0, the release the independent
+audit covered, keeps its own, [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655). Use a
+version DOI when your results depend on a specific set of expected values; each release gets its own
+under the same concept DOI.
