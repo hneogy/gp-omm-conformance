@@ -30,7 +30,10 @@ reasoning is in `DECISIONS.md`, D-095 to D-101.
 - A file a tool wrote: `python3 -m gpconf check-tle FILE... [--against RECORDS]`. Same checks, applied
   to every `1 `/`2 ` line pair in the file whatever its length; name lines, `#` comment lines and LF or
   CRLF endings are accepted; `--against` supplies the source records (CSV, JSON, XML, KVN or TLE) for
-  the round trip. Exit 1 on any failing record or when no record is found.
+  the round trip. A written record whose catalog number has no match in those records is a failure, not a
+  note: the line is about some other object, or about none. When the number is `00000` or `99999` the detail
+  names the likely cause on the rffit path (an `-i` lookup that found no elements leaves rffit's orbit
+  zero-initialised, and 99999 is its default). Exit 1 on any failing record or when no record is found.
 
 ## The precision rule
 

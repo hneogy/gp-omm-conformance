@@ -1,7 +1,7 @@
 {
  "corpus": "gp-omm-conformance",
  "corpus_version": "0.2.0",
- "generated_at": "2026-09-23T03:24:53Z",
+ "generated_at": "2026-09-23T03:53:10Z",
  "generator": "tools/make_manifest.py",
  "design": {
   "raw_provider_files_shipped": false,
@@ -2343,7 +2343,7 @@
     },
     {
      "path": "fixtures/analyst-objects/raw/analyst.csv",
-     "tier": "stable",
+     "tier": "live",
      "format": "csv",
      "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=CSV",
      "retrieved_at": "2026-09-21T00:11:30Z",
@@ -2391,7 +2391,7 @@
     },
     {
      "path": "fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv",
-     "tier": "stable",
+     "tier": "live",
      "format": "csv",
      "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=CSV",
      "retrieved_at": "2026-09-21T00:10:07Z",

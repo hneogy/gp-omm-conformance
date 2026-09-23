@@ -5,6 +5,27 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 added cases; major: changed `expected.json` schema or check semantics). `DECISIONS.md` holds the
 reasoning behind every entry, by decision number.
 
+## [Unreleased]
+
+Fixes from the audit of 2026-09-23 (a patch under the rule above: no expected value, check text or
+schema changes; the corpus stops reporting pass for outcomes that were never meant to count as one).
+
+### Fixed
+- The reference renderer wrote an exact-midnight epoch as `YYDDD.-8000000`; the writer judge therefore
+  failed a correct writer at any midnight epoch. Fixed with regression tests (D-111).
+- `check-tle --against` passed a written record whose catalog number had no match in the source
+  records, with a note; it now fails the record and names `00000` and `99999` as the likely rffit causes
+  (D-112).
+- A source file the reference reader read zero records from, where the manifest records some, passed every
+  per-file check on zero records (an HTML error page saved by a failed fetch, a truncated TLE, an empty or
+  BOM-prefixed file); it now fails the case with a `source-readable` item describing the file (D-113).
+- The writer case listed the two rolling group files its derived inputs were rendered from as stable-tier
+  sources, so `tools/fetch.py --check-drift` counted 24 stable sources and would have reported false drift for
+  them; each source now keeps the tier its own case records, and the count is 22 (D-114).
+- A stable-tier source whose bytes no longer matched the recorded SHA-256 was silently treated as live, with the
+  reference reader as oracle and only a hidden info item; the case now carries a failing `stable-source-drift`
+  item, the JSON report a `drift` field, and the values item says the frozen values were not applied (D-115).
+
 ## [0.2.0] - 2026-09-22
 
 A minor release under the versioning rule: one case added. The sixteen cases of v0.1.0 and their

@@ -247,7 +247,14 @@ def check_record(l0, l1, l2, against=None):
             if against is not None:
                 src = against.get(r["norad_cat_id"])
                 if src is None:
-                    r["notes"].append(f"no source record with id {r['norad_cat_id']} in the --against file; round trip not checked")
+                    # a written id the source records do not contain is a failure, not a note (D-112): the record is
+                    # about some other object, or about none. Two values name the likely cause on the rffit path.
+                    why = ""
+                    if r["norad_cat_id"] == 0:
+                        why = " (likely cause: 00000 is what rffit writes when its -i lookup found no elements and the orbit stayed zero-initialised, e.g. an Alpha-5 field passed through satno2tle)"
+                    elif r["norad_cat_id"] == 99999:
+                        why = " (likely cause: 99999 is rffit's default catalog number)"
+                    r["problems"].append(f"no source record with id {r['norad_cat_id']} in the --against file{why}; the round trip cannot be checked")
                 else:
                     mism, conv = round_trip(l0, l1, l2, src)
                     r["round_trip"] = {"mismatches": mism, "conventions": conv}

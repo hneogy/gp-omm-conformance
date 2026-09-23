@@ -62,11 +62,11 @@ Gaps (stated explicitly for this case):
 | `derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle` | stable | None | 58128 | 2026-09-21T01:01:34Z | `f4868060a6ab61d3…` |
 | `fixtures/analyst-objects/raw/analyst-270449-first.csv` | stable | 200 | 363 | 2026-09-21T00:44:08Z | `f9caeec84ba49dc0…` |
 | `fixtures/analyst-objects/raw/analyst-81011-first.csv` | stable | 200 | 357 | 2026-09-21T00:44:23Z | `339ed35b58d6300d…` |
-| `fixtures/analyst-objects/raw/analyst.csv` | stable | 200 | 76633 | 2026-09-21T00:11:30Z | `e1d437ebf2a53ed9…` |
+| `fixtures/analyst-objects/raw/analyst.csv` | live | 200 | 76633 | 2026-09-21T00:11:30Z | `e1d437ebf2a53ed9…` |
 | `fixtures/epoch-year-19xx/raw/iss-first.csv` | stable | 200 | 368 | 2026-09-21T00:43:39Z | `cbdd6a2e36b97d54…` |
 | `fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv` | stable | 200 | 376 | 2026-09-21T00:44:33Z | `601736c2b121cea2…` |
 | `fixtures/six-digit-omm-saramago/raw/saramago-first.csv` | stable | 200 | 374 | 2026-09-21T00:43:55Z | `2a1913dc0c5e2bab…` |
-| `fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv` | stable | 200 | 39336 | 2026-09-21T00:10:07Z | `bc9a5dff288a26d3…` |
+| `fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv` | live | 200 | 39336 | 2026-09-21T00:10:07Z | `bc9a5dff288a26d3…` |
 
 URLs (each requested once when the fixtures were built):
 

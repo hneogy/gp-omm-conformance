@@ -57,5 +57,17 @@ class DriftTests(unittest.TestCase):
         self.assertFalse([r for r in rep if r["status"] == "drift" and r["tier"] == "stable"], "stable source drifted from the manifest")
 
 
+
+class RealManifestTiers(unittest.TestCase):
+    def test_real_manifest_tiers(self):
+        # "stable wins when several cases list one path" gives the right answer only if no case mislabels a
+        # live file as stable (D-114): the two rolling group files are live, and the stable raw sources are the
+        # corpus's 22 gp-first files, the count the tracker site checks (it changes only when a case is added)
+        src = fetch.manifest_sources(ROOT)
+        self.assertEqual(src["fixtures/analyst-objects/raw/analyst.csv"]["tier"], "live")
+        self.assertEqual(src["fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv"]["tier"], "live")
+        self.assertEqual(sum(1 for p, e in src.items() if p.startswith("fixtures/") and e["tier"] == "stable"), 22)
+
+
 if __name__ == "__main__":
     unittest.main()

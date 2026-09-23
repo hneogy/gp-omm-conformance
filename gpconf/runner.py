@@ -22,12 +22,15 @@ Parser protocol (duck-typed):
 
 Two tiers: if the bytes on disk hash to the SHA-256 recorded when the corpus was built, the
 frozen expected values are the oracle ("snapshot"). Otherwise the oracle is the corpus's own
-reference reader applied to your bytes ("live"), which is clearly labelled as such.
+reference reader applied to your bytes ("live"), which is clearly labelled as such. A stable-tier
+source whose bytes changed is not silently downgraded: the case gets a failing `stable-source-drift`
+item and a `drift` field in the JSON report, and its values item says the frozen values were not applied.
 """
 import datetime as dt
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 from decimal import Decimal, InvalidOperation, ROUND_DOWN
@@ -203,6 +206,7 @@ class Item:
 class CaseResult:
     def __init__(self, case_id, title):
         self.case_id, self.title, self.items, self.modes = case_id, title, [], {}
+        self.drift = {}  # path -> {recorded_sha256, actual_sha256}: stable-tier sources whose bytes changed (D-115)
 
     def add(self, check, status, file=None, detail="", tolerance=None):
         if tolerance and status == "pass":
@@ -226,10 +230,32 @@ class CaseResult:
 
     def as_dict(self):
         return {"case": self.case_id, "title": self.title, "status": self.status, "counts": self.counts(),
-                "modes": self.modes, "items": [i.as_dict() for i in self.items]}
+                "modes": self.modes, "drift": self.drift, "items": [i.as_dict() for i in self.items]}
 
 
 # --------------------------------------------------------------------------- the runner
+def describe_bytes(raw, fmt=None, limit=48):
+    """What a file the reference reader could not read looks like: size, first bytes, and a guess (D-113)."""
+    n = len(raw)
+    guesses = []
+    if n == 0:
+        guesses.append("empty file")
+    elif not raw.strip():
+        guesses.append("whitespace only")
+    if raw.startswith(b"\xef\xbb\xbf"):
+        guesses.append("UTF-8 BOM prefix")
+    low = raw[:1024].lower()
+    if low.lstrip().startswith(b"<!doctype") or b"<html" in low:
+        guesses.append("HTML document (an error or challenge page?)")
+    if raw.strip() in (b"No GP data found", b"No SupGP data found"):
+        guesses.append("CelesTrak's empty-response text")
+    if fmt in ("tle", "2le", "3le") and re.search(rb"^1 ", raw, re.M) and not re.search(rb"^2 ", raw, re.M):
+        guesses.append("a TLE line 1 without a line 2 (truncated?)")
+    if fmt == "csv" and n and raw.count(b"\n") <= 1 and b"," in raw:
+        guesses.append("CSV header only")
+    return f"{n} bytes, starts with {raw[:limit]!r}" + (f"; looks like: {', '.join(guesses)}" if guesses else "")
+
+
 class Runner:
     def __init__(self, parser, root=None, verbose=False):
         self.parser = parser
@@ -250,14 +276,22 @@ class Runner:
         return out
 
     def load_source(self, res, case, path, src):
-        """Returns (state, fmt, mode, parsed, refrecs, reffacts). state: ok | missing | empty-404 | parse-error | unsupported"""
+        """Returns (state, fmt, mode, parsed, refrecs, reffacts). state: ok | missing | empty-404 | unreadable | parse-error | unsupported"""
         full = os.path.join(self.root, path)
         fmt = src.get("format")
         if not os.path.exists(full):
             res.add("source-present", "skip", path, "not on disk; run tools/fetch.py")
             return "missing", fmt, None, None, None, None
-        mode = "snapshot" if sha256(full) == src.get("sha256") else "live"
+        actual = sha256(full)
+        mode = "snapshot" if actual == src.get("sha256") else "live"
         res.modes[path] = mode
+        if mode == "live" and src.get("tier") == "stable":
+            # A stable-tier source is frozen by promise; changed bytes are reported, never silently downgraded (D-115).
+            res.drift[path] = {"recorded_sha256": src.get("sha256"), "actual_sha256": actual}
+            res.add("stable-source-drift", "fail", path,
+                    f"stable-tier source's bytes differ from the tested snapshot (recorded SHA-256 {str(src.get('sha256'))[:12]}…, actual {actual[:12]}…); "
+                    "the frozen expected values were not applied to this file and the parser was compared against the corpus's reference reader instead. "
+                    "Run tools/fetch.py --check-drift; if CelesTrak changed this first-ever record, tell the corpus maintainer.")
         raw = open(full, "rb").read()
         text = raw.decode("utf-8", "replace")
         if src.get("http_status", 200) != 200 or text.strip() in ("No GP data found", "No SupGP data found"):
@@ -270,6 +304,17 @@ class Runner:
         except Exception as e:  # the corpus's own reader failed: report, do not hide
             res.add("reference-reader", "fail", path, f"internal: reference reader raised {e!r}")
             return "parse-error", fmt, mode, None, None, None
+        # A file the reference reader reads nothing from is not a file with nothing in it (D-113): the checks
+        # below would all pass on zero records. The manifest's record_count says what the file should hold.
+        expected_n = src.get("record_count")
+        if isinstance(expected_n, int) and expected_n > 0 and not refrecs:
+            res.add("source-readable", "fail", path,
+                    f"reference reader found 0 of {expected_n} expected records; the file is {describe_bytes(raw, fmt)}")
+            return "unreadable", fmt, mode, None, refrecs, reffacts
+        if mode == "snapshot" and isinstance(expected_n, int) and len(refrecs) != expected_n:
+            res.add("source-readable", "fail", path,
+                    f"internal: reference reader found {len(refrecs)} of {expected_n} recorded records in a file whose hash matches the tested snapshot")
+            return "unreadable", fmt, mode, None, refrecs, reffacts
         try:
             parsed = self.parse(full, fmt)
         except Unsupported:
@@ -545,13 +590,15 @@ class Runner:
                     if state == "empty-404":
                         res.add("sha256-matches-tested-snapshot", "info", path, f"{mode}: empty response body preserved")
                     continue
-                res.add("sha256-matches-tested-snapshot", "info", path, mode)
+                res.add("sha256-matches-tested-snapshot", "info", path, "drift: stable-tier source differs from the tested snapshot" if path in res.drift else mode)
                 exempt = set()
                 if exp["kind"] == "derived-kvn":
                     rec = next((r for r in exp["records"] if r.get("derived_file") == b), None)
                     if rec:
                         exempt = {KEYWORD_TO_FIELD[k] for k in rec.get("keywords_absent", [])}
                 oracle, label = self.oracle_for(exp, path, fmt, mode, refrecs)
+                if path in res.drift:
+                    label = "reference-reader values (frozen expected values not applied: the stable source drifted from the tested snapshot; not the human-verified snapshot)"
                 partial = bool(exp.get("sets", {}).get(set_name, {}).get("record_filter")) and mode == "snapshot" and not exp.get("records_withheld")
                 if oracle:
                     self.compare_values(res, path, fmt, mode, parsed, oracle, exempt=exempt, partial=partial, oracle_label=label)

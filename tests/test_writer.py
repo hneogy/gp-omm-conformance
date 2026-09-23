@@ -6,6 +6,7 @@ when installed, must pass the catalog field and the line checks, refuse 340000 a
 lenience of to_alpha5) write '-0001' for -1. A refusal for a number the TLE field cannot carry is the correct
 output, and the tests assert it is reported as a pass."""
 import contextlib
+import glob
 import io
 import json
 import os
@@ -59,6 +60,27 @@ class ExpectedInputsTests(unittest.TestCase):
         for r in frozen:
             self.assertEqual(r["expected_catalog_field"], T.to_alpha5(r["norad_cat_id"]))
             self.assertTrue(r["source_sha256"], r["norad_cat_id"])
+
+
+    def test_sources_keep_their_originating_tier(self):
+        # D-114: a source listed under the writer case carries the tier the case that owns the file recorded,
+        # never a blanket "stable"; the two live group files must stay live or fetch.py reports false drift
+        exp = load_expected()
+        others = {}
+        for f in glob.glob(os.path.join(ROOT, "fixtures", "*", "expected.json")):
+            cid = os.path.basename(os.path.dirname(f))
+            if cid == "tle-writer-alpha5":
+                continue
+            with open(f) as fh:
+                for path, src in json.load(fh).get("sources", {}).items():
+                    if src.get("tier") != "mixed":          # "mixed" is a case-level label, not the file's own
+                        others.setdefault(path, set()).add(src["tier"])
+        for path, src in exp["sources"].items():
+            self.assertEqual(len(others.get(path, ())), 1, (path, others.get(path)))   # every input file has one recorded tier
+            self.assertEqual({src["tier"]}, others[path], path)
+        self.assertEqual(exp["sources"]["fixtures/analyst-objects/raw/analyst.csv"]["tier"], "live")
+        self.assertEqual(exp["sources"]["fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv"]["tier"], "live")
+        self.assertTrue(all(r["tier"] == "stable" for r in exp["records"]))  # the frozen inputs themselves stay stable
 
 
 class ReferenceWriterTests(unittest.TestCase):
@@ -223,10 +245,39 @@ class CheckTleTests(unittest.TestCase):
         self.assertEqual(r["status"], "pass", r["problems"])
         self.assertEqual(r["round_trip"]["mismatches"], [])
         self.assertEqual((r["secondary_fields"]["mean_motion_dot"], r["secondary_fields"]["zero_ddot_sign"]), ("zeroed", "-"))
-        other = {5: against[100000]}  # no record for this id -> round trip not checked, said so
+        other = {5: against[100000]}  # no record for this id -> a failure, not a note (D-112)
         r = W.check_file(self.fit_style, other)[0]
-        self.assertEqual(r["status"], "pass")
-        self.assertTrue(any("no source record with id 100000" in n for n in r["notes"]))
+        self.assertEqual(r["status"], "fail")
+        self.assertTrue(any("no source record with id 100000" in x for x in r["problems"]), r["problems"])
+
+    def test_unmatched_ids_fail_and_name_rffits_likely_causes(self):
+        # four records against a source file that holds only 100000: matched, unmatched, 00000, 99999 (D-112)
+        f = T.omm_fields_from_record(self.rec)
+        def lines(catnr):
+            _, l1, l2 = T.render(dict(f, NORAD_CAT_ID=str(catnr)))
+            return f"REC {catnr}\n{l1}\n{l2}\n"
+        text = lines(100000) + lines(123456) + lines(0) + lines(99999)
+        tle = self.write("written.tle", text)
+        csv = self.write("source.csv", self.source_csv())
+        out = os.path.join(self.tmp.name, "report.json")
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = gpconf_main(["check-tle", tle, "--against", csv, "--json", out])
+        self.assertEqual(rc, 1)
+        with open(out) as fh:
+            recs = json.load(fh)["files"][0]["records"]
+        by = {r["norad_cat_id"]: r for r in recs}
+        self.assertEqual(sorted(by), [0, 99999, 100000, 123456])
+        self.assertEqual(by[100000]["status"], "pass", by[100000]["problems"])
+        self.assertEqual(by[123456]["status"], "fail")
+        self.assertTrue(any("no source record with id 123456 in the --against file" in x for x in by[123456]["problems"]), by[123456]["problems"])
+        self.assertFalse(any("rffit" in x for x in by[123456]["problems"]))
+        self.assertEqual(by[0]["status"], "fail")
+        self.assertTrue(any("no source record with id 0" in x and "00000" in x and "rffit" in x and "-i lookup" in x for x in by[0]["problems"]), by[0]["problems"])
+        self.assertEqual(by[99999]["status"], "fail")
+        self.assertTrue(any("no source record with id 99999" in x and "rffit's default" in x for x in by[99999]["problems"]), by[99999]["problems"])
+        # a file of matched records only still exits 0
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(gpconf_main(["check-tle", self.write("ok.tle", lines(100000)), "--against", csv]), 0)
 
     def test_six_digit_integer_field_and_blank_field_fail(self):
         l1, l2 = Naive().write_tle(self.rec)

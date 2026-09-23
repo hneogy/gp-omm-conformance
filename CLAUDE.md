@@ -64,3 +64,7 @@ captured cleanly the moment we realise it matters, ahead of other work.
 Retrying, backtracking, or changing approach to get a result right is
 expected, not a failure. Log it in DECISIONS.md and continue. Never
 carry forward a weak result just because redoing it costs time.
+
+A step that gates a commit passes on its own exit code, never on the
+exit code of a filter after a pipe or on a line read from a log. Check
+the code, then commit; a suite that printed FAILED has not passed.

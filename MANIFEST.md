@@ -1,6 +1,6 @@
 # Corpus manifest (0.2.0)
 
-Generated 2026-09-23T03:24:53Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-09-23T03:53:10Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
 
@@ -22,7 +22,7 @@ No raw provider files are shipped. Each case lists the exact source URLs, retrie
 | 14 | `alpha5-encoding-vectors` | vectors | 0 | 4/0 | 1 |
 | 15 | `alpha5-tle-derived` | derived-tle | 604 | 4/0 | 3 |
 | 16 | `kvn-syntax-variants` | derived-kvn | 6 | 6/0 | 2 |
-| 17 | `tle-writer-alpha5` | writer | 609 | 11/0 | 4 |
+| 17 | `tle-writer-alpha5` | writer | 609 | 9/2 | 4 |
 
 ## 1. `epoch-year-19xx`
 

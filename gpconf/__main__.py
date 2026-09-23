@@ -97,6 +97,10 @@ def main(argv=None):
             print(f"== {r.case_id}")
             for i in shown:
                 print(f"  [{i.status}] {i.check} ({i.file or '-'}): {i.detail}")
+    drifted = [(r.case_id, p) for r in results for p in r.drift]
+    if drifted:
+        print("\nSTABLE SOURCE DRIFT: " + ", ".join(f"{c}: {p}" for c, p in drifted)
+              + "\n  These stable-tier files differ from the tested snapshot; the frozen expected values were not applied to them and the parser was compared against the reference reader instead. Run tools/fetch.py --check-drift.")
     modes = {m for r in results for m in r.modes.values()}
     if "live" in modes:
         print("\nnote: some sources hash differently from the tested snapshot; for those, values were compared against the corpus's own reference reader, not the human-verified snapshot.")

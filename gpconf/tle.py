@@ -81,7 +81,8 @@ def epoch_field(iso, rounding=ROUND_HALF_UP):
         frac -= 1
         nxt = t.date() + dt.timedelta(days=1)
         doy, year = nxt.timetuple().tm_yday, nxt.year
-    return f"{year % 100:02d}{doy:03d}.{str(frac)[2:].ljust(8, '0')}"
+    # format(..., 'f'): str(Decimal) prints a quantised zero as '0E-8', which used to render midnight as 'YYDDD.-8000000' (D-111)
+    return f"{year % 100:02d}{doy:03d}.{format(frac, 'f')[2:].ljust(8, '0')}"
 
 
 def ndot_field(text):

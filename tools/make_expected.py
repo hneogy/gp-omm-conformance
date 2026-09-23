@@ -372,6 +372,21 @@ REFERENCE_TLE_FIELD_KEYS = ["catalog_field", "epoch_field", "ndot_field", "nddot
                             "element_set_field", "rev_field", "intl_designator_field"]
 
 
+def originating_tier(path, from_case):
+    """The tier the case that owns a file recorded for it (D-114). The writer case's inputs are frozen records, so
+    the records are stable, but a source file keeps its own tier: the two rolling group files are live."""
+    for cid in (from_case, path.split("/")[1] if path.startswith("fixtures/") else None):
+        if not cid:
+            continue
+        f = os.path.join(ROOT, "fixtures", cid, "expected.json")
+        if os.path.exists(f):
+            tier = json.load(open(f)).get("sources", {}).get(path, {}).get("tier")
+            if tier:
+                return tier
+    PROBLEMS.append(f"{path}: no originating case records a tier for it; labelled live")
+    return "live"
+
+
 def build_writer(case, out_sources, out_records, out_notes, case_specific):
     """Writer-case inputs: canonical records copied from the frozen expected.json of stable-tier sets of other
     cases (no fetch, no raw bytes), plus the owner-approved synthetic-derived refusal inputs (D-096)."""
@@ -430,7 +445,7 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
                                     "Real elements with a vector id: no catalogued object carries this number. Owner approval 2026-09-22 (DECISIONS D-096)."})
     for path in sorted(files):
         fmt, recs, _ = gpref.read_file(os.path.join(ROOT, path))
-        out_sources[path] = source_entry(path, "stable", fmt=fmt, record_count=len(recs))
+        out_sources[path] = source_entry(path, originating_tier(path, files[path]), fmt=fmt, record_count=len(recs))
     case_specific.update({
         "inputs": {"frozen_records": n_frozen, "synthetic_derived": len(vec["encode_unrepresentable"]), "alpha5_letters": letters, "five_digit_ids": five_digit},
         "writer_protocol": "write_tle(record) -> (line1, line2) or (line0, line1, line2); raise to refuse. External: --write-cmd, one JSON record on stdin, the lines on stdout, exit 3 = unsupported, other non-zero = refused.",

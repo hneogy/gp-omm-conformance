@@ -216,6 +216,15 @@ Everything else is exact. A check that passed only because of a tolerance is rep
 difference and maximum, so a systematic sub-tolerance bias is visible instead of hidden. The
 reference adapter must be exact; the test suite enforces that.
 
+A source file the corpus's own reader reads zero records from, where the manifest records some, fails
+the case with a `source-readable` item that says what the file looked like (size, first bytes, and a guess
+such as an HTML error page, an empty file, a BOM prefix or a TLE cut off after line 1), and the file's other
+checks are not run; a 16-byte CelesTrak 404 body is a legitimate zero-record file and stays `empty-404`.
+A stable-tier source whose bytes no longer hash to the recorded SHA-256 is reported, not silently treated
+as live: the case gets a failing `stable-source-drift` item naming the recorded and actual hashes, the JSON
+report gets a `drift` field, and the file's values item says the frozen expected values were not applied
+and that the parser was compared against the reference reader instead.
+
 ## The seventeen cases
 
 | case | what it covers |
