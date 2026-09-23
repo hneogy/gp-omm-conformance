@@ -50,7 +50,7 @@ the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
 - `docs/WRITERS.md`: the writer protocol, the precision rule, the three writers' results, and the
   function-level observation of strf's `rffit` with tested and inferred claims labelled and the
   reproduction recipe. `docs/upstream/strf-number-to-alpha5-range-check.md`: a hardening suggestion,
-  drafted and not sent. (D-097, D-100, D-101)
+  drafted and not sent. (D-097, D-100, D-101) [Filed after the release as cbassa/strf#88 on 2026-09-23; D-108.]
 - `tools/make_expected.py` accepts case ids, so a new case can be built without rewriting the frozen
   files of the others. (D-095)
 - This changelog. (D-100)

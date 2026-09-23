@@ -107,6 +107,7 @@ def main():
         doc += ["", f"Expected values: `fixtures/{c['id']}/expected.json` (schema_version 1.0)."]
         open(os.path.join(ROOT, "fixtures", c["id"], "case.md"), "w").write("\n".join(doc) + "\n")
         details += [f"## {i}. `{c['id']}`", "", c["title"], "", f"Tests: {', '.join(c['tests'])}", "", "Coverage gaps:", ""] + ([f"- {x}" for x in c["coverage"]["gaps"]] or ["- none identified"]) + [""]
+    md += ["", "The records column sums the record counts of a case's source files: `analyst-objects` counts the 565 group records plus the two single-object first fetches (567)."]
     md += [""] + details + ["## Checks", ""] + [f"- **{k}** — {v}" for k, v in CHECKS.items()] + ["", "## Ambiguities", ""] + [f"- **{k}** — {v}" for k, v in AMBIGUITIES.items()]
     json.dump(manifest, open(os.path.join(ROOT, "manifest.json"), "w"), indent=1)
     open(os.path.join(ROOT, "MANIFEST.md"), "w").write("\n".join(md) + "\n")
