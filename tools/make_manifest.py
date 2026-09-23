@@ -41,7 +41,7 @@ INTERPRETATION = {
 
 LIBRARY_FINDINGS = {
     "nine-digit-supgp-launch-nominals": ["python-sgp4 2.27 sgp4.omm.initialize and Skyfield 1.55 EarthSatellite.from_omm raise ValueError('satellite number cannot exceed 339999') for every nine-digit record: 28 distinct records (27 in the full Starlink SupGP file plus one single-object query), 29 file-records counting that object's CSV and XML renderings separately."],
-    "analyst-objects": ["python-sgp4 2.27 sgp4.omm.parse_xml returns None for an empty <OBJECT_ID/> element and initialize() then raises TypeError; 564 of 566 XML analyst records fail, while the same records in CSV pass."],
+    "analyst-objects": ["python-sgp4 2.27 sgp4.omm.parse_xml returns None for an empty <OBJECT_ID/> element and initialize() then raises TypeError; 563 of 565 XML analyst records fail, while the same records in CSV pass."],
     "tle-vs-omm-precision-loss": ["python-sgp4 2.27 export_tle writes a zero second derivative as ' 00000-0', matching Space-Track's rendering; CelesTrak writes ' 00000+0', so a byte-exact round trip of a CelesTrak line succeeds only when the second derivative is non-zero. The values are identical; this is a provider divergence (D-072), not a library defect."],
     "alpha5-tle-derived": ["python-sgp4 2.27 twoline2rv decodes all 604 derived Alpha-5 lines to the correct integer (from_alpha5)."],
     "alpha5-encoding-vectors": ["python-sgp4 2.27 sgp4.alpha5.from_alpha5 is lenient: it accepts I0000 (as 180000), O1234, lowercase and four-character fields that the Space-Track definition excludes; to_alpha5(-1) returns '-0001'."],

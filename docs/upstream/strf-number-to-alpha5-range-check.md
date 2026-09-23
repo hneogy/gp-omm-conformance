@@ -1,7 +1,8 @@
 # Draft note for strf: a range check for `number_to_alpha5` (hardening suggestion, not a bug report)
 
-Status: **draft, not sent.** Prepared 2026-09-22 for the maintainer of this corpus to read first and to
-decide whether and where to send it (issue, pull request or message to https://github.com/cbassa/strf).
+Status: **filed** as https://github.com/cbassa/strf/issues/88 on 2026-09-23 (owner's decision and instruction; text
+below filed verbatim, paragraphs unwrapped, without this status block). Prepared 2026-09-22 for the maintainer of
+this corpus to read first and to decide whether and where to send it.
 Prose only, no diff: strf is GPL-3.0 and this corpus is MIT, so no strf code appears here or anywhere
 in the corpus. Every statement below is labelled. Decision D-101.
 

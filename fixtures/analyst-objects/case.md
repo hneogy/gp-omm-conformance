@@ -39,7 +39,7 @@ Gaps (stated explicitly for this case):
 
 ## Library behaviour observed (docs/CROSSCHECK.md)
 
-- python-sgp4 2.27 sgp4.omm.parse_xml returns None for an empty <OBJECT_ID/> element and initialize() then raises TypeError; 564 of 566 XML analyst records fail, while the same records in CSV pass.
+- python-sgp4 2.27 sgp4.omm.parse_xml returns None for an empty <OBJECT_ID/> element and initialize() then raises TypeError; 563 of 565 XML analyst records fail, while the same records in CSV pass.
 
 ## Ambiguities recorded
 

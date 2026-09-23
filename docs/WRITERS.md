@@ -133,8 +133,8 @@ an Alpha-5 field such as `A0000` would become 0 and the catalog lookup would fin
 
 **Not claimed.** No bug is claimed for the `rffit` binary. A short hardening suggestion (a range check in
 the helper, a refusal in the write path) is drafted in
-`docs/upstream/strf-number-to-alpha5-range-check.md` and has not been sent; whether to send it is the
-maintainer of this corpus's decision.
+`docs/upstream/strf-number-to-alpha5-range-check.md` and was filed, at the corpus maintainer's decision, as
+https://github.com/cbassa/strf/issues/88 on 2026-09-23.
 
 **For rffit and satno2tle users.** Check the file rffit wrote (satno2tle renames it `<obs>-tle.txt`):
 

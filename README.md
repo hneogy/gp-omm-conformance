@@ -272,7 +272,7 @@ Documented in `docs/CROSSCHECK.md`, with draft upstream reports in `docs/upstrea
 - python-sgp4 2.27 and Skyfield 1.55 raise `ValueError` for every nine-digit `NORAD_CAT_ID`
   loaded from OMM data.
 - python-sgp4's `sgp4.omm.parse_xml` turns an empty `<OBJECT_ID/>` into `None` and
-  `initialize()` raises `TypeError` (564 of 566 analyst XML records).
+  `initialize()` raises `TypeError` (563 of 565 analyst XML records).
 - python-sgp4's `export_tle` writes a zero second derivative as ` 00000-0`, which matches
   Space-Track's rendering; CelesTrak writes ` 00000+0`, so byte-exact round trips of CelesTrak
   lines fail while values agree. A provider divergence, not a library defect; documented in
@@ -298,20 +298,22 @@ repository. Tested at function level: correct Alpha-5 across the representable r
 for real records; above 339999 no range check, so the lines carry a blank catalog field, on a route only
 the interactive Satellite ID entry takes and that no real catalog number reaches today. Labels, details
 and the reproduction recipe are in `docs/WRITERS.md`. No bug is claimed for the binary; a short
-hardening suggestion is drafted in `docs/upstream/strf-number-to-alpha5-range-check.md` and has not
-been sent. Users of rffit or satno2tle can check the file it wrote with `python3 -m gpconf check-tle`.
+hardening suggestion, `docs/upstream/strf-number-to-alpha5-range-check.md`, was filed as
+[cbassa/strf#88](https://github.com/cbassa/strf/issues/88) on 2026-09-23. Users of rffit or satno2tle can check the file it wrote with `python3 -m gpconf check-tle`.
 
 ## Upstream
 
-Status of the findings above with python-sgp4, as of 2026-09-21:
+Status of the findings above with python-sgp4, as of 2026-09-23:
 
 - **Empty `<OBJECT_ID/>` import failure**: filed by the maintainer of this corpus as
   [brandon-rhodes/python-sgp4#171](https://github.com/brandon-rhodes/python-sgp4/issues/171)
-  (draft and prepared patch in `docs/upstream/`).
+  (draft and prepared patch in `docs/upstream/`); the patch is open as
+  [PR #172](https://github.com/brandon-rhodes/python-sgp4/pull/172), opened 2026-09-21 and amended
+  2026-09-23 after the maintainer's review.
 - **Nine-digit `NORAD_CAT_ID` rejected**: independently reported before this corpus existed as
   [#169](https://github.com/brandon-rhodes/python-sgp4/issues/169), with
   [PR #170](https://github.com/brandon-rhodes/python-sgp4/pull/170) open. Not filed again. PR #170
-  at head `5e4f308` was tested locally against all sixteen cases on both the accelerated and the
+  at head `5e4f308` was tested locally against the sixteen cases the corpus had at the time, on both the accelerated and the
   pure-Python build: it adds two tests and no library code change, the nine-digit reproducer still
   raises, and the runner results are identical to the 2.27 baseline (0 fixed, 0 regressions). The
   test report is in `docs/upstream/pr170-test-comment.md` (DECISIONS D-088).
@@ -319,7 +321,8 @@ Status of the findings above with python-sgp4, as of 2026-09-21:
 - **`omm.initialize` classification reset to `U`**: draft note only, not filed.
 
 For strf, `docs/upstream/strf-number-to-alpha5-range-check.md` holds a hardening suggestion, not a
-bug report, drafted 2026-09-22 and not sent (D-101).
+bug report, drafted 2026-09-22 (D-101) and filed as [cbassa/strf#88](https://github.com/cbassa/strf/issues/88)
+on 2026-09-23 (D-108).
 
 ## Verifying the derived Alpha-5 lines against Space-Track yourself
 

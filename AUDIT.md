@@ -299,3 +299,13 @@ and the `DECISIONS.md` entry that records it.
 Verification after the fixes: reference adapter 16/16 exact; python-sgp4 results unchanged; full test
 suite green (see the commit that adds this section); export dry run 133 files, 0 refused, 5 files
 scrubbed on the way out (four expected files and the exported copy of this report).
+
+## Correction (maintainer, 2026-09-23)
+
+The line under "Library claims" above that reads "564/566 analyst XML records raise TypeError" repeats a
+miscount and is left as written. The figure entered the repository in the Phase 3 cross-check text of
+2026-09-20 (`docs/RESEARCH.md`, copied into the README) and the audit reproduced it without recounting. The
+only analyst-group fetch on record, `fixtures/analyst-objects/raw/analyst.xml` retrieved 2026-09-21T00:11:35Z
+(SHA-256 `8c76a786…`, the same bytes at the Phase 3 commit and today), holds 565 records, 563 of them with an
+empty `OBJECT_ID`, as `docs/CROSSCHECK.md`'s per-file table and python-sgp4 issue #171 state. The README and
+`docs/RESEARCH.md` now say 563 of 565 (DECISIONS D-109).

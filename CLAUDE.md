@@ -46,6 +46,15 @@ its provenance is weak, fix the provenance without being asked. This
 includes re-fetching, re-running, re-verifying, or discarding a claim
 we cannot support.
 
+An entry that labels a claim untested, inferred, or taken from notes
+or release notes records an open question, not a settled fact. Before
+later work rests on such a claim, verify it; if it was wrong, add the
+correcting entry. Mark such claims [untested] or [inferred] in the
+entry. List one under "Open questions" in the handoff file only when
+later work could rest on it or when evidence could settle it; an
+incidental inference that fails both tests carries the marker and
+nothing more.
+
 Treat perishable evidence as urgent. Rolling windows, pre-catalog ids,
 live feeds and anything else that will not reproduce later must be
 captured cleanly the moment we realise it matters, ahead of other work.
