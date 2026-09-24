@@ -68,16 +68,34 @@ def norm_epoch(v):
     return tlemod.iso_epoch(v)  # calendar or day-of-year form, fraction, Z, offset, leap second (D-118, D-119)
 
 
+def as_integer(v):
+    """-> (int or None, problem or None). A bool, a value int() cannot convert, or a float or Decimal with a
+    fractional part is not an integer; the problem text carries the value and its type for the report (D-131)."""
+    if isinstance(v, bool):
+        return None, f"{v!r} (bool)"
+    try:
+        i = int(v)
+    except (TypeError, ValueError):
+        return None, f"{v!r} ({type(v).__name__})"
+    if isinstance(v, (float, Decimal)) and v != i:
+        return None, f"{v!r} ({type(v).__name__}, fractional)"
+    return i, None
+
+
 def norm_record(rec):
-    """Parser output -> {field: comparable value}; also returns type notes."""
-    out, notes = {}, {}
+    """Parser output -> {field: comparable value}; also returns type notes. A field that should be an integer but is
+    not stays None and is named in the record's _bad map, so the values item reports the value and its type
+    instead of the runner raising (D-131)."""
+    out, notes, bad = {}, {}, {}
     for k, v in rec.items():
         if k in INT_FIELDS:
             if v is None or v == "":
                 out[k] = None
             else:
                 notes[k] = type(v).__name__
-                out[k] = int(v) if not isinstance(v, bool) else None
+                out[k], problem = as_integer(v)
+                if problem:
+                    bad[k] = problem
         elif k in DEC_FIELDS:
             if v is None or v == "":
                 out[k] = None
@@ -90,7 +108,7 @@ def norm_record(rec):
             out[k] = norm_epoch(v)
         else:
             out[k] = None if v in (None, "") else str(v)
-    return out, notes
+    return out, notes, bad
 
 
 def epoch_diff_us(a, b):
@@ -281,8 +299,10 @@ class Runner:
         recs = fn(raw, fmt)
         out = []
         for r in recs:
-            n, notes = norm_record(r)
+            n, notes, bad = norm_record(r)
             n["_notes"] = notes
+            if bad:
+                n["_bad"] = bad
             out.append(n)
         return out
 
@@ -352,7 +372,12 @@ class Runner:
                 by_id.setdefault(p["norad_cat_id"], []).append(p)
         fails = []
         if None in by_id and "norad_cat_id" not in exempt:
-            fails.append(f"{len(by_id[None])} record(s) without norad_cat_id")
+            non_int = [p["_bad"]["norad_cat_id"] for p in by_id[None] if p.get("_bad", {}).get("norad_cat_id")]
+            absent = len(by_id[None]) - len(non_int)
+            if non_int:
+                fails.append(f"{len(non_int)} record(s) whose norad_cat_id is not an integer, e.g. " + ", ".join(non_int[:3]))
+            if absent:
+                fails.append(f"{absent} record(s) without norad_cat_id")
         missing_ids = [i for i in oracle if i not in by_id]
         if missing_ids and "norad_cat_id" not in exempt:
             fails.append(f"{len(missing_ids)} expected record(s) not returned, e.g. {missing_ids[:3]}")
@@ -374,6 +399,9 @@ class Runner:
                 if field not in got:
                     if field in CORE_FIELDS:
                         fails.append(f"id {cat}: core field {field} missing from parser output")
+                    continue
+                if field in got.get("_bad", {}):
+                    fails.append(f"id {cat}: {field} is not an integer: {got['_bad'][field]}")
                     continue
                 if field in OPTIONAL_FIELDS and want.get(field) is None and got.get(field) is None:
                     continue
@@ -458,9 +486,10 @@ class Runner:
         if "catalog-number-is-integer" not in active and "nine-digit-ids-parse" not in active:
             return
         bad = [p for p in parsed if p.get("_notes", {}).get("norad_cat_id") not in ("int",) or p.get("norad_cat_id") is None]
+        examples = [p["_bad"]["norad_cat_id"] for p in bad if p.get("_bad", {}).get("norad_cat_id")][:3]
         if "catalog-number-is-integer" in active:
             res.add("catalog-number-is-integer", "fail" if bad else "pass", path,
-                    f"{len(bad)} record(s) whose norad_cat_id is not an int" if bad else f"{len(parsed)} record(s) with integer norad_cat_id")
+                    (f"{len(bad)} record(s) whose norad_cat_id is not an int" + (", e.g. " + ", ".join(examples) if examples else "")) if bad else f"{len(parsed)} record(s) with integer norad_cat_id")
         if "nine-digit-ids-parse" in active:
             nine = [p for p in parsed if (p.get("norad_cat_id") or 0) >= 100_000_000]
             if nine:

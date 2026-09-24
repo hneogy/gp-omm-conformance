@@ -224,3 +224,45 @@ class EpochVectorValues(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NonIntegerCatalogIdTests(unittest.TestCase):
+    """An adapter that returns a catalog id the runner cannot take as an integer (Alpha-5 text kept as a string, a
+    fractional float, a bool) gets a failed values item naming the value and its type, not a parse item saying the
+    runner raised (D-131). Several libraries keep the field as a string."""
+
+    def test_norm_record_reports_instead_of_raising(self):
+        from gpconf.runner import norm_record, as_integer
+        self.assertEqual(as_integer(25544), (25544, None))
+        self.assertEqual(as_integer("25544"), (25544, None))          # a digit string converts; the type note records it
+        self.assertEqual(as_integer(25544.0), (25544, None))
+        self.assertEqual(as_integer("A0000"), (None, "'A0000' (str)"))
+        self.assertEqual(as_integer(25544.5), (None, "25544.5 (float, fractional)"))
+        self.assertEqual(as_integer(True), (None, "True (bool)"))
+        out, notes, bad = norm_record({"norad_cat_id": "A0000", "rev_at_epoch": 12.5, "mean_motion": "15.5"})
+        self.assertIsNone(out["norad_cat_id"])
+        self.assertEqual(bad, {"norad_cat_id": "'A0000' (str)", "rev_at_epoch": "12.5 (float, fractional)"})
+        self.assertEqual(notes["norad_cat_id"], "str")
+
+    def test_values_item_names_the_value_and_type(self):
+        ref = Reference()
+
+        class KeepsTheField:
+            """the reference reader, except that the TLE catalog field travels as the raw five characters"""
+            def parse(self, raw, fmt):
+                recs = ref.parse(raw, fmt)
+                if fmt in ("tle", "2le"):
+                    lines = [l for l in raw.decode("utf-8").splitlines() if l.startswith("1 ")]
+                    for r, l in zip(recs, lines):
+                        r["norad_cat_id"] = l[2:7]
+                return recs
+
+        results = Runner(KeepsTheField(), root=ROOT).run(case_ids=["alpha5-tle-derived"])
+        r = next(x for x in results if x.case_id == "alpha5-tle-derived")
+        self.assertEqual(r.status, "fail")
+        self.assertEqual([i for i in r.items if i.check == "parse"], [], "the runner must not raise on a string id")
+        values = [i for i in r.items if i.check == "values" and i.file.endswith("alpha5-A-100000-saramago-first.tle")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0].status, "fail")
+        self.assertIn("1 record(s) whose norad_cat_id is not an integer, e.g. 'A0000' (str)", values[0].detail)
+        self.assertNotIn("without norad_cat_id", values[0].detail)
