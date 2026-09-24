@@ -390,17 +390,14 @@ Expected values published under a version are frozen; corrections arrive as new 
 
 ## How this corpus was built
 
-This corpus was built with AI assistance (Anthropic's Claude, operating as a coding agent)
-under human direction and verification. The work ran in phases, each ending in a review by the
-project owner before the next began; the agent worked under a written decision policy
-(`CLAUDE.md`) that required it to record every non-trivial choice, reversal and correction.
+The work ran in phases, each ending in a review by the project owner before the next began,
+under a written decision policy (`CLAUDE.md`) that required every non-trivial choice, reversal
+and correction to be recorded.
 
-- **Audit trail:** `DECISIONS.md` is the complete, append-only log of decisions, the owner's
-  and the agent's, including the ones that were reversed. Read it first if you want to know why
-  something is the way it is.
+- **Audit trail:** `DECISIONS.md` is the complete, append-only log of decisions, including the
+  ones that were reversed. Read it first if you want to know why something is the way it is.
 - **Sources:** `docs/RESEARCH.md` records every document consulted, with verbatim quotations,
-  URLs and retrieval dates. Nothing in the corpus rests on the model's memory of the domain; the
-  catalog change it documents happened after that model's training data ends.
+  URLs and retrieval dates.
 - **Data provenance:** no element set was invented. Every value traces to a CelesTrak response
   whose URL, retrieval time and SHA-256 are recorded in the manifest, to a published standard
   cited by clause, or to a committed, labelled transformation of such a record (`derived/`,

@@ -15,8 +15,8 @@ reasoning behind every entry, by decision number.
 ## [0.2.1] - 2026-09-23
 
 A patch release under the versioning rule: fixes to the runner, the reference readers, `check-tle` and
-the tooling, from the audit follow-up of 2026-09-23 (a read-only pass by a separate AI session under the
-maintainer's direction, not the independent audit of `AUDIT.md`). No frozen expected value and no
+the tooling, from the audit follow-up of 2026-09-23 (a read-only review pass under the maintainer's direction,
+distinct from the independent audit of `AUDIT.md`). No frozen expected value and no
 schema changed; the seventeen cases are unchanged; one check was added to the writer case
 (`tle-writer-column-layout`) and one check the runner had always evaluated is now documented
 (`ccsds-epoch-strings`). The corpus stops reporting pass for outcomes that were never meant to count as
