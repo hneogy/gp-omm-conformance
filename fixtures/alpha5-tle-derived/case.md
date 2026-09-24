@@ -46,11 +46,13 @@ Gaps (stated explicitly for this case):
 
 ## Sources
 
+Every file of this case ships with the repository; nothing is fetched.
+
 | file | tier | HTTP | bytes | retrieved (UTC) | sha256 |
 |---|---|---|---|---|---|
-| `derived/alpha5-tle/alpha5-A-100000-saramago-first.tle` | stable | None | 168 | 2026-09-21T01:01:34Z | `686824ecd57ff4bc…` |
-| `derived/alpha5-tle/alpha5-T-270449-analyst-first.tle` | stable | None | 168 | 2026-09-21T01:01:34Z | `74a8c9e508c0b062…` |
-| `derived/alpha5-tle/alpha5-A-last-30-days-snapshot.tle` | stable | None | 43008 | 2026-09-21T01:01:34Z | `72e2845cdb484932…` |
-| `derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle` | stable | None | 58128 | 2026-09-21T01:01:34Z | `f4868060a6ab61d3…` |
+| `derived/alpha5-tle/alpha5-A-100000-saramago-first.tle` | stable | none: derived file shipped with the repository | 168 | generated 2026-09-21T01:01:34Z | `686824ecd57ff4bc…` |
+| `derived/alpha5-tle/alpha5-T-270449-analyst-first.tle` | stable | none: derived file shipped with the repository | 168 | generated 2026-09-21T01:01:34Z | `74a8c9e508c0b062…` |
+| `derived/alpha5-tle/alpha5-A-last-30-days-snapshot.tle` | stable | none: derived file shipped with the repository | 43008 | generated 2026-09-21T01:01:34Z | `72e2845cdb484932…` |
+| `derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle` | stable | none: derived file shipped with the repository | 58128 | generated 2026-09-21T01:01:34Z | `f4868060a6ab61d3…` |
 
 Expected values: `fixtures/alpha5-tle-derived/expected.json` (schema_version 1.0).

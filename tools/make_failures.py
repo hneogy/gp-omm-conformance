@@ -64,27 +64,30 @@ def render(reps, generated_at):
             fails = [i for i in r["items"] if i["status"] == "fail"]
             if not fails:
                 continue
-            md += [f"### `{r['case']}`", ""]
-            seen = set()
+            groups = {}  # identical details are collapsed into one bullet that says how many items it stands for (D-122)
             for i in fails:
-                key = (i["check"], i["detail"][:80])
-                if key in seen:
-                    continue
-                seen.add(key)
-                detail = i["detail"][:600]
-                if i["check"] in VALUE_CHECKS and (r["case"] in SUPGP_CASES or is_supgp_source(i["file"])):
-                    detail = "mismatch (details withheld: SupGP-derived values are not published, D-049)"
-                md.append(f"- **{i['check']}** ({os.path.basename(i['file']) if i['file'] else 'set'}): {detail}")
+                groups.setdefault((i["check"], i["detail"][:80]), []).append(i)
+            collapsed = len(fails) - len(groups)
+            md += [f"### `{r['case']}`", "", f"{len(fails)} failing item(s)" + (f", shown as {len(groups)} bullet(s): {collapsed} carried a detail identical to one shown" if collapsed else "") + ".", ""]
+            for (check, _), items in groups.items():
+                i = items[0]
+                detail = i["detail"][:600] + (" …" if len(i["detail"]) > 600 else "")
+                if check in VALUE_CHECKS and (r["case"] in SUPGP_CASES or is_supgp_source(i["file"])):
+                    detail = ("mismatch (details withheld: SupGP-derived values are not published, D-049; run the case on your own fetch, "
+                              f"`python -m gpconf run --adapter <yours> --case {r['case']} --json out.json`, and the report shows them)")
+                more = f" [{len(items)} items with this detail: " + ", ".join(os.path.basename(x["file"]) for x in items if x["file"]) + "]" if len(items) > 1 else ""
+                md.append(f"- **{check}** ({os.path.basename(i['file']) if i['file'] else 'set'}): {detail}{more}")
             if KIND.get(r["case"]) == "writer":
                 # so that a failure confined to the synthetic refusal inputs cannot be read as a failure on real records
                 passed = [i for i in r["items"] if i["status"] == "pass"]
                 if passed:
-                    md.append("- passed: " + "; ".join(f"**{i['check']}** ({i['detail'][:220]})" for i in passed))
+                    md.append("- passed: " + "; ".join(f"**{i['check']}** ({i['detail'][:220]}{' …' if len(i['detail']) > 220 else ''})" for i in passed))
             md.append("")
     md += ["## How to read this", "",
            "- `parse` failures mean the parser raised on real provider bytes; the detail carries the exception.",
            "- `values` failures list the first mismatching fields against the frozen expected values (snapshot) or the reference reader (live).",
            "- `not-exercised` means the data needed for that check was not present in the fetched snapshot (for example no nine-digit ids outside the days after a launch).",
+           "- Each case entry opens with its failing-item count; items whose first 80 characters of detail are identical are collapsed into one bullet that names the files it stands for, so the count can exceed the bullets. A detail ending in … was cut at 600 characters; the JSON report (`--json`) holds the full text.",
            "- For the writer case (`tle-writer-alpha5`) each adapter's entry also lists the checks it passed, with their record counts, so a failure confined to the three synthetic refusal inputs (340000, 799501621, -1: numbers the TLE field cannot carry, for which a refusal is the correct output) cannot be read as a failure on real records.",
            "- Re-run for your own parser: `python -m gpconf run --adapter your.module:Parser` (see README)."]
     return "\n".join(md) + "\n"

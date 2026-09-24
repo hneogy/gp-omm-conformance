@@ -16,7 +16,7 @@ Analyst objects carry an empty OBJECT_ID in every format (empty string, or an em
 
 - **object-id-may-be-empty** — OBJECT_ID (and in principle OBJECT_NAME) can be empty; parsers must not fail, and must not invent a value.
 - **object-name-unknown-literal** — OBJECT_NAME may be the literal UNKNOWN (CCSDS-recommended) rather than empty.
-- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN.
+- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 - **tle-format-omits-ids-above-99999** — A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'.
 - **tle-count-equals-omm-count-below-100000** — The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query.
 - **omm-formats-agree** — For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them.
@@ -49,6 +49,8 @@ Gaps (stated explicitly for this case):
 
 ## Sources
 
+The `raw/` files below are not in the repository: `tools/fetch.py` creates them on your machine, one request per URL under CelesTrak's usage policy, and until they exist the runner reports this case's checks as skipped, not failed.
+
 | file | tier | HTTP | bytes | retrieved (UTC) | sha256 |
 |---|---|---|---|---|---|
 | `fixtures/analyst-objects/raw/analyst.tle` | live | 200 | 36792 | 2026-09-21T00:11:41Z | `3d3aac4567f7f709…` |
@@ -57,7 +59,7 @@ Gaps (stated explicitly for this case):
 | `fixtures/analyst-objects/raw/analyst.xml` | live | 200 | 552351 | 2026-09-21T00:11:35Z | `8c76a7863573b288…` |
 | `fixtures/analyst-objects/raw/analyst.kvn` | live | 200 | 350431 | 2026-09-21T00:11:38Z | `6d8c57c5260854d2…` |
 | `fixtures/analyst-objects/raw/analyst-recapture.tle` | live | 200 | 36792 | 2026-09-21T00:41:30Z | `3d3aac4567f7f709…` |
-| `fixtures/analyst-objects/raw/analyst-270449-first.tle` | stable | 404 | 16 | 2026-09-21T00:44:05Z | `000844fd5b7a7b64…` |
+| `fixtures/analyst-objects/raw/analyst-270449-first.tle` | stable | 404, expected: the body is "No GP data found" | 16 | 2026-09-21T00:44:05Z | `000844fd5b7a7b64…` |
 | `fixtures/analyst-objects/raw/analyst-270449-first.csv` | stable | 200 | 363 | 2026-09-21T00:44:08Z | `f9caeec84ba49dc0…` |
 | `fixtures/analyst-objects/raw/analyst-270449-first.json` | stable | 200 | 409 | 2026-09-21T00:44:11Z | `c50e3ee57a010841…` |
 | `fixtures/analyst-objects/raw/analyst-270449-first.xml` | stable | 200 | 1193 | 2026-09-21T00:44:15Z | `94c54614780dbe36…` |
@@ -65,6 +67,8 @@ Gaps (stated explicitly for this case):
 | `fixtures/analyst-objects/raw/analyst-81011-first.tle` | stable | 200 | 168 | 2026-09-21T00:44:20Z | `f06539e94675d87b…` |
 | `fixtures/analyst-objects/raw/analyst-81011-first.csv` | stable | 200 | 357 | 2026-09-21T00:44:23Z | `339ed35b58d6300d…` |
 | `fixtures/analyst-objects/raw/analyst-81011-first.json` | stable | 200 | 402 | 2026-09-21T00:44:26Z | `742bd531a42360d6…` |
+
+- `analyst-recapture.tle` is a re-capture of `analyst.tle` (D-022): the same endpoint requested a second time, with the `FORMAT` value spelled in lower case; it records the response at its own retrieval time.
 
 URLs (each requested once when the fixtures were built):
 

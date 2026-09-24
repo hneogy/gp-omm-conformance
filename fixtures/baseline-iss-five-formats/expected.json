@@ -2,7 +2,7 @@
  "case": "baseline-iss-five-formats",
  "title": "ISS current GP record: the same object in TLE, 2LE, CSV, JSON, JSON-PRETTY, XML and KVN (live)",
  "schema_version": "1.0",
- "generated_at": "2026-09-21T03:54:07Z",
+ "generated_at": "2026-09-23T21:49:02Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {
@@ -546,7 +546,7 @@
   },
   {
    "id": "mmdot-convention",
-   "text": "CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (301/301 records), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6."
+   "text": "CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (304/304 records), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6."
   }
  ],
  "notes": [],

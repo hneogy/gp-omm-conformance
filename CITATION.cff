@@ -40,4 +40,6 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.22906966
     description: "Version DOI for release v0.2.0"
-  # The version DOI for v0.2.1 is added here after Zenodo mints it at the release.
+  - type: doi
+    value: 10.5281/zenodo.22926017
+    description: "Version DOI for release v0.2.1"

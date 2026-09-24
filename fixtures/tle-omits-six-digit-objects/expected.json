@@ -2,7 +2,7 @@
  "case": "tle-omits-six-digit-objects",
  "title": "A group with only 6-digit objects: OMM formats return 256 records, the TLE request returns HTTP 404",
  "schema_version": "1.0",
- "generated_at": "2026-09-21T03:54:07Z",
+ "generated_at": "2026-09-23T21:49:02Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {
@@ -9057,7 +9057,7 @@
   },
   {
    "id": "catalog-number-is-integer",
-   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN."
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
   }
  ],
  "tests": [
@@ -9067,7 +9067,7 @@
  "coverage": {
   "provides": [
    "256 six-digit ids 100404-100789 in CSV",
-   "TLE request -> 404 with body 'No GP data found' (captured twice, 00:10Z hand-recorded and 00:41Z clean)",
+   "TLE request -> 404 with body 'No GP data found' (captured twice: at 00:10Z, when a tool defect discarded the body and it was reconstructed by hand from the tool's log, D-013; and at 00:41Z as a clean re-capture with full headers, D-022)",
    "11 records with non-zero second derivative",
    "negative BSTAR values"
   ],

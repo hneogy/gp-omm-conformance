@@ -42,6 +42,8 @@ Gaps (stated explicitly for this case):
 
 ## Sources
 
+The `raw/` files below are not in the repository: `tools/fetch.py` creates them on your machine, one request per URL under CelesTrak's usage policy, and until they exist the runner reports this case's checks as skipped, not failed.
+
 | file | tier | HTTP | bytes | retrieved (UTC) | sha256 |
 |---|---|---|---|---|---|
 | `fixtures/bstar-and-derivative-forms/raw/decaying.tle` | live | 200 | 13272 | 2026-09-21T00:11:44Z | `90b5925c40cec7ac…` |
@@ -49,6 +51,8 @@ Gaps (stated explicitly for this case):
 | `fixtures/bstar-and-derivative-forms/raw/decaying-recapture.tle` | live | 200 | 13272 | 2026-09-21T00:41:33Z | `90b5925c40cec7ac…` |
 | `fixtures/satcat-70000-cutoff/raw/gp-69999-first.tle` | stable | 200 | 168 | 2026-09-21T00:44:29Z | `b7f96c3912c2445c…` |
 | `fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv` | stable | 200 | 376 | 2026-09-21T00:44:33Z | `601736c2b121cea2…` |
+
+- `decaying-recapture.tle` is a re-capture of `decaying.tle` (D-022): the same endpoint requested a second time, with the `FORMAT` value spelled in lower case; it records the response at its own retrieval time.
 
 URLs (each requested once when the fixtures were built):
 

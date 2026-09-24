@@ -1,8 +1,8 @@
 {
  "case": "alpha5-encoding-vectors",
- "title": "Alpha-5 encode/decode vectors from the Space-Track table, with boundaries and invalid inputs",
+ "title": "Specification vectors: the Alpha-5 table with boundaries and invalid inputs, catalog-id text forms, the two-digit-year pivot and CCSDS epoch strings",
  "schema_version": "1.0",
- "generated_at": "2026-09-23T20:35:25Z",
+ "generated_at": "2026-09-23T21:49:02Z",
  "generator": "tools/make_expected.py",
  "kind": "vectors",
  "sources": {
@@ -47,7 +47,7 @@
   },
   {
    "id": "catalog-number-is-integer",
-   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN."
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
   },
   {
    "id": "two-digit-year-pivot",
@@ -66,10 +66,13 @@
  ],
  "coverage": {
   "provides": [
-   "all 24 letters and both skips, the six official examples, range boundaries, invalid letters and lowercase"
+   "Alpha-5: all 24 letters and both skips, the six official examples, range boundaries, invalid letters and lowercase",
+   "catalog-id text forms: eight valid values (two of nine digits) and four to reject (Alpha-5 text, ten digits, a decimal, empty)",
+   "the two-digit-year pivot: 57-99 to 1957-1999, 00-56 to 2000-2056",
+   "CCSDS epoch strings: eight valid forms, each with the instant it denotes, and five invalid forms"
   ],
   "gaps": [
-   "vectors are not element sets; they test the mapping only"
+   "vectors are not element sets; they test the mappings only"
   ]
  },
  "ambiguities": [],

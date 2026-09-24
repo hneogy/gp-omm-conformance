@@ -26,7 +26,10 @@ reasoning is in `DECISIONS.md`, D-095 to D-101.
   same keys as `parse()` returns (`norad_cat_id` as int, `epoch` as ISO text, the elements as decimal
   text). Raise to refuse. The hook is optional; without it the case is skipped.
 - External writer: `python3 -m gpconf run --write-cmd "mytool --emit-tle"`: one JSON record on stdin,
-  the lines on stdout, exit 3 for "writing unsupported", any other non-zero exit is a refusal.
+  the lines on stdout. Two exit-code conventions are in play and they are different: your writer
+  command's exit code says what happened to one record (0 written, 3 writing unsupported, so the case
+  is skipped, any other value a refusal); `gpconf`'s own exit code, for `run` and `check-tle` alike,
+  is 0 when nothing failed and 1 when anything did.
 - A file a tool wrote: `python3 -m gpconf check-tle FILE... [--against RECORDS]`. Same checks (length,
   checksum, catalog field, column layout), applied to every `1 `/`2 ` line pair in the file whatever its
   length; name lines, `#` comment lines and LF or CRLF endings are accepted; an element line without its
@@ -35,7 +38,8 @@ reasoning is in `DECISIONS.md`, D-095 to D-101.
   day-of-year form) for the round trip. A written record whose catalog number has no match in those records is a failure, not a
   note: the line is about some other object, or about none. When the number is `00000` or `99999` the detail
   names the likely cause on the rffit path (an `-i` lookup that found no elements leaves rffit's orbit
-  zero-initialised, and 99999 is its default). Exit 1 on any failing record or when no record is found.
+  zero-initialised, and 99999 is its default). `gpconf` exits 1 on any failing record or when no record
+  is found, 0 otherwise.
 
 ## The precision rule
 
@@ -56,7 +60,8 @@ failed.
 ## The case `tle-writer-alpha5`
 
 Inputs are records already frozen in the corpus, so the case runs offline, with no CelesTrak request:
-the 604 derived Alpha-5 records (603 distinct ids, letters A and T), the first ISS record (1998 epoch,
+the 604 derived Alpha-5 records (603 distinct ids, letters A and T: 270449 appears twice, once from its
+first record and once from the analyst snapshot), the first ISS record (1998 epoch,
 negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative
 BSTAR and first derivative) and of analyst 81011 (blank designator, empty OBJECT_ID): 606 records, each
 carrying the file it was copied from, the source file and its SHA-256. Three further inputs are

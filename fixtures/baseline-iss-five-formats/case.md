@@ -42,6 +42,8 @@ Gaps (stated explicitly for this case):
 
 ## Sources
 
+The `raw/` files below are not in the repository: `tools/fetch.py` creates them on your machine, one request per URL under CelesTrak's usage policy, and until they exist the runner reports this case's checks as skipped, not failed.
+
 | file | tier | HTTP | bytes | retrieved (UTC) | sha256 |
 |---|---|---|---|---|---|
 | `fixtures/baseline-iss-five-formats/raw/iss.tle` | live | 200 | 168 | 2026-09-21T00:09:33Z | `674ea527c1ff8a70…` |

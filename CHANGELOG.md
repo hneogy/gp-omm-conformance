@@ -15,8 +15,8 @@ schema changed; the seventeen cases are unchanged; one check was added to the wr
 (`ccsds-epoch-strings`). The corpus stops reporting pass for outcomes that were never meant to count as
 one; what it reports about the naive and python-sgp4 adapters is unchanged, 14 and 7 of 17 cases
 failing. The independent audit in `AUDIT.md` covered v0.1.0; neither the writer-side case of v0.2.0 nor
-these fixes have been separately audited. The version DOI for this release is added to `CITATION.cff`
-and the README after Zenodo mints it.
+these fixes have been separately audited. Version DOI 10.5281/zenodo.22926017 (Zenodo record 22926017);
+the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
 
 ### Fixed
 - The reference renderer wrote an exact-midnight epoch as `YYDDD.-8000000`; the writer judge therefore

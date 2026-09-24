@@ -26,7 +26,7 @@ INTERPRETATION = {
     "tle-omits-six-digit-objects": "A group whose members are all six-digit. The OMM formats return every record; the TLE request returns nothing (HTTP 404). A pipeline that treats a 404 or an empty TLE file as 'no new data' silently loses every object launched after 2026-07-11. When objects below 100000 are in the window again the TLE response holds exactly those; the count check covers both states.",
     "analyst-objects": "Analyst objects carry an empty OBJECT_ID in every format (empty string, or an empty XML element that Python's ElementTree returns as None) and the literal OBJECT_NAME 'UNKNOWN' (all 565 records at the snapshot; the CCSDS-recommended value). Parsers must not crash, must not invent a designator or a name, and must keep six-digit ids 270000-270449 that the TLE rendering drops. Analyst numbers are reused, so identity is per snapshot.",
     "nine-digit-supgp-launch-nominals": "Nine-digit ids exist today only in CelesTrak SupGP launch nominals, for roughly a week after a launch. A parser must accept 799501621 as an integer in CSV/JSON/XML/KVN; the TLE format cannot carry it. python-sgp4 2.27 (and Skyfield through it) raise ValueError on these records because they store the catalog number as an Alpha-5 string. If your fetch finds no nine-digit ids, the case reports that state instead of failing.",
-    "supgp-celestrak-classification-c": "CelesTrak supplemental records differ from 18 SDS GP records: CLASSIFICATION_TYPE C, ELEMENT_SET_NO 0, extra RMS and DATA_SOURCE columns, 72000-series ids (the use of the 70000-79999 block is described only by a secondary source), and a TLE epoch rounded to the TLE's 864 microsecond resolution. Parsers that hard-code 'U', reject unknown columns, or compare epochs exactly will fail.",
+    "supgp-celestrak-classification-c": "CelesTrak supplemental records differ from the GP records of the 18th Space Defense Squadron (18 SDS): CLASSIFICATION_TYPE C, ELEMENT_SET_NO 0, extra RMS and DATA_SOURCE columns, 72000-series ids (the use of the 70000-79999 block is described only by a secondary source), and a TLE epoch rounded to the TLE's 864 microsecond resolution. Parsers that hard-code 'U', reject unknown columns, or compare epochs exactly will fail.",
     "bstar-and-derivative-forms": "Drag-term encodings: negative BSTAR and first derivative, non-zero second derivative, implied-decimal exponent fields. A parser must read ' 51949-2' as 0.51949e-2 and '-70517-5' as -0.70517e-5. No record with a positive exponent (>= 1.0) exists in the data; that encoding is untested here.",
     "satcat-70000-cutoff": "The legacy fixed-width SATCAT stops at id 69999 by design; the CSV/JSON SATCAT continues past 100000. Software reading the legacy file will never see new objects. The expected values include the parsed legacy lines for 25544 and 69999 and the JSON/CSV records for 25544, 69999 and 100000.",
     "csv-json-omitted-mandatory-fields": "CelesTrak CSV and JSON omit CENTER_NAME, REF_FRAME, TIME_SYSTEM and MEAN_ELEMENT_THEORY (constant for SGP4 data) and the header keywords. A parser that requires every CCSDS-mandatory keyword must default them (EARTH, TEME, UTC, SGP4) rather than reject the file. SupGP files add RMS and DATA_SOURCE, which must be ignored, not rejected.",
@@ -56,6 +56,23 @@ LIBRARY_FINDINGS = {
 def load_expected(case_id):
     p = os.path.join(ROOT, "fixtures", case_id, "expected.json")
     return json.load(open(p)) if os.path.exists(p) else None
+
+
+def source_status(path, s):
+    """The HTTP and retrieved-at cells of a source row: a real status and time for every row (D-122). A 404 that the
+    case expects names its body; vector and derived files, which are never fetched, say so."""
+    status = s.get("http_status")
+    if status is None:
+        side = os.path.join(ROOT, os.path.splitext(path)[0] + ".provenance.json")
+        if os.path.exists(side):
+            gen = json.load(open(side)).get("generated_at")
+            return "none: derived file shipped with the repository", f"generated {gen}" if gen else "n/a"
+        return "none: specification vectors shipped with the repository", "n/a (never fetched)"
+    if status == 404:
+        full = os.path.join(ROOT, path)
+        body = open(full, encoding="utf-8", errors="replace").read().strip() if os.path.exists(full) else {16: "No GP data found", 19: "No SupGP data found"}.get(s.get("bytes"), "")
+        return f'404, expected: the body is "{body}"' if body else "404, expected", s.get("retrieved_at")
+    return str(status), s.get("retrieved_at")
 
 
 def main():
@@ -98,9 +115,22 @@ def main():
             heading = "## Library behaviour observed" + ("" if c["kind"] == "writer" else " (docs/CROSSCHECK.md)")
             doc += ["", heading, ""] + [f"- {x}" for x in LIBRARY_FINDINGS[c["id"]]]
         doc += ["", "## Ambiguities recorded", ""] + ([f"- **{a}** — {AMBIGUITIES[a]}" for a in c["ambiguities"]] or ["- none"])
-        doc += ["", "## Sources", "", "| file | tier | HTTP | bytes | retrieved (UTC) | sha256 |", "|---|---|---|---|---|---|"]
+        doc += ["", "## Sources", ""]
+        if any(p.startswith("fixtures/") for p in srcs):
+            doc += ["The `raw/` files below are not in the repository: `tools/fetch.py` creates them on your machine, one request per URL under "
+                    "CelesTrak's usage policy, and until they exist the runner reports this case's checks as skipped, not failed.", ""]
+        else:
+            doc += ["Every file of this case ships with the repository; nothing is fetched.", ""]
+        doc += ["| file | tier | HTTP | bytes | retrieved (UTC) | sha256 |", "|---|---|---|---|---|---|"]
+        notes = []
         for p, s in srcs.items():
-            doc.append(f"| `{p}` | {s.get('tier')} | {s.get('http_status')} | {s.get('bytes')} | {s.get('retrieved_at')} | `{(s.get('sha256') or '')[:16]}…` |")
+            http, when = source_status(p, s)
+            doc.append(f"| `{p}` | {s.get('tier')} | {http} | {s.get('bytes')} | {when} | `{(s.get('sha256') or '')[:16]}…` |")
+            if s.get("recapture_of"):
+                notes.append(f"`{os.path.basename(p)}` is a re-capture of `{s['recapture_of']}` (D-022): the same endpoint requested a second time, "
+                             f"with the `FORMAT` value spelled in lower case; it records the response at its own retrieval time.")
+        if notes:
+            doc += [""] + [f"- {n}" for n in notes]
         urls = sorted({s["url"] for s in srcs.values() if s.get("url")})
         if urls:
             doc += ["", "URLs (each requested once when the fixtures were built):", ""] + [f"- <{u}>" for u in urls]

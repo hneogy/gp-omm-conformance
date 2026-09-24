@@ -2,7 +2,7 @@
  "case": "satcat-70000-cutoff",
  "title": "SATCAT on both sides of 70000: CSV/JSON records for 25544, 69999 and 100000; legacy fixed-width file stops at 69999",
  "schema_version": "1.0",
- "generated_at": "2026-09-21T03:54:07Z",
+ "generated_at": "2026-09-23T21:49:02Z",
  "generator": "tools/make_expected.py",
  "kind": "satcat",
  "sources": {
@@ -106,7 +106,7 @@
   },
   {
    "id": "catalog-number-is-integer",
-   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN."
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
   }
  ],
  "tests": [

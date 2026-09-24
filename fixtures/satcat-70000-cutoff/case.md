@@ -13,7 +13,7 @@ The legacy fixed-width SATCAT stops at id 69999 by design; the CSV/JSON SATCAT c
 ## Checks
 
 - **satcat-legacy-below-70000** — The legacy fixed-width SATCAT contains only NORAD ids below 70000; the CSV/JSON SATCAT contains ids on both sides.
-- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN.
+- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 
 ## Coverage
 
@@ -31,6 +31,8 @@ Gaps (stated explicitly for this case):
 - **satcat-record-drift** — SATCAT records for existing objects change when an object decays or its orbit summary is updated; records.php sources are treated as live for checksum purposes even though most fields are stable.
 
 ## Sources
+
+The `raw/` files below are not in the repository: `tools/fetch.py` creates them on your machine, one request per URL under CelesTrak's usage policy, and until they exist the runner reports this case's checks as skipped, not failed.
 
 | file | tier | HTTP | bytes | retrieved (UTC) | sha256 |
 |---|---|---|---|---|---|

@@ -38,13 +38,15 @@ Gaps (stated explicitly for this case):
 
 ## Sources
 
+Every file of this case ships with the repository; nothing is fetched.
+
 | file | tier | HTTP | bytes | retrieved (UTC) | sha256 |
 |---|---|---|---|---|---|
-| `derived/kvn-variants/v01-baseline-reserialised.kvn` | stable | None | 728 | 2026-09-21T00:50:18Z | `97450978821f04d3…` |
-| `derived/kvn-variants/v02-day-of-year-epoch-Z.kvn` | stable | None | 727 | 2026-09-21T00:50:18Z | `a06629aa3044698c…` |
-| `derived/kvn-variants/v03-units-brackets-leading-zeros.kvn` | stable | None | 796 | 2026-09-21T00:50:18Z | `3c9e9d9aa6190ac4…` |
-| `derived/kvn-variants/v04-comments-blank-lines-whitespace-LF.kvn` | stable | None | 677 | 2026-09-21T00:50:18Z | `1cae8ec648cc8867…` |
-| `derived/kvn-variants/v05-omm-3.0-header-optional-keywords-omitted.kvn` | stable | None | 728 | 2026-09-21T00:50:18Z | `10e02122947f3c7d…` |
-| `derived/kvn-variants/v06-signed-integers-lowercase-exponent.kvn` | stable | None | 733 | 2026-09-21T00:50:18Z | `dff1329a94b59bc8…` |
+| `derived/kvn-variants/v01-baseline-reserialised.kvn` | stable | none: derived file shipped with the repository | 728 | generated 2026-09-21T00:50:18Z | `97450978821f04d3…` |
+| `derived/kvn-variants/v02-day-of-year-epoch-Z.kvn` | stable | none: derived file shipped with the repository | 727 | generated 2026-09-21T00:50:18Z | `a06629aa3044698c…` |
+| `derived/kvn-variants/v03-units-brackets-leading-zeros.kvn` | stable | none: derived file shipped with the repository | 796 | generated 2026-09-21T00:50:18Z | `3c9e9d9aa6190ac4…` |
+| `derived/kvn-variants/v04-comments-blank-lines-whitespace-LF.kvn` | stable | none: derived file shipped with the repository | 677 | generated 2026-09-21T00:50:18Z | `1cae8ec648cc8867…` |
+| `derived/kvn-variants/v05-omm-3.0-header-optional-keywords-omitted.kvn` | stable | none: derived file shipped with the repository | 728 | generated 2026-09-21T00:50:18Z | `10e02122947f3c7d…` |
+| `derived/kvn-variants/v06-signed-integers-lowercase-exponent.kvn` | stable | none: derived file shipped with the repository | 733 | generated 2026-09-21T00:50:18Z | `dff1329a94b59bc8…` |
 
 Expected values: `fixtures/kvn-syntax-variants/expected.json` (schema_version 1.0).

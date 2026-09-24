@@ -2,7 +2,7 @@
  "case": "tle-vs-omm-precision-loss",
  "title": "The TLE is a lossy rendering of the OMM record: eccentricity truncated, BSTAR/DDOT mantissa rounded, epoch quantised",
  "schema_version": "1.0",
- "generated_at": "2026-09-21T03:54:07Z",
+ "generated_at": "2026-09-23T21:49:02Z",
  "generator": "tools/make_expected.py",
  "kind": "pairs",
  "sources": {

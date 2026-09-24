@@ -56,7 +56,8 @@ default format has been CSV since 2026-05-09.
 8. Reading `MEAN_MOTION_DOT` as the true derivative: the OMM carries the TLE field as printed
    (the ndot/2 convention).
 9. Storing the catalog number as an Alpha-5 string internally: python-sgp4 cannot load any
-   nine-digit record, and such records are live (18 SDS launch nominals in CelesTrak SupGP).
+   nine-digit record, and such records are live (launch nominals of the 18th Space Defense
+   Squadron, 18 SDS, in CelesTrak SupGP).
 10. Writing a TLE with the catalog number through an integer format (`%05d`, `f"{n:05d}"`):
     above 99999 that yields six digits, a 70-character line and a checksum over shifted columns.
     The field must be Alpha-5 from 100000, and a number above 339999 cannot be written as a TLE
@@ -93,7 +94,7 @@ you whether you are looking at the exact bytes we tested.
 ```bash
 git clone https://github.com/hneogy/gp-omm-conformance.git && cd gp-omm-conformance
 python3 tools/fetch.py            # once: ~60 requests, ~12.6 MB, 2 s apart, cached, never repeated
-python3 -m gpconf run --adapter tests.adapters.reference:Parser   # the control: 17 cases pass
+python3 -m gpconf run --adapter tests.adapters.reference:Parser   # the control: 17 cases pass (the nine-digit case says not-exercised outside a launch window)
 python3 -m gpconf run --adapter tests.adapters.naive:Parser       # the parser most projects have
 ```
 
@@ -159,10 +160,14 @@ Each source in the manifest is `stable` or `live`.
   404 semantics) and compares values against the corpus's own reference reader applied to your
   bytes, and it says so in the report. The snapshot values remain in `expected.json` as a dated
   reference.
+- **mixed** (the pairs, facts and XML-schema cases, which list files fetched for other cases): the
+  case uses the file structurally and applies no frozen values of its own; whether the file may
+  drift is judged by the tier the fetching case records (D-114). Vector and derived files ship with
+  the repository and are never fetched; their source rows say so instead of an HTTP status.
 
 ## Writing an adapter
 
-An adapter is any object with a `parse` method; the hooks are optional: four feed the vector
+An adapter is any object with a `parse` method; the hooks are optional: five feed the vector
 case and `write_tle` feeds the writer case.
 
 ```python
@@ -189,6 +194,7 @@ class Parser:
     def alpha5_decode(self, field: str) -> int: ...
     def alpha5_encode(self, n: int) -> str: ...
     def two_digit_year(self, yy: str) -> int: ...
+    def parse_catalog_id(self, text: str) -> int: ...   # catalog-id text forms: nine digits accepted, ten rejected
     def parse_epoch(self, text: str): ...     # return a datetime for the instant (it is compared), raise on invalid input
     def write_tle(self, record: dict): ...    # -> (line1, line2) or (line0, line1, line2); raise to refuse
 ```
@@ -196,8 +202,8 @@ class Parser:
 Values may be strings, `Decimal`, `int` or `float`. The eleven core fields must be present in
 every record; optional fields are compared when you return them. `mean_motion_dot` and
 `mean_motion_ddot` are expected in the TLE convention (rev/day² and rev/day³ as printed). The
-fifth hook, `parse_catalog_id(text) -> int`, feeds the catalog-id text vectors, which include
-nine-digit values. `write_tle(record)` receives a record with the same keys as `parse()` returns
+hook `parse_catalog_id(text) -> int` feeds the catalog-id text vectors, which include nine-digit
+values and a ten-digit value that must be rejected. `write_tle(record)` receives a record with the same keys as `parse()` returns
 and must return the TLE lines it writes; raise for a record it cannot write. For a catalog number
 above 339999 or below 0 a refusal is the correct output, and the runner reports it as a pass. The
 written lines are read back by the corpus's reference reader and must equal the record at each
@@ -432,8 +438,9 @@ To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, 
 gp-omm-conformance, version 0.2.1, 2026-09-23, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** for this release, v0.2.1, is added here and to `CITATION.cff` after Zenodo
-mints it at the release; v0.2.0 keeps its own, [10.5281/zenodo.22906966](https://doi.org/10.5281/zenodo.22906966),
-and v0.1.0, the release the independent audit covered, keeps [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655).
-Use a version DOI when your results depend on a specific set of expected values; each release gets its
-own under the same concept DOI.
+general. The **version DOI** for this release, v0.2.1, is
+[10.5281/zenodo.22926017](https://doi.org/10.5281/zenodo.22926017); v0.2.0 keeps its own,
+[10.5281/zenodo.22906966](https://doi.org/10.5281/zenodo.22906966), and v0.1.0, the release the independent
+audit covered, keeps [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655). Use a version DOI
+when your results depend on a specific set of expected values; each release gets its own under the same
+concept DOI.

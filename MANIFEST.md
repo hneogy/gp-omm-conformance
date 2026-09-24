@@ -1,6 +1,6 @@
 # Corpus manifest (0.2.1)
 
-Generated 2026-09-23T20:55:38Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-09-23T21:49:44Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
 
@@ -79,13 +79,13 @@ Coverage gaps:
 
 ## 6. `nine-digit-supgp-launch-nominals`
 
-Nine-digit catalog numbers: 18 SDS launch nominals (7995016xx) in CelesTrak SupGP data
+Nine-digit catalog numbers: launch nominals of the 18th Space Defense Squadron (18 SDS), 7995016xx, in CelesTrak SupGP data
 
 Tests: 9-digit-catalog-number, tle-unavailable-above-99999
 
 Coverage gaps:
 
-- perishable: nominals exist only for roughly 5-8 days after a launch (CelesTrak); a user's fetch may contain none, in which case the case reports 'no 9-digit ids available now' rather than failing
+- perishable: nominals exist only for roughly 5-8 days after a launch (CelesTrak); a user's fetch may contain none, in which case the check nine-digit-ids-parse reports not-exercised rather than failing
 - no 9-digit id exists in 18 SDS GP data; only SupGP
 
 ## 7. `supgp-celestrak-classification-c`
@@ -163,13 +163,13 @@ Coverage gaps:
 
 ## 14. `alpha5-encoding-vectors`
 
-Alpha-5 encode/decode vectors from the Space-Track table, with boundaries and invalid inputs
+Specification vectors: the Alpha-5 table with boundaries and invalid inputs, catalog-id text forms, the two-digit-year pivot and CCSDS epoch strings
 
 Tests: alpha5-letter-skip-rules, alpha5-range, 9-digit-catalog-number, 2-digit-epoch-year
 
 Coverage gaps:
 
-- vectors are not element sets; they test the mapping only
+- vectors are not element sets; they test the mappings only
 
 ## 15. `alpha5-tle-derived`
 
@@ -212,7 +212,7 @@ Coverage gaps:
 - **omm-formats-agree** — For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them.
 - **tle-values-match-omm-within-tle-precision** — The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution.
 - **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0).
-- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN.
+- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 - **tle-catalog-field-decodes** — Columns 3-7 of TLE lines 1 and 2 decode to the same integer (five digits, or Alpha-5 letter + four digits).
 - **ccsds-epoch-strings** — parse_epoch accepts every CCSDS 502.0-B-3 7.5.10 epoch form in vectors/ccsds-epoch-strings.json (calendar and day-of-year, with or without a fraction and a Z, second 60) and returns the instant each denotes (within 2 us; a leap second may read as 23:59:59 or as the next midnight), and rejects the five invalid forms.
 - **two-digit-year-pivot** — TLE epoch years 57-99 map to 1957-1999 and 00-56 to 2000-2056; the resulting ISO epoch equals the OMM EPOCH string.

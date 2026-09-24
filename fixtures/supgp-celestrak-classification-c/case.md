@@ -9,7 +9,7 @@ CelesTrak supplemental GP: classification C, element set 0, RMS/DATA_SOURCE colu
 
 ## How to read a failure
 
-CelesTrak supplemental records differ from 18 SDS GP records: CLASSIFICATION_TYPE C, ELEMENT_SET_NO 0, extra RMS and DATA_SOURCE columns, 72000-series ids (the use of the 70000-79999 block is described only by a secondary source), and a TLE epoch rounded to the TLE's 864 microsecond resolution. Parsers that hard-code 'U', reject unknown columns, or compare epochs exactly will fail.
+CelesTrak supplemental records differ from the GP records of the 18th Space Defense Squadron (18 SDS): CLASSIFICATION_TYPE C, ELEMENT_SET_NO 0, extra RMS and DATA_SOURCE columns, 72000-series ids (the use of the 70000-79999 block is described only by a secondary source), and a TLE epoch rounded to the TLE's 864 microsecond resolution. Parsers that hard-code 'U', reject unknown columns, or compare epochs exactly will fail.
 
 ## Checks
 
@@ -44,6 +44,8 @@ Gaps (stated explicitly for this case):
 - **supgp-redistribution** — SupGP data derives from operator-provided data (some explicitly 'with permission' to CelesTrak). Under the corpus design no raw bytes are shipped; the snapshot values for one SupGP record are published as a dated reference and may be removed by the owner before publication.
 
 ## Sources
+
+The `raw/` files below are not in the repository: `tools/fetch.py` creates them on your machine, one request per URL under CelesTrak's usage policy, and until they exist the runner reports this case's checks as skipped, not failed.
 
 | file | tier | HTTP | bytes | retrieved (UTC) | sha256 |
 |---|---|---|---|---|---|

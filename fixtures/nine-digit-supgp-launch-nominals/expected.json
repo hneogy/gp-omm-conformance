@@ -1,8 +1,8 @@
 {
  "case": "nine-digit-supgp-launch-nominals",
- "title": "Nine-digit catalog numbers: 18 SDS launch nominals (7995016xx) in CelesTrak SupGP data",
+ "title": "Nine-digit catalog numbers: launch nominals of the 18th Space Defense Squadron (18 SDS), 7995016xx, in CelesTrak SupGP data",
  "schema_version": "1.0",
- "generated_at": "2026-09-21T03:54:07Z",
+ "generated_at": "2026-09-23T21:49:02Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {
@@ -323,7 +323,7 @@
   },
   {
    "id": "catalog-number-is-integer",
-   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits; leading zeros and an explicit '+' are legal in KVN."
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
   },
   {
    "id": "omm-formats-agree",
@@ -352,7 +352,7 @@
    "27 nine-digit ids 799501621-799501647 in the full Starlink SupGP file at the snapshot"
   ],
   "gaps": [
-   "perishable: nominals exist only for roughly 5-8 days after a launch (CelesTrak); a user's fetch may contain none, in which case the case reports 'no 9-digit ids available now' rather than failing",
+   "perishable: nominals exist only for roughly 5-8 days after a launch (CelesTrak); a user's fetch may contain none, in which case the check nine-digit-ids-parse reports not-exercised rather than failing",
    "no 9-digit id exists in 18 SDS GP data; only SupGP"
   ]
  },
