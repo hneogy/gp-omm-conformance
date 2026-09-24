@@ -77,3 +77,15 @@ Commit messages carry no `Co-Authored-By` trailer, in this repository
 or any other of the owner's (owner instruction, 2026-09-24). The AI
 assistance is disclosed in the README; the trailer is not wanted.
 Published history is not rewritten to remove it.
+
+## Findings about other projects (Batch G convention, owner instruction 2026-09-24)
+
+A decision entry that summarises a finding about another project which has not yet been
+reported to that project names the library and says that a finding was recorded, and no
+more; the specifics (the defect, the lines, the numbers, the draft) stay in the private
+handoff under `docs/handoff/batch-g/` until the report is filed. `DECISIONS.md` is exported,
+so anything more would publish the finding ahead of the maintainer hearing of it. Once the
+report is filed, the entry is updated in place with the link; that addition is the one
+in-place edit the append-only rule allows, because it completes the entry rather than
+changing what was decided. D-128, D-132 and D-133 preceded this convention and carry the
+specifics; they are not rewritten, and their drafts go out the week of 2026-09-24.
