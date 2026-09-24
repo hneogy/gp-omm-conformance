@@ -1,6 +1,6 @@
 # Corpus manifest (0.2.1)
 
-Generated 2026-09-23T21:49:44Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-09-24T00:51:02Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
 
@@ -235,7 +235,7 @@ Coverage gaps:
 - **alpha5-encode** — Integers 100000-339999 encode to the Alpha-5 table; below 100000 encode as five digits with leading zeros; above 339999 cannot be encoded.
 - **satcat-legacy-below-70000** — The legacy fixed-width SATCAT contains only NORAD ids below 70000; the CSV/JSON SATCAT contains ids on both sides.
 - **kvn-syntax-tolerance** — KVN parsers accept blank lines, COMMENT lines at allowed positions, arbitrary whitespace around '=', bracketed units, day-of-year epochs, an optional trailing Z, signed integers, lowercase 'e' exponents, LF or CRLF endings.
-- **optional-tle-parameters-may-be-absent** — EPHEMERIS_TYPE, CLASSIFICATION_TYPE, NORAD_CAT_ID, ELEMENT_SET_NO and REV_AT_EPOCH are Optional in CCSDS Table 4-3 and may be missing from a valid OMM.
+- **optional-tle-parameters-may-be-absent** — EPHEMERIS_TYPE, CLASSIFICATION_TYPE, NORAD_CAT_ID, ELEMENT_SET_NO and REV_AT_EPOCH are marked O in CCSDS Table 4-3, but that table heads the block "TLE Related Parameters (This section is only required if MEAN_ELEMENT_THEORY=SGP/SGP4)" and the NORAD_CAT_ID row adds "This keyword is only required if MEAN_ELEMENT_THEORY=SGP/SGP4.", so for an SGP/SGP4 message the standard is ambiguous; the corpus accepts their absence from a valid OMM.
 - **omm-version-3-accepted** — CCSDS_OMM_VERS 3.0 messages (with CLASSIFICATION and MESSAGE_ID in the header) are accepted alongside 2.0.
 - **sha256-matches-tested-snapshot** — If the user's fetched bytes hash to the recorded SHA-256, the frozen expected values apply exactly; otherwise only structural checks apply and the tool says so.
 - **tle-writer-catalog-field** — A TLE writer puts the catalog number in columns 3-7 of both lines as five digits with leading zeros below 100000 and, from 100000 to 339999, as Alpha-5 (letter value 10-33, A=10 ... Z=33 with I and O never used, then the last four digits); both lines carry the same field.

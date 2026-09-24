@@ -187,6 +187,12 @@ From the FAQ addendum (Added 2024 Aug 30, Updated 2026 Mar 26):
 > we now set a limit on HTTP errors (301, 403, or 404) of 50 in a 2-hour period, at which
 > point the IP address is sent to the firewall.
 
+The same page, in the paragraph before that rule, still carries the earlier threshold (read again
+2026-09-24, page header "Updated 2026 Jun 23"): "Once the system sends more than 1,000 HTTP 403 errors
+(and now 301 and 404 errors, too) to an IP address in a day (yes, that happens almost every day), that IP
+address is put into the firewall and requires manual review to find and remove it." Both sentences stand;
+the corpus follows the stricter, later one.
+
 > If you are using more than 100 MB/day you can expect that your IP address may end up in
 > the firewall.
 
@@ -289,8 +295,8 @@ syntax; section 8 is XML; annex G has examples.
 
 ### 5.1 Structure (4.2.1)
 
-"The OMM shall be represented as a combination of the following: a) a header; b) metadata;
-c) data; and d) optional comments."
+"The OMM shall be represented as a combination of the following: a) a header; b) metadata (data
+about data); c) data; and d) optional comments (explanatory information)."
 
 ### 5.2 Header, Table 4-1
 
@@ -324,7 +330,7 @@ c) data; and d) optional comments."
 | SEMI_MAJOR_AXIS or MEAN_MOTION | km / rev/day | M ("if MEAN_ELEMENT_THEORY = SGP/SGP4, the Keplerian Mean motion in revolutions per day") |
 | ECCENTRICITY | | M |
 | INCLINATION, RA_OF_ASC_NODE, ARG_OF_PERICENTER, MEAN_ANOMALY | deg | M |
-| GM | km**3/s**2 | O |
+| GM | km**3/s**2 | O (so in Table 4-3, page 4-6; the OPM's Table 3-3 marks its GM row C) |
 | MASS, SOLAR_RAD_AREA, SOLAR_RAD_COEFF, DRAG_AREA, DRAG_COEFF | | O |
 | *TLE Related Parameters* "(This section is only required if MEAN_ELEMENT_THEORY=SGP/SGP4)" | | |
 | EPHEMERIS_TYPE | | O, "Default value = 0" |
@@ -363,7 +369,8 @@ OMM."
 
 ### 5.5 KVN syntax (section 7)
 
-- 7.3.2: "Each OPM, OMM, or OEM line must not exceed 254 ASCII characters".
+- 7.3.2: "Each OPM, OMM, or OEM line must not exceed 254 ASCII characters and spaces (excluding line
+  termination character[s])."
 - 7.3.4: printable ASCII only; 7.3.5 blank lines allowed anywhere and meaningless;
   7.3.7 CR, LF, CRLF or LFCR terminators.
 - 7.4.3: one assignment per line; 7.4.4: "Keywords must be uppercase and must not contain
@@ -379,8 +386,10 @@ OMM."
   fractional seconds optional and of any length; trailing `Z` optional; leading zeros
   required. [A parser hard-coded to `%Y-%m-%dT%H:%M:%S.%f` — python-sgp4's `omm.py` — will
   reject valid day-of-year, no-fraction and `Z` forms.]
-- 7.7.1: units are optional in KVN, must exactly match the table, in square brackets after
-  at least one blank, e.g. `[km]`.
+- 7.7.1.1: units are optional in KVN ("For documentation purposes and clarity only, units may be included
+  as ASCII text after a value in the OPM and OMM"); if shown they "must exactly match the units (including
+  lower/upper case) as specified in tables 3-3 and 4-3", with "at least one blank character between the
+  value and the units text" and "enclosed within square brackets (e.g., ‘[km]’)".
 - 7.8.5: comment lines start with `COMMENT` followed by at least one space; 7.8.8 restricts
   where they may appear in an OMM.
 - 7.9.1: version table lists `CCSDS_OMM_VERS 2.0 Silver Book 2.0, 11/2009` and
@@ -390,6 +399,13 @@ Annex G KVN example (Figure G-7) uses `MEAN_ELEMENT_THEORY = SGP/SGP4`, day-of-y
 (`EPOCH = 2020-064T10:34:41.4264`), `ELEMENT_SET_NO = 0925` (leading zero) and
 `CREATION_DATE = 2020-065T16:00:00` (no fraction) — all legal and all likely to break naive
 parsers.
+
+The standard's own example is internally inconsistent. The note before Figure G-6 says "All of these
+examples are based on the TLE shown in figure G-6", and that TLE's epoch field is `07064.44075725`
+(2007, day 64), while Figures G-7 to G-10 carry `EPOCH = 2020-064T10:34:41.4264`: the day and its
+fraction agree (0.44075725 day is 10:34:41.4264), the year does not. A TLE rendered from the OMM
+values therefore reads `20064.44075725`; a reader comparing it with Figure G-6 is seeing the
+standard's inconsistency, not the renderer's.
 
 ### 5.6 XML (section 8.9, 8.13)
 
@@ -406,8 +422,12 @@ parsers.
 ## 6. CCSDS 505.0-B-3 (NDM/XML, May 2023) and the SANA schemas
 
 Source PDF: https://ccsds.org/Pubs/505x0b3e2.pdf; schemas from
-https://sanaregistry.org/r/ndmxml_unqualified/ (files dated 2024-02-08, "version 4.0.0 of
-the NDM/XML Schema (05/19/2023)").
+https://sanaregistry.org/r/ndmxml_unqualified/ (files dated 2024-02-08). The vendored files'
+header comments differ by module: the master module says "This is version 4.0 of the NDM/XML
+Schema (05/19/2023)." and, on an earlier line, "This is version 4.0, Rev 0 of the NDM/XML Schema
+(11/06/2022." (the closing parenthesis is missing in the file); the OMM module says "This is
+version 4.0.0 of the NDM/XML Schema (05/19/2023)."; the common module says "This is version 4.0.0
+of the NDM/XML Schema (05/2023)".
 
 Downloaded (to be vendored under `schemas/` in Phase 3 with source URLs):
 `ndmxml-4.0.0-master-4.0.xsd`, `ndmxml-4.0.0-common-4.0.xsd`, `ndmxml-4.0.0-omm-3.0.xsd`
@@ -672,8 +692,12 @@ Building the fixtures continues; publishing them does not, until the owner decid
   A HEAD request to that URL on 2026-09-21 returned **HTTP 200** (3,738 bytes, Last-Modified
   2022-06-23), although the SANA registry *listing* page only shows the 4.0.0 files. The
   OMM 2.0 schema set is therefore fetchable by direct URL for Phase 3 validation; this
-  supersedes the "not obtainable" note in §10 item 6 for the master file (the companion
-  `-common-2.0.xsd` and `-omm-2.0.xsd` files still have to be checked the same way).
+  supersedes the "not obtainable" note in §10 item 6. The whole 2.0.0 set, twelve files including
+  `-common-2.0.xsd` and `-omm-2.0.xsd`, was fetched on 2026-09-21 and is vendored unmodified under
+  `schemas/ndmxml-2.0.0/`, with each file's URL and SHA-256 in `schemas/SOURCE.md`. The 3.0.0 master
+  schema that annex G Figure G-10 names also resolves by direct URL: a HEAD request to
+  `https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-3.0.0-master-3.0.xsd` on 2026-09-24 returned
+  HTTP 200 (4,016 bytes, Last-Modified 2023-05-19).
 - Observed provider behaviour (full detail in `docs/INVENTORY.md`, generated from the raw files):
   - Every CelesTrak response uses CRLF line endings, including JSON and XML.
   - XML is wrapped in `<ndm>`; each `<omm>` has `version="2.0"`; the header's mandatory

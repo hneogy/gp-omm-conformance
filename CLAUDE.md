@@ -72,3 +72,8 @@ In zsh write `${a}:Parser`, never `$a:Parser`: a colon after a bare
 variable is a modifier, and the loop silently runs the wrong thing. A
 loop that yields no output is a failure to look into, not an empty
 result.
+
+Commit messages carry no `Co-Authored-By` trailer, in this repository
+or any other of the owner's (owner instruction, 2026-09-24). The AI
+assistance is disclosed in the README; the trailer is not wanted.
+Published history is not rewritten to remove it.

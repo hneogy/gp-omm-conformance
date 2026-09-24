@@ -13,7 +13,7 @@ Six CCSDS-legal renderings of one record that CelesTrak never emits: day-of-year
 ## Checks
 
 - **kvn-syntax-tolerance** — KVN parsers accept blank lines, COMMENT lines at allowed positions, arbitrary whitespace around '=', bracketed units, day-of-year epochs, an optional trailing Z, signed integers, lowercase 'e' exponents, LF or CRLF endings.
-- **optional-tle-parameters-may-be-absent** — EPHEMERIS_TYPE, CLASSIFICATION_TYPE, NORAD_CAT_ID, ELEMENT_SET_NO and REV_AT_EPOCH are Optional in CCSDS Table 4-3 and may be missing from a valid OMM.
+- **optional-tle-parameters-may-be-absent** — EPHEMERIS_TYPE, CLASSIFICATION_TYPE, NORAD_CAT_ID, ELEMENT_SET_NO and REV_AT_EPOCH are marked O in CCSDS Table 4-3, but that table heads the block "TLE Related Parameters (This section is only required if MEAN_ELEMENT_THEORY=SGP/SGP4)" and the NORAD_CAT_ID row adds "This keyword is only required if MEAN_ELEMENT_THEORY=SGP/SGP4.", so for an SGP/SGP4 message the standard is ambiguous; the corpus accepts their absence from a valid OMM.
 - **omm-version-3-accepted** — CCSDS_OMM_VERS 3.0 messages (with CLASSIFICATION and MESSAGE_ID in the header) are accepted alongside 2.0.
 
 ## Coverage
