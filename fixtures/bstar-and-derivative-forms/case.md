@@ -32,7 +32,7 @@ Provides:
 
 Gaps (stated explicitly for this case):
 
-- no BSTAR with a positive exponent (>= 1.0 Earth radii^-1) exists in any fetched data; that encoding ('NNNNN+1') is untested
+- no BSTAR with a positive exponent (>= 1.0 Earth radii^-1) exists in any fetched data; that encoding ('NNNNN+1') is untested on the reader side (the writer case carries a synthetic-derived vector for it, D-125)
 - no second derivative with a positive exponent
 
 ## Ambiguities recorded

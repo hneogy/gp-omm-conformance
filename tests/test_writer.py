@@ -49,8 +49,15 @@ class ExpectedInputsTests(unittest.TestCase):
         recs = exp["records"]
         synthetic = [r for r in recs if r["provenance"] == "synthetic-derived"]
         frozen = [r for r in recs if r["provenance"] == "derived"]
-        self.assertEqual(sorted(r["norad_cat_id"] for r in synthetic), [-1, 340000, 799501621])
-        self.assertTrue(all(r["representable_in_tle"] is False and r["expected_behaviour"] == "refuse" for r in synthetic))
+        self.assertEqual(sorted(r["norad_cat_id"] for r in synthetic), [-1, 99999, 340000, 799501621])
+        refusals = [r for r in synthetic if r["norad_cat_id"] != 99999]
+        self.assertTrue(all(r["representable_in_tle"] is False and r["expected_behaviour"] == "refuse" for r in refusals))
+        vector = next(r for r in synthetic if r["norad_cat_id"] == 99999)  # the positive-exponent BSTAR vector (D-125)
+        self.assertEqual((vector["representable_in_tle"], vector["expected_behaviour"], vector["canonical"]["bstar"]), (True, "write", "1.2345"))
+        self.assertEqual(vector["expected_tle_field"], {"bstar_field": " 12345+1"})
+        self.assertEqual(vector["reference_tle_fields"]["bstar_field"], " 12345+1")
+        self.assertEqual(vector["reference_rendering"], "corpus-rendered")
+        self.assertEqual(len(vector["synthetic_changes"]), 2)
         self.assertTrue(all(r["tier"] == "stable" and r["representable_in_tle"] for r in frozen))
         self.assertEqual(len(frozen), len({r["norad_cat_id"] for r in frozen}))
         self.assertEqual(len(synthetic) + len(frozen), len(recs))
@@ -83,6 +90,29 @@ class ExpectedInputsTests(unittest.TestCase):
         self.assertTrue(all(r["tier"] == "stable" for r in exp["records"]))  # the frozen inputs themselves stay stable
 
 
+class PositiveExponentVectorTests(unittest.TestCase):
+    """D-125: the one positive-exponent BSTAR in the corpus is a synthetic-derived writer input; every writer must render
+    ' 12345+1' for it, and the reference reader must read that field back as 1.2345."""
+
+    def setUp(self):
+        self.rec = next(r for r in load_expected()["records"] if r["norad_cat_id"] == 99999)["canonical"]
+
+    def test_corpus_renders_and_reads_the_field(self):
+        self.assertEqual(T.exp_field("1.2345", "round"), " 12345+1")
+        self.assertEqual(T.exp_field("1.2345", "truncate"), " 12345+1")
+        self.assertEqual(ref.tle_exp_to_plain(" 12345+1"), "1.2345")
+        _, l1, _ = T.render(T.omm_fields_from_record(self.rec))
+        self.assertEqual(l1[53:61], " 12345+1")
+
+    def test_reference_and_naive_writers_render_it(self):
+        for name, parser in (("reference", Reference()), ("naive", Naive())):
+            out = parser.write_tle(dict(self.rec))
+            l1 = [l for l in (out if isinstance(out, (list, tuple)) else out.splitlines()) if l.startswith("1 ")][0]
+            self.assertEqual(l1[53:61], " 12345+1", name)
+        r = run_case(Reference())
+        self.assertEqual(r.status, "pass", [(i.check, i.detail) for i in r.items if i.status == "fail"])
+
+
 class ReferenceWriterTests(unittest.TestCase):
     def test_passes_every_check_exactly(self):
         r = run_case(Reference())
@@ -110,7 +140,7 @@ class NaiveWriterTests(unittest.TestCase):
         self.assertEqual(by["tle-writer-refuses-unencodable"].status, "fail")
         self.assertIn("0 of 3", by["tle-writer-refuses-unencodable"].detail)
         self.assertIn("instead of a refusal", by["tle-writer-refuses-unencodable"].detail)
-        self.assertIn("3 of 606 catalog field(s) correct", by["tle-writer-catalog-field"].detail)
+        self.assertIn("4 of 607 catalog field(s) correct", by["tle-writer-catalog-field"].detail)  # the four five-digit ids incl. the D-125 vector
 
 
 class Sgp4WriterTests(unittest.TestCase):

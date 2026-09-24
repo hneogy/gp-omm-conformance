@@ -1,7 +1,7 @@
 {
  "corpus": "gp-omm-conformance",
  "corpus_version": "0.2.1",
- "generated_at": "2026-09-24T00:51:02Z",
+ "generated_at": "2026-09-24T01:17:20Z",
  "generator": "tools/make_manifest.py",
  "design": {
   "raw_provider_files_shipped": false,
@@ -1048,7 +1048,7 @@
      "BSTAR up to 0.0052 (51949-2)"
     ],
     "gaps": [
-     "no BSTAR with a positive exponent (>= 1.0 Earth radii^-1) exists in any fetched data; that encoding ('NNNNN+1') is untested",
+     "no BSTAR with a positive exponent (>= 1.0 Earth radii^-1) exists in any fetched data; that encoding ('NNNNN+1') is untested on the reader side (the writer case carries a synthetic-derived vector for it, D-125)",
      "no second derivative with a positive exponent"
     ]
    },
@@ -2245,6 +2245,7 @@
    "evidence_basis": [
     "Inputs are records already frozen in this corpus (the v0.1.0 expected values of stable-tier sources): the 604 derived Alpha-5 records (603 distinct ids, letters A and T), the first ISS record (1998 epoch, negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative BSTAR and first derivative) and the first record of analyst 81011 (blank international designator, empty OBJECT_ID). No new provider request and no new raw bytes.",
     "Three inputs are synthetic-derived (PLAN.md section 2.1; owner approval 2026-09-22, DECISIONS D-096): the SARAMAGO first record with NORAD_CAT_ID replaced by 340000, 799501621 and -1, the values of vectors/alpha5.json encode_unrepresentable. The elements are real; the ids are specification vectors that no catalogued object carries. The correct output for them is a refusal.",
+    "One input is synthetic-derived for a field form (DECISIONS D-125): SARAMAGO's elements with the catalog number replaced by the five-digit vector 99999 and BSTAR replaced by 1.2345, the positive-exponent form (' 12345+1') that no fetched record carries; its expected TLE fields are rendered by the corpus, and it is a specification vector, not a catalogued object.",
     "The precision rule (a written field equals the input quantised at the field's resolution by truncation or by rounding half up) rests on the evidence of tle-vs-omm-precision-loss: CelesTrak truncates the eccentricity and rounds the mantissas (304/304 records), Space-Track rounds the eccentricity (D-070, D-071). A writer may follow either provider; the corpus reports which convention it observed."
    ],
    "coverage": {
@@ -2252,11 +2253,12 @@
      "606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived lines carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)",
      "a 1998 epoch, a negative first derivative, a non-zero second derivative, zero and negative BSTAR, a blank international designator, an empty OBJECT_ID",
      "three numbers the TLE catalog field cannot represent (340000, 799501621, -1), for which the correct output is a refusal",
+     "one positive-exponent BSTAR (1.2345, TLE field ' 12345+1') on a synthetic-derived input with the five-digit vector id 99999, rendered by the corpus (D-125)",
      "provider-rendered field substrings for the three five-digit records and the CelesTrak-style derived fields for the 604 Alpha-5 records, for an information-only byte comparison"
     ],
     "gaps": [
      "letters B-S and U-Z occur in no real catalog number; a writer's encoding of those letters is covered by the alpha5_encode vectors only",
-     "no input has a BSTAR or second derivative with a positive exponent",
+     "no fetched record has a BSTAR or second derivative with a positive exponent; the writer side covers BSTAR's positive-exponent form with one synthetic-derived vector (D-125), the reader side and the second derivative stay uncovered",
      "no rounding tie at the last kept digit occurs in the inputs, so half-up versus half-even rounding is not distinguished for writers either",
      "no output of an external tool is shipped; strf's rffit was exercised only at function level outside this repository (DECISIONS D-097) and has no adapter because it is an interactive X11 program"
     ]
@@ -2270,7 +2272,7 @@
    ],
    "expected": "fixtures/tle-writer-alpha5/expected.json",
    "case_doc": "fixtures/tle-writer-alpha5/case.md",
-   "record_count": 609,
+   "record_count": 610,
    "sources": [
     {
      "path": "derived/alpha5-tle/alpha5-A-100000-saramago-first.tle",

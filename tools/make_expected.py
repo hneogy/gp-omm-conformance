@@ -443,15 +443,36 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
                             "canonical": rec, "representable_in_tle": False, "expected_catalog_field": None, "expected_behaviour": "refuse",
                             "note": "The TLE catalog field cannot represent this number, so a refusal (an error, no lines) is the correct output; the OMM formats carry it. "
                                     "Real elements with a vector id: no catalogued object carries this number. Owner approval 2026-09-22 (DECISIONS D-096)."})
+    n_vectors = 0
+    for sv in case.get("synthetic_field_vectors", []):  # field forms no fetched record supplies, rendered by the corpus (D-125)
+        e2 = json.load(open(os.path.join(ROOT, "fixtures", sv["from_case"], "expected.json")))
+        b2 = next(r for r in e2["records"] if r.get("set") == sv["set"])
+        b2_file = next(p for p in e2["sources"] if os.path.basename(p) == b2["canonical_source"])
+        files.setdefault(b2_file, sv["from_case"])
+        rec = dict(b2["canonical"])
+        rec["norad_cat_id"] = sv["norad_cat_id"]
+        rec[sv["field"]] = sv["value"]
+        l0, l1, l2 = R.render(R.omm_fields_from_record(rec), mantissa_mode="round", ecc_mode="truncate")
+        fields = {k: v for k, v in gpref.parse_tle_lines(l0, l1, l2)["tle"].items() if k in REFERENCE_TLE_FIELD_KEYS}
+        if fields[sv["field"] + "_field"] != sv["expected_tle_field"]:
+            PROBLEMS.append(f"synthetic field vector {sv['norad_cat_id']}: rendered {fields[sv['field'] + '_field']!r}, expected {sv['expected_tle_field']!r}")
+        out_records.append({"norad_cat_id": sv["norad_cat_id"], "role": "input", "provenance": "synthetic-derived", "tier": "stable",
+                            "from_case": sv["from_case"], "from_file": b2_file, "source_file": b2_file, "source_sha256": e2["sources"][b2_file]["sha256"],
+                            "synthetic_changes": [{"field": "NORAD_CAT_ID", "from": b2["norad_cat_id"], "to": sv["norad_cat_id"], "vector_source": sv["id_vector_source"]},
+                                                  {"field": sv["field"].upper(), "from": b2["canonical"][sv["field"]], "to": sv["value"], "vector_source": sv["value_vector_source"], "reason": sv["reason"]}],
+                            "canonical": rec, "representable_in_tle": True, "expected_catalog_field": R.to_alpha5(sv["norad_cat_id"]), "expected_behaviour": "write",
+                            "expected_tle_field": {sv["field"] + "_field": sv["expected_tle_field"]},
+                            "reference_rendering": "corpus-rendered", "reference_tle_fields": fields, "note": sv["note"]})
+        n_vectors += 1
     for path in sorted(files):
         fmt, recs, _ = gpref.read_file(os.path.join(ROOT, path))
         out_sources[path] = source_entry(path, originating_tier(path, files[path]), fmt=fmt, record_count=len(recs))
     case_specific.update({
-        "inputs": {"frozen_records": n_frozen, "synthetic_derived": len(vec["encode_unrepresentable"]), "alpha5_letters": letters, "five_digit_ids": five_digit},
+        "inputs": {"frozen_records": n_frozen, "synthetic_derived": len(vec["encode_unrepresentable"]), "synthetic_field_vectors": n_vectors, "alpha5_letters": letters, "five_digit_ids": five_digit},
         "writer_protocol": "write_tle(record) -> (line1, line2) or (line0, line1, line2); raise to refuse. External: --write-cmd, one JSON record on stdin, the lines on stdout, exit 3 = unsupported, other non-zero = refused.",
         "precision_rule": "A written element field equals the input quantised at the TLE field's resolution (epoch 1e-8 day; mean motion 8 decimals; angles 4; eccentricity 7 digits; BSTAR 5-digit mantissa) by truncation or by rounding half up; the convention observed is reported per field. Refusing a catalog number above 339999 or below 0 is the correct output.",
     })
-    out_notes.append(f"{n_frozen} frozen input records ({sum(letters.values())} Alpha-5, {len(five_digit)} five-digit) and {len(vec['encode_unrepresentable'])} synthetic-derived refusal inputs.")
+    out_notes.append(f"{n_frozen} frozen input records ({sum(letters.values())} Alpha-5, {len(five_digit)} five-digit), {len(vec['encode_unrepresentable'])} synthetic-derived refusal inputs and {n_vectors} synthetic-derived field vector(s) rendered by the corpus.")
 
 
 def main():

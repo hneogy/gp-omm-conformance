@@ -1,6 +1,6 @@
 # Corpus manifest (0.2.1)
 
-Generated 2026-09-24T00:51:02Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-09-24T01:17:20Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
 
@@ -22,7 +22,7 @@ No raw provider files are shipped. Each case lists the exact source URLs, retrie
 | 14 | `alpha5-encoding-vectors` | vectors | 0 | 4/0 | 1 |
 | 15 | `alpha5-tle-derived` | derived-tle | 604 | 4/0 | 3 |
 | 16 | `kvn-syntax-variants` | derived-kvn | 6 | 6/0 | 2 |
-| 17 | `tle-writer-alpha5` | writer | 609 | 9/2 | 4 |
+| 17 | `tle-writer-alpha5` | writer | 610 | 9/2 | 4 |
 
 The records column sums the record counts of a case's source files: `analyst-objects` counts the 565 group records plus the two single-object first fetches (567).
 
@@ -107,7 +107,7 @@ Tests: bstar-implicit-decimal, negative-bstar, negative-ndot, nonzero-nddot
 
 Coverage gaps:
 
-- no BSTAR with a positive exponent (>= 1.0 Earth radii^-1) exists in any fetched data; that encoding ('NNNNN+1') is untested
+- no BSTAR with a positive exponent (>= 1.0 Earth radii^-1) exists in any fetched data; that encoding ('NNNNN+1') is untested on the reader side (the writer case carries a synthetic-derived vector for it, D-125)
 - no second derivative with a positive exponent
 
 ## 9. `satcat-70000-cutoff`
@@ -203,7 +203,7 @@ Tests: alpha5-tle-writing, alpha5-range, tle-checksum
 Coverage gaps:
 
 - letters B-S and U-Z occur in no real catalog number; a writer's encoding of those letters is covered by the alpha5_encode vectors only
-- no input has a BSTAR or second derivative with a positive exponent
+- no fetched record has a BSTAR or second derivative with a positive exponent; the writer side covers BSTAR's positive-exponent form with one synthetic-derived vector (D-125), the reader side and the second derivative stay uncovered
 - no rounding tie at the last kept digit occurs in the inputs, so half-up versus half-even rounding is not distinguished for writers either
 - no output of an external tool is shipped; strf's rffit was exercised only at function level outside this repository (DECISIONS D-097) and has no adapter because it is an interactive X11 program
 

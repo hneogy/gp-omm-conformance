@@ -2,7 +2,7 @@
  "case": "tle-writer-alpha5",
  "title": "Writing TLEs across the five-digit boundary: Alpha-5 catalog field, valid lines, refusal of numbers the format cannot carry, round trip",
  "schema_version": "1.0",
- "generated_at": "2026-09-23T21:49:02Z",
+ "generated_at": "2026-09-24T01:17:20Z",
  "generator": "tools/make_expected.py",
  "kind": "writer",
  "sources": {
@@ -26916,6 +26916,69 @@
    "expected_catalog_field": null,
    "expected_behaviour": "refuse",
    "note": "The TLE catalog field cannot represent this number, so a refusal (an error, no lines) is the correct output; the OMM formats carry it. Real elements with a vector id: no catalogued object carries this number. Owner approval 2026-09-22 (DECISIONS D-096)."
+  },
+  {
+   "norad_cat_id": 99999,
+   "role": "input",
+   "provenance": "synthetic-derived",
+   "tier": "stable",
+   "from_case": "six-digit-omm-saramago",
+   "from_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+   "source_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+   "source_sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+   "synthetic_changes": [
+    {
+     "field": "NORAD_CAT_ID",
+     "from": 100000,
+     "to": 99999,
+     "vector_source": "vectors/alpha5.json below_100000 (99999, the largest five-digit number; primary sources describe no catalogued object in 90000-99999, README; rffit uses it as a placeholder)"
+    },
+    {
+     "field": "BSTAR",
+     "from": "0.00022159168",
+     "to": "1.2345",
+     "vector_source": "the TLE exponent field's positive-exponent form, +-NNNNN+E with E >= 1 (CelesTrak TLE format description); 0.12345E+1 = 1.2345 chosen as the smallest-digits example",
+     "reason": "no fetched record carries a BSTAR with a positive exponent (audit of 2026-09-23, item 6: 1,206 lines, 1,192 negative exponents, 14 '+0', none >= 1.0)"
+    }
+   ],
+   "canonical": {
+    "norad_cat_id": 99999,
+    "object_name": "SARAMAGO",
+    "object_id": "2026-067CY",
+    "epoch": "2026-07-14T21:45:20.933856",
+    "mean_motion": "15.20467281",
+    "eccentricity": "0.00055903",
+    "inclination": "97.4593",
+    "ra_of_asc_node": "154.097",
+    "arg_of_pericenter": "270.5113",
+    "mean_anomaly": "89.5482",
+    "bstar": "1.2345",
+    "mean_motion_dot": "0.0000477",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1591
+   },
+   "representable_in_tle": true,
+   "expected_catalog_field": "99999",
+   "expected_behaviour": "write",
+   "expected_tle_field": {
+    "bstar_field": " 12345+1"
+   },
+   "reference_rendering": "corpus-rendered",
+   "reference_tle_fields": {
+    "catalog_field": "99999",
+    "intl_designator_field": "26067CY ",
+    "epoch_field": "26195.90649229",
+    "ndot_field": " .00004770",
+    "nddot_field": " 00000+0",
+    "bstar_field": " 12345+1",
+    "element_set_field": " 999",
+    "ecc_field": "0005590",
+    "rev_field": " 1591"
+   },
+   "note": "Synthetic-derived under the D-096 precedent (D-125): SARAMAGO's real elements with the catalog number replaced by the five-digit vector 99999 and BSTAR replaced by 1.2345. A specification vector for the positive-exponent field form, not a catalogued object's element set; the expected TLE fields are rendered by the corpus."
   }
  ],
  "checks": [
@@ -26958,11 +27021,12 @@
    "606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived lines carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)",
    "a 1998 epoch, a negative first derivative, a non-zero second derivative, zero and negative BSTAR, a blank international designator, an empty OBJECT_ID",
    "three numbers the TLE catalog field cannot represent (340000, 799501621, -1), for which the correct output is a refusal",
+   "one positive-exponent BSTAR (1.2345, TLE field ' 12345+1') on a synthetic-derived input with the five-digit vector id 99999, rendered by the corpus (D-125)",
    "provider-rendered field substrings for the three five-digit records and the CelesTrak-style derived fields for the 604 Alpha-5 records, for an information-only byte comparison"
   ],
   "gaps": [
    "letters B-S and U-Z occur in no real catalog number; a writer's encoding of those letters is covered by the alpha5_encode vectors only",
-   "no input has a BSTAR or second derivative with a positive exponent",
+   "no fetched record has a BSTAR or second derivative with a positive exponent; the writer side covers BSTAR's positive-exponent form with one synthetic-derived vector (D-125), the reader side and the second derivative stay uncovered",
    "no rounding tie at the last kept digit occurs in the inputs, so half-up versus half-even rounding is not distinguished for writers either",
    "no output of an external tool is shipped; strf's rffit was exercised only at function level outside this repository (DECISIONS D-097) and has no adapter because it is an interactive X11 program"
   ]
@@ -26974,13 +27038,14 @@
   }
  ],
  "notes": [
-  "606 frozen input records (603 Alpha-5, 3 five-digit) and 3 synthetic-derived refusal inputs."
+  "606 frozen input records (603 Alpha-5, 3 five-digit), 3 synthetic-derived refusal inputs and 1 synthetic-derived field vector(s) rendered by the corpus."
  ],
  "sets": {},
  "case_specific": {
   "inputs": {
    "frozen_records": 606,
    "synthetic_derived": 3,
+   "synthetic_field_vectors": 1,
    "alpha5_letters": {
     "A": 257,
     "T": 346

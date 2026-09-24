@@ -5,6 +5,13 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 added cases; major: changed `expected.json` schema or check semantics). `DECISIONS.md` holds the
 reasoning behind every entry, by decision number.
 
+## [Unreleased]
+
+### Added
+- One synthetic-derived writer input with a positive-exponent BSTAR (five-digit vector id 99999, BSTAR 1.2345, TLE
+  field ` 12345+1`), rendered by the corpus under the D-096 precedent, closing the writer side of a declared coverage gap
+  (D-125). The writer case now has 610 inputs; no frozen expected value changed.
+
 ## [0.2.1] - 2026-09-23
 
 A patch release under the versioning rule: fixes to the runner, the reference readers, `check-tle` and

@@ -273,7 +273,8 @@ Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case
   byte-identical to Space-Track output. The rendering rule the corpus applies (eccentricity
   truncated, BSTAR and second-derivative mantissa rounded half up) is CelesTrak's, derived
   empirically from those 304 records and documented in no specification we located.
-- No positive-exponent BSTAR (>= 1.0) exists in the fetched data.
+- No positive-exponent BSTAR (>= 1.0) exists in the fetched data. One synthetic-derived writer input (id 99999,
+  BSTAR 1.2345, TLE field ` 12345+1`, rendered by the corpus, D-125) covers the field's form on the writer side only.
 - Nine-digit ids exist only in supplemental launch nominals for roughly a week after a launch;
   outside that window the case reports `not-exercised`.
 - Stability of CelesTrak's `gp-first.php` over time is assumed, not yet observed; `tools/fetch.py`

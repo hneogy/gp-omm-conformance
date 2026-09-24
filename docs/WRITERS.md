@@ -67,7 +67,10 @@ BSTAR and first derivative) and of analyst 81011 (blank designator, empty OBJECT
 carrying the file it was copied from, the source file and its SHA-256. Three further inputs are
 synthetic-derived with the owner's approval (D-096): the SARAMAGO first record with the catalog number
 replaced by 340000, 799501621 and -1, the `encode_unrepresentable` values of `vectors/alpha5.json`.
-Real elements, vector ids; their correct output is a refusal.
+Real elements, vector ids; their correct output is a refusal. A fourth synthetic-derived input (D-125) keeps
+SARAMAGO's elements, takes the five-digit vector id 99999 and a BSTAR of 1.2345, the positive-exponent field
+form (` 12345+1`) that no fetched record supplies; its expected fields are rendered by the corpus, and it is a
+specification vector, not a catalogued object.
 
 Checks: `tle-checksums-valid`, `tle-writer-catalog-field`, `tle-writer-round-trip`,
 `tle-writer-refuses-unencodable`; information items `tle-writer-secondary-fields` and
