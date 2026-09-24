@@ -732,7 +732,11 @@ class Runner:
             if src.get("format") == "satcat-legacy-fixed-width":
                 ids = [int(l[13:18]) for l in open(full, encoding="utf-8", errors="replace").read().splitlines() if l[13:18].strip().isdigit()]
                 above = sum(i >= 70000 for i in ids)
-                res.add("satcat-legacy-below-70000", "fail" if above else "pass", path, f"{len(ids)} ids, max {max(ids)}, {above} at or above 70000 (data check, {mode})")
+                what = f"{len(ids)} ids, max {max(ids)}, {above} at or above 70000 (data check, {mode})"
+                if above:  # the corpus's premise about the legacy file no longer holds: loud, and about the data
+                    res.add("satcat-legacy-below-70000", "fail", path, what + "; a data property of the legacy file, not a result of the parser under test")
+                else:  # no adapter reads SATCAT: the check involves no parser, so it must never count as a parser pass (D-129)
+                    res.add("satcat-legacy-below-70000", "not-exercised", path, what + "; the parser under test was not involved: no adapter reads SATCAT, so this is not a parser result")
             else:
                 res.add("satcat-record", "info", path, f"{mode}; SATCAT records are not parsed by the GP parser under test")
 

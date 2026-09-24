@@ -94,7 +94,7 @@ you whether you are looking at the exact bytes we tested.
 ```bash
 git clone https://github.com/hneogy/gp-omm-conformance.git && cd gp-omm-conformance
 python3 tools/fetch.py            # once: ~60 requests, ~12.6 MB, 2 s apart, cached, never repeated
-python3 -m gpconf run --adapter tests.adapters.reference:Parser   # the control: 17 cases pass (the nine-digit case says not-exercised outside a launch window)
+python3 -m gpconf run --adapter tests.adapters.reference:Parser   # the control: 16 cases pass; the SATCAT case is a data check reported not-exercised for every parser, and the nine-digit case says not-exercised outside a launch window
 python3 -m gpconf run --adapter tests.adapters.naive:Parser       # the parser most projects have
 ```
 
@@ -324,13 +324,16 @@ hardening suggestion, `docs/upstream/strf-number-to-alpha5-range-check.md`, was 
 
 ## Upstream
 
-Status of the findings above with python-sgp4, as of 2026-09-23:
+Status of the findings above with python-sgp4, as of 2026-09-24:
 
 - **Empty `<OBJECT_ID/>` import failure**: filed by the maintainer of this corpus as
   [brandon-rhodes/python-sgp4#171](https://github.com/brandon-rhodes/python-sgp4/issues/171)
-  (draft and prepared patch in `docs/upstream/`); the patch is open as
+  (draft and prepared patch in `docs/upstream/`); the patch,
   [PR #172](https://github.com/brandon-rhodes/python-sgp4/pull/172), opened 2026-09-21 and amended
-  2026-09-23 after the maintainer's review.
+  2026-09-23 after the maintainer's review, was merged by the maintainer on 2026-09-24 as commit
+  `8126f77`, and #171 is closed. No release carries the fix yet (the latest is 2.27 of 2026-07-03), so
+  the python-sgp4 results in this README and in `docs/FAILURES.md`, 7 of 17 cases, are against 2.27
+  and stand until one does.
 - **Nine-digit `NORAD_CAT_ID` rejected**: independently reported before this corpus existed as
   [#169](https://github.com/brandon-rhodes/python-sgp4/issues/169), with
   [PR #170](https://github.com/brandon-rhodes/python-sgp4/pull/170) open. Not filed again. PR #170

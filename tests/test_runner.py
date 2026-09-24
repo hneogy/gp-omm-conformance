@@ -37,6 +37,32 @@ class ReferenceAdapterTests(unittest.TestCase):
                 self.assertEqual(r.status, "pass", r.case_id)
 
 
+class SatcatCaseTests(unittest.TestCase):
+    """satcat-70000-cutoff is a data check the runner makes itself; no adapter reads SATCAT. For every parser the
+    case must report not-exercised (never pass or fail), so a per-library table cannot read it as a library result."""
+
+    def test_not_a_parser_result(self):
+        parsers = [Reference(), Naive()]
+        try:
+            from tests.adapters.sgp4_adapter import Parser as Sgp4
+            parsers.append(Sgp4())
+        except ImportError:
+            pass
+        for parser in parsers:
+            with self.subTest(parser=type(parser).__module__):
+                r = next(x for x in Runner(parser, root=ROOT).run(case_ids=["satcat-70000-cutoff"]) if x.case_id == "satcat-70000-cutoff")
+                statuses = [i.status for i in r.items]
+                self.assertNotIn("pass", statuses, statuses)
+                self.assertNotIn("pass-tolerance", statuses, statuses)
+                self.assertNotIn("fail", statuses, statuses)
+                if os.path.exists(os.path.join(ROOT, "fixtures", "satcat-70000-cutoff", "raw", "satcat.txt")):
+                    self.assertEqual(r.status, "not-exercised", statuses)
+                    item = next(i for i in r.items if i.check == "satcat-legacy-below-70000")
+                    self.assertIn("not involved", item.detail)
+                else:  # public clone without the legacy file: source-present skips only
+                    self.assertEqual(r.status, "skip", statuses)
+
+
 class NaiveAdapterTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

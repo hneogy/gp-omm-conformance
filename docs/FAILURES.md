@@ -12,9 +12,10 @@ parsers were run:
   `twoline2rv`, CSV/XML/JSON via `sgp4.omm`; no KVN reader).
 
 A failure here is a statement about the parser, not about the corpus: the reference parser
-passes every case. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
+passes every case that exercises a parser; `satcat-70000-cutoff` is a data check the runner makes itself and
+reports as not exercised for every parser. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
 
-Generated 2026-09-24T01:17:23Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-24T01:17:21Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.reference:Parser); naive: run 2026-09-24T01:17:22Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-24T01:17:23Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.sgp4_adapter:Parser).
+Generated 2026-09-24T20:24:53Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-24T20:24:51Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.reference:Parser); naive: run 2026-09-24T20:24:52Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-24T20:24:53Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.sgp4_adapter:Parser).
 
 ## Status by case
 
@@ -28,7 +29,7 @@ Generated 2026-09-24T01:17:23Z by `tools/make_failures.py` from the runner repor
 | `nine-digit-supgp-launch-nominals` | pass (0 fail) | fail (5 fail) | fail (4 fail) |
 | `supgp-celestrak-classification-c` | pass (0 fail) | fail (5 fail) | fail (6 fail) |
 | `bstar-and-derivative-forms` | pass (0 fail) | fail (1 fail) | pass-tolerance (0 fail) |
-| `satcat-70000-cutoff` | pass (0 fail) | pass (0 fail) | pass (0 fail) |
+| `satcat-70000-cutoff` | not-exercised (0 fail) | not-exercised (0 fail) | not-exercised (0 fail) |
 | `csv-json-omitted-mandatory-fields` | pass (0 fail) | fail (8 fail) | fail (2 fail) |
 | `mean-motion-derivative-convention` | pass (0 fail) | fail (7 fail) | pass (0 fail) |
 | `tle-vs-omm-precision-loss` | pass (0 fail) | fail (7 fail) | pass-tolerance (0 fail) |
@@ -204,7 +205,7 @@ Generated 2026-09-24T01:17:23Z by `tools/make_failures.py` from the runner repor
 
 - `parse` failures mean the parser raised on real provider bytes; the detail carries the exception.
 - `values` failures list the first mismatching fields against the frozen expected values (snapshot) or the reference reader (live).
-- `not-exercised` means the data needed for that check was not present in the fetched snapshot (for example no nine-digit ids outside the days after a launch).
+- `not-exercised` means the data needed for that check was not present in the fetched snapshot (for example no nine-digit ids outside the days after a launch), or that the check involves no parser at all (the SATCAT data check, the same for every parser).
 - Each case entry opens with its failing-item count; items whose first 80 characters of detail are identical are collapsed into one bullet that names the files it stands for, so the count can exceed the bullets. A detail ending in … was cut at 600 characters; the JSON report (`--json`) holds the full text.
 - For the writer case (`tle-writer-alpha5`) each adapter's entry also lists the checks it passed, with their record counts, so a failure confined to the three synthetic refusal inputs (340000, 799501621, -1: numbers the TLE field cannot carry, for which a refusal is the correct output) cannot be read as a failure on real records.
 - Re-run for your own parser: `python -m gpconf run --adapter your.module:Parser` (see README).

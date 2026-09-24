@@ -12,6 +12,13 @@ reasoning behind every entry, by decision number.
   field ` 12345+1`), rendered by the corpus under the D-096 precedent, closing the writer side of a declared coverage gap
   (D-125). The writer case now has 610 inputs; no frozen expected value changed.
 
+### Changed
+- `satcat-70000-cutoff` reports `not-exercised` for every parser where it reported `pass`: its only pass/fail item
+  is a check the runner makes on the legacy SATCAT file, no adapter reads SATCAT, and a per-library table could read
+  the pass as a library result (D-129). The reference adapter now reports 16 cases exact and 1 not exercised; the
+  naive and python-sgp4 failing counts are unchanged at 14 and 7 of 17. A legacy file with an id at or above 70000
+  still fails the item, as a data property.
+
 ## [0.2.1] - 2026-09-23
 
 A patch release under the versioning rule: fixes to the runner, the reference readers, `check-tle` and

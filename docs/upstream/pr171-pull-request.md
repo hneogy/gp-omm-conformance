@@ -3,7 +3,9 @@
 Status: **opened 2026-09-21 from the owner's account with the owner's approval (D-094):**
 https://github.com/brandon-rhodes/python-sgp4/pull/172, `hneogy:omm-empty-object-id` (commit `d281247` on
 upstream master `bf25b00`) into `brandon-rhodes:master`, title and description exactly as below. Prepared
-under D-092/D-093. Everything below the rule is the posted text.
+under D-092/D-093. Amended to 1417d7f and then 0f20787 (the maintainer's `.get('OBJECT_ID', '')` decision, trailer
+removed) on 2026-09-24; **merged by the maintainer on 2026-09-24T12:58:27Z as 8126f77**, and #171 closed as
+completed (D-130). Everything below the rule is the posted text.
 ---
 
 **Title:** Accept an empty or `UNKNOWN` OBJECT_ID in `sgp4.omm`

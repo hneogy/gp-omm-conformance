@@ -8,7 +8,7 @@ SATCAT on both sides of 70000: CSV/JSON records for 25544, 69999 and 100000; leg
 
 ## How to read a failure
 
-The legacy fixed-width SATCAT stops at id 69999 by design; the CSV/JSON SATCAT continues past 100000. Software reading the legacy file will never see new objects. The expected values include the parsed legacy lines for 25544 and 69999 and the JSON/CSV records for 25544, 69999 and 100000.
+The legacy fixed-width SATCAT stops at id 69999 by design; the CSV/JSON SATCAT continues past 100000. Software reading the legacy file will never see new objects. The expected values include the parsed legacy lines for 25544 and 69999 and the JSON/CSV records for 25544, 69999 and 100000. The runner reports this case as not exercised for every parser: its check is on the data, and no adapter reads SATCAT (D-129).
 
 ## Checks
 
