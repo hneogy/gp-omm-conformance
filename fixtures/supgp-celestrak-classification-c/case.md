@@ -32,6 +32,7 @@ Gaps (stated explicitly for this case):
 
 - perishable: this post-deployment file is replaced after cataloguing
 - the meaning of the 72000-series ids (the 70000-79999 block) is described only by a secondary source (RESEARCH.md §1); primary sources cover only the 80000-89999 analyst range and the 69999 end of the legacy range
+- the 72000-series placeholders raise the same identity-over-time question as the nine-digit nominals, stated as an open question in that case's gaps: 72000 and 72001 share their OBJECT_IDs, 2026-219A and 2026-219B, with two of the per-satellite nominals [tested]
 
 ## Library behaviour observed (docs/CROSSCHECK.md)
 

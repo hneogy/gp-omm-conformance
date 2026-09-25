@@ -1,6 +1,6 @@
 # Corpus manifest (0.2.1)
 
-Generated 2026-09-25T02:51:39Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-09-25T03:18:15Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
 
@@ -11,8 +11,8 @@ No raw provider files are shipped. Each case lists the exact source URLs, retrie
 | 3 | `six-digit-omm-saramago` | gp | 2 | 5/7 | 1 |
 | 4 | `tle-omits-six-digit-objects` | gp | 256 | 0/3 | 1 |
 | 5 | `analyst-objects` | gp | 567 | 8/6 | 2 |
-| 6 | `nine-digit-supgp-launch-nominals` | gp | 28 | 0/6 | 2 |
-| 7 | `supgp-celestrak-classification-c` | gp | 2 | 0/5 | 2 |
+| 6 | `nine-digit-supgp-launch-nominals` | gp | 28 | 0/6 | 3 |
+| 7 | `supgp-celestrak-classification-c` | gp | 2 | 0/5 | 3 |
 | 8 | `bstar-and-derivative-forms` | gp | 83 | 2/3 | 2 |
 | 9 | `satcat-70000-cutoff` | satcat | 0 | 0/7 | 1 |
 | 10 | `csv-json-omitted-mandatory-fields` | facts | 0 | 0/0 | 0 |
@@ -87,6 +87,7 @@ Coverage gaps:
 
 - perishable: nominals exist only for roughly 5-8 days after a launch (CelesTrak); a user's fetch may contain none, in which case the check nine-digit-ids-parse reports not-exercised rather than failing
 - no 9-digit id exists in 18 SDS GP data; only SupGP
+- identity over time is out of scope, stated here as an open question: a nine-digit id is a launch nominal that CelesTrak serves "for the typical 5-8 days between launch and when 18 SDS starts releasing GP data" (docs/RESEARCH.md, TLE Retriever help quotation), after which the same object is expected in GP data under a catalog number of 100000 or above [inferred from that statement and "all newly cataloged objects will have 6-digit catalog numbers of 100000+"; no source states how the two records are linked]. The corpus checks that both forms parse (this case; six-digit ids in six-digit-omm-saramago and tle-omits-six-digit-objects) and holds no object in both: the 27 nominals captured on 2026-09-21 belong to launch 2026-219 (epochs 2026-09-20), and the last-30-days group fetched the same day lists launches 2026-156 to 2026-220 but not 2026-219 [tested]. What a tracker should store as the stable key across the change, and how a nominal's history merges into the catalogued object's, the corpus cannot say: it has no ground truth for the correlation, and the one link it observed, OBJECT_ID, is not one-to-one at this stage, since the placeholders 72000 and 72001 carry 2026-219A and 2026-219B and so do two of the per-satellite nominals [tested]. That is a data-relationship question for the provider's documentation, not a parsing property a fixture can freeze, which is why it is out of scope rather than missing
 
 ## 7. `supgp-celestrak-classification-c`
 
@@ -98,6 +99,7 @@ Coverage gaps:
 
 - perishable: this post-deployment file is replaced after cataloguing
 - the meaning of the 72000-series ids (the 70000-79999 block) is described only by a secondary source (RESEARCH.md §1); primary sources cover only the 80000-89999 analyst range and the 69999 end of the legacy range
+- the 72000-series placeholders raise the same identity-over-time question as the nine-digit nominals, stated as an open question in that case's gaps: 72000 and 72001 share their OBJECT_IDs, 2026-219A and 2026-219B, with two of the per-satellite nominals [tested]
 
 ## 8. `bstar-and-derivative-forms`
 

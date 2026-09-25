@@ -300,7 +300,12 @@ Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case
 - No positive-exponent BSTAR (>= 1.0) exists in the fetched data. One synthetic-derived writer input (id 99999,
   BSTAR 1.2345, TLE field ` 12345+1`, rendered by the corpus, D-125) covers the field's form on the writer side only.
 - Nine-digit ids exist only in supplemental launch nominals for roughly a week after a launch;
-  outside that window the case reports `not-exercised`.
+  outside that window the case reports `not-exercised`. What happens to a nominal's identity after
+  that week is an open question the corpus states and does not answer: it checks that the nine-digit
+  and six-digit forms both parse, holds no object in both, and has no ground truth for how a tracker
+  should correlate a nominal with the catalogued object that follows it; the shared launch
+  designator is not one-to-one. The nine-digit case's gaps say why that is out of scope rather than
+  missing.
 - Stability of CelesTrak's `gp-first.php` over time is assumed, not yet observed; `tools/fetch.py`
   compares every fetched file with the manifest after each run and reports `DRIFT` for stable
   sources whose bytes changed.
