@@ -14,6 +14,7 @@ A group whose members are all six-digit. The OMM formats return every record; th
 ## Checks
 
 - **tle-format-omits-ids-above-99999** — A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'.
+- **empty-answer-yields-no-records** — A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143).
 - **tle-count-equals-omm-count-below-100000** — The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query.
 - **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 

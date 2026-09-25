@@ -7,6 +7,10 @@ reasoning behind every entry, by decision number.
 
 ## [Unreleased]
 
+- Adapter protocol: a refusal channel. An entry carrying `_refused` with a non-empty reason (and optionally `_field`, `_input`) reports a record the library refused; `{"_adapter": {"refusals": true}}` declares that every error-drop is reported. The runner credits refusals to expected ids, keeps them apart from silent drops in the values detail, the JSON counts and the gate, and fails a refusal without a reason. The built-in python-sgp4 adapter uses it (D-144).
+
+- Runner: the provider's recorded empty answer (HTTP 404 body) is handed to the parser under test as its own check, `empty-answer-yields-no-records`, in the four cases that hold one; zero records and no error is the pass (D-143).
+
 - Runner: a gate over this month's launches, printed below the case table and written to the JSON report under `gates`; values items carry structured record counts (`counts`). Wording names the behaviour, never grades the project (D-142).
 
 ### Added

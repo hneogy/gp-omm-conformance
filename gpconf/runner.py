@@ -205,6 +205,47 @@ def oracle_from_expected(exp_rec, fmt):
     return vals
 
 
+# --------------------------------------------------------------------------- the refusal channel (D-144)
+REFUSAL_KEY, ADAPTER_KEY = "_refused", "_adapter"
+
+
+def field_to_id(field):
+    """The expected integer behind a catalog field as the input carried it: digits, or an Alpha-5 field; None otherwise."""
+    if not isinstance(field, str):
+        return None
+    f = field.strip()
+    if re.fullmatch(r"\d+", f):
+        return int(f)
+    if re.fullmatch(r"[A-Z]\d{4}", f):
+        try:
+            return tlemod.from_alpha5(f)
+        except ValueError:
+            return None
+    return None
+
+
+def split_refusals(recs):
+    """An adapter's list -> (records, refusals, declared). A refusal is an entry carrying `_refused`; its reason must be a
+    non-empty string, or the refusal is no better than a drop and is marked so (ok=False). `declared` is the adapter's
+    capability declaration ({"_adapter": {"refusals": true}}), None when absent: without it, zero refusals means only that
+    none were reported, not that none happened."""
+    records, refusals, declared = [], [], None
+    for r in recs:
+        if isinstance(r, dict) and ADAPTER_KEY in r:
+            decl = r.get(ADAPTER_KEY)
+            declared = bool(decl.get("refusals")) if isinstance(decl, dict) else None
+            continue
+        if isinstance(r, dict) and REFUSAL_KEY in r:
+            reason = r.get(REFUSAL_KEY)
+            ok = isinstance(reason, str) and bool(reason.strip())
+            field = r.get("_field")
+            refusals.append({"reason": reason.strip() if ok else None, "ok": ok, "field": field if isinstance(field, str) else None,
+                             "input": str(r.get("_input"))[:80] if r.get("_input") is not None else None, "id": field_to_id(field)})
+            continue
+        records.append(r)
+    return records, refusals, declared
+
+
 # --------------------------------------------------------------------------- report objects
 class Item:
     def __init__(self, check, status, file=None, detail="", tolerance=None, counts=None):
@@ -224,6 +265,7 @@ class CaseResult:
     def __init__(self, case_id, title):
         self.case_id, self.title, self.items, self.modes = case_id, title, [], {}
         self.drift = {}  # path -> {recorded_sha256, actual_sha256}: stable-tier sources whose bytes changed (D-115)
+        self.refusals, self.declared = {}, {}  # path -> the adapter's refusal entries; path -> its capability declaration (D-144)
 
     def add(self, check, status, file=None, detail="", tolerance=None, counts=None):
         if tolerance and status == "pass":
@@ -299,7 +341,7 @@ class Runner:
     def parse(self, path, fmt):
         raw = open(path, "rb").read()
         fn = getattr(self.parser, "parse", None) or self.parser
-        recs = fn(raw, fmt)
+        recs, self._refusals, self._declared = split_refusals(fn(raw, fmt))
         out = []
         for r in recs:
             n, notes, bad = norm_record(r)
@@ -330,6 +372,8 @@ class Runner:
         text = raw.decode("utf-8", "replace")
         if src.get("http_status", 200) != 200 or text.strip() in ("No GP data found", "No SupGP data found"):
             if text.strip() in ("No GP data found", "No SupGP data found"):
+                if "empty-answer-yields-no-records" in case.get("checks", []):
+                    self.check_empty_answer(res, path, fmt, raw, text.strip(), src.get("http_status"))
                 return "empty-404", fmt, mode, [], [], {}
         if fmt in ("satcat-json", "satcat-csv", "satcat-legacy-fixed-width", "vectors-json"):
             return "data", fmt, mode, None, None, None
@@ -360,7 +404,41 @@ class Runner:
         except Exception as e:
             res.add("parse", "fail", path, f"parser raised {type(e).__name__}: {str(e)[:200]}")
             return "parse-error", fmt, mode, None, refrecs, reffacts
+        res.refusals[path], res.declared[path] = self._refusals, self._declared
+        self.report_refusals(res, path, self._refusals)
+        if refrecs and not parsed:
+            # Fail closed (D-144): a file the reference reads records from, for which the parser returned none, is not a
+            # file with nothing in it. Every per-file check would pass on zero records, so none of them runs; the item
+            # names what happened to the records, refused with a reason or dropped.
+            refs = self._refusals
+            with_reason = [r for r in refs if r["ok"]]
+            want = {r["norad_cat_id"] for r in refrecs}
+            matched = {r["id"] for r in with_reason if r["id"] in want}
+            top = sorted(((sum(1 for r in with_reason if r["reason"] == reason), reason) for reason in {r["reason"] for r in with_reason}), reverse=True)
+            counts = {"expected": len(refrecs), "returned": 0, "loaded": 0, "misidentified": 0, "dropped": len(refrecs) - len(matched),
+                      "non_integer_id": 0, "refused": len(with_reason), "refused_matched": len(matched),
+                      "refused_without_reason": len(refs) - len(with_reason), "refusals_reported": self._declared,
+                      "top_refusal_reason": top[0][1] if top else None}
+            what = (f"{len(matched)} refused with a reason ({top[0][1][:120]})" if matched else "") + (", " if matched and counts["dropped"] else "") + \
+                   (f"{counts['dropped']} dropped" + (" silently" if self._declared else " (refusals not reported by this adapter)") if counts["dropped"] else "")
+            res.add("records-returned", "fail", path, f"parser returned 0 of {len(refrecs)} record(s): {what}", counts=counts)
+            return "parse-error", fmt, mode, None, refrecs, reffacts
         return "ok", fmt, mode, parsed, refrecs, reffacts
+
+    def report_refusals(self, res, path, refusals):
+        """One item per file that carries refusals (D-144): the reasons with their counts; a refusal without a reason fails it."""
+        if not refusals:
+            return
+        reasons = {}
+        for r in refusals:
+            if r["ok"]:
+                reasons[r["reason"]] = reasons.get(r["reason"], 0) + 1
+        no_reason = sum(1 for r in refusals if not r["ok"])
+        text = f"{len(refusals) - no_reason} refused with a reason" + ("" if not reasons else ": " + "; ".join(
+            f"{reason[:120]!r} x{n}" for reason, n in sorted(reasons.items(), key=lambda kv: -kv[1])[:5]))
+        if no_reason:
+            text += f"; {no_reason} refusal(s) without a reason, counted as dropped: a refusal that gives no reason is no better than a drop"
+        res.add("refusals", "fail" if no_reason else "info", path, text)
 
     # ---- value comparison
     def compare_values(self, res, path, fmt, mode, parsed, oracle, check="values", exempt=None, partial=False, oracle_label=None):
@@ -382,8 +460,17 @@ class Runner:
             if absent:
                 fails.append(f"{absent} record(s) without norad_cat_id")
         missing_ids = [i for i in oracle if i not in by_id]
+        refusals = res.refusals.get(path, [])
+        with_reason = [r for r in refusals if r["ok"]]
+        refused_ids = {r["id"] for r in with_reason if r["id"] is not None and r["id"] in oracle and r["id"] not in by_id}
         if missing_ids and "norad_cat_id" not in exempt:
-            fails.append(f"{len(missing_ids)} expected record(s) not returned, e.g. {missing_ids[:3]}")
+            if refused_ids:
+                silent = [i for i in missing_ids if i not in refused_ids]
+                eg = next((r for r in with_reason if r["id"] in refused_ids), None)
+                fails.append(f"{len(missing_ids)} expected record(s) not returned: {len(refused_ids)} refused with a reason"
+                             + (f" (e.g. {eg['field']!r}: {eg['reason'][:100]})" if eg else "") + f", {len(silent)} silently" + (f", e.g. {silent[:3]}" if silent else ""))
+            else:
+                fails.append(f"{len(missing_ids)} expected record(s) not returned, e.g. {missing_ids[:3]}")
         extra = [i for i in by_id if i is not None and i not in oracle]
         if extra and not partial:
             fails.append(f"{len(extra)} unexpected record id(s), e.g. {extra[:3]}")
@@ -418,10 +505,14 @@ class Runner:
         label = oracle_label or ("frozen expected values" if mode == "snapshot" else "reference-reader values (live bytes; not the human-verified snapshot)")
         # Record counts by identity (D-142): loaded = returned with the expected integer id; misidentified = returned with an
         # id that is absent, not an integer, or not one the oracle expects; dropped = expected ids no record came back for.
+        top = sorted(((sum(1 for r in with_reason if r["reason"] == reason), reason) for reason in {r["reason"] for r in with_reason}), reverse=True)
         counts = {"expected": len(oracle), "returned": len(parsed), "loaded": compared,
                   "misidentified": sum(len(v) for k, v in by_id.items() if k is None or k not in oracle),
-                  "dropped": max(0, len(oracle) - compared),
-                  "non_integer_id": len([p for p in by_id.get(None, []) if p.get("_bad", {}).get("norad_cat_id")])}
+                  "dropped": max(0, len(oracle) - compared - len(refused_ids)),
+                  "non_integer_id": len([p for p in by_id.get(None, []) if p.get("_bad", {}).get("norad_cat_id")]),
+                  "refused": len(with_reason), "refused_matched": len(refused_ids),
+                  "refused_without_reason": len(refusals) - len(with_reason),
+                  "refusals_reported": res.declared.get(path), "top_refusal_reason": top[0][1] if top else None}
         if fails:
             res.add(check, "fail", path, f"{compared} compared vs {label}; " + "; ".join(fails[:12]) + (" ..." if len(fails) > 12 else ""), counts=counts)
         else:
@@ -551,6 +642,32 @@ class Runner:
                 bad = [r["norad_cat_id"] for r in z if ("element_set_no" in got.get(r["norad_cat_id"], {}) and got[r["norad_cat_id"]]["element_set_no"] != r["element_set_no"])
                        or ("rev_at_epoch" in got.get(r["norad_cat_id"], {}) and got[r["norad_cat_id"]]["rev_at_epoch"] != r["rev_at_epoch"])]
                 res.add("element-set-zero-and-rev-one", "fail" if bad else "pass", path, f"mismatch for {bad[:3]}" if bad else f"{len(z)} record(s) with element set 0 / rev 0-1 preserved")
+
+    def check_empty_answer(self, res, path, fmt, raw, body, status):
+        """The provider's empty answer is presented to the parser under test (D-143): an empty but valid result must
+        come back as zero records and no error, or 'nothing to load' is indistinguishable from 'unreadable'."""
+        what = f"the provider's empty answer (HTTP {status or 404}, body {body!r}, {len(raw)} bytes)"
+        try:
+            got = self.parser.parse(raw, fmt)
+        except Unsupported:
+            res.add("empty-answer-yields-no-records", "skip", path, f"parser reports {fmt} unsupported")
+            return
+        except Exception as e:
+            res.add("empty-answer-yields-no-records", "fail", path,
+                    f"parser raised {type(e).__name__}: {str(e)[:160]} on {what}; an empty but valid answer must yield no records, not an error")
+            return
+        records, refusals, _ = split_refusals(got) if isinstance(got, list) else (got, [], None)
+        if refusals:
+            reason = next((r["reason"] for r in refusals if r["ok"]), "no reason given")
+            res.add("empty-answer-yields-no-records", "fail", path,
+                    f"parser refused {what} ({reason[:120]}) instead of yielding zero records; an empty answer is not an unreadable one")
+            return
+        n = len(records) if isinstance(records, list) else None
+        if n == 0:
+            res.add("empty-answer-yields-no-records", "pass", path, f"{what} read as zero records, no error")
+        else:
+            res.add("empty-answer-yields-no-records", "fail", path,
+                    f"parser returned {n if n is not None else 'a non-list'} record(s) from {what}; an empty answer must yield none")
 
     def check_format_facts(self, res, path, fmt, parsed, reffacts, active):
         if fmt in ("csv", "json") and "csv-json-omit-constant-metadata" in active:

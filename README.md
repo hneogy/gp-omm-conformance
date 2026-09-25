@@ -199,6 +199,22 @@ class Parser:
     def write_tle(self, record: dict): ...    # -> (line1, line2) or (line0, line1, line2); raise to refuse
 ```
 
+A record the library refuses is reported, not dropped, through the refusal channel: return, in the
+same list, an entry carrying `_refused` with the library's reason (a non-empty string; a refusal
+without a reason is no better than a drop and is counted as one), optionally `_field` (the catalog
+field as the input carried it, so the runner credits the refusal to the expected id, decoding
+Alpha-5 itself) and `_input` (up to 80 characters of the offending line). Put `{"_adapter":
+{"refusals": true}}` first in the list to declare that every record you drop with an error is
+reported: with it, a dropped record counts as dropped silently; without it, the report says
+refusals were not reported. External commands emit the same entries in their JSON array.
+
+```python
+        try:
+            records.append(my_library.parse_set(line1, line2))
+        except MyLibraryError as e:
+            records.append({"_refused": f"MyLibraryError: {e}", "_field": line1[2:7], "_input": line1[:80]})
+```
+
 Values may be strings, `Decimal`, `int` or `float`. The eleven core fields must be present in
 every record; optional fields are compared when you return them. `mean_motion_dot` and
 `mean_motion_ddot` are expected in the TLE convention (rev/day² and rev/day³ as printed). The
@@ -234,6 +250,10 @@ A stable-tier source whose bytes no longer hash to the recorded SHA-256 is repor
 as live: the case gets a failing `stable-source-drift` item naming the recorded and actual hashes, the JSON
 report gets a `drift` field, and the file's values item says the frozen expected values were not applied
 and that the parser was compared against the reference reader instead.
+
+### The provider's empty answer
+
+Four cases hold a recorded answer with no data in it: CelesTrak's HTTP 404 body, `No GP data found` or `No SupGP data found`, for a group with nothing in that format. The runner hands that body to the parser under test (check `empty-answer-yields-no-records`): zero records and no error is the pass, an exception or an invented record is a failure, and a parser without the format skips. The point is the distinction: an empty but valid answer is one of three outcomes a parser must keep apart from "this file is unreadable" and "this value cannot be represented", and an error here collapses the first into the second.
 
 ### The gate: this month's launches
 

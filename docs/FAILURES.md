@@ -15,7 +15,7 @@ A failure here is a statement about the parser, not about the corpus: the refere
 passes every case that exercises a parser; `satcat-70000-cutoff` is a data check the runner makes itself and
 reports as not exercised for every parser. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
 
-Generated 2026-09-25T02:33:55Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-25T02:33:13Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.reference:Parser); naive: run 2026-09-25T02:33:14Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-25T02:33:14Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.sgp4_adapter:Parser).
+Generated 2026-09-25T03:01:28Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-25T03:01:27Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.reference:Parser); naive: run 2026-09-25T03:01:27Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-25T03:01:28Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.sgp4_adapter:Parser).
 
 ## Status by case
 
@@ -26,7 +26,7 @@ Generated 2026-09-25T02:33:55Z by `tools/make_failures.py` from the runner repor
 | `six-digit-omm-saramago` | pass (0 fail) | fail (8 fail) | pass-tolerance (0 fail) |
 | `tle-omits-six-digit-objects` | pass (0 fail) | fail (1 fail) | pass-tolerance (0 fail) |
 | `analyst-objects` | pass (0 fail) | fail (13 fail) | fail (2 fail) |
-| `nine-digit-supgp-launch-nominals` | pass (0 fail) | fail (5 fail) | fail (4 fail) |
+| `nine-digit-supgp-launch-nominals` | pass (0 fail) | fail (5 fail) | fail (5 fail) |
 | `supgp-celestrak-classification-c` | pass (0 fail) | fail (5 fail) | fail (6 fail) |
 | `bstar-and-derivative-forms` | pass (0 fail) | fail (1 fail) | pass-tolerance (0 fail) |
 | `satcat-70000-cutoff` | not-exercised (0 fail) | not-exercised (0 fail) | not-exercised (0 fail) |
@@ -171,9 +171,11 @@ One headline per parser, read across existing cases from the record counts behin
 
 ### `nine-digit-supgp-launch-nominals`
 
-4 failing item(s), shown as 1 bullet(s): 3 carried a detail identical to one shown.
+5 failing item(s), shown as 3 bullet(s): 2 carried a detail identical to one shown.
 
-- **parse** (starlink-38381-799501621.csv): parser raised ValueError: satellite number cannot exceed 339999, whose Alpha 5 encoding is 'Z9999' [4 items with this detail: starlink-38381-799501621.csv, starlink-38381-799501621.json, starlink-38381-799501621.xml, starlink-all.csv]
+- **records-returned** (starlink-38381-799501621.csv): parser returned 0 of 1 record(s): 1 refused with a reason (ValueError: satellite number cannot exceed 339999, whose Alpha 5 encoding is 'Z9999') [3 items with this detail: starlink-38381-799501621.csv, starlink-38381-799501621.json, starlink-38381-799501621.xml]
+- **values** (starlink-all.csv): mismatch (details withheld: SupGP-derived values are not published, D-049; run the case on your own fetch, `python -m gpconf run --adapter <yours> --case nine-digit-supgp-launch-nominals --json out.json`, and the report shows them)
+- **classification-c** (starlink-all.csv): C not preserved for [100001, 100002, 100003]
 
 ### `supgp-celestrak-classification-c`
 
@@ -186,14 +188,14 @@ One headline per parser, read across existing cases from the record counts behin
 
 2 failing item(s), shown as 1 bullet(s): 1 carried a detail identical to one shown.
 
-- **parse** (starlink-38381-799501621.csv): parser raised ValueError: satellite number cannot exceed 339999, whose Alpha 5 encoding is 'Z9999' [2 items with this detail: starlink-38381-799501621.csv, starlink-38381-799501621.json]
+- **records-returned** (starlink-38381-799501621.csv): parser returned 0 of 1 record(s): 1 refused with a reason (ValueError: satellite number cannot exceed 339999, whose Alpha 5 encoding is 'Z9999') [2 items with this detail: starlink-38381-799501621.csv, starlink-38381-799501621.json]
 
 ### `omm-xml-schema`
 
 3 failing item(s), shown as 2 bullet(s): 1 carried a detail identical to one shown.
 
 - **parse** (analyst.xml): parser raised TypeError: 'NoneType' object is not subscriptable [2 items with this detail: analyst.xml, analyst-270449-first.xml]
-- **parse** (starlink-38381-799501621.xml): parser raised ValueError: satellite number cannot exceed 339999, whose Alpha 5 encoding is 'Z9999'
+- **records-returned** (starlink-38381-799501621.xml): parser returned 0 of 1 record(s): 1 refused with a reason (ValueError: satellite number cannot exceed 339999, whose Alpha 5 encoding is 'Z9999')
 
 ### `alpha5-encoding-vectors`
 

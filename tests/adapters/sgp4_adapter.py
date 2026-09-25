@@ -27,16 +27,22 @@ def _rec(s, name=None):
             "ephemeris_type": s.ephtype, "classification_type": s.classification, "element_set_no": s.elnum, "rev_at_epoch": s.revnum}
 
 
+DECLARATION = {"_adapter": {"refusals": True}}  # every record this adapter drops with an error is reported as a refusal (D-144)
+
+
 class Parser:
     def parse(self, raw, fmt):
         text = raw.decode("utf-8")
         if fmt in ("tle", "2le"):
             lines = text.splitlines()
-            out = []
+            out = [DECLARATION]
             for i, l in enumerate(lines):
                 if l.startswith("1 ") and i + 1 < len(lines) and lines[i + 1].startswith("2 "):
                     name = lines[i - 1].strip() if i and not lines[i - 1].startswith(("1 ", "2 ")) else None
-                    out.append(_rec(Satrec.twoline2rv(l, lines[i + 1]), name))
+                    try:
+                        out.append(_rec(Satrec.twoline2rv(l, lines[i + 1]), name))
+                    except ValueError as e:  # the refusal channel (D-144): the library's own reason, the field as the line carried it
+                        out.append({"_refused": f"ValueError: {e}", "_field": l[2:7], "_input": l[:80]})
             return out
         if fmt == "csv":
             fields_iter = omm.parse_csv(io.StringIO(text))
@@ -46,10 +52,14 @@ class Parser:
             fields_iter = json.loads(text)
         else:
             raise Unsupported(fmt)
-        out = []
+        out = [DECLARATION]
         for fields in fields_iter:
             s = Satrec()
-            omm.initialize(s, fields)
+            try:
+                omm.initialize(s, fields)
+            except ValueError as e:  # e.g. a nine-digit NORAD_CAT_ID: refused with the library's reason, not dropped (D-144)
+                out.append({"_refused": f"ValueError: {e}", "_field": str(fields.get("NORAD_CAT_ID")), "_input": str(fields.get("NORAD_CAT_ID"))})
+                continue
             r = _rec(s, fields.get("OBJECT_NAME"))
             r["object_id"] = fields.get("OBJECT_ID") or None
             out.append(r)

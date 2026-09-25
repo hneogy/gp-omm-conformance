@@ -7,9 +7,11 @@ the last-30-days group (every object above 99999) and the corpus's Alpha-5 rende
 Space-Track's TLE output carries. CelesTrak's own TLE output omits these objects (HTTP 404 for the group), a fact the
 CSV case records; the gate says so for a parser that reads TLE only.
 
-Per record and format there are three outcomes: loaded (returned with the expected integer id), misidentified
-(returned with an id that is absent, not an integer, or not the expected one: 0, NaN, a raw string) and dropped (no
-record came back, whether refused with an error or silently skipped). Every result carries the snapshot's date, its
+Per record and format there are four outcomes: loaded (returned with the expected integer id), misidentified
+(returned with an id that is absent, not an integer, or not the expected one: 0, NaN, a raw string), refused (the
+adapter reported the record with a reason through the refusal channel, D-144) and dropped (no record and no refusal).
+An adapter that declares the channel makes "dropped" mean "dropped silently"; without the declaration the gate says
+"refusals not reported by this adapter", since zero refusals then means only that none were reported. Every result carries the snapshot's date, its
 record count and id range, and the letters its Alpha-5 fields begin with, because a decoder that is wrong from J upward
 passes a snapshot whose ids all begin with A.
 """
@@ -51,10 +53,11 @@ def snapshot_facts(root, gate):
 def format_result(items):
     """One format's outcome from the items the runner recorded for its file."""
     for it in items:
-        if it.check == "values" and it.counts is not None:
+        if it.check in ("values", "records-returned") and it.counts is not None:
             c = it.counts
             return {"state": "measured", "expected": c["expected"], "returned": c["returned"], "loaded": c["loaded"],
-                    "misidentified": c["misidentified"], "dropped": c["dropped"]}
+                    "misidentified": c["misidentified"], "dropped": c["dropped"], "refused": c.get("refused_matched", 0),
+                    "refusals_reported": c.get("refusals_reported"), "top_refusal_reason": c.get("top_refusal_reason")}
     for it in items:
         if it.check == "parse" and it.status == "fail":
             return {"state": "measured", "note": "the parser raised on the file", "expected": None, "returned": 0, "loaded": 0, "misidentified": 0, "dropped": None}
@@ -70,9 +73,13 @@ def _numbers(r, expected):
     if r.get("note"):
         return f"{expected} dropped ({r['note']})"
     parts = []
-    for k in ("loaded", "misidentified", "dropped"):
+    for k in ("loaded", "misidentified"):
         if r.get(k):
             parts.append(f"{r[k]} {k}")
+    if r.get("refused"):
+        parts.append(f"{r['refused']} refused" + (f" ({r['top_refusal_reason'][:80]})" if r.get("top_refusal_reason") else ""))
+    if r.get("dropped"):
+        parts.append(f"{r['dropped']} dropped " + ("silently" if r.get("refusals_reported") else "(refusals not reported by this adapter)"))
     return ", ".join(parts) if parts else "0 returned"
 
 

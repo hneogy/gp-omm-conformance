@@ -1,6 +1,6 @@
 # Corpus manifest (0.2.1)
 
-Generated 2026-09-24T20:23:34Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-09-25T02:51:39Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
 
@@ -223,6 +223,7 @@ Coverage gaps:
 - **kvn-blank-mandatory-values** — CelesTrak KVN writes CREATION_DATE and ORIGINATOR with blank values and blank OBJECT_ID for analyst objects; MEAN_ELEMENT_THEORY is 'SGP/SGP4'.
 - **leading-dot-decimals** — CSV, KVN and XML values may start with '.' or '-.' (no leading zero) and use 'E' exponents; JSON carries numbers.
 - **tle-format-omits-ids-above-99999** — A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'.
+- **empty-answer-yields-no-records** — A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143).
 - **tle-count-equals-omm-count-below-100000** — The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query.
 - **nine-digit-ids-parse** — NORAD_CAT_ID values >= 100000000 parse and round-trip as integers in CSV, JSON, XML and KVN.
 - **supgp-extra-keys-tolerated** — SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail.
