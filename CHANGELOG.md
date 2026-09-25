@@ -7,6 +7,8 @@ reasoning behind every entry, by decision number.
 
 ## [Unreleased]
 
+- Runner: a gate over this month's launches, printed below the case table and written to the JSON report under `gates`; values items carry structured record counts (`counts`). Wording names the behaviour, never grades the project (D-142).
+
 ### Added
 - One synthetic-derived writer input with a positive-exponent BSTAR (five-digit vector id 99999, BSTAR 1.2345, TLE
   field ` 12345+1`), rendered by the corpus under the D-096 precedent, closing the writer side of a declared coverage gap

@@ -56,6 +56,12 @@ def render(reps, generated_at):
             r = by.get(n, {}).get(c)
             row.append(f"{r['status']} ({r['counts']['fail']} fail)" if r else "not run")
         md.append("| " + " | ".join(row) + " |")
+    md += ["", "## Gate: this month's launches", "",
+           "One headline per parser, read across existing cases from the record counts behind their values items (D-142): "
+           "words that name the behaviour, never a grade on the project. Snapshot facts and the letter caveat travel with each.", ""]
+    for n, label in (("reference", "reference"), ("naive", "naive"), ("sgp4", "python-sgp4")):
+        for g in (reps.get(n) or {}).get("gates", []):
+            md.append(f"- **{label}**: {g['headline']}")
     for n, label in (("naive", "Naive parser"), ("sgp4", "python-sgp4 2.27 through sgp4.omm / twoline2rv")):
         rep = reps.get(n)
         if not rep:

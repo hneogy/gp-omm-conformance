@@ -207,13 +207,16 @@ def oracle_from_expected(exp_rec, fmt):
 
 # --------------------------------------------------------------------------- report objects
 class Item:
-    def __init__(self, check, status, file=None, detail="", tolerance=None):
+    def __init__(self, check, status, file=None, detail="", tolerance=None, counts=None):
         self.check, self.status, self.file, self.detail, self.tolerance = check, status, file, detail, tolerance
+        self.counts = counts  # structured record counts behind a values item (D-142), so headlines never parse the sentence
 
     def as_dict(self):
         d = {"check": self.check, "status": self.status, "file": self.file, "detail": self.detail}
         if self.tolerance:
             d["tolerance_stats"] = self.tolerance.as_dict()
+        if self.counts is not None:
+            d["counts"] = self.counts
         return d
 
 
@@ -222,11 +225,11 @@ class CaseResult:
         self.case_id, self.title, self.items, self.modes = case_id, title, [], {}
         self.drift = {}  # path -> {recorded_sha256, actual_sha256}: stable-tier sources whose bytes changed (D-115)
 
-    def add(self, check, status, file=None, detail="", tolerance=None):
+    def add(self, check, status, file=None, detail="", tolerance=None, counts=None):
         if tolerance and status == "pass":
             status = "pass-tolerance"
             detail = (detail + "; " if detail else "") + tolerance.text()
-        self.items.append(Item(check, status, file, detail, tolerance))
+        self.items.append(Item(check, status, file, detail, tolerance, counts))
 
     @property
     def status(self):
@@ -413,10 +416,16 @@ class Runner:
                 elif result == "tolerance":
                     tol.add(field, diff)
         label = oracle_label or ("frozen expected values" if mode == "snapshot" else "reference-reader values (live bytes; not the human-verified snapshot)")
+        # Record counts by identity (D-142): loaded = returned with the expected integer id; misidentified = returned with an
+        # id that is absent, not an integer, or not one the oracle expects; dropped = expected ids no record came back for.
+        counts = {"expected": len(oracle), "returned": len(parsed), "loaded": compared,
+                  "misidentified": sum(len(v) for k, v in by_id.items() if k is None or k not in oracle),
+                  "dropped": max(0, len(oracle) - compared),
+                  "non_integer_id": len([p for p in by_id.get(None, []) if p.get("_bad", {}).get("norad_cat_id")])}
         if fails:
-            res.add(check, "fail", path, f"{compared} compared vs {label}; " + "; ".join(fails[:12]) + (" ..." if len(fails) > 12 else ""))
+            res.add(check, "fail", path, f"{compared} compared vs {label}; " + "; ".join(fails[:12]) + (" ..." if len(fails) > 12 else ""), counts=counts)
         else:
-            res.add(check, "pass", path, f"{compared} record(s) match {label}", tolerance=tol)
+            res.add(check, "pass", path, f"{compared} record(s) match {label}", tolerance=tol, counts=counts)
         return not fails
 
     def oracle_for(self, case_exp, path, fmt, mode, refrecs):

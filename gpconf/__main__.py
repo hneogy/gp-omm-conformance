@@ -92,6 +92,11 @@ def main(argv=None):
         c = r.counts()
         print(f"{r.case_id:40s} {r.status:15s} {c['pass']:5d} {c['pass-tolerance']:4d} {c['fail']:4d} {c['skip']:4d} {c['not-exercised']:3d}")
     print()
+    from .gates import compute_gates
+    gates = compute_gates(results, root)
+    for g in gates:
+        print(f"gate {g['name']}: {g['headline']}")
+    print()
     for r in results:
         shown = [i for i in r.items if args.verbose or i.status in ("fail", "pass-tolerance")]
         if shown:
@@ -110,7 +115,7 @@ def main(argv=None):
         with open(args.json, "w") as f:
             json.dump({"gpconf": __version__, "corpus_version": manifest["corpus_version"], "parser": args.cmd or args.write_cmd or args.adapter,
                        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                       "results": [r.as_dict() for r in results]}, f, indent=1, default=str)
+                       "results": [r.as_dict() for r in results], "gates": gates}, f, indent=1, default=str)
     failed = sum(1 for r in results if r.status == "fail")
     tol = sum(1 for r in results if r.status == "pass-tolerance")
     print(f"\n{len(results)} case(s): {sum(1 for r in results if r.status == 'pass')} pass (exact), {tol} pass within tolerance, {failed} fail, "

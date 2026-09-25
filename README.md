@@ -235,6 +235,10 @@ as live: the case gets a failing `stable-source-drift` item naming the recorded 
 report gets a `drift` field, and the file's values item says the frozen expected values were not applied
 and that the parser was compared against the reference reader instead.
 
+### The gate: this month's launches
+
+Below the case table the runner prints one gate, a headline read across existing cases rather than a new case: given the objects launched in the last 30 days, as a provider serves them, does the parser return them with the right identity? Its inputs are the CelesTrak CSV capture of the last-30-days group (256 objects, every one above 99999, captured 2026-09-21) and the corpus's Alpha-5 rendering of the same records, the form Space-Track's TLE output carries. Per format the parser reads, records are counted as loaded (returned with the expected integer id), misidentified (returned as 0, NaN, a string or a wrong number) or dropped (no record came back). The wording names the behaviour and never grades the project: "reads this month's launches", "only via CSV", "not in any format it reads", and, for a parser that reads TLE only, "nothing to load from this feed", because CelesTrak's TLE output omits these objects. Every headline carries the snapshot's date, count and id range, and the letters its Alpha-5 fields begin with: a decoder that is wrong from J upward passes a snapshot whose ids all begin with A. The JSON report carries the same under `gates`, with the counts, and each values item now carries its record counts under `counts`.
+
 ## The seventeen cases
 
 | case | what it covers |

@@ -15,7 +15,7 @@ A failure here is a statement about the parser, not about the corpus: the refere
 passes every case that exercises a parser; `satcat-70000-cutoff` is a data check the runner makes itself and
 reports as not exercised for every parser. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
 
-Generated 2026-09-24T20:24:53Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-24T20:24:51Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.reference:Parser); naive: run 2026-09-24T20:24:52Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-24T20:24:53Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.sgp4_adapter:Parser).
+Generated 2026-09-25T02:33:55Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-25T02:33:13Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.reference:Parser); naive: run 2026-09-25T02:33:14Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-25T02:33:14Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.sgp4_adapter:Parser).
 
 ## Status by case
 
@@ -38,6 +38,14 @@ Generated 2026-09-24T20:24:53Z by `tools/make_failures.py` from the runner repor
 | `alpha5-tle-derived` | pass (0 fail) | fail (4 fail) | pass-tolerance (0 fail) |
 | `kvn-syntax-variants` | pass (0 fail) | fail (4 fail) | skip (0 fail) |
 | `tle-writer-alpha5` | pass (0 fail) | fail (3 fail) | fail (1 fail) |
+
+## Gate: this month's launches
+
+One headline per parser, read across existing cases from the record counts behind their values items (D-142): words that name the behaviour, never a grade on the project. Snapshot facts and the letter caveat travel with each.
+
+- **reference**: reads this month's launches in every format it reads here: TLE (Alpha-5, as Space-Track serves them; rendered by the corpus from the CelesTrak CSV capture): 256 loaded, CSV (as CelesTrak serves them): 256 loaded [snapshot 2026-09-21, 256 objects, ids 100404-100789, Alpha-5 fields beginning with A: a decoder wrong from J upward is not caught by this snapshot]
+- **naive**: not in any format it reads: TLE (Alpha-5, as Space-Track serves them; rendered by the corpus from the CelesTrak CSV capture): 256 dropped (the parser raised on the file); CSV (as CelesTrak serves them): 256 dropped (the parser raised on the file) [snapshot 2026-09-21, 256 objects, ids 100404-100789, Alpha-5 fields beginning with A: a decoder wrong from J upward is not caught by this snapshot]
+- **python-sgp4**: reads this month's launches in every format it reads here: TLE (Alpha-5, as Space-Track serves them; rendered by the corpus from the CelesTrak CSV capture): 256 loaded, CSV (as CelesTrak serves them): 256 loaded [snapshot 2026-09-21, 256 objects, ids 100404-100789, Alpha-5 fields beginning with A: a decoder wrong from J upward is not caught by this snapshot]
 
 ## Naive parser: what failed and why
 
