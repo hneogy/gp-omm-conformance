@@ -224,7 +224,8 @@ class InstalledPresets(unittest.TestCase):
     def test_the_library_presets_name_the_version_found(self):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "presets")
         self.assertEqual(code, 0, out)
-        self.assertEqual([line.split()[0] for line in out.strip().splitlines()], ["reference", "naive", "sgp4", "pyephem"])
+        self.assertEqual([line.split()[0] for line in out.strip().splitlines()],
+                         ["reference", "naive", "sgp4", "pyephem", "satellite.js", "tle.js", "tle.js-api"])
         from gpconf.presets import found_version
         for name, dist, library in (("sgp4", "sgp4", "python-sgp4"), ("pyephem", "ephem", "PyEphem")):
             code, out = self.run_preset(name)

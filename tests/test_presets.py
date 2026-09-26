@@ -38,10 +38,10 @@ def items(results):
 
 
 class Registry(unittest.TestCase):
-    def test_four_presets_with_what_each_is(self):
-        self.assertEqual(list(presets.PRESETS), ["reference", "naive", "sgp4", "pyephem"])
+    def test_four_pip_presets_with_what_each_is(self):
+        self.assertEqual(list(presets.PRESETS)[:4], ["reference", "naive", "sgp4", "pyephem"])  # the Node presets follow (D-154)
         lines = presets.listing()
-        self.assertEqual([line.split()[0] for line in lines], ["reference", "naive", "sgp4", "pyephem"])
+        self.assertEqual([line.split()[0] for line in lines][:4], ["reference", "naive", "sgp4", "pyephem"])
         self.assertIn("a demonstration of failure, not a parser anyone should use", lines[1])
         for name, library, tested in (("sgp4", "python-sgp4", "2.27"), ("pyephem", "PyEphem", "4.2.1")):
             spec = presets.PRESETS[name]
@@ -72,6 +72,7 @@ class Registry(unittest.TestCase):
                 with self.assertRaises(presets.PresetUnavailable) as cm:
                     presets.load(name)
                 self.assertIn(f"pip install {presets.PRESETS[name]['requires']}", str(cm.exception))
+                self.assertIn(f"Nothing was run; this says nothing about {presets.PRESETS[name]['library']}.", str(cm.exception))  # D-153
             sys.modules.pop(adapter, None)  # a later import sees the real library again
 
     def test_preset_cannot_be_combined_with_another_parser(self):

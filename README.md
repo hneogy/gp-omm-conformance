@@ -98,12 +98,18 @@ python3 -m gpconf run --preset reference   # the control: 16 cases pass; the SAT
 python3 -m gpconf run --preset naive       # the parser most projects have: a demonstration of failure, not a parser to use
 ```
 
-A preset runs a shipped adapter with nothing written. `python3 -m gpconf presets` lists the four:
-`reference` and `naive` (standard library only), `sgp4` (needs python-sgp4: `pip install sgp4`)
-and `pyephem` (needs PyEphem: `pip install ephem`). A library preset records the version it was
-tested against, 2.27 and 4.2.1, and the report prints the version it found beside it, since a count
-is a result against one version. The adapters are in `gpconf/adapters/`; the older names
-`tests.adapters.reference:Parser` and the like still work (D-151).
+A preset runs a shipped adapter with nothing written. `python3 -m gpconf presets` lists them:
+`reference` and `naive` (standard library only), `sgp4` (needs python-sgp4: `pip install sgp4`),
+`pyephem` (needs PyEphem: `pip install ephem`), and three that need Node.js and the library
+installed where you run the command: `satellite.js`, `tle.js`, which reads the epoch from the raw
+year and day fields, and `tle.js-api`, which reads it through `getEpochTimestamp()`. A library
+preset records the version it was tested against and the report prints the version it found beside
+it, since a count is a result against one version. A Node preset's harness runs from the working
+directory, so the library resolves as it would for a script in your project; `--module PATH` names
+the library's entry file instead, for a checkout that cannot import itself by name. A preset whose
+library is missing is refused before any case runs, with exit status 2 and a message saying that
+nothing ran and that this says nothing about the library (D-153, D-154). The adapters are in
+`gpconf/adapters/`; the older names `tests.adapters.reference:Parser` and the like still work (D-151).
 
 Then write an adapter for your own parser and run it:
 

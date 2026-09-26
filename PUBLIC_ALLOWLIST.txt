@@ -32,6 +32,7 @@ schemas/**/*
 # it out (D-151; tests/test_export.py checks that every module is exported).
 gpconf/*.py
 gpconf/adapters/*.py
+gpconf/adapters/*.mjs
 tests/*.py
 tests/adapters/*.py
 tools/*.py

@@ -1219,16 +1219,28 @@ class CommandParser:
     """Runs an external program per file: raw bytes on stdin, JSON array of records on stdout.
     The command may contain {fmt} and {path}. Non-zero exit or invalid JSON = parse failure.
     write_cmd (optional): one JSON record on stdin, the TLE lines on stdout (2 or 3 lines); exit 0 =
-    written, exit 3 = writing unsupported, any other non-zero exit = the record was refused."""
+    written, exit 3 = writing unsupported, any other non-zero exit = the record was refused.
 
-    def __init__(self, cmd, vectors_cmd=None, timeout=120, write_cmd=None):
+    A command is a shell string, as `--cmd` gives it, or an argument list, as the Node presets build it (D-154): a list
+    runs without a shell, in `cwd` with `env` when given, and only an element that is exactly "{fmt}" is substituted, so
+    a harness's source passed as an argument is never altered."""
+
+    def __init__(self, cmd, vectors_cmd=None, timeout=120, write_cmd=None, cwd=None, env=None):
         self.cmd, self.vectors_cmd, self.timeout, self.write_cmd = cmd, vectors_cmd, timeout, write_cmd
+        self.cwd, self.env = cwd, env
+
+    def _run(self, cmd, data, fmt=None):
+        if isinstance(cmd, (list, tuple)):
+            argv = [fmt if (a == "{fmt}" and fmt is not None) else a for a in cmd]
+            return subprocess.run(argv, input=data, capture_output=True, timeout=self.timeout, cwd=self.cwd, env=self.env)
+        if fmt is not None:
+            cmd = cmd.replace("{fmt}", fmt)
+        return subprocess.run(cmd, shell=True, input=data, capture_output=True, timeout=self.timeout, cwd=self.cwd, env=self.env)
 
     def parse(self, raw, fmt):
         if not self.cmd:
             raise Unsupported(fmt)
-        cmd = self.cmd.replace("{fmt}", fmt)
-        p = subprocess.run(cmd, shell=True, input=raw, capture_output=True, timeout=self.timeout)
+        p = self._run(self.cmd, raw, fmt)
         if p.returncode == 3:
             raise Unsupported(fmt)
         if p.returncode != 0:
@@ -1244,7 +1256,7 @@ class CommandParser:
     def write_tle(self, record):
         if not self.write_cmd:
             raise Unsupported("tle-writing")
-        p = subprocess.run(self.write_cmd, shell=True, input=json.dumps(record, default=str).encode(), capture_output=True, timeout=self.timeout)
+        p = self._run(self.write_cmd, json.dumps(record, default=str).encode())
         if p.returncode == 3:
             raise Unsupported("tle-writing")
         if p.returncode != 0:
@@ -1254,7 +1266,7 @@ class CommandParser:
     def _vec(self, op, value):
         if not self.vectors_cmd:
             raise AttributeError(op)
-        p = subprocess.run(self.vectors_cmd, shell=True, input=json.dumps({"op": op, "input": value}).encode(), capture_output=True, timeout=self.timeout)
+        p = self._run(self.vectors_cmd, json.dumps({"op": op, "input": value}).encode())
         try:
             out = json.loads(p.stdout.decode("utf-8") or "{}")
         except ValueError as e:

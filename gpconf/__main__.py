@@ -90,7 +90,8 @@ def main(argv=None):
     ap.add_argument("command", choices=["run", "list", "presets", "check-tle", "fetch"])
     ap.add_argument("files", nargs="*", help="check-tle: TLE file(s) written by the tool under test")
     ap.add_argument("--against", help="check-tle: the source records the lines were written from (CSV/JSON/XML/KVN/TLE); enables the round-trip check")
-    ap.add_argument("--preset", help="a shipped adapter by name: reference, naive, sgp4 or pyephem (gpconf presets lists them)")
+    ap.add_argument("--preset", help="a shipped adapter by name: reference, naive, sgp4, pyephem, satellite.js, tle.js or tle.js-api (gpconf presets lists them)")
+    ap.add_argument("--module", help="Node presets: the library's entry file, for a checkout the working directory cannot import by name")
     ap.add_argument("--adapter", help="python import path module:attr of a parser object or class")
     ap.add_argument("--cmd", help="external command; raw bytes on stdin, JSON array on stdout; {fmt} substituted; exit 3 = unsupported format")
     ap.add_argument("--vectors-cmd", help="external command for vector hooks (JSON {op,input} on stdin -> {result}|{error})")
@@ -125,11 +126,13 @@ def main(argv=None):
         ap.error("run needs --preset, --adapter, --cmd or --write-cmd")
     if args.preset and len(chosen) > 1:
         ap.error("--preset names the parser; it cannot be combined with --adapter, --cmd or --write-cmd")
+    if args.module and not args.preset:
+        ap.error("--module applies to the Node presets")
     preset = None
     if args.preset:
         from .presets import load as load_preset, PresetUnavailable
         try:
-            parser, preset = load_preset(args.preset)
+            parser, preset = load_preset(args.preset, module=args.module)
         except PresetUnavailable as e:
             print(f"gpconf: {e}", file=sys.stderr)
             return 2
@@ -176,7 +179,7 @@ def main(argv=None):
         import datetime as _dt
         with open(args.json, "w") as f:
             json.dump({"gpconf": __version__, "corpus_version": manifest["corpus_version"], "parser": parser_name,
-                       **({"preset": {k: preset.get(k) for k in ("name", "library", "found", "tested_with")}} if preset else {}),
+                       **({"preset": {k: preset.get(k) for k in ("name", "library", "found", "tested_with", "runtime") if k != "runtime" or preset.get(k)}} if preset else {}),
                        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                        "results": [r.as_dict() for r in results], "gates": gates}, f, indent=1, default=str)
     failed = sum(1 for r in results if r.status == "fail")
