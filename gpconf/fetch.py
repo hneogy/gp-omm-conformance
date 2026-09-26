@@ -34,6 +34,8 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
+import shutil
 import sys
 import time
 import urllib.error
@@ -117,7 +119,57 @@ def duplicate_urls(entries):
     return sorted({u for u in urls if urls.count(u) > 1})
 
 
-def plan(entries, force=False, include_recaptures=False, root=None, now=None):
+def version_folders(root):
+    """Other corpus versions' folders beside a per-user cache folder, newest first -> [(version, folder)] (D-157)."""
+    parent, here = os.path.split(os.path.abspath(root))
+    if not os.path.isdir(parent):
+        return []
+    out = []
+    for name in os.listdir(parent):
+        d = os.path.join(parent, name)
+        if name != here and re.fullmatch(r"\d+(\.\d+)*", name) and os.path.isdir(os.path.join(d, "fixtures")):
+            out.append((name, d))
+    return sorted(out, key=lambda v: tuple(int(p) for p in v[0].split(".")), reverse=True)
+
+
+def reusable(entries, root, corpus, sources):
+    """-> {path: (version, source file)} for each stable-tier entry this folder lacks whose copy in an earlier version's
+    folder holds exactly the bytes this version's manifest records, metadata included (D-153, D-157). A live file is
+    never reused, even when its bytes match: an upgrade brings current data."""
+    man = manifest_sources(corpus)
+    out = {}
+    for e in entries:
+        rel = f"fixtures/{e['case']}/raw/{e['file']}"
+        m = man.get(rel) or {}
+        if m.get("tier") != "stable" or not m.get("sha256") or is_cached(e, root):
+            continue
+        for version, d in sources:
+            src = os.path.join(d, rel)
+            if os.path.isfile(src) and os.path.isfile(src + ".meta.json"):
+                with open(src, "rb") as f:
+                    if hashlib.sha256(f.read()).hexdigest() == m["sha256"]:
+                        out[rel] = (version, src)
+                        break
+    return out
+
+
+def reuse_one(entry, version, src, root=None):
+    """Copy a reusable file and its metadata into this folder. The metadata keeps the original retrieved_at, so the
+    two-hour rule and the provenance still describe the one request that was made, and gains reused_from."""
+    d, path, meta_path = target_paths(entry, root)
+    os.makedirs(d, exist_ok=True)
+    shutil.copyfile(src, path)
+    with open(src + ".meta.json") as f:
+        meta = json.load(f)
+    meta["reused_from"] = {"corpus_version": version, "path": src}
+    meta["reused_at"] = now_utc()
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2, sort_keys=True)
+        f.write("\n")
+    return f"reused from {version}"
+
+
+def plan(entries, force=False, include_recaptures=False, root=None, now=None, reuse=None):
     """What a run would do for each entry, without touching the network -> [{'entry', 'action', 'reason'}], action
     'fetch' | 'cached' | 'skip'. One request per URL per run. A re-capture entry (the same endpoint a second time,
     for the recapture cases) is planned only with include_recaptures, and requested only when its original is on
@@ -156,6 +208,10 @@ def plan(entries, force=False, include_recaptures=False, root=None, now=None):
                     action, reason = "skip", f"re-capture of {recap}: the original was retrieved {hours(age)} ago, less than two hours (CelesTrak refreshes at most every two hours)"
                 else:
                     action, reason = "fetch", f"re-capture of {recap}, whose original was retrieved {hours(age)} ago"
+        elif reuse and f"fixtures/{e['case']}/raw/{e['file']}" in reuse:
+            version = reuse[f"fixtures/{e['case']}/raw/{e['file']}"][0]
+            action, reason = "reuse", (f"stable tier: the copy in corpus {version}'s cache holds the bytes this version's "
+                                       f"manifest records; copied, not requested")
         else:
             action, reason = "fetch", "not on disk"
         if action == "fetch":
@@ -299,11 +355,14 @@ def fetch_one(entry, root=None):
     return f"{meta['status_line']}, {len(body)} bytes"
 
 
-def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, pause=PAUSE_SECONDS, corpus=None, prog=None):
+def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, pause=PAUSE_SECONDS, corpus=None, prog=None,
+        reuse_sources=None):
     """The command line, parameterised so the request logic can be tested with a stub in place of fetch_one and a
     temporary root: returns the exit code (0; 1 for a bad fetch list; 2 when a stable-tier source drifted).
     root is the data root and corpus the corpus root; given by a caller they bypass the command line's --root and
-    --data, and corpus defaults to root, the layout of a clone and of the tests."""
+    --data, and corpus defaults to root, the layout of a clone and of the tests. Stable-tier files are reused from
+    earlier corpus versions' folders when the data root is a per-user cache folder (D-157); reuse_sources, a list of
+    (version, folder), names them for a caller."""
     ap = argparse.ArgumentParser(prog=prog, description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", help="corpus root (default: the clone this runs from, or the corpus installed with the package)")
     ap.add_argument("--data", help=f"folder the provider files are written to (default: ${locate.DATA_ENV}, else the clone, else a per-user cache folder)")
@@ -320,14 +379,15 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     out = out or sys.stdout
     now = now or dt.datetime.now(dt.timezone.utc)
     do_fetch = fetch_one or globals()["fetch_one"]
+    data_why = None
     if root is None:
         try:
             loc = locate.resolve(args.root, args.data)
         except locate.CorpusNotFound as e:
             print(f"gpconf fetch: {e}", file=sys.stderr)
             return 2
-        corpus, root = loc["corpus"], loc["data"]
-        print(f"provider data: {root} ({loc['data_why']})", file=out)
+        corpus, root, data_why = loc["corpus"], loc["data"], loc["data_why"]
+        print(f"provider data: {root} ({data_why})", file=out)
     corpus = corpus or root
     if entries is None:
         with open(os.path.join(corpus, FETCHLIST)) as f:
@@ -348,12 +408,20 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
         present = [e for e in selected if is_cached(e, root)]
         n = print_drift(drift_report(present, root, corpus), out)
         return 2 if n else 0
-    planned = plan(selected, force=args.force, include_recaptures=args.include_recaptures, root=root, now=now)
-    made = 0
+    sources = reuse_sources if reuse_sources is not None else (version_folders(root) if data_why == "per-user cache" else [])
+    reuse = reusable(selected, root, corpus, sources) if sources else {}
+    planned = plan(selected, force=args.force, include_recaptures=args.include_recaptures, root=root, now=now, reuse=reuse)
+    made = reused = 0
     for p in planned:
         e, label = p["entry"], f"{p['entry']['case']}/{p['entry']['file']}"
         if args.dry_run:
-            print(("FETCH   " if p["action"] == "fetch" else f"{p['action']:8s}") + e["url"] + ("" if p["action"] == "fetch" else f"  ({p['reason']})"), file=out)
+            head = {"fetch": "FETCH   ", "reuse": "REUSE   "}.get(p["action"], f"{p['action']:8s}")
+            print(head + e["url"] + ("" if p["action"] == "fetch" else f"  ({p['reason']})"), file=out)
+            continue
+        if p["action"] == "reuse":
+            version, src = reuse[f"fixtures/{e['case']}/raw/{e['file']}"]
+            reused += 1
+            print(f"{reuse_one(e, version, src, root=root):>34}  {label}  (stable tier, the bytes this version records; no request)", file=out)
             continue
         if p["action"] != "fetch":
             print(f"{p['action']:>34}  {label}  ({p['reason']})", file=out)
@@ -364,8 +432,12 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
         print(f"{do_fetch(e, root=root):>34}  {label}", file=out)
     if args.dry_run:  # the planned requests are not "skipped" (D-150): say what a real run would do
         n_fetch = sum(1 for p in planned if p["action"] == "fetch")
-        print(f"dry run: no request made; a run would make {n_fetch} request(s) and leave {len(planned) - n_fetch} entries as they are", file=out)
+        n_reuse = sum(1 for p in planned if p["action"] == "reuse")
+        also = f", reuse {n_reuse} file(s) from an earlier corpus version's cache" if n_reuse else ""
+        print(f"dry run: no request made; a run would make {n_fetch} request(s){also} and leave "
+              f"{len(planned) - n_fetch - n_reuse} entries as they are", file=out)
         return 0
-    print(f"done: {made} request(s) made, {len(planned) - made} entries skipped", file=out)
+    also = f", {reused} file(s) reused from an earlier corpus version's cache" if reused else ""
+    print(f"done: {made} request(s) made{also}, {len(planned) - made - reused} entries skipped", file=out)
     n = print_drift(drift_report([p["entry"] for p in planned if is_cached(p["entry"], root)], root, corpus), out)
     return 2 if n else 0

@@ -168,6 +168,10 @@ the runner outside a clone reads its corpus from the package and keeps the provi
 cache folder, one per corpus version: `~/.cache/gpconf/<version>` (or under `$XDG_CACHE_HOME`) on
 Linux, `~/Library/Caches/gpconf/<version>` on macOS, `%LOCALAPPDATA%\gpconf\Cache\<version>` on
 Windows. The run prints that folder above the case table whenever it is not the corpus's own (D-150).
+When a new corpus version's folder is filled, a stable-tier file whose bytes hash to the new version's
+recorded SHA-256 is copied from an earlier version's folder, with its metadata, instead of requested
+again; the fetch prints `reused from <version>` for it, its metadata records `reused_from`, and the run
+report says how many files were reused. Live files are always requested (D-157).
 
 ### Two tiers: snapshot and live
 

@@ -188,6 +188,10 @@ def main(argv=None):
     print(f"\n{len(results)} case(s): {sum(1 for r in results if r.status == 'pass')} pass (exact), {tol} pass within tolerance, {failed} fail, "
           f"{sum(1 for r in results if r.status == 'skip')} skip, {len(unfetched)} need fetched data, {sum(1 for r in results if r.status == 'not-exercised')} not exercised")
     print_missing(results, unfetched, runner)
+    reused = {p: v for r in results for p, v in r.reused.items()}
+    if reused:  # D-157: the report says which provider files were copied from an earlier version's cache, not fetched
+        print(f"{len(reused)} provider file(s) were reused from corpus {', '.join(sorted(set(map(str, reused.values()))))}'s cache "
+              "rather than fetched: stable tier, bytes matching this version's recorded SHA-256.")
     if tol:
         print("'pass within tolerance' items list per-field count, mean signed difference and maximum, so a systematic bias is visible (see README, Tolerances).")
     return 1 if failed else 0

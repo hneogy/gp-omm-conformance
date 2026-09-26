@@ -307,6 +307,7 @@ class CaseResult:
         self.case_id, self.title, self.items, self.modes = case_id, title, [], {}
         self.drift = {}  # path -> {recorded_sha256, actual_sha256}: stable-tier sources whose bytes changed (D-115)
         self.refusals, self.declared = {}, {}  # path -> the adapter's refusal entries; path -> its capability declaration (D-144)
+        self.reused = {}  # path -> the corpus version whose cache the file was copied from, not fetched (D-157)
 
     def add(self, check, status, file=None, detail="", tolerance=None, counts=None):
         if tolerance and status == "pass":
@@ -336,8 +337,11 @@ class CaseResult:
         return c
 
     def as_dict(self):
-        return {"case": self.case_id, "title": self.title, "status": self.status, "counts": self.counts(),
-                "modes": self.modes, "drift": self.drift, "items": [i.as_dict() for i in self.items]}
+        d = {"case": self.case_id, "title": self.title, "status": self.status, "counts": self.counts(),
+             "modes": self.modes, "drift": self.drift, "items": [i.as_dict() for i in self.items]}
+        if self.reused:
+            d["reused"] = self.reused
+        return d
 
 
 # --------------------------------------------------------------------------- the runner
@@ -432,6 +436,14 @@ class Runner:
         if not os.path.exists(full):
             self.report_missing(res, path)
             return "missing", fmt, None, None, None, None
+        if is_provider_data(path) and os.path.exists(full + ".meta.json"):  # reused rather than fetched (D-157)
+            try:
+                with open(full + ".meta.json") as f:
+                    came = json.load(f).get("reused_from")
+            except ValueError:
+                came = None
+            if came:
+                res.reused[path] = came.get("corpus_version")
         actual = sha256(full)
         mode = "snapshot" if actual == src.get("sha256") else "live"
         res.modes[path] = mode
