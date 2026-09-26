@@ -7,6 +7,8 @@ reasoning behind every entry, by decision number.
 
 ## [Unreleased]
 
+- Runner: a provider file that is not on disk reports `not-fetched`, never `skip`, which is kept for a parser with no reader for a format or no hook for a check. The count line says how many cases need fetched data, a new `n/f` column counts missing files, a case that ran on part of its files is named below the count line, and the fetch command names a script that exists under the corpus root. A missing file that ships with the corpus stops the run with exit status 2. The gate no longer claims "every format it reads" or calls a parser TLE-only when a format was never tried, takes its snapshot date from the frozen capture, and judges a freshly fetched CSV against its own record count. No published count changed (D-148).
+
 - Adapter protocol: a refusal channel. An entry carrying `_refused` with a non-empty reason (and optionally `_field`, `_input`) reports a record the library refused; `{"_adapter": {"refusals": true}}` declares that every error-drop is reported. The runner credits refusals to expected ids, keeps them apart from silent drops in the values detail, the JSON counts and the gate, and fails a refusal without a reason. The built-in python-sgp4 adapter uses it (D-144).
 
 - Runner: the provider's recorded empty answer (HTTP 404 body) is handed to the parser under test as its own check, `empty-answer-yields-no-records`, in the four cases that hold one; zero records and no error is the pass (D-143).

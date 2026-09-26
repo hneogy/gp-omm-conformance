@@ -59,8 +59,8 @@ class SatcatCaseTests(unittest.TestCase):
                     self.assertEqual(r.status, "not-exercised", statuses)
                     item = next(i for i in r.items if i.check == "satcat-legacy-below-70000")
                     self.assertIn("not involved", item.detail)
-                else:  # public clone without the legacy file: source-present skips only
-                    self.assertEqual(r.status, "skip", statuses)
+                else:  # public clone without the legacy file: source-present not-fetched items only (D-148)
+                    self.assertEqual(r.status, "not-fetched", statuses)
 
 
 class NaiveAdapterTests(unittest.TestCase):
@@ -80,19 +80,19 @@ class NaiveAdapterTests(unittest.TestCase):
             self.assertEqual(self.by_id[c].status, "fail", f"{c} should fail for the naive parser")
 
     def test_expected_failures_on_fetched_sources(self):
-        # Without the fetched files the runner must report these cases as skipped, never as passed, and this test
-        # reports the skip and its reason instead of passing vacuously (D-119). The naive parser's failures here are
+        # Without the fetched files the runner must report these cases as not-fetched, never as passed or skipped, and
+        # this test reports the absence and its reason instead of passing vacuously (D-119, D-148). The naive parser's failures here are
         # parse failures on the provider's own bytes (six-digit ids, an empty OBJECT_ID, classification C), so the
         # cases are not driven from frozen records: rendering those back into provider formats would test the
         # corpus's rendering, not the provider's files, and the SupGP values are withheld from the export (D-049).
-        present = [c for c in self.FETCHED_MUST_FAIL if self.by_id[c].status != "skip"]
+        present = [c for c in self.FETCHED_MUST_FAIL if self.by_id[c].status != "not-fetched"]
         for c in present:
             self.assertEqual(self.by_id[c].status, "fail", f"{c} should fail for the naive parser")
-        absent = [c for c in self.FETCHED_MUST_FAIL if self.by_id[c].status == "skip"]
+        absent = [c for c in self.FETCHED_MUST_FAIL if self.by_id[c].status == "not-fetched"]
         for c in absent:
             items = self.by_id[c].items
-            self.assertTrue(items and all(i.check == "source-present" and i.status == "skip" for i in items),
-                            f"{c}: a case without its sources must consist of source-present skips only, not {[(i.check, i.status) for i in items][:5]}")
+            self.assertTrue(items and all(i.check == "source-present" and i.status == "not-fetched" for i in items),
+                            f"{c}: a case without its sources must consist of source-present not-fetched items only, not {[(i.check, i.status) for i in items][:5]}")
         if absent:
             self.skipTest(f"raw sources absent for {', '.join(absent)} (public clone): run tools/fetch.py to exercise these cases")
 
@@ -103,14 +103,15 @@ class NaiveAdapterTests(unittest.TestCase):
 
 
 class SourcelessCases(unittest.TestCase):
-    """A case none of whose files is on disk (the public clone before tools/fetch.py) is skipped. It used to report
-    'not exercised' when it listed a check with a case-level fallback (nine-digit ids since v0.1.0, the three
-    field-form checks since D-118), which reads as 'the data lacked the feature' when there was no data (D-119)."""
+    """A case none of whose files is on disk (the public clone before tools/fetch.py) reports not-fetched. It used to
+    report 'not exercised' when it listed a check with a case-level fallback (nine-digit ids since v0.1.0, the three
+    field-form checks since D-118), which reads as 'the data lacked the feature' when there was no data (D-119); and
+    then 'skip', which the corpus also uses for a parser with no reader for the format (D-148)."""
 
     CASES = ["epoch-year-19xx", "baseline-iss-five-formats", "nine-digit-supgp-launch-nominals", "bstar-and-derivative-forms",
              "six-digit-omm-saramago", "analyst-objects", "supgp-celestrak-classification-c"]
 
-    def test_a_case_without_its_files_is_skipped_not_not_exercised(self):
+    def test_a_case_without_its_files_is_not_fetched_never_skip_or_not_exercised(self):
         import json
         import shutil
         import tempfile
@@ -121,8 +122,8 @@ class SourcelessCases(unittest.TestCase):
                 shutil.copy(os.path.join(ROOT, "fixtures", c, "expected.json"), os.path.join(tmp, "fixtures", c))
             for parser in (Reference(), Naive()):
                 for r in Runner(parser, root=tmp).run(case_ids=self.CASES):
-                    self.assertEqual(r.status, "skip", (r.case_id, [(i.check, i.status) for i in r.items if i.status != "skip"]))
-                    self.assertTrue(all(i.check == "source-present" for i in r.items), r.case_id)
+                    self.assertEqual(r.status, "not-fetched", (r.case_id, [(i.check, i.status) for i in r.items if i.status != "not-fetched"]))
+                    self.assertTrue(all(i.check == "source-present" and i.status == "not-fetched" for i in r.items), r.case_id)
         with open(os.path.join(ROOT, "fixtures", "nine-digit-supgp-launch-nominals", "expected.json")) as f:
             self.assertIn("nine-digit-ids-parse", [k["id"] for k in json.load(f)["checks"]])  # the case that had the fallback since v0.1.0
 

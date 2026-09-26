@@ -3,7 +3,7 @@ on: [push, pull_request]
 jobs:
   offline:
     # No network: only the shipped cases (vectors, derived files) and the runner self-tests.
-    # Cases that need fixtures/*/raw are reported as skipped until tools/fetch.py has run locally.
+    # Cases that need fixtures/*/raw are reported as not-fetched until tools/fetch.py has run locally (D-148).
     runs-on: ubuntu-latest
     strategy:
       matrix:

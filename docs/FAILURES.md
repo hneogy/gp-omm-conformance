@@ -15,7 +15,7 @@ A failure here is a statement about the parser, not about the corpus: the refere
 passes every case that exercises a parser; `satcat-70000-cutoff` is a data check the runner makes itself and
 reports as not exercised for every parser. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
 
-Generated 2026-09-25T03:01:28Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-25T03:01:27Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.reference:Parser); naive: run 2026-09-25T03:01:27Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-25T03:01:28Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.sgp4_adapter:Parser).
+Generated 2026-09-26T06:43:03Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-26T06:43:02Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.reference:Parser); naive: run 2026-09-26T06:43:02Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-26T06:43:03Z with gpconf 0.2.1 on corpus 0.2.1 (parser tests.adapters.sgp4_adapter:Parser).
 
 ## Status by case
 

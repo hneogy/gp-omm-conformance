@@ -31,21 +31,23 @@ GATES = [
             "csv": {"case": "tle-omits-six-digit-objects", "file": "fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv",
                     "label": "CSV (as CelesTrak serves them)"},
         },
-        "snapshot_from": {"case": "tle-omits-six-digit-objects", "meta": "fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv.meta.json"},
+        "snapshot_from": {"case": "tle-omits-six-digit-objects", "source": "fixtures/tle-omits-six-digit-objects/raw/last-30-days.csv"},
         "feed_fact": "CelesTrak's TLE feed omits these objects (the group's TLE request answers HTTP 404, 'No GP data found'), so a TLE-only parser on that feed has nothing to load",
     },
 ]
 
 
 def snapshot_facts(root, gate):
-    """Date, count, id range and leading letters of the gate's snapshot, read from the case data, never hard-coded."""
+    """Date, count, id range and leading letters of the gate's snapshot, read from the case data, never hard-coded.
+
+    The date is the frozen capture's own retrieval time, recorded with the source in expected.json, so that it
+    belongs to the same records as the count. It used to come from the local fetch's metadata, falling back to the
+    date expected.json was generated: a run with nothing fetched printed the build date, and a fresh fetch would
+    print the user's fetch date beside the frozen count (D-148)."""
     exp = json.load(open(os.path.join(root, "fixtures", gate["snapshot_from"]["case"], "expected.json")))
     ids = sorted(int(r["norad_cat_id"]) for r in exp["records"])
-    date = None
-    meta = os.path.join(root, gate["snapshot_from"]["meta"])
-    if os.path.exists(meta):
-        date = json.load(open(meta)).get("retrieved_at")
-    date = (date or exp.get("generated_at") or "")[:10]
+    date = ((exp.get("sources") or {}).get(gate["snapshot_from"]["source"]) or {}).get("retrieved_at") or "date not recorded"
+    date = date[:10]
     letters = sorted({to_alpha5(i)[0] for i in ids if i >= 100000})
     return {"date": date, "count": len(ids), "id_min": ids[0], "id_max": ids[-1], "alpha5_letters": letters}
 
@@ -64,14 +66,37 @@ def format_result(items):
     for it in items:
         if it.check == "format-supported" and it.status == "skip":
             return {"state": "not read"}
-        if it.check == "source-present" and it.status == "skip":
-            return {"state": "file absent"}
+        if it.check == "source-present" and it.status == "not-fetched":
+            return {"state": "not fetched"}
     return {"state": "not run"}
+
+
+# States in which the parser's reading of a format was never tried: nothing may be claimed about that format, so a
+# headline over the others says "measured here", never "it reads here", and names the format left out (D-148).
+# "not read" is different: the parser declared the format unsupported, which is a fact about it.
+UNKNOWN_STATES = ("not fetched", "not run")
+
+
+def _expected(r, n):
+    """The count a format is judged against: its own values item's expected count, which is the frozen snapshot's
+    for a snapshot file and the reference reader's count of the same bytes for a live capture (D-148). The frozen
+    count n is used only where the parser raised before any count existed."""
+    return r["expected"] if r.get("expected") is not None else n
+
+
+def _label(label, r):
+    """A live capture is named as such: its records are not the snapshot the bracket describes (D-148)."""
+    live = r.get("live")
+    if not live:
+        return label
+    count = f", {r['expected']} objects" if r.get("expected") is not None else ""
+    return f"{label}; live capture{(' fetched ' + live['retrieved_at'][:10]) if live.get('retrieved_at') else ''}{count}, not the snapshot"
 
 
 def _numbers(r, expected):
     if r.get("note"):
-        return f"{expected} dropped ({r['note']})"
+        # a live file the parser raised on has no count of its own; the frozen count would be a number about other records
+        return f"{'every record' if r.get('live') and r.get('expected') is None else expected} dropped ({r['note']})"
     parts = []
     for k in ("loaded", "misidentified"):
         if r.get(k):
@@ -85,25 +110,31 @@ def _numbers(r, expected):
 
 def headline(formats, gate, snap):
     """Words that name the behaviour: 'reads this month's launches', 'only via CSV', 'not in any format it reads',
-    'nothing to load from this feed'. Never a grade."""
+    'nothing to load from this feed'. Never a grade. When a format was not measured for want of data or because its
+    case was not run, the claims range over the formats measured, 'measured here', and the headline names the one
+    left out before anything else (D-148)."""
     n = snap["count"]
-    labels = {f: gate["formats"][f]["label"] for f in gate["formats"]}
+    labels = {f: _label(gate["formats"][f]["label"], formats.get(f, {})) for f in gate["formats"]}
     measured = {f: r for f, r in formats.items() if r["state"] == "measured"}
     unmeasured = {f: r["state"] for f, r in formats.items() if r["state"] != "measured"}
-    full = [f for f, r in measured.items() if r["loaded"] == n]
+    unknown = {f: st for f, st in unmeasured.items() if st in UNKNOWN_STATES}
+    known = {f: st for f, st in unmeasured.items() if st not in UNKNOWN_STATES}
+    full = [f for f, r in measured.items() if r["loaded"] == _expected(r, n)]
+    scope = "measured here" if unknown else "it reads here"
+    left_out = (" (" + "; ".join(f"{f.upper()} not measured: {st}" for f, st in unknown.items()) + ")") if unknown else ""
     if not measured:
         text = "not measured: " + "; ".join(f"{labels[f]}: {st}" for f, st in unmeasured.items())
     elif len(full) == len(measured):
-        text = f"reads {gate['name']} in every format it reads here: " + ", ".join(f"{labels[f]}: {n} loaded" for f in full)
+        text = f"reads {gate['name']} in every format {scope}{left_out}: " + ", ".join(f"{labels[f]}: {measured[f]['loaded']} loaded" for f in full)
     elif full:
-        text = "only via " + " and ".join(f.upper() for f in full) + ": " + "; ".join(
-            f"{labels[f]}: {_numbers(r, n)}" for f, r in measured.items())
+        text = "only via " + " and ".join(f.upper() for f in full) + (" of the formats measured here" if unknown else "") + left_out + ": " + "; ".join(
+            f"{labels[f]}: {_numbers(r, _expected(r, n))}" for f, r in measured.items())
     else:
-        text = "not in any format it reads: " + "; ".join(f"{labels[f]}: {_numbers(r, n)}" for f, r in measured.items())
-        if list(measured) == ["tle"]:
-            text = f"nothing to load from this feed: {gate['feed_fact']}; as Space-Track serves them (Alpha-5): {_numbers(measured['tle'], n)}"
-    if unmeasured and measured:
-        text += "; " + "; ".join(f"{labels[f]}: {st}" for f, st in unmeasured.items())
+        text = f"not in any format {'measured here' if unknown else 'it reads'}{left_out}: " + "; ".join(f"{labels[f]}: {_numbers(r, _expected(r, n))}" for f, r in measured.items())
+        if list(measured) == ["tle"] and not unknown:  # TLE-only is a claim about the parser; unknown formats forbid it
+            text = f"nothing to load from this feed: {gate['feed_fact']}; as Space-Track serves them (Alpha-5): {_numbers(measured['tle'], _expected(measured['tle'], n))}"
+    if known and measured:
+        text += "; " + "; ".join(f"{labels[f]}: {st}" for f, st in known.items())
     letters = ", ".join(snap["alpha5_letters"]) or "none"
     text += (f" [snapshot {snap['date']}, {n} objects, ids {snap['id_min']}-{snap['id_max']}, Alpha-5 fields beginning with {letters}: "
              f"a decoder wrong from J upward is not caught by this snapshot]")
@@ -121,6 +152,10 @@ def compute_gates(results, root):
             res = by_case.get(spec["case"])
             items = [i for i in (res.items if res else []) if i.file == spec["file"]]
             formats[fmt] = {"label": spec["label"], **({"state": "not run"} if res is None else format_result(items))}
+            if res is not None and formats[fmt]["state"] == "measured" and res.modes.get(spec["file"]) == "live":
+                meta = os.path.join(root, spec["file"] + ".meta.json")
+                got = json.load(open(meta)).get("retrieved_at") if os.path.exists(meta) else None
+                formats[fmt]["live"] = {"retrieved_at": got}
         out.append({"id": gate["id"], "name": gate["name"], "question": gate["question"], "snapshot": snap,
                     "formats": formats, "headline": headline({f: r for f, r in formats.items()}, gate, snap)})
     return out

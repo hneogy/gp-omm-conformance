@@ -242,6 +242,16 @@ Everything else is exact. A check that passed only because of a tolerance is rep
 difference and maximum, so a systematic sub-tolerance bias is visible instead of hidden. The
 reference adapter must be exact; the test suite enforces that.
 
+A provider file that is not on disk is reported as `not-fetched`, never as `skip`: the corpus does not
+ship provider data (see "Fetching responsibly"), and `skip` is kept for a parser that has no reader for a
+format or no hook for a check. A case with none of its provider files reports `not-fetched`; the count line
+says how many cases need fetched data, the `n/f` column counts the missing files per case, and the runner
+prints the command that fetches them. A case that ran on some of its files keeps the result of those
+files and is named below the count line: after a first fetch the three re-capture files are not yet on
+disk, because each is requested only once its original is two hours old. A file that ships with the
+corpus (under `derived/` or `vectors/`) and is missing stops the run with exit status 2, since the copy
+is incomplete and no status would be true of the parser (D-148).
+
 A source file the corpus's own reader reads zero records from, where the manifest records some, fails
 the case with a `source-readable` item that says what the file looked like (size, first bytes, and a guess
 such as an HTML error page, an empty file, a BOM prefix or a TLE cut off after line 1), and the file's other
@@ -257,7 +267,7 @@ Four cases hold a recorded answer with no data in it: CelesTrak's HTTP 404 body,
 
 ### The gate: this month's launches
 
-Below the case table the runner prints one gate, a headline read across existing cases rather than a new case: given the objects launched in the last 30 days, as a provider serves them, does the parser return them with the right identity? Its inputs are the CelesTrak CSV capture of the last-30-days group (256 objects, every one above 99999, captured 2026-09-21) and the corpus's Alpha-5 rendering of the same records, the form Space-Track's TLE output carries. Per format the parser reads, records are counted as loaded (returned with the expected integer id), misidentified (returned as 0, NaN, a string or a wrong number) or dropped (no record came back). The wording names the behaviour and never grades the project: "reads this month's launches", "only via CSV", "not in any format it reads", and, for a parser that reads TLE only, "nothing to load from this feed", because CelesTrak's TLE output omits these objects. Every headline carries the snapshot's date, count and id range, and the letters its Alpha-5 fields begin with: a decoder that is wrong from J upward passes a snapshot whose ids all begin with A. The JSON report carries the same under `gates`, with the counts, and each values item now carries its record counts under `counts`.
+Below the case table the runner prints one gate, a headline read across existing cases rather than a new case: given the objects launched in the last 30 days, as a provider serves them, does the parser return them with the right identity? Its inputs are the CelesTrak CSV capture of the last-30-days group (256 objects, every one above 99999, captured 2026-09-21) and the corpus's Alpha-5 rendering of the same records, the form Space-Track's TLE output carries. Per format the parser reads, records are counted as loaded (returned with the expected integer id), misidentified (returned as 0, NaN, a string or a wrong number) or dropped (no record came back). The wording names the behaviour and never grades the project: "reads this month's launches", "only via CSV", "not in any format it reads", and, for a parser that reads TLE only, "nothing to load from this feed", because CelesTrak's TLE output omits these objects. A format that was never tried, because its file was not fetched or its case was not selected, limits the claim: the headline then says "every format measured here" or "not in any format measured here", names the format left out before the numbers, and never says "nothing to load from this feed", which would claim the parser reads TLE only. A freshly fetched CSV holds different records from the frozen capture; it is judged against its own record count and labelled as a live capture (D-148). Every headline carries the snapshot's date, count and id range, and the letters its Alpha-5 fields begin with: a decoder that is wrong from J upward passes a snapshot whose ids all begin with A. The JSON report carries the same under `gates`, with the counts, and each values item now carries its record counts under `counts`.
 
 ## The seventeen cases
 

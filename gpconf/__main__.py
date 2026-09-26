@@ -6,7 +6,7 @@ import os
 import sys
 
 from . import __version__
-from .runner import Runner, CommandParser
+from .runner import Runner, CommandParser, CorpusIncomplete, fetch_hint
 
 
 def load_adapter(spec):
@@ -15,6 +15,24 @@ def load_adapter(spec):
     m = importlib.import_module(mod)
     obj = getattr(m, attr or "Parser")
     return obj() if isinstance(obj, type) else obj
+
+
+def print_missing(results, unfetched, root):
+    """Below the count line: what was not fetched, so that neither a case with no data nor a case that ran on part
+    of its data reads as a result it has not earned (D-148)."""
+    partial = [r for r in results if r.status != "not-fetched" and r.missing()]
+    if not unfetched and not partial:
+        return
+    if unfetched:
+        print(f"{len(unfetched)} case(s) have none of their provider files on disk and report not-fetched; "
+              "skip is reserved for a parser with no reader for a format or no hook for a check.")
+    if partial:
+        files = [f for r in partial for f in r.missing()]
+        print(f"{len(partial)} case(s) ran without {len(files)} of their provider files, so each result covers only the files on disk "
+              f"(column n/f): {', '.join(r.case_id for r in partial)}.")
+        if any("recapture" in os.path.basename(f) for f in files):
+            print("  A re-capture file is fetched on a later run, once its original is at least two hours old.")
+    print(f"Provider data is not shipped with the corpus; fetch it with {fetch_hint(root)}.")
 
 
 def check_tle(args):
@@ -84,13 +102,17 @@ def main(argv=None):
         ap.error("run needs --adapter, --cmd or --write-cmd")
     parser = CommandParser(args.cmd, args.vectors_cmd, write_cmd=args.write_cmd) if (args.cmd or args.write_cmd) else load_adapter(args.adapter)
     runner = Runner(parser, root=root, verbose=args.verbose)
-    results = runner.run(case_ids=args.case, tags=args.tag)
+    try:
+        results = runner.run(case_ids=args.case, tags=args.tag)
+    except CorpusIncomplete as e:
+        print(f"gpconf: {e}", file=sys.stderr)
+        return 2
     print(f"gpconf {__version__} | corpus {manifest['corpus_version']} | parser: {args.cmd or args.write_cmd or args.adapter}")
     print()
-    print(f"{'case':40s} {'status':15s} exact  tol fail skip n/e")
+    print(f"{'case':40s} {'status':15s} exact  tol fail skip n/e n/f")
     for r in results:
         c = r.counts()
-        print(f"{r.case_id:40s} {r.status:15s} {c['pass']:5d} {c['pass-tolerance']:4d} {c['fail']:4d} {c['skip']:4d} {c['not-exercised']:3d}")
+        print(f"{r.case_id:40s} {r.status:15s} {c['pass']:5d} {c['pass-tolerance']:4d} {c['fail']:4d} {c['skip']:4d} {c['not-exercised']:3d} {c['not-fetched']:3d}")
     print()
     from .gates import compute_gates
     gates = compute_gates(results, root)
@@ -106,7 +128,8 @@ def main(argv=None):
     drifted = [(r.case_id, p) for r in results for p in r.drift]
     if drifted:
         print("\nSTABLE SOURCE DRIFT: " + ", ".join(f"{c}: {p}" for c, p in drifted)
-              + "\n  These stable-tier files differ from the tested snapshot; the frozen expected values were not applied to them and the parser was compared against the reference reader instead. Run tools/fetch.py --check-drift.")
+              + "\n  These stable-tier files differ from the tested snapshot; the frozen expected values were not applied to them and the parser was compared against the reference reader instead. Run "
+              + fetch_hint(root, "--check-drift") + ".")
     modes = {m for r in results for m in r.modes.values()}
     if "live" in modes:
         print("\nnote: some sources hash differently from the tested snapshot; for those, values were compared against the corpus's own reference reader, not the human-verified snapshot.")
@@ -118,8 +141,10 @@ def main(argv=None):
                        "results": [r.as_dict() for r in results], "gates": gates}, f, indent=1, default=str)
     failed = sum(1 for r in results if r.status == "fail")
     tol = sum(1 for r in results if r.status == "pass-tolerance")
+    unfetched = [r for r in results if r.status == "not-fetched"]
     print(f"\n{len(results)} case(s): {sum(1 for r in results if r.status == 'pass')} pass (exact), {tol} pass within tolerance, {failed} fail, "
-          f"{sum(1 for r in results if r.status == 'skip')} skip, {sum(1 for r in results if r.status == 'not-exercised')} not exercised")
+          f"{sum(1 for r in results if r.status == 'skip')} skip, {len(unfetched)} need fetched data, {sum(1 for r in results if r.status == 'not-exercised')} not exercised")
+    print_missing(results, unfetched, root)
     if tol:
         print("'pass within tolerance' items list per-field count, mean signed difference and maximum, so a systematic bias is visible (see README, Tolerances).")
     return 1 if failed else 0

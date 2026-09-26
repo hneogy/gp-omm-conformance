@@ -57,6 +57,39 @@ class Unsupported(Exception):
     """Raise from parse() for a format the parser does not implement."""
 
 
+class CorpusIncomplete(Exception):
+    """A file that ships with the corpus (derived/, vectors/) is not on disk: the copy is broken, and no status
+    the runner could report for the case would be true of the parser (D-148)."""
+
+
+REPO_URL = "https://github.com/hneogy/gp-omm-conformance"
+
+
+def is_provider_data(path):
+    """A provider response under fixtures/<case>/raw/: never shipped with the corpus, always fetched (D-019)."""
+    parts = path.replace("\\", "/").split("/")
+    return len(parts) >= 4 and parts[0] == "fixtures" and parts[2] == "raw"
+
+
+def fetch_hint(root, *args):
+    """The command that fetches provider data for this corpus root, naming a script that exists (D-148).
+
+    A clone has tools/fetch.py; the path is given relative to the working directory when that is shorter and
+    quoted when it needs to be. A copy without the script (an installed runner) is told where the script lives
+    instead of being pointed at a path it does not have."""
+    import shlex
+    script = os.path.join(root, "tools", "fetch.py")
+    tail = "".join(" " + a for a in args)
+    if os.path.exists(script):
+        try:
+            rel = os.path.relpath(script)
+        except ValueError:  # another drive on Windows
+            rel = script
+        path = script if rel.startswith("..") else rel
+        return f"python3 {shlex.quote(path)}{tail}"
+    return f"python3 tools/fetch.py{tail} in a clone of {REPO_URL}"
+
+
 # --------------------------------------------------------------------------- normalisation
 def norm_epoch(v):
     if v is None:
@@ -275,14 +308,21 @@ class CaseResult:
 
     @property
     def status(self):
+        # not-fetched ranks above skip: a case with no provider data on disk says so, and never borrows skip, which
+        # means the parser has no reader for the format (D-148). A case that ran on some of its files keeps the
+        # result of those files; its missing ones are counted under not-fetched and named below the table.
         st = {i.status for i in self.items}
-        for s in ("fail", "pass-tolerance", "pass", "not-exercised"):
+        for s in ("fail", "pass-tolerance", "pass", "not-exercised", "not-fetched"):
             if s in st:
                 return s
         return "skip"
 
+    def missing(self):
+        """Provider files this case names that were not on disk (D-148)."""
+        return [i.file for i in self.items if i.status == "not-fetched"]
+
     def counts(self):
-        c = {"pass": 0, "pass-tolerance": 0, "fail": 0, "skip": 0, "not-exercised": 0, "info": 0}
+        c = {"pass": 0, "pass-tolerance": 0, "fail": 0, "skip": 0, "not-exercised": 0, "not-fetched": 0, "info": 0}
         for i in self.items:
             c[i.status] = c.get(i.status, 0) + 1
         return c
@@ -351,12 +391,21 @@ class Runner:
             out.append(n)
         return out
 
+    def report_missing(self, res, path):
+        """A source file that is not on disk. Provider data is reported as not-fetched with the command that fetches
+        it; a file that ships with the corpus stops the run, since the copy itself is incomplete (D-148)."""
+        if not is_provider_data(path):
+            raise CorpusIncomplete(f"{path} ships with the corpus and is not on disk under {self.root}: "
+                                   f"this copy of the corpus is incomplete; re-clone {REPO_URL} or reinstall")
+        res.add("source-present", "not-fetched", path,
+                f"not on disk: provider data is not shipped with the corpus; fetch it with {fetch_hint(self.root)}")
+
     def load_source(self, res, case, path, src):
         """Returns (state, fmt, mode, parsed, refrecs, reffacts). state: ok | missing | empty-404 | unreadable | parse-error | unsupported"""
         full = os.path.join(self.root, path)
         fmt = src.get("format")
         if not os.path.exists(full):
-            res.add("source-present", "skip", path, "not on disk; run tools/fetch.py")
+            self.report_missing(res, path)
             return "missing", fmt, None, None, None, None
         actual = sha256(full)
         mode = "snapshot" if actual == src.get("sha256") else "live"
@@ -367,7 +416,7 @@ class Runner:
             res.add("stable-source-drift", "fail", path,
                     f"stable-tier source's bytes differ from the tested snapshot (recorded SHA-256 {str(src.get('sha256'))[:12]}…, actual {actual[:12]}…); "
                     "the frozen expected values were not applied to this file and the parser was compared against the corpus's reference reader instead. "
-                    "Run tools/fetch.py --check-drift; if CelesTrak changed this first-ever record, tell the corpus maintainer.")
+                    f"Run {fetch_hint(self.root, '--check-drift')}; if CelesTrak changed this first-ever record, tell the corpus maintainer.")
         raw = open(full, "rb").read()
         text = raw.decode("utf-8", "replace")
         if src.get("http_status", 200) != 200 or text.strip() in ("No GP data found", "No SupGP data found"):
@@ -789,7 +838,7 @@ class Runner:
             if os.path.basename(p) not in assigned:
                 sets.setdefault("_ungrouped", []).append(os.path.basename(p))
         bypath = {os.path.basename(p): p for p in exp["sources"]}
-        read_any = False  # a case none of whose files is on disk is skipped, not "not exercised" (D-119)
+        read_any = False  # a case none of whose files is on disk reports not-fetched, never "not exercised" (D-119, D-148)
         for set_name, basenames in sets.items():
             files = {}
             for b in basenames:
@@ -880,7 +929,7 @@ class Runner:
         for path, src in exp["sources"].items():
             full = os.path.join(self.root, path)
             if not os.path.exists(full):
-                res.add("source-present", "skip", path, "not on disk; run tools/fetch.py")
+                self.report_missing(res, path)
                 continue
             mode = "snapshot" if sha256(full) == src.get("sha256") else "live"
             res.modes[path] = mode
@@ -1123,6 +1172,8 @@ class Runner:
                 self.run_vectors(case, exp, res)
             elif kind == "writer":
                 self.run_writer(case, exp, res)
+        except CorpusIncomplete:
+            raise  # a broken copy of the corpus is not a result about the parser (D-148)
         except Exception as e:
             res.add("runner", "fail", None, f"internal error in runner: {type(e).__name__}: {e}")
         return res
