@@ -31,6 +31,9 @@ clang++ -std=c++17 -O1 -DHAVE_CSV -I repo/libsgp4 -o build/vectors vectors.cpp b
 For pull request #42, check out `2b8d14139fa266cdf57cb52ec9e1dfa041ee343d` instead (`git -C repo fetch origin
 pull/42/head`), build into a separate folder, and leave out `-DHAVE_CSV`, since that tree predates CSV.
 
+Release v3.0 (`c6ebb90625b43d7f6c6eb38b386f343d3cfe03a6`, 2026-09-26) renamed the library's sources from `.cc` to `.cpp`,
+so the pinned command above compiles nothing against the release.
+
 ## Run
 
 Note this folder, then run the corpus runner from the root of a corpus clone (or from anywhere, once `gpconf` is
