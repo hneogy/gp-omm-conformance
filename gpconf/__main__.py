@@ -87,9 +87,10 @@ def main(argv=None):
         return fetch_run(argv[1:], prog="gpconf fetch")
     ap = argparse.ArgumentParser(prog="gpconf", description="GP/OMM conformance corpus runner",
                                  epilog="gpconf fetch --help: the fetch subcommand's own options")
-    ap.add_argument("command", choices=["run", "list", "check-tle", "fetch"])
+    ap.add_argument("command", choices=["run", "list", "presets", "check-tle", "fetch"])
     ap.add_argument("files", nargs="*", help="check-tle: TLE file(s) written by the tool under test")
     ap.add_argument("--against", help="check-tle: the source records the lines were written from (CSV/JSON/XML/KVN/TLE); enables the round-trip check")
+    ap.add_argument("--preset", help="a shipped adapter by name: reference, naive, sgp4 or pyephem (gpconf presets lists them)")
     ap.add_argument("--adapter", help="python import path module:attr of a parser object or class")
     ap.add_argument("--cmd", help="external command; raw bytes on stdin, JSON array on stdout; {fmt} substituted; exit 3 = unsupported format")
     ap.add_argument("--vectors-cmd", help="external command for vector hooks (JSON {op,input} on stdin -> {result}|{error})")
@@ -104,6 +105,10 @@ def main(argv=None):
 
     if args.command == "check-tle":  # needs no corpus: it checks the user's own file
         return check_tle(args)
+    if args.command == "presets":
+        from .presets import listing
+        print("\n".join(listing()))
+        return 0
     try:
         loc = locate.resolve(args.root, args.data)
     except locate.CorpusNotFound as e:
@@ -115,16 +120,31 @@ def main(argv=None):
         for c in manifest["cases"]:
             print(f"{c['id']:40s} {c['kind']:12s} {', '.join(c['tests'])}")
         return 0
-    if not args.adapter and not args.cmd and not args.write_cmd:
-        ap.error("run needs --adapter, --cmd or --write-cmd")
-    parser = CommandParser(args.cmd, args.vectors_cmd, write_cmd=args.write_cmd) if (args.cmd or args.write_cmd) else load_adapter(args.adapter)
+    chosen = [f for f in ("preset", "adapter", "cmd") if getattr(args, f)] + (["write-cmd"] if args.write_cmd and not args.cmd else [])
+    if not chosen:
+        ap.error("run needs --preset, --adapter, --cmd or --write-cmd")
+    if args.preset and len(chosen) > 1:
+        ap.error("--preset names the parser; it cannot be combined with --adapter, --cmd or --write-cmd")
+    preset = None
+    if args.preset:
+        from .presets import load as load_preset, PresetUnavailable
+        try:
+            parser, preset = load_preset(args.preset)
+        except PresetUnavailable as e:
+            print(f"gpconf: {e}", file=sys.stderr)
+            return 2
+    elif args.cmd or args.write_cmd:
+        parser = CommandParser(args.cmd, args.vectors_cmd, write_cmd=args.write_cmd)
+    else:
+        parser = load_adapter(args.adapter)
+    parser_name = preset["label"] if preset else (args.cmd or args.write_cmd or args.adapter)
     runner = Runner(parser, root=root, verbose=args.verbose, data=loc["data"], data_why=loc["data_why"])
     try:
         results = runner.run(case_ids=args.case, tags=args.tag)
     except CorpusIncomplete as e:
         print(f"gpconf: {e}", file=sys.stderr)
         return 2
-    print(f"gpconf {__version__} | corpus {manifest['corpus_version']} | parser: {args.cmd or args.write_cmd or args.adapter}")
+    print(f"gpconf {__version__} | corpus {manifest['corpus_version']} | parser: {parser_name}")
     if runner.data != root:  # a clone's output is unchanged; elsewhere the reader is told where the provider files were looked for
         print(f"provider data: {runner.data} ({runner.data_why})")
     print()
@@ -155,7 +175,8 @@ def main(argv=None):
     if args.json:
         import datetime as _dt
         with open(args.json, "w") as f:
-            json.dump({"gpconf": __version__, "corpus_version": manifest["corpus_version"], "parser": args.cmd or args.write_cmd or args.adapter,
+            json.dump({"gpconf": __version__, "corpus_version": manifest["corpus_version"], "parser": parser_name,
+                       **({"preset": {k: preset.get(k) for k in ("name", "library", "found", "tested_with")}} if preset else {}),
                        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                        "results": [r.as_dict() for r in results], "gates": gates}, f, indent=1, default=str)
     failed = sum(1 for r in results if r.status == "fail")

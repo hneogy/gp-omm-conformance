@@ -94,9 +94,16 @@ you whether you are looking at the exact bytes we tested.
 ```bash
 git clone https://github.com/hneogy/gp-omm-conformance.git && cd gp-omm-conformance
 python3 tools/fetch.py            # once: ~60 requests, ~12.6 MB, 2 s apart, cached, never repeated
-python3 -m gpconf run --adapter tests.adapters.reference:Parser   # the control: 16 cases pass; the SATCAT case is a data check reported not-exercised for every parser, and the nine-digit case says not-exercised outside a launch window
-python3 -m gpconf run --adapter tests.adapters.naive:Parser       # the parser most projects have
+python3 -m gpconf run --preset reference   # the control: 16 cases pass; the SATCAT case is a data check reported not-exercised for every parser, and the nine-digit case says not-exercised outside a launch window
+python3 -m gpconf run --preset naive       # the parser most projects have: a demonstration of failure, not a parser to use
 ```
+
+A preset runs a shipped adapter with nothing written. `python3 -m gpconf presets` lists the four:
+`reference` and `naive` (standard library only), `sgp4` (needs python-sgp4: `pip install sgp4`)
+and `pyephem` (needs PyEphem: `pip install ephem`). A library preset records the version it was
+tested against, 2.27 and 4.2.1, and the report prints the version it found beside it, since a count
+is a result against one version. The adapters are in `gpconf/adapters/`; the older names
+`tests.adapters.reference:Parser` and the like still work (D-151).
 
 Then write an adapter for your own parser and run it:
 

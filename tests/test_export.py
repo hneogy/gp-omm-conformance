@@ -31,6 +31,20 @@ class ExportGuardTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.tmp.cleanup()
 
+    def test_every_module_of_the_package_and_the_tests_is_exported(self):
+        # D-151: the allowlist's patterns do not recurse. "gpconf/*.py" covered the whole package until gpconf/adapters/
+        # was added under it, and an export then shipped the tests/adapters/ shims without the modules they load. A
+        # new folder of Python files without its own allowlist line fails here, not in public CI.
+        rels = {os.path.relpath(f, self.dest) for f in self.files}
+        for top in ("gpconf", "tests"):
+            for d, _, fs in os.walk(os.path.join(ROOT, top)):
+                if "__pycache__" in d:
+                    continue
+                for f in fs:
+                    if f.endswith(".py"):
+                        rel = os.path.relpath(os.path.join(d, f), ROOT)
+                        self.assertIn(rel, rels, f"{rel} is not in the export: add a line for its folder to PUBLIC_ALLOWLIST.txt")
+
     def test_no_raw_and_no_spacetrack_paths(self):
         rels = [os.path.relpath(f, self.dest) for f in self.files]
         self.assertFalse([r for r in rels if re.search(r"(^|/)fixtures/[^/]+/raw(/|$)", r)])

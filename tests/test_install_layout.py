@@ -44,9 +44,8 @@ def install(tmp, with_corpus=True):
     """A copy of the package outside the repository -> (site folder, HOME, a project folder holding the user's adapter)."""
     site, home, project = (os.path.join(tmp, d) for d in ("site", "home", "project"))
     pkg = os.path.join(site, "gpconf")
-    os.makedirs(pkg)
-    for f in glob.glob(os.path.join(ROOT, "gpconf", "*.py")):
-        shutil.copy(f, pkg)
+    os.makedirs(site)
+    shutil.copytree(os.path.join(ROOT, "gpconf"), pkg, ignore=shutil.ignore_patterns("__pycache__", locate.BUNDLED))
     if with_corpus:
         for rel in shipped_files(ROOT):
             dest = os.path.join(pkg, locate.BUNDLED, rel)
@@ -54,7 +53,7 @@ def install(tmp, with_corpus=True):
             shutil.copy(os.path.join(ROOT, rel), dest)
     os.makedirs(home)
     os.makedirs(project)
-    shutil.copy(os.path.join(ROOT, "tests", "adapters", "reference.py"), os.path.join(project, "my_adapter.py"))
+    shutil.copy(os.path.join(ROOT, "gpconf", "adapters", "reference.py"), os.path.join(project, "my_adapter.py"))
     return site, home, project
 
 
@@ -195,6 +194,46 @@ class InstalledCopy(unittest.TestCase):
         self.assertIn("3 case(s) ran without 3 of their provider files", out)  # the re-captures a normal fetch leaves out
         self.assertIn("only with --include-recaptures", out)
         self.assertNotIn("fetch it with", out)  # nothing a normal fetch would bring is missing
+
+
+class InstalledPresets(unittest.TestCase):
+    """D-151: --preset runs a shipped adapter from an installed copy, with no adapter written."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp()
+        cls.site, cls.home, cls.project = install(cls.tmp)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def run_preset(self, name):
+        return run_installed(self.site, self.home, self.project, "-m", "gpconf", "run", "--preset", name)
+
+    def test_the_standard_library_presets_run_offline(self):
+        code, out = self.run_preset("reference")
+        self.assertEqual(code, 0, out)
+        self.assertIn("parser: preset reference\n", out)
+        self.assertIn("17 case(s): 4 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
+        code, out = self.run_preset("naive")
+        self.assertEqual(code, 1, out)  # it fails the four offline cases, which is what it is for
+        self.assertIn("parser: preset naive (a demonstration of failure, not a parser anyone should use)", out)
+        self.assertIn("17 case(s): 0 pass (exact), 0 pass within tolerance, 4 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
+
+    def test_the_library_presets_name_the_version_found(self):
+        code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "presets")
+        self.assertEqual(code, 0, out)
+        self.assertEqual([line.split()[0] for line in out.strip().splitlines()], ["reference", "naive", "sgp4", "pyephem"])
+        from gpconf.presets import found_version
+        for name, dist, library in (("sgp4", "sgp4", "python-sgp4"), ("pyephem", "ephem", "PyEphem")):
+            code, out = self.run_preset(name)
+            if found_version(dist) is None:
+                self.assertEqual(code, 2, out)
+                self.assertIn(f"needs {library}, which is not installed: pip install {dist}", out)
+            else:
+                self.assertIn(code, (0, 1), out)
+                self.assertIn(f"parser: preset {name} ({library} {found_version(dist)}", out)
 
 
 class InstalledWithoutCorpus(unittest.TestCase):

@@ -28,7 +28,10 @@ fixtures/*/case.md
 derived/**/*
 vectors/*.json
 schemas/**/*
+# Patterns do not recurse: a new folder under gpconf/ or tests/ needs its own line, or the export silently leaves
+# it out (D-151; tests/test_export.py checks that every module is exported).
 gpconf/*.py
+gpconf/adapters/*.py
 tests/*.py
 tests/adapters/*.py
 tools/*.py
