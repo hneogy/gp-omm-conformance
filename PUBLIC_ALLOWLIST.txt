@@ -7,6 +7,8 @@ README.md
 CHANGELOG.md
 AUDIT.md
 CITATION.cff
+# The GitHub Action (D-158): it runs tools/action_report.py from this repository at the tag a workflow names.
+action.yml
 CLAUDE.md
 DECISIONS.md
 MANIFEST.md

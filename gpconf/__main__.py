@@ -37,7 +37,7 @@ def print_missing(results, unfetched, runner):
             print("  A re-capture file is the same endpoint requested a second time when the corpus was built; the fetch requests it "
                   "only with --include-recaptures, once its original is at least two hours old, so a normal fetch leaves these cases without it.")
     # the fetch command only where a normal fetch would bring something: a missing re-capture it never requests (D-150)
-    if any("recapture" not in os.path.basename(f) for r in results for f in r.missing()):
+    if runner.fetch_hints and any("recapture" not in os.path.basename(f) for r in results for f in r.missing()):
         print(f"Provider data is not shipped with the corpus; fetch it with {runner.hint()}.")
 
 
@@ -98,6 +98,8 @@ def main(argv=None):
     ap.add_argument("--write-cmd", help="external TLE writer for the writer case: one JSON record on stdin, 2-3 TLE lines on stdout; exit 3 = unsupported, other non-zero = refused")
     ap.add_argument("--root", help="corpus root (default: the clone this package sits in, else the corpus installed with it)")
     ap.add_argument("--data", help=f"folder holding the fetched provider files (default: ${locate.DATA_ENV}, else the clone, else a per-user cache folder)")
+    ap.add_argument("--no-fetch-hint", action="store_true", help="do not name the command that fetches provider data, for a run that is "
+                    "offline by design, such as the GitHub Action's, whose data folder is empty and discarded with the job")
     ap.add_argument("--case", action="append", help="case id (repeatable)")
     ap.add_argument("--tag", action="append", help="test tag (repeatable)")
     ap.add_argument("--json", help="write the full report to this file")
@@ -141,7 +143,7 @@ def main(argv=None):
     else:
         parser = load_adapter(args.adapter)
     parser_name = preset["label"] if preset else (args.cmd or args.write_cmd or args.adapter)
-    runner = Runner(parser, root=root, verbose=args.verbose, data=loc["data"], data_why=loc["data_why"])
+    runner = Runner(parser, root=root, verbose=args.verbose, data=loc["data"], data_why=loc["data_why"], fetch_hints=not args.no_fetch_hint)
     try:
         results = runner.run(case_ids=args.case, tags=args.tag)
     except CorpusIncomplete as e:
@@ -170,8 +172,8 @@ def main(argv=None):
     drifted = [(r.case_id, p) for r in results for p in r.drift]
     if drifted:
         print("\nSTABLE SOURCE DRIFT: " + ", ".join(f"{c}: {p}" for c, p in drifted)
-              + "\n  These stable-tier files differ from the tested snapshot; the frozen expected values were not applied to them and the parser was compared against the reference reader instead. Run "
-              + runner.hint("--check-drift") + ".")
+              + "\n  These stable-tier files differ from the tested snapshot; the frozen expected values were not applied to them and the parser was compared against the reference reader instead."
+              + (" Run " + runner.hint("--check-drift") + "." if runner.fetch_hints else ""))
     modes = {m for r in results for m in r.modes.values()}
     if "live" in modes:
         print("\nnote: some sources hash differently from the tested snapshot; for those, values were compared against the corpus's own reference reader, not the human-verified snapshot.")

@@ -1,0 +1,48 @@
+name: GP/OMM conformance corpus
+description: >-
+  Runs a parser against the GP/OMM conformance corpus, offline, and reports the results in the job summary.
+  Failed cases never fail the job; a preset whose library will not import does, as a setup error.
+author: Honorius Neogy
+inputs:
+  preset:
+    description: >-
+      The shipped adapter to run: reference, naive, sgp4, pyephem, satellite.js, tle.js or tle.js-api. The library it
+      tests must already be installed in the job, in the interpreter given as `python` or, for the Node presets, in
+      `working-directory`.
+    required: true
+  python:
+    description: The Python interpreter to run the corpus with, the one the library is installed in (use `python` on Windows).
+    required: false
+    default: python3
+  module:
+    description: Node presets only. The library's entry file, for a checkout that cannot import itself by name.
+    required: false
+    default: ""
+  working-directory:
+    description: The folder the run starts in; a Node preset resolves its library from here.
+    required: false
+    default: "."
+outputs:
+  report:
+    description: Path of the JSON report, with every item.
+    value: ${{ steps.run.outputs.report }}
+  failed:
+    description: Number of failed cases. The job does not fail on them.
+    value: ${{ steps.run.outputs.failed }}
+  exercised:
+    description: Number of cases the parser was run on, offline.
+    value: ${{ steps.run.outputs.exercised }}
+runs:
+  using: composite
+  steps:
+    # Runs the corpus from this repository at the tag the workflow names (github.action_path): nothing is installed
+    # and nothing is fetched. Inputs reach the script through the environment, never through the shell text. D-158.
+    - id: run
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GPCONF_ACTION_PATH: ${{ github.action_path }}
+        GPCONF_PRESET: ${{ inputs.preset }}
+        GPCONF_PYTHON: ${{ inputs.python }}
+        GPCONF_MODULE: ${{ inputs.module }}
+      run: '"$GPCONF_PYTHON" "$GPCONF_ACTION_PATH/tools/action_report.py"'

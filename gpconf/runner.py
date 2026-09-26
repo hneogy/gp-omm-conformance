@@ -383,7 +383,7 @@ def describe_bytes(raw, fmt=None, limit=48):
 
 
 class Runner:
-    def __init__(self, parser, root=None, verbose=False, data=None, data_why=None):
+    def __init__(self, parser, root=None, verbose=False, data=None, data_why=None, fetch_hints=True):
         self.parser = parser
         # Two roots (D-150): the corpus root holds what ships (manifest, expected values, derived/, vectors/), the
         # data root the provider files this machine fetched. With no root given, both are resolved as the command
@@ -396,6 +396,9 @@ class Runner:
         self.root = root
         self.data = data or root
         self.data_why = data_why or ("--data" if data else "--root")
+        # False for a run that is offline by design, the GitHub Action's: its data folder is empty and discarded with
+        # the job, so a command that fetches into it would be wrong advice (D-158)
+        self.fetch_hints = fetch_hints
         self.verbose = verbose
         self.manifest = json.load(open(os.path.join(self.root, "manifest.json")))
 
@@ -426,8 +429,8 @@ class Runner:
         if not is_provider_data(path):
             raise CorpusIncomplete(f"{path} ships with the corpus and is not on disk under {self.root}: "
                                    f"this copy of the corpus is incomplete; re-clone {REPO_URL} or reinstall")
-        res.add("source-present", "not-fetched", path,
-                f"not on disk: provider data is not shipped with the corpus; fetch it with {self.hint()}")
+        res.add("source-present", "not-fetched", path, "not on disk: provider data is not shipped with the corpus"
+                + (f"; fetch it with {self.hint()}" if self.fetch_hints else ""))
 
     def load_source(self, res, case, path, src):
         """Returns (state, fmt, mode, parsed, refrecs, reffacts). state: ok | missing | empty-404 | unreadable | parse-error | unsupported"""
@@ -453,7 +456,8 @@ class Runner:
             res.add("stable-source-drift", "fail", path,
                     f"stable-tier source's bytes differ from the tested snapshot (recorded SHA-256 {str(src.get('sha256'))[:12]}…, actual {actual[:12]}…); "
                     "the frozen expected values were not applied to this file and the parser was compared against the corpus's reference reader instead. "
-                    f"Run {self.hint('--check-drift')}; if CelesTrak changed this first-ever record, tell the corpus maintainer.")
+                    + (f"Run {self.hint('--check-drift')}; if" if self.fetch_hints else "If")
+                    + " CelesTrak changed this first-ever record, tell the corpus maintainer.")
         raw = open(full, "rb").read()
         text = raw.decode("utf-8", "replace")
         if src.get("http_status", 200) != 200 or text.strip() in ("No GP data found", "No SupGP data found"):

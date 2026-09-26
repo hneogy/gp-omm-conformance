@@ -48,6 +48,12 @@ class ExportGuardTests(unittest.TestCase):
                         rel = os.path.relpath(os.path.join(d, f), ROOT)
                         self.assertIn(rel, rels, f"{rel} is not in the export: add a line for its folder or file type to PUBLIC_ALLOWLIST.txt")
 
+    def test_the_action_is_exported(self):
+        # D-158: action.yml at the root is what `uses: hneogy/gp-omm-conformance@<tag>` reads; its script is in tools/
+        rels = {os.path.relpath(f, self.dest) for f in self.files}
+        self.assertIn("action.yml", rels)
+        self.assertIn(os.path.join("tools", "action_report.py"), rels)
+
     def test_no_raw_and_no_spacetrack_paths(self):
         rels = [os.path.relpath(f, self.dest) for f in self.files]
         self.assertFalse([r for r in rels if re.search(r"(^|/)fixtures/[^/]+/raw(/|$)", r)])

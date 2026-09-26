@@ -112,6 +112,23 @@ library is missing is refused before any case runs, with exit status 2 and a mes
 nothing ran and that this says nothing about the library (D-153, D-154). The adapters are in
 `gpconf/adapters/`; the older names `tests.adapters.reference:Parser` and the like still work (D-151).
 
+In a GitHub Actions job, from v0.3.0, three lines run a preset against your library:
+
+```yaml
+- uses: hneogy/gp-omm-conformance@v0.3.0
+  with:
+    preset: sgp4
+```
+
+Install your library first, in the job's Python (the `python` input names the interpreter) or, for a Node
+preset, in the job's working folder. The Action runs the corpus from this repository at the tag you name,
+so a corpus release changes nothing in your CI until you move the tag. It runs offline and fetches nothing:
+only the cases that ship with the corpus run, and the rest are reported as needing provider data. It is
+report-only: failed cases do not fail the job, and the job summary carries the case table, the gate line and
+the reminder that a count is a result against that version on that date, not a verdict on the project. A
+preset whose library will not import fails the job as a setup error, exit status 2, saying that nothing ran.
+There is no badge (D-153, D-158).
+
 Then write an adapter for your own parser and run it:
 
 ```bash
