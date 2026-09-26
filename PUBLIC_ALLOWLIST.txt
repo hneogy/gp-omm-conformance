@@ -37,5 +37,9 @@ tests/*.py
 tests/adapters/*.py
 tools/*.py
 tools/fetchlist.json
+# The recipes for the five harnesses that cannot be presets (D-155). ** recurses here, unlike the single-level patterns
+# above; glob skips dotfiles, so the folder's .gitignore has its own line.
+harnesses/**/*
+harnesses/.gitignore
 tools/crosscheck-requirements.lock.txt
 # tools/_fetch-run-*.log are NOT exported: build-time run logs stay private (audit minor item).

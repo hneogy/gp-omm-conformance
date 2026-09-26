@@ -1,0 +1,19 @@
+# What the recipes create when they are built inside a corpus clone: the projects' checkouts, build products and
+# Node modules. The SatDump stand-ins you write are ignored too, so that they are never committed here (D-152).
+libsgp4/repo/
+libsgp4/build*/
+gpredict/repo/
+gpredict/gpredict-harness
+satdump/master/
+satdump/rel/
+satdump/build*/
+satdump/stand-ins*.cpp
+astroz/repo/
+astroz/harness
+astroz/vectors
+astroz/.zig-cache/
+astroz/zig-cache/
+gods-eye-view/main/
+gods-eye-view/node_modules/
+gods-eye-view/package.json
+gods-eye-view/package-lock.json

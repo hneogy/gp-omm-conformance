@@ -81,7 +81,8 @@ catalog number as Alpha-5 above 99999 and refuse numbers above 339999 (or below 
 | `vectors/`: specification vectors (Alpha-5 table, catalog-id text forms, two-digit-year pivot, CCSDS epoch strings) | |
 | `manifest.json` / `MANIFEST.md`: every source with URL, retrieval time, SHA-256, tier; every check and ambiguity by id | SupGP-derived snapshot values: the element values of CelesTrak supplemental records are withheld from the public release; those cases keep their structural checks and run against your own fetch |
 | `schemas/`: SANA NDM/XML schema sets 2.0.0 and 4.0.0, unmodified | |
-| `gpconf/`: the runner (standard library, Python 3.9+) | |
+| `gpconf/`: the runner (standard library, Python 3.9+) and the adapters and harnesses behind its presets | |
+| `harnesses/`: recipes for the five hand-run libraries that cannot be presets (libsgp4, Gpredict, SatDump, astroz, gods-eye-view): each harness, its pinned commit and build commands; best-effort, not in the pip package, and tied to the projects' internals (D-155) | SatDump's link stand-ins: the recipe lists the symbols to define instead (D-152) |
 | `docs/`: research notes with verbatim sources, cross-check, breakage catalogue, upstream bug-report drafts; `AUDIT.md`: the independent audit and its resolutions | |
 
 Why no raw files: CelesTrak's site states no redistribution terms for its data

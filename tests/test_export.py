@@ -37,7 +37,9 @@ class ExportGuardTests(unittest.TestCase):
         # new folder of Python files without its own allowlist line fails here, not in public CI.
         # D-154 widened it from Python files to every file of the package: the Node harnesses are .mjs.
         rels = {os.path.relpath(f, self.dest) for f in self.files}
-        for top, wanted in (("gpconf", lambda f: not f.endswith(".pyc")), ("tests", lambda f: f.endswith(".py"))):
+        # D-155 added harnesses/: every recipe file, its .gitignore included, since glob skips dotfiles unless listed.
+        for top, wanted in (("gpconf", lambda f: not f.endswith(".pyc")), ("tests", lambda f: f.endswith(".py")),
+                            ("harnesses", lambda f: f != ".DS_Store")):
             for d, _, fs in os.walk(os.path.join(ROOT, top)):
                 if "__pycache__" in d:
                     continue
