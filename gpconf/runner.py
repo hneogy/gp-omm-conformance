@@ -16,6 +16,7 @@ Parser protocol (duck-typed):
         alpha5_encode(n: int) -> str              raise for unencodable input
         two_digit_year(yy: str) -> int
         parse_epoch(text: str) -> datetime        raise for invalid input
+        parse_catalog_id(text: str) -> int        raise for invalid input
     optional hook used by the writer case (see gpconf/writer.py):
         write_tle(record: dict) -> (line1, line2) | (line0, line1, line2)
                                                   raise to refuse; refusing a number above 339999 is correct
@@ -1233,7 +1234,8 @@ class Runner:
 # --------------------------------------------------------------------------- external command adapter
 class CommandParser:
     """Runs an external program per file: raw bytes on stdin, JSON array of records on stdout.
-    The command may contain {fmt} and {path}. Non-zero exit or invalid JSON = parse failure.
+    {fmt} in the command is replaced with the file's format, the only placeholder. Exit 3 = format unsupported; any
+    other non-zero exit, or output that is not a JSON array = parse failure (docs/ADAPTERS.md, D-161).
     write_cmd (optional): one JSON record on stdin, the TLE lines on stdout (2 or 3 lines); exit 0 =
     written, exit 3 = writing unsupported, any other non-zero exit = the record was refused.
 

@@ -140,8 +140,10 @@ class StagePackage(unittest.TestCase):
         self.assertIn("](AUDIT.md)", repo)  # relative in the repository: resolves on GitHub, in a clone, at any tag
         self.assertNotIn("](AUDIT.md)", staged)
         self.assertIn(f"(https://github.com/hneogy/gp-omm-conformance/blob/v{version}/AUDIT.md)", staged)
+        self.assertIn(f"(https://github.com/hneogy/gp-omm-conformance/blob/v{version}/docs/ADAPTERS.md)", staged)
         self.assertEqual(sp.relative_links(staged), [])
-        self.assertEqual(sp.relative_links(repo), ["AUDIT.md"])  # counted on 2026-09-26: the README's one relative link
+        # the README's relative links: AUDIT.md (counted 2026-09-26, D-159), and the adapter guide twice (D-161)
+        self.assertEqual(sorted(set(sp.relative_links(repo))), ["AUDIT.md", "docs/ADAPTERS.md"])
         self.assertEqual(len(staged.splitlines()), len(repo.splitlines()))  # links rewritten, nothing else
 
     def test_the_audit_reads_the_long_description(self):

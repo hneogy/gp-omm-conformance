@@ -59,6 +59,11 @@ class ExportGuardTests(unittest.TestCase):
         rels = {os.path.relpath(f, self.dest) for f in self.files}
         self.assertIn("SECURITY.md", rels)
 
+    def test_the_adapter_guide_is_exported(self):
+        # D-161: docs/ files are allowlisted one by one; the README and the wiki link to this one
+        rels = {os.path.relpath(f, self.dest) for f in self.files}
+        self.assertIn(os.path.join("docs", "ADAPTERS.md"), rels)
+
     def test_no_raw_and_no_spacetrack_paths(self):
         rels = [os.path.relpath(f, self.dest) for f in self.files]
         self.assertFalse([r for r in rels if re.search(r"(^|/)fixtures/[^/]+/raw(/|$)", r)])

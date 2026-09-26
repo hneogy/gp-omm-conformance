@@ -83,7 +83,7 @@ catalog number as Alpha-5 above 99999 and refuse numbers above 339999 (or below 
 | `schemas/`: SANA NDM/XML schema sets 2.0.0 and 4.0.0, unmodified | |
 | `gpconf/`: the runner (standard library, Python 3.9+) and the adapters and harnesses behind its presets | |
 | `harnesses/`: recipes for the five hand-run libraries that cannot be presets (libsgp4, Gpredict, SatDump, astroz, gods-eye-view): each harness, its pinned commit and build commands; best-effort, not in the pip package, and tied to the projects' internals (D-155) | SatDump's link stand-ins: the recipe lists the symbols to define instead (D-152) |
-| `docs/`: research notes with verbatim sources, cross-check, breakage catalogue, upstream bug-report drafts; `AUDIT.md`: the independent audit and its resolutions | |
+| `docs/`: the adapter guide (`docs/ADAPTERS.md`), research notes with verbatim sources, cross-check, breakage catalogue, upstream bug-report drafts; `AUDIT.md`: the independent audit and its resolutions | |
 
 The pip package, `gpconf`, carries the runner and the corpus's own files: every case's `expected.json` and
 `case.md`, `derived/`, `vectors/`, `manifest.json` and the fetch list. It carries no provider data; the schemas,
@@ -147,23 +147,9 @@ the reminder that a count is a result against that version on that date, not a v
 preset whose library will not import fails the job as a setup error, exit status 2, saying that nothing ran.
 There is no badge (D-153, D-158).
 
-Then write an adapter for your own parser and run it:
-
-```bash
-python3 -m gpconf run --adapter mypkg.gpconf_adapter:Parser --json report.json
-```
-
-Or drive a non-Python parser as an external command (raw bytes on stdin, JSON array on
-stdout, `{fmt}` substituted, exit code 3 for an unsupported format):
-
-```bash
-python3 -m gpconf run --cmd "mytool --input-format {fmt}"
-```
-
-A TLE writer is driven the same way: `--write-cmd "mytool --emit-tle"` receives one JSON record
-on stdin and must print the two (or three) TLE lines; exit code 3 marks writing as unsupported,
-and any other non-zero exit is a refusal, which is the correct output for a catalog number the TLE
-field cannot represent.
+Then write an adapter for your own parser: a Python class the runner imports (`--adapter module:Class`), or, for a
+parser in any other language, a command that reads a file on standard input and prints JSON (`--cmd`, with
+`--vectors-cmd` and `--write-cmd` for the hooks). [`docs/ADAPTERS.md`](docs/ADAPTERS.md) is the guide.
 
 If the writer cannot be wrapped at all (an interactive program such as strf's `rffit`, which
 satno2tle drives), check the file it wrote instead. The format checks need nothing else; the
@@ -228,65 +214,13 @@ Each source in the manifest is `stable` or `live`.
 
 ## Writing an adapter
 
-An adapter is any object with a `parse` method; the hooks are optional: five feed the vector
-case and `write_tle` feeds the writer case.
-
-```python
-from gpconf.runner import Unsupported
-
-class Parser:
-    def parse(self, raw: bytes, fmt: str) -> list[dict]:
-        # fmt is one of: tle, 2le, csv, json, xml, kvn
-        if fmt == "kvn":
-            raise Unsupported(fmt)
-        records = my_library.load(raw, fmt)
-        return [{
-            "norad_cat_id": r.satnum,                 # int
-            "epoch": r.epoch,                          # datetime or ISO string
-            "mean_motion": r.mean_motion,              # str, Decimal, int or float
-            "eccentricity": r.ecc, "inclination": r.inc, "ra_of_asc_node": r.raan,
-            "arg_of_pericenter": r.argp, "mean_anomaly": r.ma,
-            "bstar": r.bstar, "mean_motion_dot": r.ndot, "mean_motion_ddot": r.nddot,
-            # optional:
-            "object_name": r.name, "object_id": r.intldes, "classification_type": r.cls,
-            "ephemeris_type": r.ephtype, "element_set_no": r.elnum, "rev_at_epoch": r.revnum,
-        } for r in records]
-
-    def alpha5_decode(self, field: str) -> int: ...
-    def alpha5_encode(self, n: int) -> str: ...
-    def two_digit_year(self, yy: str) -> int: ...
-    def parse_catalog_id(self, text: str) -> int: ...   # catalog-id text forms: nine digits accepted, ten rejected
-    def parse_epoch(self, text: str): ...     # return a datetime for the instant (it is compared), raise on invalid input
-    def write_tle(self, record: dict): ...    # -> (line1, line2) or (line0, line1, line2); raise to refuse
-```
-
-A record the library refuses is reported, not dropped, through the refusal channel: return, in the
-same list, an entry carrying `_refused` with the library's reason (a non-empty string; a refusal
-without a reason is no better than a drop and is counted as one), optionally `_field` (the catalog
-field as the input carried it, so the runner credits the refusal to the expected id, decoding
-Alpha-5 itself) and `_input` (up to 80 characters of the offending line). Put `{"_adapter":
-{"refusals": true}}` first in the list to declare that every record you drop with an error is
-reported: with it, a dropped record counts as dropped silently; without it, the report says
-refusals were not reported. External commands emit the same entries in their JSON array.
-
-```python
-        try:
-            records.append(my_library.parse_set(line1, line2))
-        except MyLibraryError as e:
-            records.append({"_refused": f"MyLibraryError: {e}", "_field": line1[2:7], "_input": line1[:80]})
-```
-
-Values may be strings, `Decimal`, `int` or `float`. The eleven core fields must be present in
-every record; optional fields are compared when you return them. `mean_motion_dot` and
-`mean_motion_ddot` are expected in the TLE convention (rev/day² and rev/day³ as printed). The
-hook `parse_catalog_id(text) -> int` feeds the catalog-id text vectors, which include nine-digit
-values and a ten-digit value that must be rejected. `write_tle(record)` receives a record with the same keys as `parse()` returns
-and must return the TLE lines it writes; raise for a record it cannot write. For a catalog number
-above 339999 or below 0 a refusal is the correct output, and the runner reports it as a pass. The
-written lines are read back by the corpus's reference reader and must equal the record at each
-field's resolution, by truncation or by rounding half up (both provider conventions exist); the
-runner reports which convention it saw, and reports separately, without failing, how the writer
-treated the derivatives, element set, revolution and name.
+An adapter hands the corpus's files to your parser and returns what it read, in the corpus's field names: a Python
+class with a `parse(raw, fmt)` method, or a command that reads a file on standard input and prints a JSON array.
+Optional hooks answer the vector case and the writer case, and a refusal channel reports a record the library
+rejected, with the library's reason. [`docs/ADAPTERS.md`](docs/ADAPTERS.md) is the guide: both protocols, the refusal
+channel, how returned records are counted, the hooks, running and reading a report, and what an adapter must not do,
+with worked examples copied from the shipped adapters. The sections below describe how any parser's results are
+judged and reported.
 
 ### Tolerances, and how they are reported
 

@@ -19,6 +19,8 @@ PUBLIC_ALLOWLIST.txt
 pyproject.toml
 .gitignore
 .github/workflows/ci.yml
+# The adapter guide (D-161); docs/ files are named one by one, so each new one needs its own line.
+docs/ADAPTERS.md
 docs/CROSSCHECK.md
 docs/WRITERS.md
 docs/FAILURES.md
