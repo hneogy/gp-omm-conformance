@@ -442,8 +442,9 @@ saved responses to yourself.
 
 The build is a pipeline of small scripts, all in `tools/`, all offline except `fetch.py`:
 `fetch.py` → `inventory.py` → `validate_render.py` → `derive_alpha5.py`,
-`derive_kvn_variants.py` → `make_expected.py` → `crosscheck.py` (needs the optional
-`crosscheck` extra: python-sgp4, Skyfield, xmlschema) → `validate_xml.py` → `make_manifest.py`
+`derive_kvn_variants.py` → `make_expected.py` → `crosscheck.py` (needs python-sgp4, Skyfield and
+xmlschema, pinned in `tools/crosscheck-requirements.lock.txt`: `pip install -r` it into the environment you build in)
+→ `validate_xml.py` → `make_manifest.py`
 → `make_failures.py`. Refreshing live sources produces new snapshot values and bumps the
 corpus minor version; frozen values of a released version are never rewritten.
 

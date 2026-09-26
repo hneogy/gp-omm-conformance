@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,14 +8,23 @@ version = "0.2.1"
 description = "Runner for the GP/OMM conformance corpus (Alpha-5, 6- and 9-digit catalog numbers, OMM formats)"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = []
 
 [project.optional-dependencies]
-crosscheck = ["sgp4", "skyfield", "xmlschema", "lxml"]
+# The library presets' libraries (D-151, D-153). The Node presets' libraries cannot be pip extras.
+sgp4 = ["sgp4"]
+pyephem = ["ephem"]
 
 [project.scripts]
 gpconf = "gpconf.__main__:main"
 
-[tool.setuptools]
-packages = ["gpconf"]
+[tool.setuptools.packages.find]
+# Found, not listed: an explicit list, ["gpconf"], would have dropped gpconf.adapters from a wheel (D-153, D-156).
+include = ["gpconf", "gpconf.*"]
+
+[tool.setuptools.package-data]
+# gpconf/corpus/ exists only in a tree staged from a public export by tools/stage_package.py, never in the repository.
+gpconf = ["corpus/**/*"]
+"gpconf.adapters" = ["*.mjs"]
