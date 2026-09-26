@@ -54,6 +54,11 @@ class ExportGuardTests(unittest.TestCase):
         self.assertIn("action.yml", rels)
         self.assertIn(os.path.join("tools", "action_report.py"), rels)
 
+    def test_the_security_policy_is_exported(self):
+        # D-160: GitHub shows SECURITY.md at the root of the public repository as its security policy
+        rels = {os.path.relpath(f, self.dest) for f in self.files}
+        self.assertIn("SECURITY.md", rels)
+
     def test_no_raw_and_no_spacetrack_paths(self):
         rels = [os.path.relpath(f, self.dest) for f in self.files]
         self.assertFalse([r for r in rels if re.search(r"(^|/)fixtures/[^/]+/raw(/|$)", r)])
