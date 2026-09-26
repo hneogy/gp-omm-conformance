@@ -20,6 +20,14 @@ pyephem = ["ephem"]
 [project.scripts]
 gpconf = "gpconf.__main__:main"
 
+[project.urls]
+# The PyPI page's sidebar, the only navigation a visitor there gets (D-159). DOI is the Zenodo concept DOI, which
+# resolves to the latest release.
+Homepage = "https://gpconf.neogy.dev"
+Repository = "https://github.com/hneogy/gp-omm-conformance"
+Issues = "https://github.com/hneogy/gp-omm-conformance/issues"
+DOI = "https://doi.org/10.5281/zenodo.22867654"
+
 [tool.setuptools.packages.find]
 # Found, not listed: an explicit list, ["gpconf"], would have dropped gpconf.adapters from a wheel (D-153, D-156).
 include = ["gpconf", "gpconf.*"]

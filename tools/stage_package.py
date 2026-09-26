@@ -16,13 +16,21 @@ flat package); and the shipped corpus files into gpconf/corpus/: manifest.json, 
 fixtures/<case>/expected.json and case.md, derived/ and vectors/. Every staged file must match the export manifest's
 SHA-256, so an export changed after it was made is refused.
 
+README.md is staged as the PyPI description, with every relative link and image made absolute (D-159): PyPI shows the
+README as the project page, where a link to a file in the repository does not resolve. The repository's README keeps its
+relative links, which resolve on GitHub, in a clone, in a fork and at any tag; only the staged copy is rewritten, to
+https://github.com/hneogy/gp-omm-conformance/blob/v<version>/<path> (tree/ for a folder, raw.githubusercontent.com for an
+image), the tag of the version being built, so the page links to the files of the version a user installed. A relative
+link to a path the export does not hold is refused, since the page would carry a dead link. Code is left alone.
+
 Building (--build, with the `build` frontend and setuptools installed) runs `python -m build --no-isolation` on the
 staged tree, which makes the sdist and then the wheel from it, and audits both.
 
 Auditing (--audit, or after --build) opens a wheel or an sdist and checks every file under gpconf/ against the export
 manifest: a corpus file under gpconf/corpus/X must hash to the manifest's entry for X, a package file to its own
 entry. It fails on a hash mismatch, a file the manifest does not list, a provider file, any other unexpected member,
-or a staged file that is missing from the archive.
+or a staged file that is missing from the archive; README.md must be the staged PyPI copy, and the long description in
+the archive's metadata (PKG-INFO, or the wheel's METADATA), which is what PyPI shows, must hold no relative link.
 
 Standard library only.
 """
@@ -30,6 +38,7 @@ import argparse
 import glob
 import hashlib
 import os
+import posixpath
 import re
 import subprocess
 import sys
@@ -43,6 +52,8 @@ BUNDLED = "gpconf/corpus"
 RAW = re.compile(r"(^|/)fixtures/[^/]+/raw(/|$)")
 SDIST_OTHER = re.compile(r"^(PKG-INFO|setup\.cfg|pyproject\.toml|README\.md|LICENSE|gpconf\.egg-info/.+)$")
 WHEEL_OTHER = re.compile(r"^gpconf-[^/]+\.dist-info/.+$")
+REPO_URL = "https://github.com/hneogy/gp-omm-conformance"
+RAW_URL = "https://raw.githubusercontent.com/hneogy/gp-omm-conformance"
 
 
 class Refused(Exception):
@@ -112,11 +123,124 @@ def stage(export, out):
         data = open(os.path.join(export, src), "rb").read()
         if manifest.get(src) != sha256_bytes(data):
             raise Refused(f"{src} does not match {MANIFEST}: the export was changed after it was made")
+        if src == "README.md":  # the PyPI description, relative links made absolute (D-159)
+            data = staged_readme(export)[0]
         target = os.path.join(out, dest)
         os.makedirs(os.path.dirname(target), exist_ok=True)
         with open(target, "wb") as f:
             f.write(data)
     return pairs
+
+
+# --------------------------------------------------------------------------- the README as the PyPI description (D-159)
+SCHEME = re.compile(r"^(?:[A-Za-z][A-Za-z0-9+.-]*:|//)")
+CODE_SPAN = re.compile(r"(`+)(?:(?!\1).)+?\1")
+INLINE = re.compile(r"(!?)\[((?:[^\[\]]|\[[^\]]*\])*)\]\(\s*(<[^>]*>|[^()\s]+(?:\([^()\s]*\)[^()\s]*)*)(\s+(?:\"[^\"]*\"|'[^']*'))?\s*\)")
+REFDEF = re.compile(r"(?m)^( {0,3}\[[^\]]+\]:[ \t]*)(<[^>]*>|\S+)")
+HTML_ATTR = re.compile(r"""((?:href|src)\s*=\s*)(["'])([^"']*)(\2)""", re.I)
+
+
+def version_of(export):
+    """The version in the export's pyproject.toml; the tag is v<version>."""
+    m = re.search(r'(?m)^version\s*=\s*"([^"]+)"', open(os.path.join(export, "pyproject.toml"), encoding="utf-8").read())
+    if not m:
+        raise Refused(f"no version in {export}/pyproject.toml")
+    return m.group(1)
+
+
+def _absolute(target, tag, kind_of, image):
+    """One link target -> its absolute form, or None when it is absolute already."""
+    bare = target[1:-1] if target.startswith("<") and target.endswith(">") else target
+    if not bare or SCHEME.match(bare):
+        return None
+    if bare.startswith("#"):  # an in-page anchor: GitHub's heading ids are not certain on PyPI [inferred]; point at GitHub
+        return f"{REPO_URL}/blob/{tag}/README.md{bare}"
+    m = re.match(r"^([^#?]*)(.*)$", bare)
+    path, suffix = posixpath.normpath(m.group(1)), m.group(2)  # suffix: the fragment or query, kept as written
+    path = path.lstrip("/")  # GitHub resolves /path from the repository root
+    if path.startswith("../") or path == "..":
+        raise Refused(f"README.md links to {bare}, outside the repository: the PyPI page would carry a dead link")
+    kind = kind_of(path)
+    if kind is None:
+        raise Refused(f"README.md links to {bare}, which the export does not hold: the PyPI page would carry a dead link")
+    if image:
+        url = f"{RAW_URL}/{tag}/{path}"
+    else:
+        url = f"{REPO_URL}/{'tree' if kind == 'dir' else 'blob'}/{tag}/{path}"
+    return url + suffix
+
+
+def relative_links(text):
+    """-> the relative link and image targets outside code, in order: what PyPI could not resolve."""
+    found = []
+    pypi_readme(text, "v0", lambda p: "file", found=found)
+    return found
+
+
+def pypi_readme(text, tag, kind_of, found=None):
+    """README text -> the PyPI description: relative links, images, reference definitions and HTML href/src made
+    absolute and pinned to `tag`. Fenced code blocks and code spans are left as they are. kind_of(path) -> 'file',
+    'dir' or None (absent: refused). `found`, if given, collects the relative targets rewritten."""
+    def fix(target, image):
+        new = _absolute(target, tag, kind_of, image)
+        if new is not None and found is not None:
+            found.append(target)
+        return new
+
+    def inline(m):
+        bang, label, target, title = m.group(1), m.group(2), m.group(3), m.group(4) or ""
+        label = INLINE.sub(inline, label)  # an image inside a link's text
+        new = fix(target, bool(bang))
+        return f"{bang}[{label}]({new if new is not None else target}{title})"
+
+    def prose(s):
+        spans = []
+        s = CODE_SPAN.sub(lambda m: spans.append(m.group(0)) or f"\x00{len(spans) - 1}\x00", s)
+        s = INLINE.sub(inline, s)
+        s = REFDEF.sub(lambda m: m.group(1) + (fix(m.group(2), False) or m.group(2)), s)
+        s = HTML_ATTR.sub(lambda m: m.group(1) + m.group(2) + (fix(m.group(3), m.group(1).lower().startswith("src")) or m.group(3)) + m.group(4), s)
+        return re.sub(r"\x00(\d+)\x00", lambda m: spans[int(m.group(1))], s)
+
+    out, block, fence = [], [], None
+    for line in text.splitlines(keepends=True):
+        opener = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
+        if fence is None and opener:
+            out.append(prose("".join(block)))
+            block, fence = [line], opener.group(1)
+        elif fence is not None:
+            block.append(line)
+            if re.match(r"^ {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}\s*$", line):
+                out.append("".join(block))
+                block, fence = [], None
+        else:
+            block.append(line)
+    out.append("".join(block) if fence is not None else prose("".join(block)))
+    return "".join(out)
+
+
+def staged_readme(export):
+    """-> (the export's README.md as the PyPI description, the relative targets made absolute)."""
+    def kind_of(path):
+        full = os.path.join(export, *path.split("/"))
+        return "dir" if os.path.isdir(full) else "file" if os.path.isfile(full) else None
+    found = []
+    text = pypi_readme(open(os.path.join(export, "README.md"), encoding="utf-8").read(), "v" + version_of(export), kind_of, found)
+    return text.encode("utf-8"), found
+
+
+def expected_top(export, manifest):
+    """-> {top-level file: SHA-256 as staged}: the export's own for pyproject.toml and LICENSE, the PyPI copy for README.md."""
+    top = {name: manifest.get(name) for name in TOP}
+    top["README.md"] = sha256_bytes(staged_readme(export)[0])
+    return top
+
+
+def long_description(name, data):
+    """The long description in an sdist's PKG-INFO or a wheel's METADATA: the body after the header block."""
+    if not (name == "PKG-INFO" or name.endswith(".dist-info/METADATA")):
+        return None
+    text = data.decode("utf-8", "replace").replace("\r\n", "\n")
+    return text.split("\n\n", 1)[1] if "\n\n" in text else ""
 
 
 def members(archive):
@@ -136,8 +260,10 @@ def members(archive):
     return out
 
 
-def audit(archive, manifest, pairs):
-    """-> (report lines, problems). Every file under gpconf/ is checked against the export manifest."""
+def audit(archive, manifest, pairs, top=None):
+    """-> (report lines, problems). Every file under gpconf/ is checked against the export manifest; the top-level
+    files against `top` (expected_top(): README.md as staged for PyPI), and the long description for relative links."""
+    top = top or {name: manifest.get(name) for name in TOP}
     got = members(archive)
     kind = "wheel" if archive.endswith(".whl") else "sdist"
     other = WHEEL_OTHER if kind == "wheel" else SDIST_OTHER
@@ -152,8 +278,11 @@ def audit(archive, manifest, pairs):
             key, bucket = name, "package"
         elif other.match(name):
             extra.append(name)
-            if name in TOP and manifest.get(name) != sha256_bytes(data):
-                problems.append(f"{name} in the {kind} does not match {MANIFEST}")
+            if name in TOP and top.get(name) != sha256_bytes(data):
+                problems.append(f"{name} in the {kind} does not match {MANIFEST}" + (" as staged for PyPI" if name == "README.md" else ""))
+            description = long_description(name, data)
+            if description is not None:
+                problems += [f"relative link in the long description ({name}), which PyPI cannot resolve: {r}" for r in relative_links(description)]
             continue
         else:
             problems.append(f"unexpected file in the {kind}: {name}")
@@ -200,19 +329,22 @@ def main(argv=None):
     try:
         manifest = check_export(a.export)
         pairs = plan(a.export)
+        top = expected_top(a.export, manifest)
         archives = list(a.audit or [])
         if a.out:
             stage(a.export, a.out)
+            links = staged_readme(a.export)[1]
             print(f"staged {len(pairs)} files into {a.out}: {sum(1 for _, d in pairs if d.startswith(BUNDLED + '/'))} corpus files, "
                   f"{sum(1 for _, d in pairs if d.startswith('gpconf/') and not d.startswith(BUNDLED + '/'))} package files, "
-                  f"{len(TOP)} top-level files; every one matches {MANIFEST}")
+                  f"{len(TOP)} top-level files; every one matches {MANIFEST}; README.md staged as the PyPI description with "
+                  f"{len(links)} relative link(s) made absolute at v{version_of(a.export)}: {', '.join(links) or 'none'}")
             if a.build:
                 archives += build(a.out, a.build)
         elif a.build:
             ap.error("--build needs --out")
         failed = False
         for archive in archives:
-            report, problems = audit(archive, manifest, pairs)
+            report, problems = audit(archive, manifest, pairs, top)
             print("\n".join(report))
             for p in problems:
                 print(f"  PROBLEM: {p}")

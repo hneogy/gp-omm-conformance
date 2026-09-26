@@ -1,45 +1,76 @@
 # Changelog
 
 Notable changes to the corpus. The version number is assigned when the owner tags a release, under
-the rule in the README (patch: documentation and tooling only; minor: refreshed live snapshots or
-added cases; major: changed `expected.json` schema or check semantics). `DECISIONS.md` holds the
-reasoning behind every entry, by decision number.
+the rule in the README (patch: documentation and tooling only; minor: refreshed live snapshots, added
+cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
+`DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
 ## [Unreleased]
 
-- A GitHub Action, `action.yml` with `tools/action_report.py`: `uses: hneogy/gp-omm-conformance@<tag>` with a `preset` runs the corpus from this repository at that tag, offline and report-only. Failed cases do not fail the job; a preset that cannot run exits 2 as a setup error saying nothing ran; the job summary carries the case table, the gate line and the site's sentence that a count is a result against that version on that date; outputs `report`, `failed` and `exercised`; no badge. Tested live on macOS, Ubuntu and Windows. The Action runs `gpconf run` with the new `--no-fetch-hint`, which leaves the fetch command out of the output and the JSON report, since the Action never fetches and its data folder is thrown away with the job (D-158).
+The next release makes the corpus installable with pip: the runner and the corpus's own files in one package,
+a `gpconf` command, presets that test a library with no adapter written, and a GitHub Action. In a clone nothing
+changes: `tools/fetch.py` and `python3 -m gpconf` work as before.
 
-- Fetch: in the per-user cache, a stable-tier file whose bytes hash to the new corpus version's recorded SHA-256 is copied from an earlier version's folder with its metadata and marked `reused_from`, instead of being requested again; live files are always requested. The fetch prints `reused from <version>` and counts reused files apart from requests; the run report says how many provider files were reused rather than fetched, and the JSON report lists them per case (D-157).
+### Installing and running
 
-- Packaging: `tools/stage_package.py` assembles the `gpconf` package from a public export, and from nothing else: it refuses a folder without its export manifest, with a provider file, or with the private repository's handoff notes; walks the package recursively; copies the shipped corpus into `gpconf/corpus/`; checks every staged file against the export manifest; and, with the `build` frontend, builds the sdist and the wheel and audits every file in them against the manifest. `pyproject.toml` finds its packages instead of listing them (the list omitted `gpconf.adapters`), gains the `sgp4` and `pyephem` extras, drops the `crosscheck` extra (the README points at the pinned lockfile) and declares its licence in the current form. Nothing is published (D-156).
+- `pip install gpconf` installs the runner with the corpus's own files: every case's expected values and notes,
+  the derived Alpha-5 lines, the specification vectors and the manifest. Standard library only, Python 3.9 or
+  later. Provider data is not in the package (D-150, D-156).
+- Before any fetch, `gpconf run --preset reference` runs the four cases whose files ship in the package (the
+  Alpha-5 vectors, the derived Alpha-5 lines, the KVN variants and the writer case) and reports the other thirteen
+  as `not-fetched`, with the command that fetches them. `gpconf check-tle`, which checks a TLE file your own tool
+  wrote, needs no corpus data at all (D-148, D-150).
+- `gpconf fetch` retrieves the provider data under CelesTrak's usage policy, about 60 requests, 2 s apart, each URL
+  once, into a per-user cache folder, one per corpus version: `~/.cache/gpconf/<version>` on Linux,
+  `~/Library/Caches/gpconf/<version>` on macOS, `%LOCALAPPDATA%\gpconf\Cache\<version>` on Windows. `--data DIR`
+  or the `GPCONF_DATA` environment variable names another folder. When a later version's folder is filled, files
+  that have not changed are copied from the earlier one instead of requested again (stable-tier files whose
+  SHA-256 matches); live files are always requested (D-150, D-157).
 
-- `harnesses/`: recipes for the five hand-run libraries that cannot be presets, libsgp4, Gpredict, SatDump, astroz and gods-eye-view. Each folder holds the corpus's harness, the commit it was tested at in full, the project's licence, what the harness compiles against, the build commands as run and the run command; best-effort, not in the pip package, and tied to projects' internals that can change under them without notice. SatDump's recipe lists the symbols its link needs instead of shipping stand-ins (D-152, D-155).
+### Testing a library without writing an adapter
 
-- Runner: three Node presets, `satellite.js` (tested with 7.1.0), `tle.js` and `tle.js-api` (tested with 5.0.3; the epoch from the raw fields and from the millisecond API), run from the working directory so that the library resolves as it would in the user's project, with `--module PATH` for a checkout. A preflight refuses a missing Node or library before any case runs; every library preset's refusal now says that nothing ran and that this says nothing about the library (exit 2). The command parser also takes an argument list, a working directory and an environment. No published result changed (D-153, D-154).
+- `gpconf run --preset NAME`, and `gpconf presets` lists them: `reference`; `naive`, a demonstration of failure,
+  not a parser to use; `sgp4` (`pip install "gpconf[sgp4]"`, tested with python-sgp4 2.27); `pyephem`
+  (`pip install "gpconf[pyephem]"`, tested with PyEphem 4.2.1); and three for Node.js libraries installed in the
+  folder you run from: `satellite.js` (tested with 7.1.0), and `tle.js` and `tle.js-api` (tested with 5.0.3; the
+  epoch from the raw fields, or from the millisecond API). `--module PATH` points a Node preset at a checkout
+  (D-151, D-154).
+- The report prints the library version it found beside the version the preset was tested with. A preset whose
+  library, or Node, is missing stops before any case runs, with exit status 2 and a message saying that nothing ran
+  and that this says nothing about the library (D-153, D-154).
+- Five libraries that cannot be presets, libsgp4, Gpredict, SatDump, astroz and gods-eye-view, have recipes in the
+  repository's `harnesses/` folder: the harness, the commit it was tested at and the build commands. They are
+  best-effort, tied to those projects' internals, and not in the pip package (D-152, D-155).
 
-- Runner: `--preset NAME` runs a shipped adapter with no adapter written, and `gpconf presets` lists them: `reference` and `naive` (standard library only; naive is a demonstration of failure, not a parser to use), `sgp4` (python-sgp4, tested with 2.27) and `pyephem` (PyEphem, tested with 4.2.1). A library preset's report names the version it found beside the version it was tested with; a missing library is refused with the command that installs it. The three built-in adapters moved to `gpconf/adapters/`, where the old `tests.adapters` names still reach them, and the PyEphem adapter joined from the corpus's hand run. No result changed (D-151).
+### In CI
 
-- Runner: works outside a clone. The corpus's shipped files and the fetched provider files have separate roots: a clone uses itself for both, as before; a copy elsewhere reads its corpus from the package (`gpconf/corpus/`) and keeps provider files in a per-user cache folder, one per corpus version, unless `--data DIR` or the `GPCONF_DATA` environment variable names another. The fetch script is the `gpconf fetch` subcommand (`tools/fetch.py` runs the same code in a clone), `check-tle` needs no corpus, and the fetch command a run prints names the subcommand where no clone script exists. The runner's line about re-capture files is corrected: a normal fetch never requests them. No result changed (D-150).
+- A GitHub Action: `uses: hneogy/gp-omm-conformance@<tag>` with a `preset` runs the corpus from the repository at
+  that tag, after your own steps have installed your library. It runs offline and fetches nothing, so only the cases
+  whose files ship with the corpus run; it fails no job on a failed case, and a preset that cannot run fails the step
+  as a setup error. The job summary carries the case table, the gate line and the reminder that a count is a result
+  against that version on that date. Outputs: `report`, `failed`, `exercised`. No badge. Tested on macOS, Ubuntu and
+  Windows (D-153, D-158).
 
-- Runner: a provider file that is not on disk reports `not-fetched`, never `skip`, which is kept for a parser with no reader for a format or no hook for a check. The count line says how many cases need fetched data, a new `n/f` column counts missing files, a case that ran on part of its files is named below the count line, and the fetch command names a script that exists under the corpus root. A missing file that ships with the corpus stops the run with exit status 2. The gate no longer claims "every format it reads" or calls a parser TLE-only when a format was never tried, takes its snapshot date from the frozen capture, and judges a freshly fetched CSV against its own record count. No published count changed (D-148).
+### In the report
 
-- Adapter protocol: a refusal channel. An entry carrying `_refused` with a non-empty reason (and optionally `_field`, `_input`) reports a record the library refused; `{"_adapter": {"refusals": true}}` declares that every error-drop is reported. The runner credits refusals to expected ids, keeps them apart from silent drops in the values detail, the JSON counts and the gate, and fails a refusal without a reason. The built-in python-sgp4 adapter uses it (D-144).
-
-- Runner: the provider's recorded empty answer (HTTP 404 body) is handed to the parser under test as its own check, `empty-answer-yields-no-records`, in the four cases that hold one; zero records and no error is the pass (D-143).
-
-- Runner: a gate over this month's launches, printed below the case table and written to the JSON report under `gates`; values items carry structured record counts (`counts`). Wording names the behaviour, never grades the project (D-142).
-
-### Added
-- One synthetic-derived writer input with a positive-exponent BSTAR (five-digit vector id 99999, BSTAR 1.2345, TLE
-  field ` 12345+1`), rendered by the corpus under the D-096 precedent, closing the writer side of a declared coverage gap
-  (D-125). The writer case now has 610 inputs; no frozen expected value changed.
-
-### Changed
-- `satcat-70000-cutoff` reports `not-exercised` for every parser where it reported `pass`: its only pass/fail item
-  is a check the runner makes on the legacy SATCAT file, no adapter reads SATCAT, and a per-library table could read
-  the pass as a library result (D-129). The reference adapter now reports 16 cases exact and 1 not exercised; the
-  naive and python-sgp4 failing counts are unchanged at 14 and 7 of 17. A legacy file with an id at or above 70000
-  still fails the item, as a data property.
+- A provider file that is not on disk is reported as `not-fetched`, never as `skip`, which is kept for a parser with
+  no reader for a format or no hook for a check. The count line says how many cases need fetched data, the
+  `n/f` column counts the missing files per case, and the runner names the command that fetches them unless
+  `--no-fetch-hint` asks it not to, as the Action does. A file that should ship with the corpus and is missing stops
+  the run with exit status 2 (D-148, D-158).
+- Below the case table, a gate asks whether the parser can load this month's launches: the 256 objects of
+  CelesTrak's last-30-days group, captured 2026-09-21, every one above 99999. Per format, it counts records loaded
+  with the right id, misidentified, or dropped, and it names the behaviour without grading the project. The JSON
+  report carries the gate under `gates`, and each values item carries its record counts under `counts` (D-142,
+  D-148).
+- An adapter can report a record the library refused, with the library's reason, so that a refusal is counted
+  apart from a silent drop; a refusal without a reason counts as a drop. The `sgp4` preset uses it (D-144).
+- In the four cases that hold one, the provider's empty answer, CelesTrak's HTTP 404 body, is handed to the parser
+  as a check of its own: zero records and no error is the pass (D-143).
+- `satcat-70000-cutoff` is a check on the legacy SATCAT file, not on a parser, and is reported `not-exercised` for
+  every parser; the `reference` preset reports 16 cases exact and 1 not exercised (D-129).
+- The writer case gains a synthetic-derived input with a positive-exponent BSTAR (id 99999, TLE field
+  ` 12345+1`), 610 inputs in all; no frozen expected value changed (D-125).
 
 ## [0.2.1] - 2026-09-23
 

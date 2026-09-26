@@ -3,7 +3,10 @@
 The staging script takes a public export as its only input and refuses anything else; it walks the package
 recursively, copies the shipped corpus into gpconf/corpus/, checks every staged file against the export manifest, and
 audits a built wheel or sdist file by file. These tests build no real package (CI has no build frontend): the audit is
-exercised on archives made here from a staged tree, correct and then damaged in each way it must catch."""
+exercised on archives made here from a staged tree, correct and then damaged in each way it must catch.
+
+D-159, stage 8: README.md is staged as the PyPI description, its relative links made absolute and pinned to the release
+tag, while the repository's README keeps them relative; the audit fails a long description with a relative link."""
 import io
 import os
 import re
@@ -20,13 +23,13 @@ sys.path.insert(0, os.path.join(ROOT, "tools"))
 import stage_package as sp  # noqa: E402
 
 
-def make_wheel(stage_dir, path, mutate=None):
+def make_wheel(stage_dir, path, mutate=None, metadata=b"Name: gpconf\n"):
     files = {}
     for base, _, fs in os.walk(os.path.join(stage_dir, "gpconf")):
         for f in fs:
             full = os.path.join(base, f)
             files[os.path.relpath(full, stage_dir).replace(os.sep, "/")] = open(full, "rb").read()
-    files["gpconf-0.0.0.dist-info/METADATA"] = b"Name: gpconf\n"
+    files["gpconf-0.0.0.dist-info/METADATA"] = metadata
     if mutate:
         mutate(files)
     with zipfile.ZipFile(path, "w") as z:
@@ -55,6 +58,7 @@ class StagePackage(unittest.TestCase):
         cls.stage = os.path.join(cls.tmp, "stage")
         cls.pairs = sp.stage(cls.export, cls.stage)
         cls.manifest = sp.read_manifest(cls.export)
+        cls.top = sp.expected_top(cls.export, cls.manifest)
 
     @classmethod
     def tearDownClass(cls):
@@ -106,13 +110,13 @@ class StagePackage(unittest.TestCase):
     def test_the_audit_passes_a_faithful_wheel_and_sdist(self):
         w = os.path.join(self.tmp, "good.whl")
         make_wheel(self.stage, w)
-        report, problems = sp.audit(w, self.manifest, self.pairs)
+        report, problems = sp.audit(w, self.manifest, self.pairs, self.top)
         self.assertEqual(problems, [])
         n_corpus = sum(1 for _, d in self.pairs if d.startswith("gpconf/corpus/"))
         self.assertIn(f"{n_corpus} corpus files", report[0])
         s = os.path.join(self.tmp, "good.tar.gz")
         make_sdist(self.stage, s)
-        self.assertEqual(sp.audit(s, self.manifest, self.pairs)[1], [])
+        self.assertEqual(sp.audit(s, self.manifest, self.pairs, self.top)[1], [])
 
     def test_the_audit_catches_each_kind_of_damage(self):
         cases = {
@@ -126,8 +130,70 @@ class StagePackage(unittest.TestCase):
             with self.subTest(damage=want):
                 w = os.path.join(self.tmp, f"bad-{len(want)}.whl")
                 make_wheel(self.stage, w, mutate)
-                problems = sp.audit(w, self.manifest, self.pairs)[1]
+                problems = sp.audit(w, self.manifest, self.pairs, self.top)[1]
                 self.assertTrue(any(want in p for p in problems), problems)
+
+    def test_the_staged_readme_is_the_pypi_copy_and_the_repository_keeps_its_own(self):
+        repo = open(os.path.join(self.export, "README.md"), encoding="utf-8").read()
+        staged = open(os.path.join(self.stage, "README.md"), encoding="utf-8").read()
+        version = sp.version_of(self.export)
+        self.assertIn("](AUDIT.md)", repo)  # relative in the repository: resolves on GitHub, in a clone, at any tag
+        self.assertNotIn("](AUDIT.md)", staged)
+        self.assertIn(f"(https://github.com/hneogy/gp-omm-conformance/blob/v{version}/AUDIT.md)", staged)
+        self.assertEqual(sp.relative_links(staged), [])
+        self.assertEqual(sp.relative_links(repo), ["AUDIT.md"])  # counted on 2026-09-26: the README's one relative link
+        self.assertEqual(len(staged.splitlines()), len(repo.splitlines()))  # links rewritten, nothing else
+
+    def test_the_audit_reads_the_long_description(self):
+        staged = open(os.path.join(self.stage, "README.md"), "rb").read()
+        good = os.path.join(self.tmp, "desc-good.whl")
+        make_wheel(self.stage, good, metadata=b"Name: gpconf\nDescription-Content-Type: text/markdown\n\n" + staged)
+        self.assertEqual(sp.audit(good, self.manifest, self.pairs, self.top)[1], [])
+        bad = os.path.join(self.tmp, "desc-bad.whl")
+        make_wheel(self.stage, bad, metadata=b"Name: gpconf\n\nSee [the audit](AUDIT.md).\n")
+        problems = sp.audit(bad, self.manifest, self.pairs, self.top)[1]
+        self.assertTrue(any("relative link in the long description" in p and "AUDIT.md" in p for p in problems), problems)
+
+
+class PypiReadme(unittest.TestCase):
+    FILES = {"AUDIT.md": "file", "docs": "dir", "docs/FAILURES.md": "file", "img/x.png": "file", "harnesses": "dir",
+             ".github/workflows/ci.yml": "file"}
+
+    def rewrite(self, text):
+        return sp.pypi_readme(text, "v9.9.9", self.FILES.get)
+
+    def test_every_relative_form_becomes_absolute_at_the_tag(self):
+        blob = "https://github.com/hneogy/gp-omm-conformance/blob/v9.9.9/"
+        tree = "https://github.com/hneogy/gp-omm-conformance/tree/v9.9.9/"
+        raw = "https://raw.githubusercontent.com/hneogy/gp-omm-conformance/v9.9.9/"
+        cases = {
+            "[a](AUDIT.md)": f"[a]({blob}AUDIT.md)",
+            '[f](./docs/FAILURES.md#naive "t")': f'[f]({blob}docs/FAILURES.md#naive "t")',
+            "[d](docs/)": f"[d]({tree}docs)",
+            "[h](/harnesses)": f"[h]({tree}harnesses)",
+            "[c](./.github/workflows/ci.yml)": f"[c]({blob}.github/workflows/ci.yml)",
+            "[x](#quick-start)": f"[x]({blob}README.md#quick-start)",
+            "![p](img/x.png)": f"![p]({raw}img/x.png)",
+            "[r]: docs/FAILURES.md": f"[r]: {blob}docs/FAILURES.md",
+            '<a href="docs/FAILURES.md">h</a>': f'<a href="{blob}docs/FAILURES.md">h</a>',
+            "[![b](img/x.png)](AUDIT.md)": f"[![b]({raw}img/x.png)]({blob}AUDIT.md)",
+        }
+        for src, want in cases.items():
+            with self.subTest(src=src):
+                self.assertEqual(self.rewrite(src), want)
+
+    def test_absolute_links_and_code_are_left_alone(self):
+        for text in ("[DOI](https://doi.org/10.5281/zenodo.22867654)", "[![DOI](https://zenodo.org/b.svg)](https://doi.org/x)",
+                     "mail [me](mailto:a@b.c)", "`[not a link](AUDIT.md)`", "```\n[not a link](AUDIT.md)\n```\n",
+                     "~~~md\n[not a link](missing.md)\n~~~\n"):
+            with self.subTest(text=text):
+                self.assertEqual(self.rewrite(text), text)
+
+    def test_a_link_the_export_does_not_hold_is_refused(self):
+        for text in ("[x](missing.md)", "[x](../outside.md)", "![x](img/none.png)"):
+            with self.subTest(text=text):
+                with self.assertRaisesRegex(sp.Refused, "dead link"):
+                    self.rewrite(text)
 
 
 class Metadata(unittest.TestCase):
@@ -154,6 +220,15 @@ class Metadata(unittest.TestCase):
 
     def test_the_runtime_needs_nothing(self):
         self.assertIn("dependencies = []", self.text)
+
+    def test_the_pypi_sidebar_links(self):
+        # D-159: the repository, the site, the issue tracker and the Zenodo concept DOI, the only navigation PyPI gives
+        urls = re.search(r"\[project\.urls\]\n(.*?)(?:\n\[|\Z)", self.text, re.S).group(1)
+        links = dict(re.findall(r'(?m)^(\w+) = "([^"]+)"', urls))
+        self.assertEqual(links, {"Homepage": "https://gpconf.neogy.dev",
+                                 "Repository": "https://github.com/hneogy/gp-omm-conformance",
+                                 "Issues": "https://github.com/hneogy/gp-omm-conformance/issues",
+                                 "DOI": "https://doi.org/10.5281/zenodo.22867654"})
 
 
 if __name__ == "__main__":

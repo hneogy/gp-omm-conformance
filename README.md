@@ -75,7 +75,7 @@ catalog number as Alpha-5 above 99999 and refuse numbers above 339999 (or below 
 
 | in the repository | not in the repository |
 |---|---|
-| `fixtures/<case>/expected.json`: frozen expected values and structural checks for 17 cases, all numbers as decimal strings | raw CelesTrak responses (`fixtures/<case>/raw/`): rebuilt on your machine by `tools/fetch.py` under CelesTrak's own usage policy |
+| `fixtures/<case>/expected.json`: frozen expected values and structural checks for 17 cases, all numbers as decimal strings | raw CelesTrak responses (`fixtures/<case>/raw/`): rebuilt on your machine by `tools/fetch.py` or `gpconf fetch` under CelesTrak's own usage policy |
 | `fixtures/<case>/case.md`: what the case tests, how to read a failure, coverage gaps stated per case | Space-Track data, in any form (a `.gitignore` guard refuses such paths) |
 | `derived/`: Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T only), six CCSDS-legal KVN variants, each with a provenance sidecar | invented element sets: none, anywhere |
 | `vectors/`: specification vectors (Alpha-5 table, catalog-id text forms, two-digit-year pivot, CCSDS epoch strings) | |
@@ -85,12 +85,28 @@ catalog number as Alpha-5 above 99999 and refuse numbers above 339999 (or below 
 | `harnesses/`: recipes for the five hand-run libraries that cannot be presets (libsgp4, Gpredict, SatDump, astroz, gods-eye-view): each harness, its pinned commit and build commands; best-effort, not in the pip package, and tied to the projects' internals (D-155) | SatDump's link stand-ins: the recipe lists the symbols to define instead (D-152) |
 | `docs/`: research notes with verbatim sources, cross-check, breakage catalogue, upstream bug-report drafts; `AUDIT.md`: the independent audit and its resolutions | |
 
+The pip package, `gpconf`, carries the runner and the corpus's own files: every case's `expected.json` and
+`case.md`, `derived/`, `vectors/`, `manifest.json` and the fetch list. It carries no provider data; the schemas,
+the other documents, the build tools, the test suite and the recipes stay in the repository.
+
 Why no raw files: CelesTrak's site states no redistribution terms for its data
 (`docs/RESEARCH.md` §11), and silence is not permission. Rebuilding locally means the
 provider's terms apply to you directly, fixtures cannot rot unnoticed, and SHA-256 hashes tell
 you whether you are looking at the exact bytes we tested.
 
 ## Quick start
+
+From v0.3.0 the runner installs from PyPI with the corpus's own files; the provider data is fetched once,
+into a per-user cache:
+
+```bash
+pip install gpconf
+gpconf run --preset reference   # before any fetch: the 4 cases whose files ship in the package run; 13 say they need provider data
+gpconf fetch                    # once: ~60 requests, ~12.6 MB, 2 s apart, cached, never repeated
+gpconf run --preset reference   # then all seventeen, as in a clone
+```
+
+Or from a clone, as before:
 
 ```bash
 git clone https://github.com/hneogy/gp-omm-conformance.git && cd gp-omm-conformance
@@ -99,9 +115,11 @@ python3 -m gpconf run --preset reference   # the control: 16 cases pass; the SAT
 python3 -m gpconf run --preset naive       # the parser most projects have: a demonstration of failure, not a parser to use
 ```
 
+Installed, the command is `gpconf`; in a clone it is `python3 -m gpconf`; the two take the same arguments.
 A preset runs a shipped adapter with nothing written. `python3 -m gpconf presets` lists them:
-`reference` and `naive` (standard library only), `sgp4` (needs python-sgp4: `pip install sgp4`),
-`pyephem` (needs PyEphem: `pip install ephem`), and three that need Node.js and the library
+`reference` and `naive` (standard library only), `sgp4` (needs python-sgp4: `pip install sgp4`, or
+`pip install "gpconf[sgp4]"`), `pyephem` (needs PyEphem: `pip install ephem`, or
+`pip install "gpconf[pyephem]"`), and three that need Node.js and the library
 installed where you run the command: `satellite.js`, `tle.js`, which reads the epoch from the raw
 year and day fields, and `tle.js-api`, which reads it through `getEpochTimestamp()`. A library
 preset records the version it was tested against and the report prints the version it found beside
@@ -472,9 +490,10 @@ corpus minor version; frozen values of a released version are never rewritten.
 ## Versioning
 
 `corpus_version` in `manifest.json`. Patch: documentation and tooling only. Minor: refreshed
-live snapshots or added cases. Major: changed `expected.json` schema or check semantics.
-Expected values published under a version are frozen; corrections arrive as new versions with a
-`DECISIONS.md` entry.
+live snapshots, added cases, or an additive protocol change. Major: changed `expected.json` schema or
+check semantics. Expected values published under a version are frozen; corrections arrive as new versions
+with a `DECISIONS.md` entry. The `gpconf` package carries the version of the corpus it ships, and the runner
+prints both on its first line.
 
 ## How this corpus was built
 
