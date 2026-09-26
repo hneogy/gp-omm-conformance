@@ -147,6 +147,14 @@ disk and two hours old). After each run it compares every file with the SHA-256 
 (`--check-drift` does the comparison without fetching). If you receive an HTTP 403 read the
 body: CelesTrak explains why.
 
+The same fetch runs as `python3 -m gpconf fetch`, with the same options. In a clone it writes the
+provider files under `fixtures/<case>/raw/` as always. `--data DIR`, or the `GPCONF_DATA` environment
+variable, puts them in another folder, and `gpconf run` then reads them from the same place. A copy of
+the runner outside a clone reads its corpus from the package and keeps the provider files in a per-user
+cache folder, one per corpus version: `~/.cache/gpconf/<version>` (or under `$XDG_CACHE_HOME`) on
+Linux, `~/Library/Caches/gpconf/<version>` on macOS, `%LOCALAPPDATA%\gpconf\Cache\<version>` on
+Windows. The run prints that folder above the case table whenever it is not the corpus's own (D-150).
+
 ### Two tiers: snapshot and live
 
 Each source in the manifest is `stable` or `live`.
@@ -247,8 +255,10 @@ ship provider data (see "Fetching responsibly"), and `skip` is kept for a parser
 format or no hook for a check. A case with none of its provider files reports `not-fetched`; the count line
 says how many cases need fetched data, the `n/f` column counts the missing files per case, and the runner
 prints the command that fetches them. A case that ran on some of its files keeps the result of those
-files and is named below the count line: after a first fetch the three re-capture files are not yet on
-disk, because each is requested only once its original is two hours old. A file that ships with the
+files and is named below the count line. The three re-capture files are an example: each is the same
+endpoint requested a second time when the corpus was built, and the fetch requests it only with
+`--include-recaptures`, so a normal fetch leaves those three cases without it (D-150 corrects D-148's
+wording here, which said a later run would bring it). A file that ships with the
 corpus (under `derived/` or `vectors/`) and is missing stops the run with exit status 2, since the copy
 is incomplete and no status would be true of the parser (D-148).
 

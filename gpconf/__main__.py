@@ -1,4 +1,5 @@
-"""python -m gpconf: run a parser against the corpus and print a report; check-tle: check a TLE file a tool wrote."""
+"""python -m gpconf: run a parser against the corpus and print a report; fetch: fetch the provider data the corpus
+does not ship; list: the cases; check-tle: check a TLE file a tool wrote."""
 import argparse
 import importlib
 import json
@@ -6,7 +7,8 @@ import os
 import sys
 
 from . import __version__
-from .runner import Runner, CommandParser, CorpusIncomplete, fetch_hint
+from . import locate
+from .runner import Runner, CommandParser, CorpusIncomplete
 
 
 def load_adapter(spec):
@@ -17,7 +19,7 @@ def load_adapter(spec):
     return obj() if isinstance(obj, type) else obj
 
 
-def print_missing(results, unfetched, root):
+def print_missing(results, unfetched, runner):
     """Below the count line: what was not fetched, so that neither a case with no data nor a case that ran on part
     of its data reads as a result it has not earned (D-148)."""
     partial = [r for r in results if r.status != "not-fetched" and r.missing()]
@@ -31,8 +33,12 @@ def print_missing(results, unfetched, root):
         print(f"{len(partial)} case(s) ran without {len(files)} of their provider files, so each result covers only the files on disk "
               f"(column n/f): {', '.join(r.case_id for r in partial)}.")
         if any("recapture" in os.path.basename(f) for f in files):
-            print("  A re-capture file is fetched on a later run, once its original is at least two hours old.")
-    print(f"Provider data is not shipped with the corpus; fetch it with {fetch_hint(root)}.")
+            # corrected by D-150: a normal fetch never requests a re-capture, so a later run does not bring it
+            print("  A re-capture file is the same endpoint requested a second time when the corpus was built; the fetch requests it "
+                  "only with --include-recaptures, once its original is at least two hours old, so a normal fetch leaves these cases without it.")
+    # the fetch command only where a normal fetch would bring something: a missing re-capture it never requests (D-150)
+    if any("recapture" not in os.path.basename(f) for r in results for f in r.missing()):
+        print(f"Provider data is not shipped with the corpus; fetch it with {runner.hint()}.")
 
 
 def check_tle(args):
@@ -75,39 +81,52 @@ def check_tle(args):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="gpconf", description="GP/OMM conformance corpus runner")
-    ap.add_argument("command", choices=["run", "list", "check-tle"])
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv[:1] == ["fetch"]:  # its own options (tools/fetch.py's), parsed by gpconf/fetch.py (D-150)
+        from .fetch import run as fetch_run
+        return fetch_run(argv[1:], prog="gpconf fetch")
+    ap = argparse.ArgumentParser(prog="gpconf", description="GP/OMM conformance corpus runner",
+                                 epilog="gpconf fetch --help: the fetch subcommand's own options")
+    ap.add_argument("command", choices=["run", "list", "check-tle", "fetch"])
     ap.add_argument("files", nargs="*", help="check-tle: TLE file(s) written by the tool under test")
     ap.add_argument("--against", help="check-tle: the source records the lines were written from (CSV/JSON/XML/KVN/TLE); enables the round-trip check")
     ap.add_argument("--adapter", help="python import path module:attr of a parser object or class")
     ap.add_argument("--cmd", help="external command; raw bytes on stdin, JSON array on stdout; {fmt} substituted; exit 3 = unsupported format")
     ap.add_argument("--vectors-cmd", help="external command for vector hooks (JSON {op,input} on stdin -> {result}|{error})")
     ap.add_argument("--write-cmd", help="external TLE writer for the writer case: one JSON record on stdin, 2-3 TLE lines on stdout; exit 3 = unsupported, other non-zero = refused")
-    ap.add_argument("--root", help="corpus root (default: the directory containing manifest.json next to this package)")
+    ap.add_argument("--root", help="corpus root (default: the clone this package sits in, else the corpus installed with it)")
+    ap.add_argument("--data", help=f"folder holding the fetched provider files (default: ${locate.DATA_ENV}, else the clone, else a per-user cache folder)")
     ap.add_argument("--case", action="append", help="case id (repeatable)")
     ap.add_argument("--tag", action="append", help="test tag (repeatable)")
     ap.add_argument("--json", help="write the full report to this file")
     ap.add_argument("--verbose", "-v", action="store_true", help="print every item, not only failures and within-tolerance passes")
     args = ap.parse_args(argv)
 
-    root = args.root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if args.command == "check-tle":  # needs no corpus: it checks the user's own file
+        return check_tle(args)
+    try:
+        loc = locate.resolve(args.root, args.data)
+    except locate.CorpusNotFound as e:
+        print(f"gpconf: {e}", file=sys.stderr)
+        return 2
+    root = loc["corpus"]
     manifest = json.load(open(os.path.join(root, "manifest.json")))
     if args.command == "list":
         for c in manifest["cases"]:
             print(f"{c['id']:40s} {c['kind']:12s} {', '.join(c['tests'])}")
         return 0
-    if args.command == "check-tle":
-        return check_tle(args)
     if not args.adapter and not args.cmd and not args.write_cmd:
         ap.error("run needs --adapter, --cmd or --write-cmd")
     parser = CommandParser(args.cmd, args.vectors_cmd, write_cmd=args.write_cmd) if (args.cmd or args.write_cmd) else load_adapter(args.adapter)
-    runner = Runner(parser, root=root, verbose=args.verbose)
+    runner = Runner(parser, root=root, verbose=args.verbose, data=loc["data"], data_why=loc["data_why"])
     try:
         results = runner.run(case_ids=args.case, tags=args.tag)
     except CorpusIncomplete as e:
         print(f"gpconf: {e}", file=sys.stderr)
         return 2
     print(f"gpconf {__version__} | corpus {manifest['corpus_version']} | parser: {args.cmd or args.write_cmd or args.adapter}")
+    if runner.data != root:  # a clone's output is unchanged; elsewhere the reader is told where the provider files were looked for
+        print(f"provider data: {runner.data} ({runner.data_why})")
     print()
     print(f"{'case':40s} {'status':15s} exact  tol fail skip n/e n/f")
     for r in results:
@@ -115,7 +134,7 @@ def main(argv=None):
         print(f"{r.case_id:40s} {r.status:15s} {c['pass']:5d} {c['pass-tolerance']:4d} {c['fail']:4d} {c['skip']:4d} {c['not-exercised']:3d} {c['not-fetched']:3d}")
     print()
     from .gates import compute_gates
-    gates = compute_gates(results, root)
+    gates = compute_gates(results, root, runner.data)
     for g in gates:
         print(f"gate {g['name']}: {g['headline']}")
     print()
@@ -129,7 +148,7 @@ def main(argv=None):
     if drifted:
         print("\nSTABLE SOURCE DRIFT: " + ", ".join(f"{c}: {p}" for c, p in drifted)
               + "\n  These stable-tier files differ from the tested snapshot; the frozen expected values were not applied to them and the parser was compared against the reference reader instead. Run "
-              + fetch_hint(root, "--check-drift") + ".")
+              + runner.hint("--check-drift") + ".")
     modes = {m for r in results for m in r.modes.values()}
     if "live" in modes:
         print("\nnote: some sources hash differently from the tested snapshot; for those, values were compared against the corpus's own reference reader, not the human-verified snapshot.")
@@ -144,7 +163,7 @@ def main(argv=None):
     unfetched = [r for r in results if r.status == "not-fetched"]
     print(f"\n{len(results)} case(s): {sum(1 for r in results if r.status == 'pass')} pass (exact), {tol} pass within tolerance, {failed} fail, "
           f"{sum(1 for r in results if r.status == 'skip')} skip, {len(unfetched)} need fetched data, {sum(1 for r in results if r.status == 'not-exercised')} not exercised")
-    print_missing(results, unfetched, root)
+    print_missing(results, unfetched, runner)
     if tol:
         print("'pass within tolerance' items list per-field count, mean signed difference and maximum, so a systematic bias is visible (see README, Tolerances).")
     return 1 if failed else 0

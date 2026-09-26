@@ -71,15 +71,23 @@ def is_provider_data(path):
     return len(parts) >= 4 and parts[0] == "fixtures" and parts[2] == "raw"
 
 
-def fetch_hint(root, *args):
-    """The command that fetches provider data for this corpus root, naming a script that exists (D-148).
+def fetch_hint(root, *args, data=None, data_why=None):
+    """The command that fetches provider data into the folder this run reads, naming a command that exists
+    (D-148, D-150).
 
-    A clone has tools/fetch.py; the path is given relative to the working directory when that is shorter and
-    quoted when it needs to be. A copy without the script (an installed runner) is told where the script lives
-    instead of being pointed at a path it does not have."""
+    A clone has tools/fetch.py; the path is given relative to the working directory when that is shorter and quoted
+    when it needs to be. Without the script (an installed runner, or a bare copy of the corpus) the command is the
+    package's own `python3 -m gpconf fetch`. A data folder chosen with --data is passed on; one chosen with the
+    GPCONF_DATA environment variable is not, since the variable reaches the fetch too; a bare corpus copy given as
+    --root is passed on, since the fetch would otherwise look elsewhere."""
     import shlex
     script = os.path.join(root, "tools", "fetch.py")
-    tail = "".join(" " + a for a in args)
+    flags = ""
+    if data_why == "--root" and not os.path.exists(script):
+        flags += f" --root {shlex.quote(root)}"
+    if data_why == "--data" and data:
+        flags += f" --data {shlex.quote(data)}"
+    tail = flags + "".join(" " + a for a in args)
     if os.path.exists(script):
         try:
             rel = os.path.relpath(script)
@@ -87,7 +95,7 @@ def fetch_hint(root, *args):
             rel = script
         path = script if rel.startswith("..") else rel
         return f"python3 {shlex.quote(path)}{tail}"
-    return f"python3 tools/fetch.py{tail} in a clone of {REPO_URL}"
+    return f"python3 -m gpconf fetch{tail}"
 
 
 # --------------------------------------------------------------------------- normalisation
@@ -371,11 +379,28 @@ def describe_bytes(raw, fmt=None, limit=48):
 
 
 class Runner:
-    def __init__(self, parser, root=None, verbose=False):
+    def __init__(self, parser, root=None, verbose=False, data=None, data_why=None):
         self.parser = parser
-        self.root = root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # Two roots (D-150): the corpus root holds what ships (manifest, expected values, derived/, vectors/), the
+        # data root the provider files this machine fetched. With no root given, both are resolved as the command
+        # line resolves them (a clone, or the installed corpus and a per-user cache); with a root and no data, the
+        # provider files are looked for under the root, the layout of a clone and of every test.
+        if root is None:
+            from . import locate
+            loc = locate.resolve(None, data)
+            root, data, data_why = loc["corpus"], loc["data"], loc["data_why"]
+        self.root = root
+        self.data = data or root
+        self.data_why = data_why or ("--data" if data else "--root")
         self.verbose = verbose
         self.manifest = json.load(open(os.path.join(self.root, "manifest.json")))
+
+    def path(self, rel):
+        """A source's path on disk: provider data under the data root, everything that ships under the corpus root."""
+        return os.path.join(self.data if is_provider_data(rel) else self.root, rel)
+
+    def hint(self, *args):
+        return fetch_hint(self.root, *args, data=self.data, data_why=self.data_why)
 
     # ---- parsing helpers
     def parse(self, path, fmt):
@@ -398,11 +423,11 @@ class Runner:
             raise CorpusIncomplete(f"{path} ships with the corpus and is not on disk under {self.root}: "
                                    f"this copy of the corpus is incomplete; re-clone {REPO_URL} or reinstall")
         res.add("source-present", "not-fetched", path,
-                f"not on disk: provider data is not shipped with the corpus; fetch it with {fetch_hint(self.root)}")
+                f"not on disk: provider data is not shipped with the corpus; fetch it with {self.hint()}")
 
     def load_source(self, res, case, path, src):
         """Returns (state, fmt, mode, parsed, refrecs, reffacts). state: ok | missing | empty-404 | unreadable | parse-error | unsupported"""
-        full = os.path.join(self.root, path)
+        full = self.path(path)
         fmt = src.get("format")
         if not os.path.exists(full):
             self.report_missing(res, path)
@@ -416,7 +441,7 @@ class Runner:
             res.add("stable-source-drift", "fail", path,
                     f"stable-tier source's bytes differ from the tested snapshot (recorded SHA-256 {str(src.get('sha256'))[:12]}…, actual {actual[:12]}…); "
                     "the frozen expected values were not applied to this file and the parser was compared against the corpus's reference reader instead. "
-                    f"Run {fetch_hint(self.root, '--check-drift')}; if CelesTrak changed this first-ever record, tell the corpus maintainer.")
+                    f"Run {self.hint('--check-drift')}; if CelesTrak changed this first-ever record, tell the corpus maintainer.")
         raw = open(full, "rb").read()
         text = raw.decode("utf-8", "replace")
         if src.get("http_status", 200) != 200 or text.strip() in ("No GP data found", "No SupGP data found"):
@@ -615,7 +640,7 @@ class Runner:
                     else ok_text + (f"; {tol} within tolerance" if tol else ""))
 
         if "leading-dot-decimals" in active and fmt in ("csv", "kvn", "xml"):
-            kws = leading_dot_keywords(open(os.path.join(self.root, path), "rb").read().decode("utf-8", "replace"), fmt)
+            kws = leading_dot_keywords(open(self.path(path), "rb").read().decode("utf-8", "replace"), fmt)
             fields = sorted({ref.DECIMAL_KEYS[k] for k in kws if k in ref.DECIMAL_KEYS})  # only decimal keywords can start with '.'
             if fields:
                 n, bad, tol = compare(fields)
@@ -927,7 +952,7 @@ class Runner:
 
     def run_satcat(self, case, exp, res):
         for path, src in exp["sources"].items():
-            full = os.path.join(self.root, path)
+            full = self.path(path)
             if not os.path.exists(full):
                 self.report_missing(res, path)
                 continue

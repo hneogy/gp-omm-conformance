@@ -52,7 +52,7 @@ class NotFetchedStatus(unittest.TestCase):
         for i in r.items:
             self.assertEqual(i.check, "source-present")
             self.assertIn("provider data is not shipped with the corpus", i.detail)
-            self.assertIn("python3 tools/fetch.py", i.detail)
+            self.assertIn("python3 -m gpconf fetch --root", i.detail)  # a bare corpus copy: the subcommand, pointed at it (D-150)
 
     def test_the_json_report_carries_the_status_and_the_count(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -74,7 +74,7 @@ class NotFetchedStatus(unittest.TestCase):
         self.assertIn("exact  tol fail skip n/e n/f", text)
         self.assertIn("2 case(s): 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 2 need fetched data, 0 not exercised", text)
         self.assertIn("2 case(s) have none of their provider files on disk and report not-fetched", text)
-        self.assertIn("in a clone of https://github.com/hneogy/gp-omm-conformance", text)  # no tools/fetch.py under this root
+        self.assertIn("fetch it with python3 -m gpconf fetch --root", text)  # no tools/fetch.py under this root (D-150)
         self.assertNotIn("run tools/fetch.py", text)
 
     def test_a_parser_without_a_reader_still_skips(self):
@@ -112,7 +112,11 @@ class PartlyFetchedCase(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("0 need fetched data", text)
         self.assertIn(f"1 case(s) ran without 1 of their provider files, so each result covers only the files on disk (column n/f): {CASE}.", text)
-        self.assertIn("A re-capture file is fetched on a later run, once its original is at least two hours old.", text)
+        # D-150 corrects D-148: a normal fetch never requests a re-capture, so no later run brings it
+        self.assertIn("the fetch requests it only with --include-recaptures", text)
+        self.assertIn("so a normal fetch leaves these cases without it", text)
+        self.assertNotIn("fetched on a later run", text)
+        self.assertNotIn("fetch it with", text)  # a normal fetch would not bring a re-capture, so no fetch command (D-150)
 
 
 class FetchHint(unittest.TestCase):
@@ -134,9 +138,13 @@ class FetchHint(unittest.TestCase):
             finally:
                 os.chdir(cwd)
 
-    def test_a_copy_without_the_script_is_told_where_it_lives(self):
+    def test_a_copy_without_the_script_is_given_the_subcommand(self):
+        # D-150: the fetch is a subcommand of the package, so a copy without tools/fetch.py is given a command it has
         with tempfile.TemporaryDirectory() as tmp:
-            self.assertEqual(fetch_hint(tmp), "python3 tools/fetch.py in a clone of https://github.com/hneogy/gp-omm-conformance")
+            self.assertEqual(fetch_hint(tmp), "python3 -m gpconf fetch")
+            self.assertEqual(fetch_hint(tmp, data_why="--root"), f"python3 -m gpconf fetch --root {tmp}")
+            self.assertEqual(fetch_hint(tmp, "--check-drift", data="/d d", data_why="--data"), "python3 -m gpconf fetch --data '/d d' --check-drift")
+            self.assertEqual(fetch_hint(tmp, data="/d", data_why="GPCONF_DATA"), "python3 -m gpconf fetch")  # the variable reaches the fetch itself
 
 
 class IncompleteCopy(unittest.TestCase):

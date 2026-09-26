@@ -141,8 +141,9 @@ def headline(formats, gate, snap):
     return text
 
 
-def compute_gates(results, root):
-    """Gate results from a run's CaseResults; a gate whose cases were not run says so."""
+def compute_gates(results, root, data=None):
+    """Gate results from a run's CaseResults; a gate whose cases were not run says so. root is the corpus root;
+    data the data root, where a live capture's metadata sits (the corpus root when not given, as in a clone)."""
     by_case = {r.case_id: r for r in results}
     out = []
     for gate in GATES:
@@ -153,7 +154,7 @@ def compute_gates(results, root):
             items = [i for i in (res.items if res else []) if i.file == spec["file"]]
             formats[fmt] = {"label": spec["label"], **({"state": "not run"} if res is None else format_result(items))}
             if res is not None and formats[fmt]["state"] == "measured" and res.modes.get(spec["file"]) == "live":
-                meta = os.path.join(root, spec["file"] + ".meta.json")
+                meta = os.path.join(data or root, spec["file"] + ".meta.json")
                 got = json.load(open(meta)).get("retrieved_at") if os.path.exists(meta) else None
                 formats[fmt]["live"] = {"retrieved_at": got}
         out.append({"id": gate["id"], "name": gate["name"], "question": gate["question"], "snapshot": snap,
