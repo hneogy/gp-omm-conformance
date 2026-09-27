@@ -5,11 +5,16 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
-## [Unreleased]
+## [0.3.0] - 2026-09-27
 
-The next release makes the corpus installable with pip: the runner and the corpus's own files in one package,
-a `gpconf` command, presets that test a library with no adapter written, and a GitHub Action. In a clone nothing
-changes: `tools/fetch.py` and `python3 -m gpconf` work as before.
+A minor release under the versioning rule: the adapter protocol gains a refusal channel, an additive change,
+and the corpus becomes installable with pip: the runner and the corpus's own files in one package, a `gpconf`
+command, presets that test a library with no adapter written, and a GitHub Action. In a clone nothing changes:
+`tools/fetch.py` and `python3 -m gpconf` work as before. The seventeen cases stay and no frozen expected value
+changed (the writer case gained one input); the naive and python-sgp4 adapters still fail 14 and 7 of them. The
+independent audit in `AUDIT.md` covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1 nor
+the changes of this release have been separately audited. The version DOI for this release is added to
+`CITATION.cff` and the README after Zenodo mints it.
 
 ### Installing and running
 

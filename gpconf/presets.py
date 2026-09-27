@@ -1,10 +1,9 @@
 """Presets: `gpconf run --preset NAME` runs a shipped adapter with no adapter written (D-151).
 
 Each preset names the adapter module, the library it exposes, the version it was tested against and, for a
-preset that needs a third-party library, the pip requirement and the optional extra the package will declare
-for it. The extras are recorded here and are not yet in pyproject.toml, which v0.3.0's packaging stage writes;
-until then the install hint names the library's own pip package. The report prints the version found beside the
-version tested, because a count is a result against that version, not a verdict on the project.
+preset that needs a third-party library, the pip requirement and the optional extra that pyproject.toml declares
+for it (D-156); the install hint names the library's own pip package. The report prints the version found beside
+the version tested, because a count is a result against that version, not a verdict on the project.
 
 The Node presets (D-154) run a harness shipped in gpconf/adapters/ through `node --input-type=module --eval`, from the
 working directory, so the library resolves as it would for a script in the user's project; `--module PATH` names its
