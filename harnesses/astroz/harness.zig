@@ -1,4 +1,4 @@
-// Harness for gp-omm-conformance over astroz (ATTron/astroz, GPL-3.0, called unmodified through its Tle module):
+// Harness for gp-omm-conformance over astroz (ATTron/astroz, GPL-3.0 through v0.13.0, MIT from v0.14.0; called unmodified through its Tle module):
 // TLE and 2LE through Tle.MultiIterator + Tle.parseLines (the library's own file walk), OMM JSON through
 // Tle.parseOmmArray. Runner --cmd protocol: raw bytes on stdin, JSON records on stdout, exit 3 for formats the
 // library has no reader for (CSV, XML, KVN). argv: fmt, mode ('fields' = epoch rebuilt from epochYear/epochDay
@@ -14,7 +14,10 @@ fn emit(w: *std.Io.Writer, t: Tle, mode: []const u8) !void {
     if (c.eql(mode, "jd")) try c.isoFromJd(w, t.epochJd) else try c.isoFromFields(w, t.epochYear, t.epochDay);
     try w.print("\",\"_epoch_year_field\":{d},\"_epoch_day_field\":{d},\"_epoch_jd\":{d},\"_epoch_j2000_field\":{d}", .{ t.epochYear, t.epochDay, t.epochJd, t.epoch });
     try w.print(",\"mean_motion\":{d},\"eccentricity\":{d},\"inclination\":{d},\"ra_of_asc_node\":{d},\"arg_of_pericenter\":{d},\"mean_anomaly\":{d}", .{ t.mMotion, t.eccentricity, t.inclination, t.rightAscension, t.perigee, t.mAnomaly });
-    try w.print(",\"bstar\":{d},\"mean_motion_dot\":{d},\"rev_at_epoch\":{d},\"element_set_no\":{d},\"ephemeris_type\":{d}}}", .{ t.bstarDrag, t.firstDerMeanMotion, t.revNum, t.elemNumber, t.ephemType });
+    try w.print(",\"bstar\":{d},\"mean_motion_dot\":{d},\"rev_at_epoch\":{d},\"element_set_no\":{d},\"ephemeris_type\":{d}", .{ t.bstarDrag, t.firstDerMeanMotion, t.revNum, t.elemNumber, t.ephemType });
+    // v0.14.0 (#105) carries the second derivative; earlier trees have no such field, and the branch is not compiled there.
+    if (@hasField(Tle, "secondDerMeanMotion")) try w.print(",\"mean_motion_ddot\":{d}", .{t.secondDerMeanMotion});
+    try w.writeAll("}");
 }
 
 pub fn main(init: std.process.Init) !void {

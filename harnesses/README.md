@@ -23,7 +23,7 @@ code before trusting a count.
 | [libsgp4](libsgp4/) | master 661e057, and PR #42 at 2b8d141 | Apache-2.0 | the library's own classes (`Tle`, `DateTime`) and every `.cc` file of `libsgp4/` | a C++17 compiler (Apple clang 21 as run) |
 | [gpredict](gpredict/) | tag v2.6, c9fa018 | GPL-2.0 | the internal SGP4 module `src/sgpsdp/` of the application, compiled on its own, with a stand-in for its one GLib call | a C compiler (Apple clang 21 as run) |
 | [satdump](satdump/) | master f3d82ad, and release 1.2.2 at 7aef0fe | GPL-3.0 | internal source files of `src-core/` and its bundled predict fork | a C++17 compiler (Apple clang 21 as run), libcurl |
-| [astroz](astroz/) | main d558933 | GPL-3.0 | the library's `src/Tle.zig`, used directly as a module | Zig 0.16.0 (as run; the harness uses interfaces new in 0.16) |
+| [astroz](astroz/) | main d558933, and release v0.14.0 at 67ca74c | GPL-3.0 through v0.13.0, MIT from v0.14.0 | the library's `src/Tle.zig`, used directly as a module | Zig 0.16.0 (as run; the harness uses interfaces new in 0.16) |
 | [gods-eye-view](gods-eye-view/) | main ce671ce | MIT | the application's satellites layer, by its internal module paths, with Cesium stood in | Node.js (26.5.0 as run) |
 
 The counts each run produced are in the hand-run table on the site's library page

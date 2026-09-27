@@ -21,12 +21,13 @@ RECIPES = {
                  "commits": ["c9fa018f2f16bff6dd1c5c51befb8188fe5a5e35"]},
     "satdump": {"files": {"README.md", "harness.cpp", "harness-rel.cpp"}, "licence": "GPL-3.0",
                 "commits": ["f3d82adbfe04e57c596b93479d687f4b830ee26c", "7aef0fe8441bc3eb440b1b6ba053556da5e40991"]},
-    "astroz": {"files": {"README.md", "harness.zig", "vectors.zig", "common.zig"}, "licence": "GPL-3.0",
-               "commits": ["d558933ec3a9c9ee826eb8de665b6e5d229ebecb"]},
+    "astroz": {"files": {"README.md", "harness.zig", "vectors.zig", "common.zig"}, "licence": ("GPL-3.0", "MIT"),
+               "commits": ["d558933ec3a9c9ee826eb8de665b6e5d229ebecb", "67ca74c8313c5c42159217e2bbddfaedad07e0cd"]},
     "gods-eye-view": {"files": {"README.md", "harness.mjs", "register.mjs", "cesium-hook.mjs", "cesium-stub.mjs"}, "licence": "MIT",
                       "commits": ["ce671ce500a393be27e3cbb2a08799fbca9b6e28"]},
 }
 ORIGINAL_DIR = {"libsgp4": "libsgp4", "gpredict": "gpredict", "satdump": "satdump", "astroz": "astroz", "gods-eye-view": "gods-eye-view"}
+ORIGINAL_FILE = {("astroz", "harness.zig"): "harness-ddot.zig"}  # the v0.14.0 run's harness (D-166)
 
 
 def files_under(d):
@@ -64,7 +65,8 @@ class Recipes(unittest.TestCase):
                 text = " ".join(open(os.path.join(H, name, "README.md"), encoding="utf-8").read().split())  # prose wraps freely
                 for c in spec["commits"]:
                     self.assertIn(c, text)
-                self.assertIn(spec["licence"], text)
+                for licence in [spec["licence"]] if isinstance(spec["licence"], str) else spec["licence"]:
+                    self.assertIn(licence, text)
                 self.assertIn("Best-effort, not installable by pip.", text)
                 self.assertIn("with nothing to say so", text)  # the break-silently statement
                 self.assertIn("published result", text)
@@ -117,15 +119,17 @@ class SatDump(unittest.TestCase):
 
 @unittest.skipUnless(os.path.isdir(ORIGINALS), "the hand runs' originals are private")
 class CopiesOfTheHandRuns(unittest.TestCase):
-    """The recipes' harness files are the hand runs' files, byte for byte, except one reworded comment in astroz."""
+    """The recipes' harness files are the hand runs' files, byte for byte, except the first comment line of astroz's
+    common.zig and harness.zig, which says whose code it is and the library's licence, reworded for the public copy.
+    astroz's harness.zig is the one its v0.14.0 run used (D-166), which also builds at d558933."""
 
     def test_copies_match(self):
         for name, spec in RECIPES.items():
             for rel in spec["files"] - {"README.md"}:
                 with self.subTest(file=f"{name}/{rel}"):
                     ours = open(os.path.join(H, name, rel), encoding="utf-8").read().splitlines()
-                    theirs = open(os.path.join(ORIGINALS, ORIGINAL_DIR[name], rel), encoding="utf-8").read().splitlines()
-                    if (name, rel) == ("astroz", "common.zig"):
+                    theirs = open(os.path.join(ORIGINALS, ORIGINAL_DIR[name], ORIGINAL_FILE.get((name, rel), rel)), encoding="utf-8").read().splitlines()
+                    if name == "astroz" and rel in ("common.zig", "harness.zig"):
                         ours, theirs = ours[1:], theirs[1:]  # the first comment line says whose code it is, reworded for the public copy
                     self.assertEqual(ours, theirs)
 

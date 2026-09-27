@@ -1,4 +1,4 @@
-// Shared helpers for the gp-omm-conformance harness over astroz (the corpus's own code; astroz is GPL-3.0 and is only called).
+// Shared helpers for the gp-omm-conformance harness over astroz (the corpus's own code; astroz, GPL-3.0 through v0.13.0 and MIT from v0.14.0, is only called).
 const std = @import("std");
 
 pub fn eql(a: []const u8, b: []const u8) bool {
