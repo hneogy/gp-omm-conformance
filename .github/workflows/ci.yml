@@ -4,7 +4,9 @@ jobs:
   offline:
     # No network: only the shipped cases (vectors, derived files) and the runner self-tests.
     # Cases that need fixtures/*/raw are reported as not-fetched until tools/fetch.py has run locally (D-148).
-    runs-on: ubuntu-latest
+    # Pinned (D-169): ubuntu-latest moves to Ubuntu 26 on 2026-10-19, and actions/setup-python has no Python 3.9
+    # build for 26.04, so the 3.9 job would stop there. 24.04 has 3.9 and 3.12.
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.9", "3.12"]
