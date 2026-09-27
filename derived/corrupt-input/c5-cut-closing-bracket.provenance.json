@@ -1,0 +1,54 @@
+{
+  "file": "derived/corrupt-input/c5-cut-closing-bracket.json",
+  "provenance": "synthetic-derived",
+  "label": "SYNTHETIC-DERIVED: real records frozen in this corpus, rendered by the corpus, with one stated edit; served by no provider",
+  "input": 5,
+  "check": "corrupt-file-cut",
+  "description": "A JSON array with no closing bracket: three complete records and no end to the array.",
+  "rendering": {
+    "layout": "CelesTrak's JSON layout: one array on one line, keys in CSV column order, numbers written from the frozen decimal text"
+  },
+  "file_edit": {
+    "was": "]\\r\\n",
+    "now": "",
+    "statement": "the closing bracket of the array and the line ending after it removed: the text ends with the last record's closing brace"
+  },
+  "records": [
+    {
+      "position": 1,
+      "role": "valid",
+      "norad_cat_id": 25544,
+      "values_from": "fixtures/epoch-year-19xx/expected.json",
+      "set": "iss-first",
+      "tier": "stable",
+      "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+      "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5"
+    },
+    {
+      "position": 2,
+      "role": "valid",
+      "norad_cat_id": 20453,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "decaying",
+      "tier": "live",
+      "source_file": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+      "source_sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79"
+    },
+    {
+      "position": 3,
+      "role": "valid",
+      "norad_cat_id": 69999,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "gp-69999-first",
+      "tier": "stable",
+      "source_file": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+      "source_sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108"
+    }
+  ],
+  "owner_approval": "owner approval 2026-09-27 of the v0.4.0 plan's inputs 1 to 5 (section 5) with decisions 2 to 4 of its section 10; synthetic-derived provenance under the D-096 precedent (PLAN.md section 2.1); DECISIONS D-171",
+  "generator": "tools/derive_corrupt_inputs.py",
+  "generated_at": "2026-09-27T06:48:07Z",
+  "line_endings": "CRLF",
+  "bytes": 1278,
+  "output_sha256": "6d711e2b69fd9fd833d39862fd25c4e70d8319c601e98d30c5c3a0e6e227d589"
+}

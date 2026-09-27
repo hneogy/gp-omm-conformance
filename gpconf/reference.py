@@ -136,6 +136,16 @@ def intl_designator_to_object_id(field):
     return f"{two_digit_year(yy)}-{launch}{piece}"
 
 
+def tle_number(fn, field, what):
+    """A numeric TLE column read by fn; a letter or stray character in it is a ValueError naming the field. Decimal
+    raises decimal.InvalidOperation there, which is not a ValueError, so the runner used to report a malformed
+    provider line as an internal error of the corpus (D-117, D-171)."""
+    try:
+        return fn(field)
+    except ArithmeticError:
+        raise ValueError(f"TLE {what} field {field!r} is not a number") from None
+
+
 def parse_tle_lines(l0, l1, l2, strict=True):
     if strict and (len(l1) != 69 or len(l2) != 69):
         raise ValueError(f"line length {len(l1)}/{len(l2)} != 69")
@@ -144,14 +154,14 @@ def parse_tle_lines(l0, l1, l2, strict=True):
         "norad_cat_id": from_alpha5(cat_field),
         "object_name": (l0.strip() or None) if l0 is not None else None,
         "object_id": intl_designator_to_object_id(l1[9:17]),
-        "epoch": tle_epoch_to_iso(l1[18:32]),
-        "mean_motion": plain(l2[52:63]),
-        "eccentricity": plain(Decimal("0." + l2[26:33])),
-        "inclination": plain(l2[8:16]), "ra_of_asc_node": plain(l2[17:25]),
-        "arg_of_pericenter": plain(l2[34:42]), "mean_anomaly": plain(l2[43:51]),
-        "bstar": tle_exp_to_plain(l1[53:61]),
-        "mean_motion_dot": plain(l1[33:43]),
-        "mean_motion_ddot": tle_exp_to_plain(l1[44:52]),
+        "epoch": tle_number(tle_epoch_to_iso, l1[18:32], "epoch"),
+        "mean_motion": tle_number(plain, l2[52:63], "mean motion"),
+        "eccentricity": tle_number(lambda f: plain(Decimal("0." + f)), l2[26:33], "eccentricity"),
+        "inclination": tle_number(plain, l2[8:16], "inclination"), "ra_of_asc_node": tle_number(plain, l2[17:25], "right ascension"),
+        "arg_of_pericenter": tle_number(plain, l2[34:42], "argument of perigee"), "mean_anomaly": tle_number(plain, l2[43:51], "mean anomaly"),
+        "bstar": tle_number(tle_exp_to_plain, l1[53:61], "BSTAR"),
+        "mean_motion_dot": tle_number(plain, l1[33:43], "first derivative"),
+        "mean_motion_ddot": tle_number(tle_exp_to_plain, l1[44:52], "second derivative"),
         "ephemeris_type": int(l1[62]) if l1[62].strip() else 0,
         "classification_type": l1[7],
         "element_set_no": int(l1[64:68]),
@@ -193,7 +203,15 @@ def read_tle_text(text):
 
 # --------------------------------------------------------------------------- CSV / JSON
 def read_csv_text(text):
-    rows = list(csv.DictReader(io.StringIO(text)))
+    reader = csv.DictReader(io.StringIO(text))
+    rows = []
+    for r in reader:
+        # A row with fewer fields than the header (a file cut inside a row) or more used to come back as a record
+        # with the missing values None and the cut value read as it stood, a wrong record (D-117, D-171).
+        if None in r or None in r.values():
+            n = sum(1 for k, v in r.items() if k is not None and v is not None) + len(r.get(None) or [])
+            raise ValueError(f"CSV data row {len(rows) + 1} has {n} fields and the header {len(reader.fieldnames)}: a file cut inside a row?")
+        rows.append(r)
     cols = list(rows[0].keys()) if rows else []
     recs = []
     for r in rows:

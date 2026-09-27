@@ -150,7 +150,7 @@ class InstalledCopy(unittest.TestCase):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "run", "--adapter", "my_adapter:Parser")
         self.assertEqual(code, 0, out)
         self.assertIn(f"provider data: {self.cache} (per-user cache)", out)
-        self.assertIn("17 case(s): 4 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
+        self.assertIn("18 case(s): 5 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
         self.assertIn("fetch it with python3 -m gpconf fetch.", out)
         self.assertNotIn("tools/fetch.py", out)
         self.assertIn("in every format measured here (CSV not measured: not fetched)", out)
@@ -159,7 +159,7 @@ class InstalledCopy(unittest.TestCase):
     def test_list_reads_the_bundled_manifest(self):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "list")
         self.assertEqual(code, 0, out)
-        self.assertEqual(len(out.strip().splitlines()), 17, out)
+        self.assertEqual(len(out.strip().splitlines()), 18, out)
 
     def test_fetch_dry_run_plans_every_normal_entry_into_the_cache_and_writes_nothing(self):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "fetch", "--dry-run")
@@ -189,7 +189,7 @@ class InstalledCopy(unittest.TestCase):
                                   extra_env={locate.DATA_ENV: data})
         self.assertEqual(code, 0, out)
         self.assertIn(f"provider data: {data} ({locate.DATA_ENV})", out)
-        self.assertIn("17 case(s): 16 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 1 not exercised", out)
+        self.assertIn("18 case(s): 17 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 1 not exercised", out)
         self.assertIn("reads this month's launches in every format it reads here", out)
         self.assertIn("3 case(s) ran without 3 of their provider files", out)  # the re-captures a normal fetch leaves out
         self.assertIn("only with --include-recaptures", out)
@@ -215,11 +215,11 @@ class InstalledPresets(unittest.TestCase):
         code, out = self.run_preset("reference")
         self.assertEqual(code, 0, out)
         self.assertIn("parser: preset reference\n", out)
-        self.assertIn("17 case(s): 4 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
+        self.assertIn("18 case(s): 5 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
         code, out = self.run_preset("naive")
-        self.assertEqual(code, 1, out)  # it fails the four offline cases, which is what it is for
+        self.assertEqual(code, 1, out)  # it fails the five offline cases, which is what it is for
         self.assertIn("parser: preset naive (a demonstration of failure, not a parser anyone should use)", out)
-        self.assertIn("17 case(s): 0 pass (exact), 0 pass within tolerance, 4 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
+        self.assertIn("18 case(s): 0 pass (exact), 0 pass within tolerance, 5 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
 
     def test_the_library_presets_name_the_version_found(self):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "presets")

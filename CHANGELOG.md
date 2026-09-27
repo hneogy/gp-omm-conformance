@@ -5,6 +5,63 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
+## [0.4.0] - 2026-09-27
+
+A minor release under the versioning rule: one case added, the eighteenth, `corrupt-input`, the first case to hand a
+parser corrupt input (D-171). No frozen expected value changed and the adapter protocol is as in 0.3.0. The reference
+adapter passes all eighteen cases (seventeen exact, the SATCAT data check not exercised); the naive adapter fails 15
+of them and python-sgp4 2.27 fails 8 (D-173). The independent audit in `AUDIT.md` covered v0.1.0; neither the
+writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0 nor the changes of this
+release have been separately audited. The version DOI for this release is added to `CITATION.cff` and the README
+after Zenodo mints it.
+
+### Added
+
+- `corrupt-input`: six files, each carrying one corrupt input between valid records: a wrong checksum digit on
+  line 1, line 2 one character short (a digit lost mid-line, so every column after it moves), the letter O for a 0
+  in the epoch field, a set with no line 2, a CSV that ends inside its last row, and a JSON array whose closing
+  bracket is missing. Every input is a real record frozen in this corpus with one stated edit, synthetic-derived
+  under the D-096 precedent, and `tools/derive_corrupt_inputs.py` rebuilds them from the public expected values.
+  The corrupt record must come back refused with a reason and the records around it loaded. A parser that
+  validates no checksum is reported on the first input, not failed, and a whole-file refusal of a cut file passes,
+  with the complete records it gives up counted. The outcomes are counted in the existing loaded, misidentified,
+  refused and dropped vocabulary (D-142, D-144). The case runs offline, so CI and the GitHub Action run it (D-171).
+  What a parser returns from each input is compared with what it returns from the same records unedited, three
+  files that ship beside the inputs, so the case grades what the corrupt input changes; how exactly a parser reads
+  the records is left to the values check, which grades it in their own cases (D-175).
+
+### Changed
+
+- The reference reader rejects a TLE field that is not a number with an error that names the field (it used to
+  surface as an internal error of the corpus), and a CSV row whose field count differs from the header's (it used
+  to come back as a record with the missing values empty). The reference adapter reads TLE sets one at a time, so a
+  set it rejects is refused with the reader's reason and the sets after it still load (D-171).
+- `docs/FAILURES.md` covers the eighteen cases (D-173).
+- The `pyephem` preset reports an element set `readtle()` refuses through the refusal channel, with PyEphem's own
+  message as the reason; it used to drop the set, and the report said that refusals were not reported. Over the
+  seventeen earlier cases `readtle()` refuses no set, so none of their results changes; the headline of the gate over
+  this month's launches now says "dropped silently" where it said "refusals not reported by this adapter" (D-174).
+- The Gpredict recipe's harness (`harnesses/gpredict/`) reports a set Gpredict rejects through the refusal channel,
+  with the function's return code as the reason, where it used to drop it (D-178); so does the libsgp4 recipe's
+  (`harnesses/libsgp4/`), with the library's exception message as the reason, and it now documents the build of
+  release v3.0 (D-182); and so does the astroz recipe's (`harnesses/astroz/`), with the library's error name as the
+  reason, and it now exits with astroz's error when astroz rejects a JSON file as a whole, where it used to return an
+  empty list, so the report says that the parser refused the file (D-185).
+- Every shipped adapter and recipe that splits a TLE file into sets for a library that reads one set at a time (the
+  `pyephem`, `sgp4`, `satellite.js` and `tle.js` presets, and the Gpredict and libsgp4 recipes) hands each line 1 to
+  the library with whatever line follows it, where it used to pass over a line 1 not followed by a line 2; the report
+  then shows what the library does with a set missing its second line, not what the adapter does. `docs/ADAPTERS.md`
+  asks the same of a new adapter (D-183).
+
+### Fixed
+
+- Three test-shim docstrings carried a local path; `tests/test_export.py` now fails on any absolute home path in an
+  exported file (D-172).
+- A failing command adapter's error reached an item's detail with the line ending its standard error ended with; it
+  is now stripped (D-177).
+- The README's row for `tle-writer-alpha5` left out the positive-exponent BSTAR input added in 0.3.0 (D-125), so the
+  inputs it listed added up to 609 rather than 610; it now names all four synthetic-derived inputs (D-187).
+
 ## [0.3.0] - 2026-09-27
 
 A minor release under the versioning rule: the adapter protocol gains a refusal channel, an additive change,

@@ -16,7 +16,7 @@ ORIGINALS = os.path.join(ROOT, "docs", "handoff", "batch-g")
 
 RECIPES = {
     "libsgp4": {"files": {"README.md", "harness.cpp", "vectors.cpp", "common.h"}, "licence": "Apache-2.0",
-                "commits": ["661e057a5d369d5ee424676cf1d69cbead95ff2c", "2b8d14139fa266cdf57cb52ec9e1dfa041ee343d"]},
+                "commits": ["661e057a5d369d5ee424676cf1d69cbead95ff2c", "2b8d14139fa266cdf57cb52ec9e1dfa041ee343d", "c6ebb90625b43d7f6c6eb38b386f343d3cfe03a6"]},
     "gpredict": {"files": {"README.md", "harness.c", "stubs/glib.h", "stubs/glib/gprintf.h"}, "licence": "GPL-2.0",
                  "commits": ["c9fa018f2f16bff6dd1c5c51befb8188fe5a5e35"]},
     "satdump": {"files": {"README.md", "harness.cpp", "harness-rel.cpp"}, "licence": "GPL-3.0",
@@ -27,7 +27,9 @@ RECIPES = {
                       "commits": ["ce671ce500a393be27e3cbb2a08799fbca9b6e28"]},
 }
 ORIGINAL_DIR = {"libsgp4": "libsgp4", "gpredict": "gpredict", "satdump": "satdump", "astroz": "astroz", "gods-eye-view": "gods-eye-view"}
-ORIGINAL_FILE = {("astroz", "harness.zig"): "harness-ddot.zig"}  # the v0.14.0 run's harness (D-166)
+ORIGINAL_FILE = {("astroz", "harness.zig"): "round-2/harness.zig",  # round two's harness, with the refusal channel (D-185)
+                 ("gpredict", "harness.c"): "round-2/harness.c",  # round two's harness, with the refusal channel (D-178)
+                 ("libsgp4", "harness.cpp"): "round-2/harness.cpp"}  # likewise (D-182)
 
 
 def files_under(d):
@@ -120,8 +122,9 @@ class SatDump(unittest.TestCase):
 @unittest.skipUnless(os.path.isdir(ORIGINALS), "the hand runs' originals are private")
 class CopiesOfTheHandRuns(unittest.TestCase):
     """The recipes' harness files are the hand runs' files, byte for byte, except the first comment line of astroz's
-    common.zig and harness.zig, which says whose code it is and the library's licence, reworded for the public copy.
-    astroz's harness.zig is the one its v0.14.0 run used (D-166), which also builds at d558933."""
+    common.zig, which says whose code it is and the library's licence, reworded for the public copy. astroz's
+    harness.zig is round two's, which reports refusals (D-185) and also builds at d558933; Gpredict's harness.c is
+    round two's too (D-178), and so is libsgp4's harness.cpp (D-182)."""
 
     def test_copies_match(self):
         for name, spec in RECIPES.items():
@@ -129,7 +132,7 @@ class CopiesOfTheHandRuns(unittest.TestCase):
                 with self.subTest(file=f"{name}/{rel}"):
                     ours = open(os.path.join(H, name, rel), encoding="utf-8").read().splitlines()
                     theirs = open(os.path.join(ORIGINALS, ORIGINAL_DIR[name], ORIGINAL_FILE.get((name, rel), rel)), encoding="utf-8").read().splitlines()
-                    if name == "astroz" and rel in ("common.zig", "harness.zig"):
+                    if name == "astroz" and rel == "common.zig":
                         ours, theirs = ours[1:], theirs[1:]  # the first comment line says whose code it is, reworded for the public copy
                     self.assertEqual(ours, theirs)
 

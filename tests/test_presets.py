@@ -113,6 +113,70 @@ class SameAdapters(unittest.TestCase):
                 self.assertEqual(items(Runner(parser, root=ROOT).run(case_ids=OFFLINE)), items(Runner(cls(), root=ROOT).run(case_ids=OFFLINE)))
 
 
+class PyEphemRefusals(unittest.TestCase):
+    """D-174: the pyephem preset reports an element set readtle() refuses through the refusal channel (D-144), with the
+    library's own message as the reason. D-183: every line 1 reaches the library with whatever line follows it, so a line
+    1 with no line 2 after it is PyEphem's to answer, not the adapter's. Skips where PyEphem is not installed."""
+
+    def setUp(self):
+        try:
+            import ephem
+            from gpconf.adapters.pyephem_adapter import Parser
+        except ImportError:
+            self.skipTest("PyEphem not installed here")
+        self.ephem, self.parser = ephem, Parser()
+
+    def read(self, name):
+        with open(os.path.join(ROOT, "derived", "corrupt-input", name), "rb") as f:
+            raw = f.read()
+        return raw.decode("utf-8").splitlines(), self.parser.parse(raw, "tle")
+
+    def test_a_set_readtle_refuses_comes_back_as_a_refusal_with_the_librarys_reason(self):
+        lines, out = self.read("c1-checksum-digit.tle")
+        i = next(i for i, l in enumerate(lines) if l.startswith("1 69999"))
+        with self.assertRaises(Exception) as cm:
+            self.ephem.readtle(lines[i - 1].strip(), lines[i], lines[i + 1])
+        self.assertEqual(out[0], {"_adapter": {"refusals": True}})
+        self.assertEqual([r for r in out if "_refused" in r],
+                         [{"_refused": f"{type(cm.exception).__name__}: {cm.exception}", "_field": "69999", "_input": lines[i]}])
+        self.assertEqual(sorted(r["norad_cat_id"] for r in out[1:] if "_refused" not in r), [20453, 25544])
+
+    def test_a_line_1_with_no_line_2_reaches_the_library_with_the_next_line(self):
+        lines, out = self.read("c4-line-2-missing.tle")
+        i = next(i for i, l in enumerate(lines) if l.startswith("1 69999"))
+        with self.assertRaises(Exception) as cm:
+            self.ephem.readtle(lines[i - 1].strip(), lines[i], lines[i + 1])  # line 1 and the next set's name line
+        self.assertEqual(out[0], {"_adapter": {"refusals": True}})
+        self.assertEqual([r for r in out if "_refused" in r],
+                         [{"_refused": f"{type(cm.exception).__name__}: {cm.exception}", "_field": "69999", "_input": lines[i]}])
+        self.assertEqual(sorted(r["norad_cat_id"] for r in out[1:] if "_refused" not in r), [20453, 25544])
+
+
+class Sgp4Pairing(unittest.TestCase):
+    """D-183: the python-sgp4 adapter hands every line 1 to the library with whatever line follows it; what the library
+    makes of a line 1 with no line 2 after it is its own answer. Skips where python-sgp4 is not installed."""
+
+    def test_a_line_1_with_no_line_2_reaches_the_library(self):
+        try:
+            from sgp4.api import Satrec
+            from gpconf.adapters.sgp4_adapter import Parser
+        except ImportError:
+            self.skipTest("python-sgp4 not installed here")
+        with open(os.path.join(ROOT, "derived", "corrupt-input", "c4-line-2-missing.tle"), "rb") as f:
+            raw = f.read()
+        lines = raw.decode("utf-8").splitlines()
+        i = next(i for i, l in enumerate(lines) if l.startswith("1 69999"))
+        try:
+            Satrec.twoline2rv(lines[i], lines[i + 1])
+            answered = "returned"
+        except ValueError:
+            answered = "refused"
+        out = Parser().parse(raw, "tle")
+        got = {r["norad_cat_id"] for r in out if "norad_cat_id" in r} | {int(r["_field"]) for r in out if "_refused" in r}
+        self.assertIn(69999, got, f"the library {answered} the pair, and the adapter must pass that answer on")
+        self.assertTrue({20453, 25544} <= got)
+
+
 class Report(unittest.TestCase):
     def test_the_json_report_records_the_preset(self):
         with tempfile.TemporaryDirectory() as tmp:

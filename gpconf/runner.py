@@ -1195,6 +1195,216 @@ class Runner:
             res.add("tle-writer-matches-provider-rendering", "info", None,
                     "byte-identical to the provider's or derived rendering: " + ", ".join(f"{f} {a}/{n}" for f, (a, n) in prov.items()))
 
+    @staticmethod
+    def unedited_diffs(got, base):
+        """The fields in which a record the parser returned from a corrupt input differs from the same parser's reading
+        of that record in the unedited file (D-175), compared exactly: the same parser read the same record, so a
+        difference is the edit's doing. How close either reading comes to the frozen values is the values check's
+        question, asked in the records' own cases; asked here as well, it failed a parser that reads these records
+        imprecisely in every file, whatever it did with the corrupt input."""
+        def same(a, b):
+            return a == b or (isinstance(a, Decimal) and isinstance(b, Decimal) and a.is_nan() and b.is_nan())
+        diffs = []
+        for field in CORE_FIELDS + OPTIONAL_FIELDS:
+            a, b = got.get(field), base.get(field)
+            bad_a, bad_b = got.get("_bad", {}).get(field), base.get("_bad", {}).get(field)
+            if not same(a, b) or bad_a != bad_b:
+                diffs.append(f"{field} = {bad_a or repr(a)}, from the unedited file {bad_b or repr(b)}")
+        return diffs
+
+    def read_unedited(self, res, path, src, fmt, readings):
+        """The parser's reading of an unedited file (D-175), made once per run of the case: ({id: first record}, {id:
+        count}, None), or (None, None, why) when the file cannot serve as the comparison, because the parser refused it
+        as a whole or its bytes are not the ones the case was built on."""
+        if path in readings:
+            return readings[path]
+        full = self.path(path)
+        if not os.path.exists(full):
+            self.report_missing(res, path)  # ships with the corpus: an incomplete copy stops the run (D-148)
+        actual = sha256(full)
+        res.modes[path] = "snapshot" if actual == src.get("sha256") else "live"
+        if actual != src.get("sha256"):
+            res.drift[path] = {"recorded_sha256": src.get("sha256"), "actual_sha256": actual}
+            res.add("stable-source-drift", "fail", path, f"the unedited file's bytes differ from the ones the case was built on (recorded SHA-256 "
+                    f"{str(src.get('sha256'))[:12]}…, actual {actual[:12]}…): the inputs it is the comparison for were not graded")
+            readings[path] = (None, None, "its bytes are not the recorded ones")
+            return readings[path]
+        with open(full, "rb") as f:
+            raw = f.read()
+        try:
+            out = (getattr(self.parser, "parse", None) or self.parser)(raw, fmt)
+        except Exception as e:  # Unsupported too: the input of the same format was read, so this is a refusal of the file
+            readings[path] = (None, None, f"the parser refused it as a whole ({type(e).__name__}: {str(e)[:160]})")
+            return readings[path]
+        if not isinstance(out, list):
+            readings[path] = (None, None, f"the parser returned {type(out).__name__} for it, not a list of records")
+            return readings[path]
+        base, count = {}, {}
+        for r in split_refusals(out)[0]:
+            n, _, bad = norm_record(r)
+            if bad:
+                n["_bad"] = bad
+            base.setdefault(n.get("norad_cat_id"), n)
+            count[n.get("norad_cat_id")] = count.get(n.get("norad_cat_id"), 0) + 1
+        readings[path] = (base, count, None)
+        return readings[path]
+
+    def run_corrupt_input(self, case, exp, res):
+        """Corrupt-input case (D-171): each file that ships with the corpus hands the parser one corrupt input between
+        valid records. The corrupt record must come back refused with a reason and the valid ones loaded; every record's
+        outcome is counted in the vocabulary of D-142 and D-144 (loaded, misidentified, refused, dropped), a record built
+        from garbage counting as misidentified. What the parser returns is compared, record by record and exactly, with
+        what the same parser returns from the input's unedited file, the same records with no edit (D-175), so the items
+        grade what the edit changes and nothing else; a record the parser does not return from the unedited file either
+        is left out of the grading. A parser that raises on a file has refused it as a whole, which is fail-closed for a
+        file cut mid-record, the complete records it gave up counted (owner decision 3), and for a TLE file gives up the
+        valid sets around the corrupt one. A parser that validates no checksum returns input 1's set exactly as it
+        returns it unedited: reported, not failed (owner decision 2)."""
+        by_file = {}
+        for r in exp["records"]:
+            by_file.setdefault(r["file"], []).append(r)
+        unedited = exp["case_specific"].get("unedited", {})
+        readings = {}  # unedited file -> the parser's reading of it, made once
+        for path, src in exp["sources"].items():
+            if path in unedited:
+                continue  # read when an input it is the comparison for is graded
+            base_name = os.path.basename(path)
+            spec = exp["case_specific"]["files"][base_name]
+            check, fmt, cut = spec["check"], spec["format"], spec["check"] == "corrupt-file-cut"
+            want = sorted(by_file.get(base_name, []), key=lambda r: r["position"])
+            full = self.path(path)
+            if not os.path.exists(full):
+                self.report_missing(res, path)  # ships with the corpus: an incomplete copy stops the run (D-148)
+                continue
+            actual = sha256(full)
+            res.modes[path] = "snapshot" if actual == src.get("sha256") else "live"
+            if actual != src.get("sha256"):
+                res.drift[path] = {"recorded_sha256": src.get("sha256"), "actual_sha256": actual}
+                res.add("stable-source-drift", "fail", path, f"the file's bytes differ from the input the case was built on (recorded SHA-256 "
+                        f"{str(src.get('sha256'))[:12]}…, actual {actual[:12]}…): its expectations describe other bytes and were not applied")
+                continue
+            whole = None
+            with open(full, "rb") as f:
+                raw = f.read()
+            try:
+                out = (getattr(self.parser, "parse", None) or self.parser)(raw, fmt)
+            except Unsupported:
+                res.add(check, "skip", path, f"parser reports {fmt} unsupported")
+                continue
+            except Exception as e:  # the parser refused the file as a whole, with the exception as its reason
+                whole, out = f"{type(e).__name__}: {str(e)[:160]}", []
+            if not isinstance(out, list):
+                res.add(check, "fail", path, f"parser returned {type(out).__name__}, not a list of records")
+                continue
+            upath = spec["unedited"]
+            uname = os.path.basename(upath)
+            base, base_count, why = self.read_unedited(res, upath, exp["sources"][upath], fmt, readings)
+            if why:
+                for c in (check, "corrupt-input-neighbours-load"):
+                    res.add(c, "not-exercised", path, f"no comparison: the unedited file {uname} cannot serve as one ({why}), so nothing here isolates what the edit changes")
+                continue
+            got, refusals, declared = split_refusals(out)
+            res.refusals[path], res.declared[path] = refusals, declared
+            self.report_refusals(res, path, refusals)
+            parsed = []
+            for r in got:
+                n, notes, bad = norm_record(r)
+                n["_notes"] = notes
+                if bad:
+                    n["_bad"] = bad
+                parsed.append(n)
+            by_id = {}
+            for p in parsed:
+                by_id.setdefault(p.get("norad_cat_id"), []).append(p)
+            ids = {r["norad_cat_id"] for r in want}
+            with_reason = [x for x in refusals if x["ok"]]
+            outcome = {}  # id -> (outcome, what)
+            for r in want:
+                cat = r["norad_cat_id"]
+                if whole:
+                    outcome[cat] = ("refused" if r["role"] == "corrupt" else "given up", whole)
+                elif by_id.get(cat):
+                    diffs = self.unedited_diffs(by_id[cat][0], base[cat]) if cat in base else ["a record the parser does not return from the unedited file"]
+                    outcome[cat] = ("garbage", "; ".join(diffs[:3])) if diffs else ("loaded", None)
+                elif any(x["id"] == cat for x in with_reason):
+                    outcome[cat] = ("refused", next(x["reason"] for x in with_reason if x["id"] == cat))
+                elif any(x["id"] == cat for x in refusals):
+                    outcome[cat] = ("refused without a reason", None)
+                else:
+                    outcome[cat] = ("dropped", None)
+            corrupt = next((r for r in want if r["role"] == "corrupt"), None)
+            unmatched = [x for x in with_reason if x["id"] not in ids]
+            if corrupt and outcome[corrupt["norad_cat_id"]][0] == "dropped" and unmatched:
+                # a refusal that names no record of the file stands for the corrupt record, which did not come back
+                outcome[corrupt["norad_cat_id"]] = ("refused", unmatched[0]["reason"])
+            # records the parser does not return from the unedited file either: what it does with them here is not the edit's doing
+            unread = {cat for cat in ids if cat not in base and outcome[cat][0] != "garbage"}
+            # records beyond the expected ones (an id the file does not hold, a second copy), unless the unedited reading has them too
+            extra = [p for k, ps in by_id.items() for p in ps[max(base_count.get(k, 0), 1 if k in ids else 0):]]
+            reasons = [x["reason"] for x in with_reason] or ([whole] if whole else [])
+            counts = {"expected": len(want), "returned": len(parsed),
+                      "loaded": sum(1 for o, _ in outcome.values() if o == "loaded"),
+                      "misidentified": sum(1 for o, _ in outcome.values() if o == "garbage") + len(extra),
+                      "dropped": sum(1 for o, _ in outcome.values() if o in ("dropped", "refused without a reason")),
+                      "non_integer_id": len([p for p in by_id.get(None, []) if p.get("_bad", {}).get("norad_cat_id")]),
+                      "refused": len(want) if whole else len(with_reason),
+                      "refused_matched": sum(1 for o, _ in outcome.values() if o in ("refused", "given up")),
+                      "refused_without_reason": len(refusals) - len(with_reason), "refusals_reported": declared,
+                      "top_refusal_reason": max(set(reasons), key=reasons.count) if reasons else None}
+            garbage_extra = f"; {len(extra)} record(s) the file does not hold, built from garbage" if extra else ""
+            # the corrupt input itself
+            if corrupt is None:  # the JSON array without its closing bracket: every record complete, the file cut
+                if whole:
+                    status, text = "pass", f"the parser refused the file as a whole ({whole}): fail-closed; {len(want)} complete record(s) given up with it"
+                elif with_reason and not extra:
+                    status, text = "pass", f"the cut reported with a reason: {with_reason[0]['reason'][:120]!r}"
+                else:
+                    status, text = "fail", (f"{counts['loaded']} of {len(want)} record(s) loaded and nothing said of the cut "
+                                            f"({spec.get('file_edit', 'the file is cut')}): silent partial loading" + garbage_extra)
+            elif corrupt["norad_cat_id"] in unread:
+                status, text = "not-exercised", (f"the parser does not return {corrupt['norad_cat_id']} from the unedited file {uname} either, "
+                                                 "so what it does with the edited record says nothing about the edit")
+            else:
+                o, what = outcome[corrupt["norad_cat_id"]]
+                if o == "refused":
+                    status, text = "pass", (f"the parser refused the file as a whole ({whole})" + (": fail-closed for a file cut mid-record" if cut else "")
+                                            if whole else f"the corrupt record refused with a reason: {what[:160]!r}")
+                elif o == "loaded":
+                    status = "info" if corrupt["if_read_as_unedited"] == "report" else "fail"
+                    text = f"{corrupt['read_as_unedited_means']} ({corrupt['edit']})"
+                elif o == "garbage":
+                    status, text = "fail", f"built a record from the corrupt input: {what}"
+                elif o == "refused without a reason":
+                    status, text = "fail", "the corrupt record refused without a reason: no better than a drop (D-144)"
+                else:
+                    status, text = "fail", ("the cut row dropped with nothing said: silent partial loading" if cut else "the corrupt record dropped " +
+                                            ("silently" if declared else "(refusals not reported by this adapter)"))
+                if extra:
+                    status, text = "fail", text + garbage_extra
+            res.add(check, status, path, text, counts=counts)
+            # the valid records around it, graded where the parser returns them from the unedited file
+            valid = [r for r in want if r["role"] == "valid"]
+            graded = [r for r in valid if r["norad_cat_id"] not in unread]
+            where = "complete record(s)" if cut else "valid set(s) around the corrupt one"
+            left_out = [str(r["norad_cat_id"]) for r in valid if r["norad_cat_id"] in unread]
+            note = f"; not graded: {', '.join(left_out)}, which the parser does not return from the unedited file either" if left_out else ""
+            label = {"garbage": "changed by the corrupt input"}
+            problems = [f"{r['norad_cat_id']} {label.get(outcome[r['norad_cat_id']][0], outcome[r['norad_cat_id']][0])}"
+                        + (f" ({outcome[r['norad_cat_id']][1][:160]})" if outcome[r['norad_cat_id']][1] else "")
+                        for r in graded if outcome[r["norad_cat_id"]][0] != "loaded"]
+            if not graded:
+                res.add("corrupt-input-neighbours-load", "not-exercised", path, f"the parser returns none of the {len(valid)} {where} from the unedited file "
+                        f"{uname} either, so nothing here shows what the edit changed")
+            elif whole and cut:
+                res.add("corrupt-input-neighbours-load", "info", path, f"{len(graded)} {where} given up with the file: a whole-file refusal of a file cut mid-record is fail-closed (owner decision 3, D-171)" + note)
+            elif whole:
+                res.add("corrupt-input-neighbours-load", "fail", path, f"the parser refused the file as a whole ({whole}), so the {len(graded)} {where} were given up with it" + note)
+            elif problems:
+                res.add("corrupt-input-neighbours-load", "fail", path, f"{len(graded) - len(problems)} of {len(graded)} {where} loaded as the parser reads them from "
+                        f"the unedited file {uname}; " + "; ".join(problems) + note)
+            else:
+                res.add("corrupt-input-neighbours-load", "pass", path, f"{len(graded)} {where} loaded, each exactly as the parser reads it from the unedited file {uname}" + note)
+
     def run_case(self, case):
         exp = json.load(open(os.path.join(self.root, "fixtures", case["id"], "expected.json")))
         res = CaseResult(case["id"], case["title"])
@@ -1214,6 +1424,8 @@ class Runner:
                 self.run_vectors(case, exp, res)
             elif kind == "writer":
                 self.run_writer(case, exp, res)
+            elif kind == "corrupt-input":
+                self.run_corrupt_input(case, exp, res)
         except CorpusIncomplete:
             raise  # a broken copy of the corpus is not a result about the parser (D-148)
         except Exception as e:
@@ -1247,6 +1459,12 @@ class CommandParser:
         self.cmd, self.vectors_cmd, self.timeout, self.write_cmd = cmd, vectors_cmd, timeout, write_cmd
         self.cwd, self.env = cwd, env
 
+    @staticmethod
+    def _stderr(p):
+        """A failing command's standard error as an item's detail carries it: the last 300 characters, without the
+        line ending most programs end with, which would otherwise break the report's line (D-177)."""
+        return p.stderr.decode("utf-8", "replace").strip()[-300:]
+
     def _run(self, cmd, data, fmt=None):
         if isinstance(cmd, (list, tuple)):
             argv = [fmt if (a == "{fmt}" and fmt is not None) else a for a in cmd]
@@ -1262,7 +1480,7 @@ class CommandParser:
         if p.returncode == 3:
             raise Unsupported(fmt)
         if p.returncode != 0:
-            raise RuntimeError(f"exit {p.returncode}: {p.stderr.decode('utf-8', 'replace')[-300:]}")
+            raise RuntimeError(f"exit {p.returncode}: {self._stderr(p)}")
         try:
             data = json.loads(p.stdout.decode("utf-8"))
         except ValueError as e:
@@ -1278,7 +1496,7 @@ class CommandParser:
         if p.returncode == 3:
             raise Unsupported("tle-writing")
         if p.returncode != 0:
-            raise RuntimeError(f"exit {p.returncode}: {p.stderr.decode('utf-8', 'replace')[-300:]}")
+            raise RuntimeError(f"exit {p.returncode}: {self._stderr(p)}")
         return p.stdout.decode("utf-8")
 
     def _vec(self, op, value):

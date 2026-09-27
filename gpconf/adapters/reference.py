@@ -13,7 +13,7 @@ class Parser:
     def parse(self, raw, fmt):
         text = raw.decode("utf-8")
         if fmt in ("tle", "2le"):
-            recs = ref.read_tle_text(text)
+            recs = tle_sets(text)
         elif fmt == "csv":
             recs, _ = ref.read_csv_text(text)
         elif fmt == "json":
@@ -27,8 +27,8 @@ class Parser:
             raise Unsupported(fmt)
         out = []
         for r in recs:
-            d = {k: r.get(k) for k in CORE_FIELDS + OPTIONAL_FIELDS if r.get(k) is not None or k in CORE_FIELDS}
-            out.append(d)
+            d = r if "_refused" in r else {k: r.get(k) for k in CORE_FIELDS + OPTIONAL_FIELDS if r.get(k) is not None or k in CORE_FIELDS}
+            out.append(d)  # a refusal (D-144) is passed on as it is
         return out
 
     def write_tle(self, record):
@@ -73,3 +73,28 @@ class Parser:
         if frac:
             t = t + dt.timedelta(microseconds=int(round(float("0" + frac) * 1e6)))
         return t
+
+
+def tle_sets(text):
+    """The reference reader's pairing (read_tle_text), one set at a time, so that a set the strict reader rejects comes
+    back as a refusal with the reader's reason and the sets after it still load; a line 1 with no line 2 after it, or a
+    line 2 with no line 1 before it, is refused too, where read_tle_text passes over it (D-171). A valid file gives
+    exactly read_tle_text's records."""
+    lines = text.splitlines()
+    out, i = [], 0
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("1 ") and i + 1 < len(lines) and lines[i + 1].startswith("2 "):
+            l0 = lines[i - 1] if i > 0 and lines[i - 1][:2] not in ("1 ", "2 ") else None
+            try:
+                out.append(ref.parse_tle_lines(l0, line, lines[i + 1]))
+            except ValueError as e:
+                out.append({"_refused": f"ValueError: {e}", "_field": line[2:7], "_input": line[:80]})
+            i += 2
+            continue
+        if line.startswith("1 "):
+            out.append({"_refused": "a line 1 with no line 2 after it", "_field": line[2:7], "_input": line[:80]})
+        elif line.startswith("2 "):
+            out.append({"_refused": "a line 2 with no line 1 before it", "_field": line[2:7], "_input": line[:80]})
+        i += 1
+    return out

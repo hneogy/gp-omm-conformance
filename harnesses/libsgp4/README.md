@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| tested at | master `661e057a5d369d5ee424676cf1d69cbead95ff2c` ("Version 2", 2026-07-26), and the head of pull request #42, `2b8d14139fa266cdf57cb52ec9e1dfa041ee343d` (2026-03-26) |
+| tested at | master `661e057a5d369d5ee424676cf1d69cbead95ff2c` ("Version 2", 2026-07-26), the head of pull request #42, `2b8d14139fa266cdf57cb52ec9e1dfa041ee343d` (2026-03-26), and release v3.0, `c6ebb90625b43d7f6c6eb38b386f343d3cfe03a6` (2026-09-26) |
 | licence of the library | Apache-2.0 |
 | what the harness compiles against | the library's own classes, `Tle` and `DateTime`, and every `.cc` file of `libsgp4/`, compiled without its CMake build. `Tle::FromCsv` exists only on master, so CSV is read only with `-DHAVE_CSV` |
 | toolchain as run | Apple clang 21, C++17, macOS; built and run on 2026-09-24 |
-| published result | 6 of 17 cases failed on master, 5 of 17 on PR #42, with the runner of 2026-09-24 (corpus D-138) |
+| published result | 6 of 17 cases failed on master, 5 of 17 on PR #42, with the runner of 2026-09-24 (corpus D-138); round two, release v3.0 on v0.4.0's eighteen cases: 9 of 18 (corpus D-182, D-183) |
 
 Best-effort, not installable by pip. This harness uses the library's classes rather than its internals, so it is the
 least likely of the five to break, but it is tied to the commits above: the constructor signatures and `FromCsv` are
@@ -14,8 +14,11 @@ what it was written against, and a later change to either can make it build and 
 nothing to say so.
 
 `harness.cpp` reads TLE and 2LE through the `Tle(name, line1, line2)` constructor and, on master, CSV through
-`Tle::FromCsv()` one data line at a time, as `LoadCsvTleFile()` does. `vectors.cpp` answers the corpus's vector hooks
-through the same constructors. `common.h` is shared by both.
+`Tle::FromCsv()` one data line at a time, as `LoadCsvTleFile()` does. A set or row the library throws on comes back
+through the runner's refusal channel with the exception's message as its reason (corpus D-144, adopted in D-182);
+each line 1 goes to the constructor with whatever line follows it, so the library, not the harness, answers for a line
+1 with no line 2 after it (corpus D-183). `vectors.cpp`
+answers the corpus's vector hooks through the same constructors. `common.h` is shared by both.
 
 ## Build, master
 
@@ -31,7 +34,8 @@ clang++ -std=c++17 -O1 -DHAVE_CSV -I repo/libsgp4 -o build/vectors vectors.cpp b
 For pull request #42, check out `2b8d14139fa266cdf57cb52ec9e1dfa041ee343d` instead (`git -C repo fetch origin
 pull/42/head`), build into a separate folder, and leave out `-DHAVE_CSV`, since that tree predates CSV.
 
-Release v3.0 (`c6ebb90625b43d7f6c6eb38b386f343d3cfe03a6`, 2026-09-26) renamed the library's sources from `.cc` to `.cpp`,
+For release v3.0, check out `c6ebb90625b43d7f6c6eb38b386f343d3cfe03a6` instead and compile `repo/libsgp4/*.cpp` into a
+separate folder (for example `build-v3.0`), with `-DHAVE_CSV`: v3.0 renamed the library's sources from `.cc` to `.cpp`,
 so the pinned command above compiles nothing against the release.
 
 ## Run

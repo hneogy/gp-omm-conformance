@@ -6,7 +6,7 @@
 | licence of the library | GPL-3.0 through v0.13.0, so at d558933; MIT from v0.14.0 (#103) |
 | what the harness compiles against | the library's source file `src/Tle.zig`, used directly as a module named `astroz` rather than through the package's build: `Tle.MultiIterator` and `Tle.parseLines` for TLE and 2LE, `Tle.parseOmmArray` for OMM JSON |
 | toolchain as run | Zig 0.16.0 (Homebrew), macOS; built and run on 2026-09-24, and at v0.14.0 on 2026-09-27. The library's own parser tests passed on it (`zig test src/Tle.zig`, 10 of 10 at d558933, 14 of 14 at v0.14.0). The harness uses Zig 0.16's process and I/O interfaces, so earlier Zig versions will not build it; later ones were not tried |
-| published result | 9 of 17 cases failed at d558933, with the runner of 2026-09-24 (corpus D-140); 9 of 17 at v0.14.0, with the same runner (corpus D-166) |
+| published result | 9 of 17 cases failed at d558933, with the runner of 2026-09-24 (corpus D-140); 9 of 17 at v0.14.0, with the same runner (corpus D-166); round two, v0.14.0 on v0.4.0's eighteen cases: 10 of 18 in both modes (corpus D-185) |
 
 Best-effort, not installable by pip. This harness compiles a source file of the library directly, by its path in the
 tree, and depends on Zig's standard library as of 0.16. If astroz moves, renames or reshapes `src/Tle.zig`, or Zig
@@ -15,7 +15,12 @@ changes those interfaces again, the harness may fail to build, or build and read
 `harness.zig` takes the format and an epoch mode: `fields` rebuilds the epoch from the parsed year and day fields,
 `jd` takes it from the parser's Julian date, the value the propagators use. Both modes gave 9 of 17 failing cases at
 both commits. It reads the second derivative of mean motion where the library has one (from v0.14.0); d558933 has
-none, and that line is not compiled there.
+none, and that line is not compiled there. A set `parseLines` rejects comes back through the runner's refusal channel
+with the error's name as its reason, and a JSON file `parseOmmArray` rejects makes the harness exit with that error,
+which the runner reports as the parser refusing the file (corpus D-144, adopted in D-185). The line pairing is the
+library's own `MultiIterator`, which passes over a line shorter than 69 characters, and over a line 1 with no line 2
+after it, without an error: neither reaches `parseLines`, so the report shows such a set as dropped silently, which is
+what a caller of the iterator gets.
 `vectors.zig` answers the corpus's vector hooks through the same module. `common.zig` is shared by both.
 
 ## Build

@@ -1,7 +1,7 @@
 {
  "corpus": "gp-omm-conformance",
- "corpus_version": "0.3.0",
- "generated_at": "2026-09-27T01:11:25Z",
+ "corpus_version": "0.4.0",
+ "generated_at": "2026-09-27T19:32:42Z",
  "generator": "tools/make_manifest.py",
  "design": {
   "raw_provider_files_shipped": false,
@@ -60,7 +60,13 @@
   "tle-writer-refuses-unencodable": "A TLE catalog field cannot represent a number above 339999 (Z9999) or below 0, so the correct output for such a record is a refusal: an error and no lines. Those numbers belong in the OMM formats. The check passes when the writer refuses and fails when it writes lines with a six-digit, blank or otherwise invalid field.",
   "tle-writer-secondary-fields": "Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information, never failed: orbit-fitting tools regenerate these fields by design.",
   "tle-writer-column-layout": "Every field of a written TLE sits in its fixed columns: on line 1 the decimal points at columns 24 and 35 and the separators at 2, 9, 18, 33, 44, 53, 62 and 64; on line 2 the decimal points at 12, 21, 38, 47 and 55, the separators at 2, 8, 17, 26, 34, 43 and 52, seven eccentricity digits, right-justified element set and revolution numbers. A left-justified value with a recomputed checksum has the right length and checksum and still fails this check.",
-  "tle-writer-matches-provider-rendering": "Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's CelesTrak-style derived line). Information only: an equivalent rendering under the other provider's convention is not a defect."
+  "tle-writer-matches-provider-rendering": "Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's CelesTrak-style derived line). Information only: an equivalent rendering under the other provider's convention is not a defect.",
+  "corrupt-tle-checksum-digit": "A TLE set whose line 1 carries a wrong checksum digit, every other character real, is refused with a reason. A parser that validates no checksum returns the set exactly as it returns it from the unedited file: that is reported, not failed, since the corpus's own reference reader treats the checksum as data (owner decision, D-171). A record that differs from that reading fails, as does a silent drop.",
+  "corrupt-tle-line-short": "A TLE set whose line 2 has lost one character mid-line (a digit of the eccentricity), so that it is 68 characters and every column after the cut has moved one to the left, is refused with a reason. A record read from it fails as misidentified, since its values are not the set's, and so does a silent drop.",
+  "corrupt-tle-letter-in-number": "A TLE set with the letter O in place of a 0 in line 1's epoch field is refused with a reason, not read as a record with a wrong epoch and not dropped silently. The line's checksum is still valid, since a letter counts 0 as the digit it replaced did, so the checksum cannot catch it.",
+  "corrupt-tle-missing-line-2": "A TLE set whose line 1 is followed directly by the next set's name line: the orphan line 1 is refused with a reason. Passing over it without a word counts as dropped, and pairing it with the lines after it builds a record from garbage.",
+  "corrupt-file-cut": "A file cut mid-record, as a CSV that ends inside its last row and as a JSON array missing its closing bracket: the complete records load and the cut is reported with a reason, or the file is refused as a whole with a reason, which is fail-closed; the complete records a whole-file refusal gives up are counted, not failed (owner decision, D-171). Loading the complete records while saying nothing of the cut is silent partial loading and fails, as does a record read from the cut row.",
+  "corrupt-input-neighbours-load": "The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded here, since the values check grades it on the same records in their own cases (D-175). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed."
  },
  "ambiguities": {
   "unknown-vs-blank": "CCSDS 502.0-B-3 Table 4-2 says an unknown OBJECT_NAME/OBJECT_ID 'should be set to UNKNOWN' and 7.5.1 requires a non-empty value for mandatory keywords; CelesTrak writes an empty OBJECT_ID (empty string in CSV/JSON/KVN, empty element in XML) while the first-ever analyst records carry OBJECT_NAME 'UNKNOWN'. The corpus expects the provider's actual output and records the spec text.",
@@ -2416,6 +2422,172 @@
      "sha256": "bc9a5dff288a26d30ec7371b7894be8d313f93fd19033c063df382cff1ff6e8c",
      "provenance": "live",
      "record_count": 256
+    }
+   ]
+  },
+  {
+   "id": "corrupt-input",
+   "title": "Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, a file cut mid-record",
+   "kind": "corrupt-input",
+   "tests": [
+    "corrupt-input",
+    "fail-closed",
+    "resynchronisation"
+   ],
+   "checks": [
+    "corrupt-tle-checksum-digit",
+    "corrupt-tle-line-short",
+    "corrupt-tle-letter-in-number",
+    "corrupt-tle-missing-line-2",
+    "corrupt-file-cut",
+    "corrupt-input-neighbours-load"
+   ],
+   "evidence_basis": [
+    "Corrupt provider output cannot be captured on demand, so the inputs are made, under the D-096 precedent for synthetic-derived provenance (PLAN.md section 2.1 reserves it for owner approval): the owner approved these five inputs on 2026-09-27 (DECISIONS D-171). Each is a real record frozen in this corpus with one stated edit, placed between valid real records; each file's provenance record (derived/corrupt-input/*.provenance.json) names the records, the files their values were frozen from with those files' SHA-256, and the edit.",
+    "Every record is rendered by the corpus from values in this corpus's public expected.json files (tools/derive_corrupt_inputs.py reads no provider file). The TLE lines use the renderer that reproduces CelesTrak's lines for 304 of 304 records, checked here against each record's frozen TLE fields, so the unedited lines equal CelesTrak's own; the CSV and JSON follow CelesTrak's column order and line endings and write the frozen values in plain decimal notation.",
+    "Owner decisions of 2026-09-25 (v0.4.0 plan, section 10) applied here: a parser that validates no checksum is reported, not failed, since the corpus's own reference reader treats the checksum as data (decision 2); a whole-file refusal of a cut file passes, with the complete records it gives up counted (decision 3); the shifted-column input is held (decision 4).",
+    "The outcomes are counted in the vocabulary of D-142 and D-144: loaded (returned with its id and exactly the values the same parser returns for it from the unedited file), misidentified (a record built from garbage: returned with other values than from the unedited file, or with an id the file does not hold), refused (with a reason, through the refusal channel or by the parser raising on the file) and dropped (neither).",
+    "Every record a parser returns from an input is compared with the same parser's reading of the matching unedited file (derived/corrupt-input/unedited-*: the same records laid out as the input lays them out, with no edit), exactly, so the case measures what the edit changes (D-175). Comparing with the frozen expected values, as the case first did, graded how exactly a parser reads these records a second time: a parser that reads them imprecisely everywhere failed the neighbours item in every file whatever it did with the corrupt input. That is the values check's question, asked of the same records in epoch-year-19xx and bstar-and-derivative-forms. Where a parser does not return a record from the unedited file either, the items that would rest on it are not exercised: nothing then isolates the edit."
+   ],
+   "coverage": {
+    "provides": [
+     "five corrupt inputs, each one stated edit of 69999's first record (a stable-tier record): line 1's checksum digit changed from 6 to 1; line 2 one character short, the eccentricity's fourth digit (column 30) lost so that every column after it moves left; the letter O for the 0 in column 26 of line 1, inside the epoch field, the checksum still valid; line 1 with no line 2 after it; the file cut mid-record, as a CSV that ends inside its last row's MEAN_MOTION_DOT value and as a JSON array whose closing bracket is missing",
+     "each TLE input between two valid sets, 25544's first record before it and 20453 from the decaying snapshot after it, so that the counts on the neighbours measure whether a parser picks up again; the CSV holds the same two records before the cut row, the JSON all three records complete",
+     "no provider file: every record rendered by the corpus from values frozen in this corpus's public expected.json files, a public clone rebuilding the same bytes",
+     "three unedited files, the inputs' records with no edit (one TLE file for inputs 1 to 4, the CSV with its last row whole, the JSON array closed), against which every record a parser returns from an input is compared (D-175)"
+    ],
+    "gaps": [
+     "the shifted CSV column (the plan's input 6) is held, not included (owner decision 4, D-171)",
+     "one edit per input, on one record: a parser is characterised only for what is edited here (line 1's checksum digit, line 2's length, a letter in the epoch field, a missing line 2, the end of a CSV or JSON file); a letter in another numeric column, a wrong checksum on line 2 or a line cut elsewhere is not exercised",
+     "no corrupt KVN, XML or 2LE input",
+     "a line cut short at its end, which loses only the checksum digit and leaves every value readable, is not an input: a parser that accepts it reads the right values, and accepting a malformed line whose values survive is what the wrong checksum digit already shows (D-171)",
+     "any non-empty reason counts as a refusal's reason; whether it names the right defect is not checked"
+    ]
+   },
+   "ambiguities": [],
+   "library_findings": [
+    "python-sgp4 2.27 through the built-in adapter (run 2026-09-27; its three failing items in docs/FAILURES.md): the fast Satrec.twoline2rv, the C++ extension, reads line 2 one character short and the epoch field with a letter in it without an error, building records with an eccentricity of 0.148004 for 0.1487004 and a revolution number of 189308 for 18930, and with an epoch of day 189.7 for 189.70990935 and BSTAR and the first derivative 0; the pure-Python sgp4.io.twoline2rv raises ValueError on both lines. The split is documented and by design: the maintainer does not add checks to the C++ code (python-sgp4 #116, 2023), and python-sgp4's README section \"Double-checking your TLE lines\" tells users to validate with the slow twoline2rv. The orphan line 1 is passed over by the adapter's own line pairing, since python-sgp4 reads one set at a time, and the cut CSV row stops omm.initialize with a TypeError, which refuses the whole file, a pass under owner decision 3 (DECISIONS D-171, D-173)."
+   ],
+   "expected": "fixtures/corrupt-input/expected.json",
+   "case_doc": "fixtures/corrupt-input/case.md",
+   "record_count": 18,
+   "sources": [
+    {
+     "path": "derived/corrupt-input/c1-checksum-digit.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-09-27T06:48:07Z",
+     "http_status": null,
+     "bytes": 504,
+     "sha256": "7917ac5e69fa2d2a372f1d580f2fe180aaa2ce24e30011371a65d9106ff339aa",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c1-checksum-digit.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/c2-line-2-short.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-09-27T06:48:07Z",
+     "http_status": null,
+     "bytes": 503,
+     "sha256": "08771a837aeb57b0bb16155db7d45056438559e5f6a55945c533ab4f329ed14e",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c2-line-2-short.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/c3-letter-in-epoch.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-09-27T06:48:07Z",
+     "http_status": null,
+     "bytes": 504,
+     "sha256": "8103d578599f1322d7d3524ad46dedd4d0b6ecea7f06919b83e9f0f4dfa7cfa3",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c3-letter-in-epoch.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/c4-line-2-missing.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-09-27T06:48:07Z",
+     "http_status": null,
+     "bytes": 433,
+     "sha256": "9ad3679e9be32faf2e7d9cab68b61bf25b6b047fd0dfaa210f49ea1f17623c61",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c4-line-2-missing.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/c5-cut-last-row.csv",
+     "tier": "stable",
+     "format": "csv",
+     "url": null,
+     "retrieved_at": "2026-09-27T06:48:07Z",
+     "http_status": null,
+     "bytes": 692,
+     "sha256": "c1cdfc2530b0dc1367e7e4b5a250c6354b396ace353961f31b93344819ebc526",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c5-cut-last-row.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/c5-cut-closing-bracket.json",
+     "tier": "stable",
+     "format": "json",
+     "url": null,
+     "retrieved_at": "2026-09-27T06:48:07Z",
+     "http_status": null,
+     "bytes": 1278,
+     "sha256": "6d711e2b69fd9fd833d39862fd25c4e70d8319c601e98d30c5c3a0e6e227d589",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c5-cut-closing-bracket.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/unedited-sets.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-09-27T15:12:19Z",
+     "http_status": null,
+     "bytes": 504,
+     "sha256": "6d53b5f62556841e73b55c3a969d230f31510c5fbb45f145b468a2e429b204d6",
+     "provenance": "derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/unedited-sets.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/unedited-rows.csv",
+     "tier": "stable",
+     "format": "csv",
+     "url": null,
+     "retrieved_at": "2026-09-27T15:12:19Z",
+     "http_status": null,
+     "bytes": 698,
+     "sha256": "5c0ee080f1312fb68355766d55692f33fded37b645e2d325c55567fbd836c01b",
+     "provenance": "derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/unedited-rows.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/unedited-array.json",
+     "tier": "stable",
+     "format": "json",
+     "url": null,
+     "retrieved_at": "2026-09-27T15:12:19Z",
+     "http_status": null,
+     "bytes": 1281,
+     "sha256": "54e8a8e19244f2965a45a11393c28a10fa040ab0202350eb4e56c70811055b08",
+     "provenance": "derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/unedited-array.provenance.json"
     }
    ]
   }

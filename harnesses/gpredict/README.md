@@ -6,14 +6,17 @@
 | licence of the application | GPL-2.0 |
 | what the harness compiles against | Gpredict's internal SGP4 module, the six files of `src/sgpsdp/` it needs, compiled on their own without the GTK application; the harness calls the module's `Get_Next_Tle_Set()` directly. `stubs/` stands in for GLib, whose only use by the module is `g_ascii_strtod`, mapped to the C library's `strtod`: in the C locale, which the harness never changes, the two are the same conversion |
 | toolchain as run | Apple clang 21 (`cc -std=gnu99`), macOS; built and run on 2026-09-24. Gpredict's own SGP4 test, `test-001.c`, built the same way, ran and exited 0 |
-| published result | 6 of 17 cases failed, with the runner of 2026-09-24 (corpus D-133) |
+| published result | 6 of 17 cases failed, with the runner of 2026-09-24 (corpus D-133); round two, with this harness on v0.4.0's eighteen cases: 7 of 18 (corpus D-178, unchanged under D-183) |
 
 Best-effort, not installable by pip. This harness compiles internal source files of an application, not a library
 interface. If a later Gpredict renames or splits those files, changes `Get_Next_Tle_Set()`, or starts using more of
 GLib, the harness may fail to build, or build and read differently, with nothing to say so. Results hold for v2.6.
 
 `harness.c` reads TLE text on stdin, hands every name-plus-two-line set, or a name-less pair given a placeholder
-name, to `Get_Next_Tle_Set()`, and prints the parsed `tle_t` records as JSON. TLE and 2LE only.
+name, to `Get_Next_Tle_Set()`, and prints the parsed `tle_t` records as JSON. TLE and 2LE only. A set the function
+rejects comes back through the runner's refusal channel with the function's return code as its reason: -2, its one
+failure, is `Good_Elements()` rejecting the set (corpus D-144, adopted in D-178). Each line 1 goes to the function with
+whatever line follows it, so Gpredict, not the harness, answers for a line 1 with no line 2 after it (corpus D-183).
 
 ## Build
 

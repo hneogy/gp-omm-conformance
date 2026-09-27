@@ -1,0 +1,53 @@
+{
+  "file": "derived/corrupt-input/unedited-rows.csv",
+  "provenance": "derived",
+  "label": "DERIVED: real records frozen in this corpus, rendered by the corpus with no edit; served by no provider",
+  "for_inputs": [
+    5
+  ],
+  "description": "The CSV of input 5 with its last row whole: three complete records.",
+  "rendering": {
+    "layout": "CelesTrak's CSV column order and CRLF line endings; values as frozen, in plain decimal notation"
+  },
+  "records": [
+    {
+      "position": 1,
+      "role": "valid",
+      "norad_cat_id": 25544,
+      "values_from": "fixtures/epoch-year-19xx/expected.json",
+      "set": "iss-first",
+      "tier": "stable",
+      "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+      "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5"
+    },
+    {
+      "position": 2,
+      "role": "valid",
+      "norad_cat_id": 20453,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "decaying",
+      "tier": "live",
+      "source_file": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+      "source_sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79"
+    },
+    {
+      "position": 3,
+      "role": "valid",
+      "edited_in_inputs": [
+        5
+      ],
+      "norad_cat_id": 69999,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "gp-69999-first",
+      "tier": "stable",
+      "source_file": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+      "source_sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108"
+    }
+  ],
+  "basis": "DECISIONS D-175 (owner instruction 2026-09-27): what a parser returns from each corrupt input is compared with what the same parser returns from this file, the same records with no edit",
+  "generator": "tools/derive_corrupt_inputs.py",
+  "generated_at": "2026-09-27T15:12:19Z",
+  "line_endings": "CRLF",
+  "bytes": 698,
+  "output_sha256": "5c0ee080f1312fb68355766d55692f33fded37b645e2d325c55567fbd836c01b"
+}

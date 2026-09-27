@@ -6,7 +6,7 @@
 | licence of the program | GPL-3.0 |
 | what the harness compiles against | internal source files of SatDump's `src-core/`: `common/tracking/tle.cpp` (the TLE registry's parser, `parseTLEStream`), on master also `db/kepler/kepler_utils.cpp` (`ccsdsOmmToKepler`, the CSV reader), `common/utils.cpp` and `utils/string.cpp`, and the ten files of the bundled predict fork, `libs/predict/`, whose `predict_parse_tle` the harness also calls. The GUI, the database layer, HTTP and logging are not built |
 | toolchain as run | Apple clang 21, C++17 and gnu99, libcurl, macOS; built and run on 2026-09-24 |
-| published result | 3 of 17 cases failed on 1.2.2, 5 of 17 on master, with the runner of 2026-09-24 (corpus D-137) |
+| published result | 3 of 17 cases failed on 1.2.2, 5 of 17 on master, with the runner of 2026-09-24 (corpus D-137); round two, on v0.4.0's eighteen cases: 4 of 18 on 1.2.2, 9 of 18 on master (corpus D-181) |
 
 Best-effort, not installable by pip. This harness compiles internal source files of an application, chosen by hand
 from its tree. If SatDump moves, renames or splits them, or changes what they reference, the harness may fail to link,
@@ -87,12 +87,11 @@ clang++ -std=c++17 -DSOURCE_PATH_SIZE=0 -DNO_KEPLER -I rel/src-core -I rel/src-c
 ```
 
 One step differs from the run of 2026-09-24, which linked the release with the predict objects compiled from master's
-tree; compiling the release tree's own `libs/predict/` as above was not tried.
+tree. Compiling the release tree's own `libs/predict/` as above gives the same result, item for item (corpus D-181).
 
 The harness files here differ from the ones built on 2026-09-24 in one respect: an unused call into the predict
-fork, whose result was discarded, and its declaration were removed (corpus D-152). The output cannot change, and the
-function it sat in gives identical output before and after when compiled on its own; the full harness has not been
-rebuilt since.
+fork, whose result was discarded, and its declaration were removed (corpus D-152). Rebuilt in full since, they give
+the same result as the ones of 2026-09-24, item for item, on both trees (corpus D-181).
 
 ## Run
 

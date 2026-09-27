@@ -1,0 +1,61 @@
+{
+  "file": "derived/corrupt-input/c4-line-2-missing.tle",
+  "provenance": "synthetic-derived",
+  "label": "SYNTHETIC-DERIVED: real records frozen in this corpus, rendered by the corpus, with one stated edit; served by no provider",
+  "input": 4,
+  "check": "corrupt-tle-missing-line-2",
+  "description": "A set with no line 2, between two valid sets.",
+  "rendering": {
+    "renderer": "gpconf/tle.py render",
+    "settings": {
+      "mantissa_mode": "round",
+      "ecc_mode": "truncate"
+    },
+    "checked_against": "each record's frozen TLE field substrings (by_format.tle.fields in its expected.json): equal",
+    "note": "for these five-digit records the renderer reproduces CelesTrak's own lines (tools/validate_render.py, 304 of 304 records)"
+  },
+  "records": [
+    {
+      "position": 1,
+      "role": "valid",
+      "norad_cat_id": 25544,
+      "values_from": "fixtures/epoch-year-19xx/expected.json",
+      "set": "iss-first",
+      "tier": "stable",
+      "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+      "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5"
+    },
+    {
+      "position": 2,
+      "role": "corrupt",
+      "norad_cat_id": 69999,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "gp-69999-first",
+      "tier": "stable",
+      "source_file": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+      "source_sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+      "edit": {
+        "line": 2,
+        "was": "present",
+        "now": "removed",
+        "statement": "line 2 removed: the set's name line and line 1 are followed directly by the next set's name line"
+      }
+    },
+    {
+      "position": 3,
+      "role": "valid",
+      "norad_cat_id": 20453,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "decaying",
+      "tier": "live",
+      "source_file": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+      "source_sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79"
+    }
+  ],
+  "owner_approval": "owner approval 2026-09-27 of the v0.4.0 plan's inputs 1 to 5 (section 5) with decisions 2 to 4 of its section 10; synthetic-derived provenance under the D-096 precedent (PLAN.md section 2.1); DECISIONS D-171",
+  "generator": "tools/derive_corrupt_inputs.py",
+  "generated_at": "2026-09-27T06:48:07Z",
+  "line_endings": "CRLF",
+  "bytes": 433,
+  "output_sha256": "9ad3679e9be32faf2e7d9cab68b61bf25b6b047fd0dfaa210f49ea1f17623c61"
+}

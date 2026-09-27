@@ -10,13 +10,12 @@ traceable to a provider response whose URL, retrieval time and SHA-256 are recor
 (`tle-writer-alpha5`) asks the same of code that *writes* TLEs: Alpha-5 in the catalog field,
 valid lines, and a refusal for the numbers the format cannot carry.
 
-Status: version `0.3.0`, a minor release: the runner and the corpus install with pip as `gpconf`, with
-presets that test a library without an adapter and a GitHub Action, and the adapter protocol gains a
-refusal channel, an additive change; the seventeen cases stay, no frozen expected value changed (the
-writer case gained one input), and the naive and python-sgp4 adapters still fail 14 and 7 of them. The
-independent audit (`AUDIT.md`) covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of
-v0.2.1 nor the packaging and protocol changes of v0.3.0 have been separately audited. Maintainer:
-Honorius Neogy (NEOGY LLC).
+Status: version `0.4.0`, a minor release: an eighteenth case, `corrupt-input`, hands a parser corrupt
+input between valid records and counts what comes back (D-171); no frozen expected value changed and the
+adapter protocol is as in 0.3.0, and the naive and python-sgp4 adapters fail 15 and 8 of the eighteen
+cases. The independent audit (`AUDIT.md`) covered v0.1.0; neither the writer-side case of v0.2.0, the
+fixes of v0.2.1, the packaging and protocol changes of v0.3.0 nor the corrupt-input case of v0.4.0 have
+been separately audited. Maintainer: Honorius Neogy (NEOGY LLC).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22867654.svg)](https://doi.org/10.5281/zenodo.22867654) See `DECISIONS.md` for the full decision log and `MANIFEST.md` for every case,
 source and known gap.
@@ -64,6 +63,10 @@ default format has been CSV since 2026-05-09.
     above 99999 that yields six digits, a 70-character line and a checksum over shifted columns.
     The field must be Alpha-5 from 100000, and a number above 339999 cannot be written as a TLE
     at all: the correct output is a refusal, and the record belongs in an OMM format.
+11. Reading a corrupt record as if it were whole: a letter in a numeric column read as the number before it, a line
+    one character short read at shifted columns, a set with no second line passed over without a word, a file cut
+    mid-record loaded in part with nothing said. The bad record should be refused with a reason, and the records
+    after it still read.
 
 **What to change.** Parse the catalog number as an integer from any source; decode Alpha-5
 strictly (reject I, O, lowercase) if you read Space-Track TLEs; treat empty `OBJECT_ID` and
@@ -77,7 +80,7 @@ catalog number as Alpha-5 above 99999 and refuse numbers above 339999 (or below 
 
 | in the repository | not in the repository |
 |---|---|
-| `fixtures/<case>/expected.json`: frozen expected values and structural checks for 17 cases, all numbers as decimal strings | raw CelesTrak responses (`fixtures/<case>/raw/`): rebuilt on your machine by `tools/fetch.py` or `gpconf fetch` under CelesTrak's own usage policy |
+| `fixtures/<case>/expected.json`: frozen expected values and structural checks for 18 cases, all numbers as decimal strings | raw CelesTrak responses (`fixtures/<case>/raw/`): rebuilt on your machine by `tools/fetch.py` or `gpconf fetch` under CelesTrak's own usage policy |
 | `fixtures/<case>/case.md`: what the case tests, how to read a failure, coverage gaps stated per case | Space-Track data, in any form (a `.gitignore` guard refuses such paths) |
 | `derived/`: Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T only), six CCSDS-legal KVN variants, each with a provenance sidecar | invented element sets: none, anywhere |
 | `vectors/`: specification vectors (Alpha-5 table, catalog-id text forms, two-digit-year pivot, CCSDS epoch strings) | |
@@ -103,9 +106,9 @@ into a per-user cache:
 
 ```bash
 pip install gpconf
-gpconf run --preset reference   # before any fetch: the 4 cases whose files ship in the package run; 13 say they need provider data
+gpconf run --preset reference   # before any fetch: the 5 cases whose files ship in the package run; 13 say they need provider data
 gpconf fetch                    # once: ~60 requests, ~12.6 MB, 2 s apart, cached, never repeated
-gpconf run --preset reference   # then all seventeen, as in a clone
+gpconf run --preset reference   # then all eighteen, as in a clone
 ```
 
 Or from a clone, as before:
@@ -113,7 +116,7 @@ Or from a clone, as before:
 ```bash
 git clone https://github.com/hneogy/gp-omm-conformance.git && cd gp-omm-conformance
 python3 tools/fetch.py            # once: ~60 requests, ~12.6 MB, 2 s apart, cached, never repeated
-python3 -m gpconf run --preset reference   # the control: 16 cases pass; the SATCAT case is a data check reported not-exercised for every parser, and the nine-digit case says not-exercised outside a launch window
+python3 -m gpconf run --preset reference   # the control: 17 cases pass; the SATCAT case is a data check reported not-exercised for every parser, and the nine-digit case says not-exercised outside a launch window
 python3 -m gpconf run --preset naive       # the parser most projects have: a demonstration of failure, not a parser to use
 ```
 
@@ -135,7 +138,7 @@ nothing ran and that this says nothing about the library (D-153, D-154). The ada
 In a GitHub Actions job, from v0.3.0, three lines run a preset against your library:
 
 ```yaml
-- uses: hneogy/gp-omm-conformance@v0.3.0
+- uses: hneogy/gp-omm-conformance@v0.4.0
   with:
     preset: sgp4
 ```
@@ -268,7 +271,7 @@ Four cases hold a recorded answer with no data in it: CelesTrak's HTTP 404 body,
 
 Below the case table the runner prints one gate, a headline read across existing cases rather than a new case: given the objects launched in the last 30 days, as a provider serves them, does the parser return them with the right identity? Its inputs are the CelesTrak CSV capture of the last-30-days group (256 objects, every one above 99999, captured 2026-09-21) and the corpus's Alpha-5 rendering of the same records, the form Space-Track's TLE output carries. Per format the parser reads, records are counted as loaded (returned with the expected integer id), misidentified (returned as 0, NaN, a string or a wrong number) or dropped (no record came back). The wording names the behaviour and never grades the project: "reads this month's launches", "only via CSV", "not in any format it reads", and, for a parser that reads TLE only, "nothing to load from this feed", because CelesTrak's TLE output omits these objects. A format that was never tried, because its file was not fetched or its case was not selected, limits the claim: the headline then says "every format measured here" or "not in any format measured here", names the format left out before the numbers, and never says "nothing to load from this feed", which would claim the parser reads TLE only. A freshly fetched CSV holds different records from the frozen capture; it is judged against its own record count and labelled as a live capture (D-148). Every headline carries the snapshot's date, count and id range, and the letters its Alpha-5 fields begin with: a decoder that is wrong from J upward passes a snapshot whose ids all begin with A. The JSON report carries the same under `gates`, with the counts, and each values item now carries its record counts under `counts`.
 
-## The seventeen cases
+## The eighteen cases
 
 | case | what it covers |
 |---|---|
@@ -288,7 +291,8 @@ Below the case table the runner prints one gate, a headline read across existing
 | `alpha5-encoding-vectors` | the Space-Track table, official examples, boundaries, invalid inputs |
 | `alpha5-tle-derived` | 604 derived Alpha-5 lines (letters A and T) from real CelesTrak records |
 | `kvn-syntax-variants` | six CCSDS-legal KVN renderings CelesTrak never emits |
-| `tle-writer-alpha5` | writer side: 606 frozen records (603 Alpha-5 ids, three five-digit) written through `write_tle`, plus three numbers the TLE field cannot carry, for which a refusal is the correct output |
+| `tle-writer-alpha5` | writer side: 610 inputs written through `write_tle`: 606 frozen records (603 Alpha-5 ids and three five-digit), plus four synthetic-derived: the five-digit vector 99999 with the positive-exponent BSTAR ` 12345+1` no fetched record carries (D-125), and three numbers the TLE field cannot carry (340000, 799501621, -1), for which a refusal is the correct output |
+| `corrupt-input` | corrupt input between valid records: a wrong checksum digit, line 2 one character short, a letter in the epoch field, a set with no line 2, a CSV cut in its last row, a JSON array left open; each a frozen record with one stated edit (synthetic-derived, D-171); the right answer is a refusal with a reason, and the records around it load as they do without it (D-175) |
 
 Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case>/case.md`.
 
@@ -370,7 +374,7 @@ Status of the findings above with python-sgp4, as of 2026-09-24:
   [PR #172](https://github.com/brandon-rhodes/python-sgp4/pull/172), opened 2026-09-21 and amended
   2026-09-23 after the maintainer's review, was merged by the maintainer on 2026-09-24 as commit
   `8126f77`, and #171 is closed. No release carries the fix yet (the latest is 2.27 of 2026-07-03), so
-  the python-sgp4 results in this README and in `docs/FAILURES.md`, 7 of 17 cases, are against 2.27
+  the python-sgp4 results in this README and in `docs/FAILURES.md`, 8 of 18 cases, are against 2.27
   and stand until one does.
 - **Nine-digit `NORAD_CAT_ID` rejected**: independently reported before this corpus existed as
   [#169](https://github.com/brandon-rhodes/python-sgp4/issues/169), with
@@ -459,8 +463,8 @@ and correction to be recorded.
   and in `DECISIONS.md` (D-054 onward). The public copy of `AUDIT.md` withholds one row of its
   appendix table (a sample entry from the SupGP case, per D-033/D-049) and says so in a notice; the
   auditor's text is otherwise unchanged and the private original is intact. It covered v0.1.0; neither
-  the writer-side case of v0.2.0, the fixes of v0.2.1 nor the packaging and protocol changes of v0.3.0 have
-  been separately audited.
+  the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0 nor the
+  corrupt-input case of v0.4.0 have been separately audited.
 
 If you find an error, the most useful report names the case id, the source file's SHA-256 and
 the field, so that the discrepancy can be traced to a specific fetched byte sequence.
@@ -477,12 +481,13 @@ makes this data freely available; please respect its usage policy. Standards: CC
 Alpha-5 definition: Space-Track, https://www.space-track.org/documentation.
 
 To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, H. (NEOGY LLC).
-gp-omm-conformance, version 0.3.0, 2026-09-27, https://github.com/hneogy/gp-omm-conformance.*
+gp-omm-conformance, version 0.4.0, 2026-09-27, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** for this release, v0.3.0, is
-[10.5281/zenodo.22986178](https://doi.org/10.5281/zenodo.22986178); v0.2.1 keeps its own, [10.5281/zenodo.22926017](https://doi.org/10.5281/zenodo.22926017),
-v0.2.0 its own, [10.5281/zenodo.22906966](https://doi.org/10.5281/zenodo.22906966), and v0.1.0, the release the
+general. The **version DOI** for this release, v0.4.0, is added here and to `CITATION.cff` after Zenodo
+mints it at the release; v0.3.0 keeps its own, [10.5281/zenodo.22986178](https://doi.org/10.5281/zenodo.22986178),
+v0.2.1 its own, [10.5281/zenodo.22926017](https://doi.org/10.5281/zenodo.22926017), v0.2.0 its own,
+[10.5281/zenodo.22906966](https://doi.org/10.5281/zenodo.22906966), and v0.1.0, the release the
 independent audit covered, keeps [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655). Use a version DOI
 when your results depend on a specific set of expected values; each release gets its own under the same
 concept DOI.

@@ -39,7 +39,7 @@ def meta_for(path):
     if os.path.exists(pp):
         p = json.load(open(pp))
         return {"url": None, "retrieved_at": p.get("generated_at"), "http_status": None, "sha256": p.get("output_sha256"),
-                "provenance": "derived", "provenance_file": os.path.relpath(pp, ROOT)}
+                "provenance": p.get("provenance", "derived"), "provenance_file": os.path.relpath(pp, ROOT)}
     return {}
 
 
@@ -475,6 +475,83 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
     out_notes.append(f"{n_frozen} frozen input records ({sum(letters.values())} Alpha-5, {len(five_digit)} five-digit), {len(vec['encode_unrepresentable'])} synthetic-derived refusal inputs and {n_vectors} synthetic-derived field vector(s) rendered by the corpus.")
 
 
+CORRUPT_EXPECTED = {  # per check: what the corrupt record must come to, and what reading it as the record it carries means
+    "corrupt-tle-checksum-digit": ("refuse", "report", "read the set as the record it carries: validates no checksum (reported, not failed: owner decision 2, D-171)"),
+    "corrupt-tle-line-short": ("refuse", "fail", "read line 2, one character short, as a complete line"),
+    "corrupt-tle-letter-in-number": ("refuse", "fail", "read the epoch field with a letter in it as a number"),
+    "corrupt-tle-missing-line-2": ("refuse", "fail", "read a set that has no line 2"),
+    "corrupt-file-cut": ("refuse", "fail", "read the cut row as a record"),
+}
+
+
+def build_corrupt_input(case, out_sources, out_records, out_notes, case_specific):
+    """Corrupt-input case (D-171): the files tools/derive_corrupt_inputs.py wrote, each with its provenance record. The
+    expected values of every record are those of the record without the edit: the frozen canonical values for CSV and
+    JSON, and for TLE the values its unedited rendering reads to, which differ from the canonical ones where the TLE
+    is lossy (tle-vs-omm-precision-loss). The corrupt files are never read with the reference reader here: rejecting
+    them is its job. Each input names its unedited file, the same records with no edit (D-175): the runner compares
+    what a parser returns from the input with what the same parser returns from that file."""
+    allowed = {(s["case"], s["set"]) for s in case["records_from"]}
+    unedited, for_input = {}, {}
+    for path in case["sets"]["unedited"]["files"]:
+        prov_path = path.rsplit(".", 1)[0] + ".provenance.json"
+        prov = json.load(open(os.path.join(ROOT, prov_path)))
+        fmt = path.rsplit(".", 1)[-1]
+        if prov.get("provenance") != "derived":
+            PROBLEMS.append(f"{path}: an unedited file must be derived (no edit), its provenance record says {prov.get('provenance')!r}")
+        unedited[path] = {"format": fmt, "for_inputs": prov["for_inputs"], "norad_cat_ids": [r["norad_cat_id"] for r in prov["records"]],
+                          "provenance_file": prov_path, "record_count": len(prov["records"])}
+        for i in prov["for_inputs"]:
+            for_input[(i, fmt)] = path
+    files = {}
+    for path in case["sets"]["inputs"]["files"]:
+        prov_path = path.rsplit(".", 1)[0] + ".provenance.json"
+        prov = json.load(open(os.path.join(ROOT, prov_path)))
+        fmt = path.rsplit(".", 1)[-1]
+        out_sources[path] = source_entry(path, "stable", fmt=fmt, record_count=len(prov["records"]))  # checks the bytes against the provenance record's SHA-256
+        refuse, as_is, as_is_text = CORRUPT_EXPECTED[prov["check"]]
+        spec = {"input": prov["input"], "check": prov["check"], "description": prov["description"], "format": fmt,
+                "provenance_file": prov_path, "unedited": for_input.get((prov["input"], fmt))}
+        if spec["unedited"] is None:
+            PROBLEMS.append(f"{path}: no unedited file declares input {prov['input']} in format {fmt}")
+        elif sorted(r["norad_cat_id"] for r in prov["records"]) != sorted(unedited[spec["unedited"]]["norad_cat_ids"]):
+            PROBLEMS.append(f"{path}: its records are not those of its unedited file {spec['unedited']}")
+        if prov.get("file_edit"):
+            spec["file_edit"] = prov["file_edit"]["statement"]
+        for rp in prov["records"]:
+            if (rp["values_from"].split("/")[1], rp["set"]) not in allowed:
+                PROBLEMS.append(f"{path}: record {rp['norad_cat_id']} comes from {rp['values_from']} set {rp['set']}, not named in the case's records_from")
+            e = json.load(open(os.path.join(ROOT, rp["values_from"])))
+            r = next(x for x in e["records"] if x.get("set") == rp["set"] and x["norad_cat_id"] == rp["norad_cat_id"])
+            if fmt == "tle":
+                lines = R.render(R.omm_fields_from_record(r["canonical"]), mantissa_mode="round", ecc_mode="truncate")
+                want = strip_record(gpref.parse_tle_lines(*lines))
+            else:
+                want = dict(r["canonical"])
+            entry = {"norad_cat_id": rp["norad_cat_id"], "file": os.path.basename(path), "position": rp["position"], "role": rp["role"],
+                     "tier": "stable", "provenance": "synthetic-derived" if rp["role"] == "corrupt" else "derived",
+                     "values_from": rp["values_from"], "set": rp["set"], "origin_tier": rp["tier"],
+                     "source_file": rp["source_file"], "source_sha256": rp["source_sha256"], "expected": want}
+            if rp["role"] == "corrupt":
+                entry.update({"edit": rp["edit"]["statement"], "expected_behaviour": refuse,
+                              "if_read_as_unedited": as_is, "read_as_unedited_means": as_is_text})
+                spec["edit"] = rp["edit"]["statement"]
+                spec["corrupt_norad_cat_id"] = rp["norad_cat_id"]
+            out_records.append(entry)
+        files[os.path.basename(path)] = spec
+    for path, u in unedited.items():
+        out_sources[path] = source_entry(path, "stable", fmt=u["format"], record_count=u.pop("record_count"))
+    case_specific.update({
+        "files": files,
+        "unedited": unedited,
+        "outcomes": "Per record: loaded (returned with its id and exactly the values the same parser returns for it from the input's unedited file), misidentified (returned with other values, or with an id the file does not hold: built from garbage), refused (with a reason, through the refusal channel, or with the file when the parser raises on it) and dropped (none of these). A corrupt record must be refused; a valid one must load. A record the parser does not return from the unedited file either is left out of the grading, and an input whose unedited file the parser refuses as a whole is not exercised: nothing then isolates the edit (D-175). The expected values below are the records' own, for reference; the runner does not grade against them here, since the values check grades them in the records' own cases.",
+        "decisions": {"checksum": "a parser that validates no checksum is reported, not failed (owner decision 2)",
+                      "cut_file": "a whole-file refusal of a cut file passes; the complete records it gives up are counted (owner decision 3)",
+                      "shifted_column": "held, not included (owner decision 4)"},
+    })
+    out_notes.append(f"{len(files)} files, {len(out_records)} records ({sum(1 for r in out_records if r['role'] == 'corrupt')} corrupt); synthetic-derived under the D-096 precedent, owner approval 2026-09-27 (D-171).")
+
+
 def main():
     wanted = set(sys.argv[1:])  # optional case ids: rebuild only those files, leaving the others' frozen values untouched
     xmlval = {}
@@ -536,6 +613,8 @@ def main():
             build_derived_kvn(case, out["sources"], out["records"])
         elif kind == "writer":
             build_writer(case, out["sources"], out["records"], out["notes"], out["case_specific"])
+        elif kind == "corrupt-input":
+            build_corrupt_input(case, out["sources"], out["records"], out["notes"], out["case_specific"])
         d = os.path.join(ROOT, "fixtures", case["id"])
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(d, "expected.json"), "w") as f:

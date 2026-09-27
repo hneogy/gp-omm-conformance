@@ -1,0 +1,64 @@
+{
+  "file": "derived/corrupt-input/c3-letter-in-epoch.tle",
+  "provenance": "synthetic-derived",
+  "label": "SYNTHETIC-DERIVED: real records frozen in this corpus, rendered by the corpus, with one stated edit; served by no provider",
+  "input": 3,
+  "check": "corrupt-tle-letter-in-number",
+  "description": "A set with a letter in a numeric column of line 1, between two valid sets.",
+  "rendering": {
+    "renderer": "gpconf/tle.py render",
+    "settings": {
+      "mantissa_mode": "round",
+      "ecc_mode": "truncate"
+    },
+    "checked_against": "each record's frozen TLE field substrings (by_format.tle.fields in its expected.json): equal",
+    "note": "for these five-digit records the renderer reproduces CelesTrak's own lines (tools/validate_render.py, 304 of 304 records)"
+  },
+  "records": [
+    {
+      "position": 1,
+      "role": "valid",
+      "norad_cat_id": 25544,
+      "values_from": "fixtures/epoch-year-19xx/expected.json",
+      "set": "iss-first",
+      "tier": "stable",
+      "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+      "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5"
+    },
+    {
+      "position": 2,
+      "role": "corrupt",
+      "norad_cat_id": 69999,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "gp-69999-first",
+      "tier": "stable",
+      "source_file": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+      "source_sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+      "edit": {
+        "line": 1,
+        "column": 26,
+        "was": "0",
+        "now": "O",
+        "epoch_field_was": "26189.70990935",
+        "epoch_field_now": "26189.7O990935",
+        "statement": "line 1 column 26, the first 0 among the epoch field's fractional digits, replaced by the letter O ('26189.70990935' becomes '26189.7O990935'); the checksum is still valid, since a letter counts 0 as the digit it replaced did"
+      }
+    },
+    {
+      "position": 3,
+      "role": "valid",
+      "norad_cat_id": 20453,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "decaying",
+      "tier": "live",
+      "source_file": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+      "source_sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79"
+    }
+  ],
+  "owner_approval": "owner approval 2026-09-27 of the v0.4.0 plan's inputs 1 to 5 (section 5) with decisions 2 to 4 of its section 10; synthetic-derived provenance under the D-096 precedent (PLAN.md section 2.1); DECISIONS D-171",
+  "generator": "tools/derive_corrupt_inputs.py",
+  "generated_at": "2026-09-27T06:48:07Z",
+  "line_endings": "CRLF",
+  "bytes": 504,
+  "output_sha256": "8103d578599f1322d7d3524ad46dedd4d0b6ecea7f06919b83e9f0f4dfa7cfa3"
+}

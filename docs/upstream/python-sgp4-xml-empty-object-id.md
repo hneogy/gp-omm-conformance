@@ -1,6 +1,11 @@
 # Draft bug report: `sgp4.omm.parse_xml` + `initialize` raise `TypeError` on an empty `<OBJECT_ID/>` (CelesTrak analyst objects)
 
-Status: draft, not yet filed. Target: brandon-rhodes/python-sgp4.
+Status: **filed 2026-09-21T04:51:27Z from the owner's account, on the owner's authorisation, as
+https://github.com/brandon-rhodes/python-sgp4/issues/171 (D-086)**: the text from the Environment section onward,
+without this status line and the patch-location note at the end, with a cross-reference to #168 and a closing line
+naming the corpus. The patch was opened as https://github.com/brandon-rhodes/python-sgp4/pull/172 (D-094), which was
+merged as 8126f77 on 2026-09-24 and closed #171 (D-130). Earlier: draft, not yet filed (this line went stale when the
+issue was filed and was corrected on 2026-09-27, D-186). Target: brandon-rhodes/python-sgp4.
 
 ## Environment
 

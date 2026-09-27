@@ -55,6 +55,12 @@ CHECKS = {
     "tle-writer-secondary-fields": "Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information, never failed: orbit-fitting tools regenerate these fields by design.",
     "tle-writer-column-layout": "Every field of a written TLE sits in its fixed columns: on line 1 the decimal points at columns 24 and 35 and the separators at 2, 9, 18, 33, 44, 53, 62 and 64; on line 2 the decimal points at 12, 21, 38, 47 and 55, the separators at 2, 8, 17, 26, 34, 43 and 52, seven eccentricity digits, right-justified element set and revolution numbers. A left-justified value with a recomputed checksum has the right length and checksum and still fails this check.",
     "tle-writer-matches-provider-rendering": "Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's CelesTrak-style derived line). Information only: an equivalent rendering under the other provider's convention is not a defect.",
+    "corrupt-tle-checksum-digit": "A TLE set whose line 1 carries a wrong checksum digit, every other character real, is refused with a reason. A parser that validates no checksum returns the set exactly as it returns it from the unedited file: that is reported, not failed, since the corpus's own reference reader treats the checksum as data (owner decision, D-171). A record that differs from that reading fails, as does a silent drop.",
+    "corrupt-tle-line-short": "A TLE set whose line 2 has lost one character mid-line (a digit of the eccentricity), so that it is 68 characters and every column after the cut has moved one to the left, is refused with a reason. A record read from it fails as misidentified, since its values are not the set's, and so does a silent drop.",
+    "corrupt-tle-letter-in-number": "A TLE set with the letter O in place of a 0 in line 1's epoch field is refused with a reason, not read as a record with a wrong epoch and not dropped silently. The line's checksum is still valid, since a letter counts 0 as the digit it replaced did, so the checksum cannot catch it.",
+    "corrupt-tle-missing-line-2": "A TLE set whose line 1 is followed directly by the next set's name line: the orphan line 1 is refused with a reason. Passing over it without a word counts as dropped, and pairing it with the lines after it builds a record from garbage.",
+    "corrupt-file-cut": "A file cut mid-record, as a CSV that ends inside its last row and as a JSON array missing its closing bracket: the complete records load and the cut is reported with a reason, or the file is refused as a whole with a reason, which is fail-closed; the complete records a whole-file refusal gives up are counted, not failed (owner decision, D-171). Loading the complete records while saying nothing of the cut is silent partial loading and fails, as does a record read from the cut row.",
+    "corrupt-input-neighbours-load": "The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded here, since the values check grades it on the same records in their own cases (D-175). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed.",
 }
 
 AMBIGUITIES = {
@@ -285,8 +291,8 @@ CASES = [
         "ambiguities": ["leading-dot-decimals", "met-sgp-sgp4-vs-sgp4"],
     },
     {
-        # Writer-side case (added after v0.1.0; DECISIONS D-095..D-097). Must stay last: it reads the other
-        # cases' expected.json files, which make_expected.py writes earlier in the same run.
+        # Writer-side case (added after v0.1.0; DECISIONS D-095..D-097). Must come after the cases whose expected.json
+        # files it reads, which make_expected.py writes earlier in the same run.
         "id": "tle-writer-alpha5",
         "evidence_basis": [
             "Inputs are records already frozen in this corpus (the v0.1.0 expected values of stable-tier sources): the 604 derived Alpha-5 records (603 distinct ids, letters A and T), the first ISS record (1998 epoch, negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative BSTAR and first derivative) and the first record of analyst 81011 (blank international designator, empty OBJECT_ID). No new provider request and no new raw bytes.",
@@ -323,5 +329,38 @@ CASES = [
                               "no rounding tie at the last kept digit occurs in the inputs, so half-up versus half-even rounding is not distinguished for writers either",
                               "no output of an external tool is shipped; strf's rffit was exercised only at function level outside this repository (DECISIONS D-097) and has no adapter because it is an interactive X11 program"]},
         "ambiguities": ["ecc-truncation-vs-mantissa-rounding"],
+    },
+    {
+        # Corrupt input (v0.4.0, stage 1; DECISIONS D-171). Reads the expected.json files of epoch-year-19xx and
+        # bstar-and-derivative-forms, so it comes after them; tools/derive_corrupt_inputs.py writes its files.
+        "id": "corrupt-input",
+        "evidence_basis": [
+            "Corrupt provider output cannot be captured on demand, so the inputs are made, under the D-096 precedent for synthetic-derived provenance (PLAN.md section 2.1 reserves it for owner approval): the owner approved these five inputs on 2026-09-27 (DECISIONS D-171). Each is a real record frozen in this corpus with one stated edit, placed between valid real records; each file's provenance record (derived/corrupt-input/*.provenance.json) names the records, the files their values were frozen from with those files' SHA-256, and the edit.",
+            "Every record is rendered by the corpus from values in this corpus's public expected.json files (tools/derive_corrupt_inputs.py reads no provider file). The TLE lines use the renderer that reproduces CelesTrak's lines for 304 of 304 records, checked here against each record's frozen TLE fields, so the unedited lines equal CelesTrak's own; the CSV and JSON follow CelesTrak's column order and line endings and write the frozen values in plain decimal notation.",
+            "Owner decisions of 2026-09-25 (v0.4.0 plan, section 10) applied here: a parser that validates no checksum is reported, not failed, since the corpus's own reference reader treats the checksum as data (decision 2); a whole-file refusal of a cut file passes, with the complete records it gives up counted (decision 3); the shifted-column input is held (decision 4).",
+            "The outcomes are counted in the vocabulary of D-142 and D-144: loaded (returned with its id and exactly the values the same parser returns for it from the unedited file), misidentified (a record built from garbage: returned with other values than from the unedited file, or with an id the file does not hold), refused (with a reason, through the refusal channel or by the parser raising on the file) and dropped (neither).",
+            "Every record a parser returns from an input is compared with the same parser's reading of the matching unedited file (derived/corrupt-input/unedited-*: the same records laid out as the input lays them out, with no edit), exactly, so the case measures what the edit changes (D-175). Comparing with the frozen expected values, as the case first did, graded how exactly a parser reads these records a second time: a parser that reads them imprecisely everywhere failed the neighbours item in every file whatever it did with the corrupt input. That is the values check's question, asked of the same records in epoch-year-19xx and bstar-and-derivative-forms. Where a parser does not return a record from the unedited file either, the items that would rest on it are not exercised: nothing then isolates the edit.",
+        ],
+        "title": "Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, a file cut mid-record",
+        "kind": "corrupt-input",
+        "sets": {"inputs": {"tier": "stable", "files": [f"derived/corrupt-input/{n}" for n in ["c1-checksum-digit.tle", "c2-line-2-short.tle", "c3-letter-in-epoch.tle", "c4-line-2-missing.tle", "c5-cut-last-row.csv", "c5-cut-closing-bracket.json"]]},
+                 "unedited": {"tier": "stable", "files": [f"derived/corrupt-input/{n}" for n in ["unedited-sets.tle", "unedited-rows.csv", "unedited-array.json"]]}},
+        "records_from": [
+            {"case": "epoch-year-19xx", "set": "iss-first"},
+            {"case": "bstar-and-derivative-forms", "set": "gp-69999-first"},
+            {"case": "bstar-and-derivative-forms", "set": "decaying"},
+        ],
+        "tests": ["corrupt-input", "fail-closed", "resynchronisation"],
+        "checks": ["corrupt-tle-checksum-digit", "corrupt-tle-line-short", "corrupt-tle-letter-in-number", "corrupt-tle-missing-line-2", "corrupt-file-cut", "corrupt-input-neighbours-load"],
+        "coverage": {"provides": ["five corrupt inputs, each one stated edit of 69999's first record (a stable-tier record): line 1's checksum digit changed from 6 to 1; line 2 one character short, the eccentricity's fourth digit (column 30) lost so that every column after it moves left; the letter O for the 0 in column 26 of line 1, inside the epoch field, the checksum still valid; line 1 with no line 2 after it; the file cut mid-record, as a CSV that ends inside its last row's MEAN_MOTION_DOT value and as a JSON array whose closing bracket is missing",
+                                  "each TLE input between two valid sets, 25544's first record before it and 20453 from the decaying snapshot after it, so that the counts on the neighbours measure whether a parser picks up again; the CSV holds the same two records before the cut row, the JSON all three records complete",
+                                  "no provider file: every record rendered by the corpus from values frozen in this corpus's public expected.json files, a public clone rebuilding the same bytes",
+                                  "three unedited files, the inputs' records with no edit (one TLE file for inputs 1 to 4, the CSV with its last row whole, the JSON array closed), against which every record a parser returns from an input is compared (D-175)"],
+                     "gaps": ["the shifted CSV column (the plan's input 6) is held, not included (owner decision 4, D-171)",
+                              "one edit per input, on one record: a parser is characterised only for what is edited here (line 1's checksum digit, line 2's length, a letter in the epoch field, a missing line 2, the end of a CSV or JSON file); a letter in another numeric column, a wrong checksum on line 2 or a line cut elsewhere is not exercised",
+                              "no corrupt KVN, XML or 2LE input",
+                              "a line cut short at its end, which loses only the checksum digit and leaves every value readable, is not an input: a parser that accepts it reads the right values, and accepting a malformed line whose values survive is what the wrong checksum digit already shows (D-171)",
+                              "any non-empty reason counts as a refusal's reason; whether it names the right defect is not checked"]},
+        "ambiguities": [],
     },
 ]

@@ -37,10 +37,11 @@ class Parser:
             lines = text.splitlines()
             out = [DECLARATION]
             for i, l in enumerate(lines):
-                if l.startswith("1 ") and i + 1 < len(lines) and lines[i + 1].startswith("2 "):
+                if l.startswith("1 "):  # with whatever line follows, a line 2 or not: the library answers (D-183)
+                    l2 = lines[i + 1] if i + 1 < len(lines) else ""
                     name = lines[i - 1].strip() if i and not lines[i - 1].startswith(("1 ", "2 ")) else None
                     try:
-                        out.append(_rec(Satrec.twoline2rv(l, lines[i + 1]), name))
+                        out.append(_rec(Satrec.twoline2rv(l, l2), name))
                     except ValueError as e:  # the refusal channel (D-144): the library's own reason, the field as the line carried it
                         out.append({"_refused": f"ValueError: {e}", "_field": l[2:7], "_input": l[:80]})
             return out

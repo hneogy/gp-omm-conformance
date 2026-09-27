@@ -15,7 +15,7 @@ A failure here is a statement about the parser, not about the corpus: the refere
 passes every case that exercises a parser; `satcat-70000-cutoff` is a data check the runner makes itself and
 reports as not exercised for every parser. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
 
-Generated 2026-09-27T01:12:01Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-27T01:11:40Z with gpconf 0.3.0 on corpus 0.3.0 (parser tests.adapters.reference:Parser); naive: run 2026-09-27T01:11:41Z with gpconf 0.3.0 on corpus 0.3.0 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-27T01:11:42Z with gpconf 0.3.0 on corpus 0.3.0 (parser tests.adapters.sgp4_adapter:Parser).
+Generated 2026-09-27T19:33:31Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-09-27T19:33:14Z with gpconf 0.4.0 on corpus 0.4.0 (parser tests.adapters.reference:Parser); naive: run 2026-09-27T19:33:15Z with gpconf 0.4.0 on corpus 0.4.0 (parser tests.adapters.naive:Parser); sgp4: run 2026-09-27T19:33:16Z with gpconf 0.4.0 on corpus 0.4.0 (parser tests.adapters.sgp4_adapter:Parser).
 
 ## Status by case
 
@@ -38,6 +38,7 @@ Generated 2026-09-27T01:12:01Z by `tools/make_failures.py` from the runner repor
 | `alpha5-tle-derived` | pass (0 fail) | fail (4 fail) | pass-tolerance (0 fail) |
 | `kvn-syntax-variants` | pass (0 fail) | fail (4 fail) | skip (0 fail) |
 | `tle-writer-alpha5` | pass (0 fail) | fail (3 fail) | fail (1 fail) |
+| `corrupt-input` | pass (0 fail) | fail (3 fail) | fail (3 fail) |
 
 ## Gate: this month's launches
 
@@ -160,6 +161,14 @@ One headline per parser, read across existing cases from the record counts behin
 - **tle-writer-refuses-unencodable** (set): 0 of 3 number(s) the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused; written instead of refused: id 340000: lines written instead of a refusal (line 1 columns 3-7 '34000', 70 characters); id 799501621: lines written instead of a refusal (line 1 columns 3-7 '79950', 73 characters); id -1: lines written instead of a refusal (line 1 columns 3-7 '-0001', 69 characters)
 - passed: **tle-writer-column-layout** (4 record(s) with every field in its fixed columns); **tle-writer-round-trip** (607 record(s) read back at the TLE field resolution (rendering observed per field: epoch: exact 4; mean_motion: exact 4; eccentricity: exact 2, quantised 2; inclination: exact 4; ra_of_asc_node: exact 4; arg_of_pericente …)
 
+### `corrupt-input`
+
+3 failing item(s).
+
+- **corrupt-tle-line-short** (c2-line-2-short.tle): built a record from the corrupt input: mean_motion = Decimal('1.623733631'), from the unedited file Decimal('11.62373363'); eccentricity = Decimal('0.148004'), from the unedited file Decimal('0.1487004'); mean_anomaly = Decimal('45.3718'), from the unedited file Decimal('345.3718')
+- **corrupt-input-neighbours-load** (c3-letter-in-epoch.tle): the parser refused the file as a whole (ValueError: could not convert string to float: '189.7O990935'), so the 2 valid set(s) around the corrupt one were given up with it
+- **corrupt-tle-missing-line-2** (c4-line-2-missing.tle): the corrupt record dropped (refusals not reported by this adapter)
+
 
 ## python-sgp4 2.27 through sgp4.omm / twoline2rv: what failed and why
 
@@ -210,6 +219,14 @@ One headline per parser, read across existing cases from the record counts behin
 
 - **tle-writer-refuses-unencodable** (set): 2 of 3 number(s) the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused (340000, 799501621); written instead of refused: id -1: lines written instead of a refusal (line 1 columns 3-7 '-0001', 69 characters)
 - passed: **tle-checksums-valid** (607 record(s) written as two 69-character lines with valid checksums); **tle-writer-catalog-field** (607 catalog field(s) written correctly (five digits below 100000, Alpha-5 from 100000)); **tle-writer-column-layout** (607 record(s) with every field in its fixed columns); **tle-writer-round-trip** (607 record(s) read back at the TLE field resolution (rendering observed per field: epoch: exact 607; mean_motion: exact 607; eccentricity: exact 71, quantised 246, round 256, truncate 34; inclination: exact 607; ra_of_as …)
+
+### `corrupt-input`
+
+3 failing item(s).
+
+- **corrupt-tle-line-short** (c2-line-2-short.tle): built a record from the corrupt input: eccentricity = Decimal('0.148004'), from the unedited file Decimal('0.1487004'); rev_at_epoch = 189308, from the unedited file 18930
+- **corrupt-tle-letter-in-number** (c3-letter-in-epoch.tle): built a record from the corrupt input: epoch = '2026-07-08T16:48:00.000000', from the unedited file '2026-07-08T17:02:16.167840'; bstar = Decimal('0.0'), from the unedited file Decimal('-0.000007051700000000001'); mean_motion_dot = Decimal('0.0'), from the unedited file Decimal('-2.3E-7')
+- **corrupt-tle-missing-line-2** (c4-line-2-missing.tle): built a record from the corrupt input: mean_motion = Decimal('0.0'), from the unedited file Decimal('11.62373363'); eccentricity = Decimal('0.0'), from the unedited file Decimal('0.1487004'); inclination = Decimal('0.0'), from the unedited file Decimal('34.2417')
 
 ## How to read this
 

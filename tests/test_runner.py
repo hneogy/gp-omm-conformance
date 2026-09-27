@@ -33,7 +33,7 @@ class ReferenceAdapterTests(unittest.TestCase):
     def test_offline_cases_pass_without_raw_files(self):
         # cases whose sources are all shipped (derived/, vectors/) must pass even when fixtures/*/raw is absent
         for r in self.results:
-            if r.case_id in ("alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "tle-writer-alpha5"):
+            if r.case_id in ("alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "tle-writer-alpha5", "corrupt-input"):
                 self.assertEqual(r.status, "pass", r.case_id)
 
 
@@ -72,7 +72,7 @@ class NaiveAdapterTests(unittest.TestCase):
     # Cases the naive parser must fail. The first group ships with the repository (derived files, vectors, inline
     # writer inputs) and runs from a fresh clone; the second needs the CelesTrak files in fixtures/*/raw, which the
     # public clone does not carry (provider data is not redistributed; tools/fetch.py fetches them).
-    OFFLINE_MUST_FAIL = ["alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "tle-writer-alpha5"]
+    OFFLINE_MUST_FAIL = ["alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "tle-writer-alpha5", "corrupt-input"]
     FETCHED_MUST_FAIL = ["six-digit-omm-saramago", "analyst-objects", "supgp-celestrak-classification-c"]
 
     def test_expected_failures_offline(self):

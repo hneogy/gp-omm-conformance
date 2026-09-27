@@ -92,7 +92,7 @@ the per-field count, mean and maximum difference. The README's
 The PyEphem adapter handles TLEs only, so it is the smallest complete adapter that ships. Here it is whole, below its
 docstring.
 
-From [`gpconf/adapters/pyephem_adapter.py`](../gpconf/adapters/pyephem_adapter.py), lines 9 to 55:
+From [`gpconf/adapters/pyephem_adapter.py`](../gpconf/adapters/pyephem_adapter.py), lines 11 to 60:
 
 ```python
 import math
@@ -103,6 +103,8 @@ except ImportError as e:  # pragma: no cover
     raise ImportError("this adapter needs PyEphem: pip install ephem") from e
 
 from gpconf.runner import Unsupported
+
+DECLARATION = {"_adapter": {"refusals": True}}  # every element set readtle() refuses is reported as a refusal (D-144)
 
 
 def _rec(s, name):
@@ -130,29 +132,35 @@ class Parser:
         if fmt not in ("tle", "2le"):
             raise Unsupported(fmt)
         lines = raw.decode("utf-8").splitlines()
-        out = []
+        out = [DECLARATION]
         for i, l in enumerate(lines):
-            if l.startswith("1 ") and i + 1 < len(lines) and lines[i + 1].startswith("2 "):
+            if l.startswith("1 "):  # with whatever line follows, a line 2 or not: the library answers (D-183)
+                l2 = lines[i + 1] if i + 1 < len(lines) else ""
                 name = lines[i - 1].strip() if i and not lines[i - 1].startswith(("1 ", "2 ")) else ""
                 # readtle() rejects an empty name (db_tle returns -1 when the stripped name is empty), so a
                 # name-less 2LE pair gets the catalog field as its name; object_name is then not reported
                 call_name = name or l[2:7]
                 try:
-                    out.append(_rec(ephem.readtle(call_name, l, lines[i + 1]), name))
-                except Exception:  # noqa: BLE001 -- the library refused the element set: dropped, as in the hand run
-                    pass
+                    out.append(_rec(ephem.readtle(call_name, l, l2), name))
+                except Exception as e:  # noqa: BLE001 -- the refusal channel (D-144): the library's own reason, the field as the line carried it
+                    out.append({"_refused": f"{type(e).__name__}: {e}", "_field": l[2:7], "_input": l[:80]})
         return out
 ```
 
 - `parse` accepts `tle` and `2le` and raises `Unsupported` for every other format.
-- The loop pairs each line 1 with the line 2 after it and takes the line before as the name when it is one. The
-  library does the parsing: `ephem.readtle()`.
+- The loop hands each line 1 to the library with the line after it, whatever that line is, and takes the line before
+  as the name when it is one. The library does the parsing: `ephem.readtle()`.
 - `_rec` maps the library's attributes to the corpus's fields and converts radians to degrees. It leaves out what
   PyEphem does not keep, and says so. `mean_motion_ddot` is a core field, so its absence is reported in every values item:
   that is the library's gap, shown rather than hidden behind an invented zero.
-- An element set `readtle()` rejects is dropped (`except Exception: pass`). This adapter does not report refusals
-  yet, so the runner counts those records as dropped and says that refusals were not reported. The next example
-  reports them.
+- An element set `readtle()` rejects comes back as a refusal: the library's exception as the reason and the catalog
+  field as the line carried it (see [Refusals](#refusals-the-refusal-channel)). The list begins with `DECLARATION`,
+  which tells the runner that this adapter reports refusals, so a record it neither returns nor refuses counts as
+  dropped silently.
+- PyEphem reads one element set at a time, so the adapter splits the file, and it does not check that a line 2 follows:
+  a line 1 with no line 2 after it reaches `readtle()` with the next line, and PyEphem's answer is what the report
+  shows. Do the same in your own adapter if your library takes one set at a time: filtering the pairs by their prefixes
+  first would measure your adapter's pairing instead of the library (D-183).
 
 To run it: `pip install ephem`, then `python3 -m gpconf run --preset pyephem`, or the same adapter named directly:
 `python3 -m gpconf run --adapter gpconf.adapters.pyephem_adapter:Parser`.
@@ -162,7 +170,7 @@ To run it: `pip install ephem`, then `python3 -m gpconf run --preset pyephem`, o
 python-sgp4 reads TLE and three OMM formats, writes TLEs, and decodes Alpha-5, so its adapter shows the whole
 protocol.
 
-From [`gpconf/adapters/sgp4_adapter.py`](../gpconf/adapters/sgp4_adapter.py), lines 4 to 66:
+From [`gpconf/adapters/sgp4_adapter.py`](../gpconf/adapters/sgp4_adapter.py), lines 4 to 67:
 
 ```python
 import io
@@ -201,10 +209,11 @@ class Parser:
             lines = text.splitlines()
             out = [DECLARATION]
             for i, l in enumerate(lines):
-                if l.startswith("1 ") and i + 1 < len(lines) and lines[i + 1].startswith("2 "):
+                if l.startswith("1 "):  # with whatever line follows, a line 2 or not: the library answers (D-183)
+                    l2 = lines[i + 1] if i + 1 < len(lines) else ""
                     name = lines[i - 1].strip() if i and not lines[i - 1].startswith(("1 ", "2 ")) else None
                     try:
-                        out.append(_rec(Satrec.twoline2rv(l, lines[i + 1]), name))
+                        out.append(_rec(Satrec.twoline2rv(l, l2), name))
                     except ValueError as e:  # the refusal channel (D-144): the library's own reason, the field as the line carried it
                         out.append({"_refused": f"ValueError: {e}", "_field": l[2:7], "_input": l[:80]})
             return out
@@ -240,7 +249,7 @@ class Parser:
   [refusal channel](#refusals-the-refusal-channel) section explains each key.
 
 The rest of the file answers the writer case and two of the vector hooks with the library's own functions. From
-[`gpconf/adapters/sgp4_adapter.py`](../gpconf/adapters/sgp4_adapter.py), lines 68 to 78:
+[`gpconf/adapters/sgp4_adapter.py`](../gpconf/adapters/sgp4_adapter.py), lines 69 to 79:
 
 ```python
     def write_tle(self, record):
@@ -289,7 +298,7 @@ instead, so the report names the value and its type.
 
 ### A worked example: satellite.js
 
-From [`gpconf/adapters/satellitejs.mjs`](../gpconf/adapters/satellitejs.mjs), lines 8 to 77:
+From [`gpconf/adapters/satellitejs.mjs`](../gpconf/adapters/satellitejs.mjs), lines 8 to 78:
 
 ```javascript
 import { readFileSync } from 'node:fs';
@@ -343,9 +352,10 @@ if (fmt === 'tle' || fmt === '2le') {
   const lines = raw.split(/\r?\n/);
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
-    if (l.startsWith('1 ') && i + 1 < lines.length && lines[i + 1].startsWith('2 ')) {
+    if (l.startsWith('1 ')) {   // with whatever line follows, a line 2 or not: the library answers (D-183)
+      const l2 = i + 1 < lines.length ? lines[i + 1] : '';
       const name = i > 0 && !/^[12] /.test(lines[i - 1]) ? lines[i - 1].trim() : '';
-      try { out.push(record(twoline2satrec(l, lines[i + 1]), name)); }
+      try { out.push(record(twoline2satrec(l, l2), name)); }
       catch (e) { process.stderr.write(`satellite.js refused line ${i + 1}: ${e && e.message}\n`); }
     }
   }
@@ -449,7 +459,7 @@ is no example here; `write_tle` in `sgp4_adapter.py`, above, follows the same co
 ## Refusals: the refusal channel
 
 A library that rejects a record should be heard, not lost. An adapter reports a rejected record by putting, in the
-same list as the records, an entry like this one from `gpconf/adapters/sgp4_adapter.py` (line 45):
+same list as the records, an entry like this one from `gpconf/adapters/sgp4_adapter.py` (line 46):
 
 ```python
 {"_refused": f"ValueError: {e}", "_field": l[2:7], "_input": l[:80]}
@@ -575,8 +585,8 @@ From [`gpconf/adapters/reference.py`](../gpconf/adapters/reference.py), lines 39
 
 ### Fetch the provider data, once
 
-Four cases run from files that ship with the corpus: the Alpha-5 vectors, the derived Alpha-5 lines, the KVN variants
-and the writer case. The other thirteen read provider files, which you fetch once:
+Five cases run from files that ship with the corpus: the Alpha-5 vectors, the derived Alpha-5 lines, the KVN variants,
+the writer case and the corrupt-input case. The other thirteen read provider files, which you fetch once:
 
 ```bash
 python3 tools/fetch.py
@@ -601,7 +611,7 @@ their tags; `-v` prints every item, not only the failures and the passes within 
 The command above prints:
 
 ```text
-gpconf 0.3.0 | corpus 0.3.0 | parser: gpconf.adapters.reference:Parser
+gpconf 0.4.0 | corpus 0.4.0 | parser: gpconf.adapters.reference:Parser
 
 case                                     status          exact  tol fail skip n/e n/f
 alpha5-encoding-vectors                  pass                5    0    0    0   0   0

@@ -3,9 +3,16 @@
 // Tle.parseOmmArray. Runner --cmd protocol: raw bytes on stdin, JSON records on stdout, exit 3 for formats the
 // library has no reader for (CSV, XML, KVN). argv: fmt, mode ('fields' = epoch rebuilt from epochYear/epochDay
 // with the pivot at 57; 'jd' = epoch from the parser's epochJd, the value the propagators use).
+// Refusals (D-144, adopted in round two, D-185): every array begins with the declaration {"_adapter":{"refusals":true}};
+// a pair parseLines rejects comes back as {"_refused":"error.<name>","_field":<columns 3-7 of line 1>,"_input":<line 1>};
+// a JSON file parseOmmArray rejects is refused as a whole: exit 1, with the error on stderr. The line pairing is the
+// library's: MultiIterator passes over a line shorter than 69 characters, and over a line 1 with no line 2 after it,
+// without an error, so neither reaches parseLines, and what it passes over comes back as neither a record nor a refusal.
 const std = @import("std");
 const Tle = @import("astroz");
 const c = @import("common.zig");
+
+const declaration = "[{\"_adapter\":{\"refusals\":true}}";
 
 fn emit(w: *std.Io.Writer, t: Tle, mode: []const u8) !void {
     try w.print("{{\"norad_cat_id\":{d},\"object_name\":null,\"_designator\":", .{t.satelliteNumber});
@@ -17,6 +24,15 @@ fn emit(w: *std.Io.Writer, t: Tle, mode: []const u8) !void {
     try w.print(",\"bstar\":{d},\"mean_motion_dot\":{d},\"rev_at_epoch\":{d},\"element_set_no\":{d},\"ephemeris_type\":{d}", .{ t.bstarDrag, t.firstDerMeanMotion, t.revNum, t.elemNumber, t.ephemType });
     // v0.14.0 (#105) carries the second derivative; earlier trees have no such field, and the branch is not compiled there.
     if (@hasField(Tle, "secondDerMeanMotion")) try w.print(",\"mean_motion_ddot\":{d}", .{t.secondDerMeanMotion});
+    try w.writeAll("}");
+}
+
+// A pair parseLines rejects: the library's error as the reason, the catalog field as line 1 carries it.
+fn refusal(w: *std.Io.Writer, err: anyerror, line1: []const u8) !void {
+    try w.print("{{\"_refused\":\"error.{s}\",\"_field\":", .{@errorName(err)});
+    try c.jsonString(w, line1[2..7]);
+    try w.writeAll(",\"_input\":");
+    try c.jsonString(w, line1);
     try w.writeAll("}");
 }
 
@@ -42,15 +58,12 @@ pub fn main(init: std.process.Init) !void {
     var fe = std.Io.File.stderr().writerStreaming(io, &ebuf);
     const e = &fe.interface;
 
-    try w.writeByte('[');
-    var first = true;
     if (is_json) {
         const tles = Tle.parseOmmArray(text, gpa) catch |err| {
+            // the library rejects the file as a whole: exit 1 says so, where an empty array would say the file held nothing
             try e.print("parseOmmArray: error.{s}\n", .{@errorName(err)});
             try e.flush();
-            try w.writeByte(']');
-            try w.flush();
-            return;
+            std.process.exit(1);
         };
         defer {
             for (tles) |*t| {
@@ -59,26 +72,27 @@ pub fn main(init: std.process.Init) !void {
             }
             gpa.free(tles);
         }
+        try w.writeAll(declaration);
         for (tles) |t| {
-            if (!first) try w.writeByte(',');
-            first = false;
+            try w.writeByte(',');
             try emit(w, t, mode);
         }
     } else {
+        try w.writeAll(declaration);
         var iter = Tle.MultiIterator.init(text);
         var n: usize = 0;
         var bad: usize = 0;
         while (iter.next()) |pair| {
             n += 1;
+            try w.writeByte(',');
             if (Tle.parseLines(pair.line1, pair.line2, gpa)) |t| {
                 var tle = t;
                 defer tle.deinit();
-                if (!first) try w.writeByte(',');
-                first = false;
                 try emit(w, tle, mode);
             } else |err| {
                 bad += 1;
                 if (bad <= 5) try e.print("set {d} ({s}): error.{s}\n", .{ n, pair.line1[0..7], @errorName(err) });
+                try refusal(w, err, pair.line1);
             }
         }
         try e.print("sets seen {d}, refused {d}\n", .{ n, bad });

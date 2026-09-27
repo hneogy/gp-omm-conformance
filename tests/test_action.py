@@ -71,17 +71,17 @@ class Behaviour(unittest.TestCase):
     def test_a_passing_preset(self):
         code, summary, out = run_step("reference")
         self.assertEqual(code, 0, summary)
-        self.assertIn("**4 of 17 cases exercised**, offline: 4 pass", summary)
+        self.assertIn("**5 of 18 cases exercised**, offline: 5 pass", summary)
         self.assertIn("| case | status | exact | tol | fail | skip | n/e | n/f |", summary)
         self.assertIn("**Gate, this month's launches:**", summary)
         self.assertIn(SENTENCE, summary)
-        self.assertEqual((out.get("failed"), out.get("exercised")), ("0", "4"))
+        self.assertEqual((out.get("failed"), out.get("exercised")), ("0", "5"))
         self.assertTrue(out.get("report", "").endswith("gpconf-report-reference.json"))
 
     def test_failed_cases_do_not_fail_the_job(self):
         code, summary, out = run_step("naive")
         self.assertEqual(code, 0, summary)
-        self.assertEqual(out.get("failed"), "4")
+        self.assertEqual(out.get("failed"), "5")
         self.assertIn("Failed cases do not fail this job.", summary)
         self.assertIn("a demonstration of failure, not a parser anyone should use", summary)
 
@@ -162,7 +162,7 @@ class Behaviour(unittest.TestCase):
         code, summary, out = run_step("reference", extra_env={"GPCONF_DATA": ROOT})
         self.assertEqual(code, 0, summary)
         self.assertIn("13 need provider data, which this Action does not fetch", summary)
-        self.assertEqual(out.get("exercised"), "4")
+        self.assertEqual(out.get("exercised"), "5")
 
 
 if __name__ == "__main__":

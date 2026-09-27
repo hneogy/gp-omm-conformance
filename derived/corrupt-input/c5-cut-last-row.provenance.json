@@ -1,0 +1,55 @@
+{
+  "file": "derived/corrupt-input/c5-cut-last-row.csv",
+  "provenance": "synthetic-derived",
+  "label": "SYNTHETIC-DERIVED: real records frozen in this corpus, rendered by the corpus, with one stated edit; served by no provider",
+  "input": 5,
+  "check": "corrupt-file-cut",
+  "description": "A CSV file cut inside its last row: two complete records, then the cut one.",
+  "rendering": {
+    "layout": "CelesTrak's CSV column order and CRLF line endings; values as frozen, in plain decimal notation (CelesTrak writes some with a leading dot and an exponent, a difference of notation, not of value)"
+  },
+  "records": [
+    {
+      "position": 1,
+      "role": "valid",
+      "norad_cat_id": 25544,
+      "values_from": "fixtures/epoch-year-19xx/expected.json",
+      "set": "iss-first",
+      "tier": "stable",
+      "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+      "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5"
+    },
+    {
+      "position": 2,
+      "role": "valid",
+      "norad_cat_id": 20453,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "decaying",
+      "tier": "live",
+      "source_file": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+      "source_sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79"
+    },
+    {
+      "position": 3,
+      "role": "corrupt",
+      "norad_cat_id": 69999,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "gp-69999-first",
+      "tier": "stable",
+      "source_file": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+      "source_sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+      "edit": {
+        "field": "MEAN_MOTION_DOT",
+        "was": "-0.00000023",
+        "now": "-0.000000",
+        "statement": "the file ends inside its last row, two characters before the end of the MEAN_MOTION_DOT value ('-0.00000023' becomes '-0.000000'); MEAN_MOTION_DDOT and the row's line ending are missing"
+      }
+    }
+  ],
+  "owner_approval": "owner approval 2026-09-27 of the v0.4.0 plan's inputs 1 to 5 (section 5) with decisions 2 to 4 of its section 10; synthetic-derived provenance under the D-096 precedent (PLAN.md section 2.1); DECISIONS D-171",
+  "generator": "tools/derive_corrupt_inputs.py",
+  "generated_at": "2026-09-27T06:48:07Z",
+  "line_endings": "CRLF",
+  "bytes": 692,
+  "output_sha256": "c1cdfc2530b0dc1367e7e4b5a250c6354b396ace353961f31b93344819ebc526"
+}

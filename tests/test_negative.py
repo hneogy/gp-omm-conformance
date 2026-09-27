@@ -113,6 +113,7 @@ class CommandParserParse(unittest.TestCase):
                   "elif mode == 'obj': print(json.dumps({'norad_cat_id': 25544}))\n"
                   "elif mode == 'text': print('not json at all')\n"
                   "elif mode == 'fail': print('boom: cannot read', file=sys.stderr); sys.exit(1)\n"
+                  "elif mode == 'wfail': sys.stderr.write('refused: 340000\\n\\n'); sys.exit(1)\n"
                   "elif mode == 'unsup': sys.exit(3)\n")
         self.script = os.path.join(self.tmp.name, "p.py")
         with open(self.script, "w") as f:
@@ -135,8 +136,7 @@ class CommandParserParse(unittest.TestCase):
     def test_non_zero_exit_names_the_exit_code_and_stderr(self):
         with self.assertRaises(RuntimeError) as cm:
             CommandParser(self.cmd("fail")).parse(b"", "csv")
-        self.assertIn("exit 1", str(cm.exception))
-        self.assertIn("boom", str(cm.exception))
+        self.assertEqual(str(cm.exception), "exit 1: boom: cannot read")  # the line ending left out (D-177)
 
     def test_a_json_object_instead_of_an_array_is_named(self):
         with self.assertRaises(RuntimeError) as cm:
@@ -153,7 +153,13 @@ class CommandParserParse(unittest.TestCase):
         fails = [i for i in r.items if i.check == "parse" and i.status == "fail"]
         self.assertTrue(fails)
         self.assertIn("exit 1", fails[0].detail)
+        self.assertNotIn("\n", fails[0].detail)
         self.assertNotIn("internal error", " ".join(i.detail for i in r.items))
+
+    def test_a_failing_writer_command_is_named_without_its_line_endings(self):
+        with self.assertRaises(RuntimeError) as cm:
+            CommandParser(None, write_cmd=self.cmd("wfail")).write_tle({"norad_cat_id": 340000})
+        self.assertEqual(str(cm.exception), "exit 1: refused: 340000")
 
 
 class EpochVectorValues(unittest.TestCase):

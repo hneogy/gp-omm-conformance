@@ -1,6 +1,6 @@
-# Corpus manifest (0.3.0)
+# Corpus manifest (0.4.0)
 
-Generated 2026-09-27T01:11:25Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-09-27T19:32:42Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
 
@@ -23,6 +23,7 @@ No raw provider files are shipped. Each case lists the exact source URLs, retrie
 | 15 | `alpha5-tle-derived` | derived-tle | 604 | 4/0 | 3 |
 | 16 | `kvn-syntax-variants` | derived-kvn | 6 | 6/0 | 2 |
 | 17 | `tle-writer-alpha5` | writer | 610 | 9/2 | 4 |
+| 18 | `corrupt-input` | corrupt-input | 18 | 9/0 | 5 |
 
 The records column sums the record counts of a case's source files: `analyst-objects` counts the 565 group records plus the two single-object first fetches (567).
 
@@ -209,6 +210,20 @@ Coverage gaps:
 - no rounding tie at the last kept digit occurs in the inputs, so half-up versus half-even rounding is not distinguished for writers either
 - no output of an external tool is shipped; strf's rffit was exercised only at function level outside this repository (DECISIONS D-097) and has no adapter because it is an interactive X11 program
 
+## 18. `corrupt-input`
+
+Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, a file cut mid-record
+
+Tests: corrupt-input, fail-closed, resynchronisation
+
+Coverage gaps:
+
+- the shifted CSV column (the plan's input 6) is held, not included (owner decision 4, D-171)
+- one edit per input, on one record: a parser is characterised only for what is edited here (line 1's checksum digit, line 2's length, a letter in the epoch field, a missing line 2, the end of a CSV or JSON file); a letter in another numeric column, a wrong checksum on line 2 or a line cut elsewhere is not exercised
+- no corrupt KVN, XML or 2LE input
+- a line cut short at its end, which loses only the checksum digit and leaves every value readable, is not an input: a parser that accepts it reads the right values, and accepting a malformed line whose values survive is what the wrong checksum digit already shows (D-171)
+- any non-empty reason counts as a refusal's reason; whether it names the right defect is not checked
+
 ## Checks
 
 - **omm-formats-agree** — For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them.
@@ -247,6 +262,12 @@ Coverage gaps:
 - **tle-writer-secondary-fields** — Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information, never failed: orbit-fitting tools regenerate these fields by design.
 - **tle-writer-column-layout** — Every field of a written TLE sits in its fixed columns: on line 1 the decimal points at columns 24 and 35 and the separators at 2, 9, 18, 33, 44, 53, 62 and 64; on line 2 the decimal points at 12, 21, 38, 47 and 55, the separators at 2, 8, 17, 26, 34, 43 and 52, seven eccentricity digits, right-justified element set and revolution numbers. A left-justified value with a recomputed checksum has the right length and checksum and still fails this check.
 - **tle-writer-matches-provider-rendering** — Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's CelesTrak-style derived line). Information only: an equivalent rendering under the other provider's convention is not a defect.
+- **corrupt-tle-checksum-digit** — A TLE set whose line 1 carries a wrong checksum digit, every other character real, is refused with a reason. A parser that validates no checksum returns the set exactly as it returns it from the unedited file: that is reported, not failed, since the corpus's own reference reader treats the checksum as data (owner decision, D-171). A record that differs from that reading fails, as does a silent drop.
+- **corrupt-tle-line-short** — A TLE set whose line 2 has lost one character mid-line (a digit of the eccentricity), so that it is 68 characters and every column after the cut has moved one to the left, is refused with a reason. A record read from it fails as misidentified, since its values are not the set's, and so does a silent drop.
+- **corrupt-tle-letter-in-number** — A TLE set with the letter O in place of a 0 in line 1's epoch field is refused with a reason, not read as a record with a wrong epoch and not dropped silently. The line's checksum is still valid, since a letter counts 0 as the digit it replaced did, so the checksum cannot catch it.
+- **corrupt-tle-missing-line-2** — A TLE set whose line 1 is followed directly by the next set's name line: the orphan line 1 is refused with a reason. Passing over it without a word counts as dropped, and pairing it with the lines after it builds a record from garbage.
+- **corrupt-file-cut** — A file cut mid-record, as a CSV that ends inside its last row and as a JSON array missing its closing bracket: the complete records load and the cut is reported with a reason, or the file is refused as a whole with a reason, which is fail-closed; the complete records a whole-file refusal gives up are counted, not failed (owner decision, D-171). Loading the complete records while saying nothing of the cut is silent partial loading and fails, as does a record read from the cut row.
+- **corrupt-input-neighbours-load** — The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded here, since the values check grades it on the same records in their own cases (D-175). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed.
 
 ## Ambiguities
 

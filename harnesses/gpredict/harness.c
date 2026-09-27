@@ -1,7 +1,10 @@
 /* Harness for gp-omm-conformance: reads TLE text on stdin, hands every 3-line (or name-less 2-line) set to Gpredict's
    own Get_Next_Tle_Set() (src/sgpsdp/sgp_in.c, unmodified), and prints the parsed tle_t as JSON records in the
-   runner's --cmd protocol. usage: gpredict-harness <fmt>; exit 3 = format unsupported. Written for the corpus; the
-   Gpredict sources it links are GPL-2.0 and are fetched separately, never copied into the corpus. */
+   runner's --cmd protocol. usage: gpredict-harness <fmt>; exit 3 = format unsupported. A set Get_Next_Tle_Set()
+   rejects comes back through the runner's refusal channel with the function's return code as its reason (corpus
+   D-144, adopted in D-178); each line 1 goes to the function with whatever line follows it, so Gpredict, not the
+   harness, answers for a line 1 with no line 2 after it (D-183). Written for the corpus; the Gpredict sources it links
+   are GPL-2.0 and are fetched separately, never copied into the corpus. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,21 +46,30 @@ int main(int argc, char **argv) {
     /* split into lines */
     static char *lines[400000]; int n = 0;
     for (char *p = strtok(buf, "\n"); p && n < 400000; p = strtok(NULL, "\n")) { size_t l = strlen(p); if (l && p[l-1] == '\r') p[l-1] = '\0'; lines[n++] = p; }
-    printf("[");
-    int first = 1, refused = 0;
-    for (int i = 0; i + 1 < n; i++) {
-        if (strncmp(lines[i], "1 ", 2) != 0 || strncmp(lines[i + 1], "2 ", 2) != 0) continue;
+    printf("[{\"_adapter\":{\"refusals\":true}}");   /* every set the function rejects is reported (D-144) */
+    int refused = 0;
+    for (int i = 0; i < n; i++) {
+        if (strncmp(lines[i], "1 ", 2) != 0) continue;   /* with whatever line follows, a line 2 or not: Gpredict answers (D-183) */
+        const char *l2 = i + 1 < n ? lines[i + 1] : "";
         const char *name = (i > 0 && strncmp(lines[i-1], "1 ", 2) != 0 && strncmp(lines[i-1], "2 ", 2) != 0) ? lines[i-1] : NULL;
         char line[3][80]; memset(line, 0, sizeof line);
         /* a name-less 2LE pair gets the catalog field as its name: Get_Next_Tle_Set() reads a name line first */
         if (name) strncpy(line[0], name, 79); else strncpy(line[0], lines[i] + 2, 5);
-        strncpy(line[1], lines[i], 79); strncpy(line[2], lines[i + 1], 79);
+        strncpy(line[1], lines[i], 79); strncpy(line[2], l2, 79);
         tle_t tle; memset(&tle, 0, sizeof tle);
         int rc = Get_Next_Tle_Set(line, &tle);
-        if (rc != 1) { refused++; fprintf(stderr, "gpredict refused line %d (Get_Next_Tle_Set returned %d): %s\n", i + 1, rc, lines[i]); continue; }
+        if (rc != 1) {
+            /* the refusal channel: Gpredict gives a return code, not a message; -2, its one failure, is Good_Elements()
+               rejecting the set (sgp_in.c) */
+            char field[6] = {0};
+            strncpy(field, lines[i] + 2, 5);
+            refused++; fprintf(stderr, "gpredict refused line %d (Get_Next_Tle_Set returned %d): %s\n", i + 1, rc, lines[i]);
+            printf(",{\"_refused\":\"Get_Next_Tle_Set() returned %d%s\",\"_field\":", rc, rc == -2 ? ": Good_Elements() rejected the set" : "");
+            json_string(field); printf(",\"_input\":"); json_string(lines[i]); printf("}");
+            continue;
+        }
         char iso[40]; iso_epoch(tle.epoch, iso, sizeof iso);
-        if (!first) printf(","); first = 0;
-        printf("{\"norad_cat_id\":%d,\"object_name\":", tle.catnr);
+        printf(",{\"norad_cat_id\":%d,\"object_name\":", tle.catnr);
         if (name) json_string(tle.sat_name); else printf("null");   /* the placeholder name is the harness's, not Gpredict's */
         printf(",\"_idesg\":"); json_string(tle.idesg);
         printf(",\"epoch\":\"%s\",\"_epoch_raw\":%.17g,\"_epoch_year_field\":%d", iso, tle.epoch, tle.epoch_year);

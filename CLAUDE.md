@@ -89,3 +89,37 @@ report is filed, the entry is updated in place with the link; that addition is t
 in-place edit the append-only rule allows, because it completes the entry rather than
 changing what was decided. D-128, D-132 and D-133 preceded this convention and carry the
 specifics; they are not rewritten, and their drafts go out the week of 2026-09-24.
+
+## Outreach text (owner convention, 2026-09-27)
+
+Every message to another project (an issue, a comment, a pull request's description, a reply)
+is written for a maintainer to read, not to carry the corpus's record. A SatDump collaborator
+asked, on #1221, not to be sent LLM-generated text: hard to read; focus on the actual issue
+(https://github.com/SatDump/SatDump/issues/1221#issuecomment-5857824841). The owner adopted
+that as a standing convention for all outreach from 2026-09-27:
+
+- Lead with the one-sentence finding. Then one reproduction and one measured number. Stop.
+- No [tested]/[inferred] brackets in filed text. They belong in the corpus's own records,
+  not a maintainer's inbox.
+- No structured tables, no section headers, no bulleted inventories in a first report.
+  Prose.
+- File:line citations only where the line is the point.
+- The evidence lives in the corpus; the message points at it.
+
+What this does not change: the verification standard behind every claim stays exactly as it
+is. Every sentence of a message rests on a run or a source read recorded in the handoff, with
+its markers there, and a claim that is not verified stays out of the message. What changes is
+how much of the evidence goes in the message.
+
+The lengths, in words of the posted text, measured 2026-09-27. The length that drew the
+complaint: the original #1221 report, 459 words, three numbered points, two of them under
+bold headings, and a bracket on each, followed by a 79-word narrowing the next day
+(https://github.com/SatDump/SatDump/issues/1221). The length that has worked: the #44 comment
+on dnwrnr/sgp4 after v3.0, 194 words
+(https://github.com/dnwrnr/sgp4/issues/44#issuecomment-5848881779); the astroz #99
+confirmation, 128 words (https://github.com/ATTron/astroz/pull/99#issuecomment-5850276993);
+and the reply to the complaint on #1221, 39 words
+(https://github.com/SatDump/SatDump/issues/1221#issuecomment-5857935271). The first two predate
+the convention and each carries a [tested] bracket; they are cited for their length, not for
+their brackets. A draft written before 2026-09-27 is checked against this section before it
+goes out.
