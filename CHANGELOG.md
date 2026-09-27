@@ -13,8 +13,8 @@ command, presets that test a library with no adapter written, and a GitHub Actio
 `tools/fetch.py` and `python3 -m gpconf` work as before. The seventeen cases stay and no frozen expected value
 changed (the writer case gained one input); the naive and python-sgp4 adapters still fail 14 and 7 of them. The
 independent audit in `AUDIT.md` covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1 nor
-the changes of this release have been separately audited. The version DOI for this release is added to
-`CITATION.cff` and the README after Zenodo mints it.
+the changes of this release have been separately audited. Version DOI 10.5281/zenodo.22986178 (Zenodo record
+22986178); the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
 
 ### Installing and running
 
