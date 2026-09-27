@@ -12,8 +12,8 @@ parser corrupt input (D-171). No frozen expected value changed and the adapter p
 adapter passes all eighteen cases (seventeen exact, the SATCAT data check not exercised); the naive adapter fails 15
 of them and python-sgp4 2.27 fails 8 (D-173). The independent audit in `AUDIT.md` covered v0.1.0; neither the
 writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0 nor the changes of this
-release have been separately audited. The version DOI for this release is added to `CITATION.cff` and the README
-after Zenodo mints it.
+release have been separately audited. Version DOI 10.5281/zenodo.23002261 (Zenodo record 23002261); the concept DOI
+10.5281/zenodo.22867654 resolves to the latest release.
 
 ### Added
 
