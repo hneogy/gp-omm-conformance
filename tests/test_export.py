@@ -13,6 +13,15 @@ from public_scrub import SUPGP_CASES, supgp_value_strings  # noqa: E402
 
 TEXT_EXT = (".json", ".md", ".py", ".txt", ".csv", ".kvn", ".xml", ".tle", ".2le", ".yml", ".toml", ".xsd", ".log", "")
 
+# An absolute home path, whoever the user, in the three shapes (D-172): macOS and Linux (and root's home), and Windows
+# with a drive letter and backslashes, escaped backslashes or forward slashes. A path glued to a word character is part
+# of a URL or a relative path and does not count; one after a dot, a quote or a space does. The folder names are spelt
+# with character classes, and the samples below are assembled at run time, so that this file does not match itself.
+HOME_PATH = re.compile(r"(?<!\w)/(?:U[s]ers|h[o]me|r[o]ot)/[^\s\"'`<>)\]]*"
+                       r"|(?i:\b[a-z]:(?:\\\\|\\|/)(?:u[s]ers|d[o]cuments and settings)(?:\\\\|\\|/))[^\s\"'`<>)\]]*")
+# The one allowed path: the macOS home of a user named u, a fixture of the cache-folder test.
+ALLOWED_HOME_PATHS = {("tests/test_install_layout.py", "/U" + "sers/u")}
+
 
 class ExportGuardTests(unittest.TestCase):
     @classmethod
@@ -91,6 +100,31 @@ class ExportGuardTests(unittest.TestCase):
         self.assertIn("Public-copy notice.", text)
         self.assertIn("private original, which is intact", text)
         self.assertNotIn("nine-digit-supgp-launch-nominals |", text)  # no appendix row from the SupGP case
+
+    def test_the_home_path_guard_knows_every_shape(self):
+        u, h, r, das = "Us" + "ers", "ho" + "me", "ro" + "ot", "Docu" + "ments and Settings"
+        caught = [f"/{u}/alice/x", f"tests.adapters./{u}/alice/p", f"'/{u}/alice'", f"/{h}/bob/.cache", f"/{r}/.ssh",
+                  f"C:\\{u}\\carol\\AppData", f"C:\\\\{u}\\\\carol", f"c:/{u}/carol/x", f"D:\\{das}\\dave"]
+        missed = [s for s in caught if not HOME_PATH.search(s)]
+        self.assertEqual(missed, [], "the guard misses these home-path shapes")
+        ignored = [f"https://example.org/{h}/page", "~/.venvs/twine", f"relative/{u}/x", "docs/ADAPTERS.md"]
+        self.assertEqual([s for s in ignored if HOME_PATH.search(s)], [], "the guard takes these for home paths")
+
+    def test_no_absolute_home_path_in_any_exported_file(self):
+        # D-172: three docstrings shipped the owner's home folder in v0.3.0, written through a shell whose zsh `:P`
+        # modifier made a real path of `$name:Parser`. CLAUDE.md already warned against that spelling and did not stop it,
+        # so the guard is a test: no exported file, of any type, may carry an absolute home path of any user.
+        hits = []
+        for f in self.files:
+            rel = os.path.relpath(f, self.dest).replace(os.sep, "/")
+            with open(f, "rb") as fh:
+                text = fh.read().decode("utf-8", "replace")
+            for m in HOME_PATH.finditer(text):
+                path = m.group(0)
+                if any(rel == af and (path == ap or path.startswith(ap + "/")) for af, ap in ALLOWED_HOME_PATHS):
+                    continue
+                hits.append(f"{rel}:{text.count(chr(10), 0, m.start()) + 1}: {path[:80]}")
+        self.assertEqual(hits, [], "absolute home paths in exported files; a local path publishes a user name and a folder layout: " + "; ".join(hits[:10]))
 
     def test_no_supgp_values_anywhere(self):
         if not self.values:
