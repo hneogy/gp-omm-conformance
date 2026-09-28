@@ -5,6 +5,13 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
+## [Unreleased]
+
+Added `docs/LETTER-IN-FIELD.md`, on the corrupt-input case's input 3, the letter O in place of a 0 in line 1's epoch
+field: four TLE readers read the field up to the letter with no error, reported to PyEphem, satellite.js, Gpredict
+and tle.js; libsgp4 v3.0 and astroz v0.14.0 refuse the line; with the fix in each language (D-193). Documentation
+only.
+
 ## [0.4.0] - 2026-09-27
 
 A minor release under the versioning rule: one case added, the eighteenth, `corrupt-input`, the first case to hand a

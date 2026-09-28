@@ -88,7 +88,7 @@ catalog number as Alpha-5 above 99999 and refuse numbers above 339999 (or below 
 | `schemas/`: SANA NDM/XML schema sets 2.0.0 and 4.0.0, unmodified | |
 | `gpconf/`: the runner (standard library, Python 3.9+) and the adapters and harnesses behind its presets | |
 | `harnesses/`: recipes for the five hand-run libraries that cannot be presets (libsgp4, Gpredict, SatDump, astroz, gods-eye-view): each harness, its pinned commit and build commands; best-effort, not in the pip package, and tied to the projects' internals (D-155) | SatDump's link stand-ins: the recipe lists the symbols to define instead (D-152) |
-| `docs/`: the adapter guide (`docs/ADAPTERS.md`), research notes with verbatim sources, cross-check, breakage catalogue, upstream bug-report drafts; `AUDIT.md`: the independent audit and its resolutions | |
+| `docs/`: the adapter guide (`docs/ADAPTERS.md`), research notes with verbatim sources, cross-check, breakage catalogue, upstream bug-report drafts, the letter-in-field reference (`docs/LETTER-IN-FIELD.md`); `AUDIT.md`: the independent audit and its resolutions | |
 
 The pip package, `gpconf`, carries the runner and the corpus's own files: every case's `expected.json` and
 `case.md`, `derived/`, `vectors/`, `manifest.json` and the fetch list. It carries no provider data; the schemas,
