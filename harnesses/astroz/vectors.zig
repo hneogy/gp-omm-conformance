@@ -1,4 +1,4 @@
-// Vector hooks for gp-omm-conformance over astroz: {op, input} JSON on stdin -> {result} | {error} on stdout.
+// Vector hooks for gp-omm-conformance over astroz: {op, input} JSON on stdin -> {result} | {error} | {unsupported} on stdout.
 // alpha5_decode and two_digit_year go through Tle.parseLines on the ISS baseline pair with the field substituted
 // (astroz validates no checksum); parse_epoch and parse_catalog_id through Tle.parseOmm on a JSON record with the
 // one value substituted (astroz reads OMM as JSON only). No encoder or writer exists.
@@ -71,6 +71,6 @@ pub fn main(init: std.process.Init) !void {
             } else try w.print("{{\"result\":{d}}}", .{tle.satelliteNumber});
         } else |err| try w.print("{{\"error\":\"error.{s}\"}}", .{@errorName(err)});
     } else if (c.eql(op, "alpha5_encode")) {
-        try w.writeAll("{\"error\":\"astroz has no TLE writer\"}");
+        try w.writeAll("{\"unsupported\":\"astroz has no TLE writer\"}"); // the item skips (D-205, D-206)
     } else try w.print("{{\"error\":\"unknown op {s}\"}}", .{op});
 }

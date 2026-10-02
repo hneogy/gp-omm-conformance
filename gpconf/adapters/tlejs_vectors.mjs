@@ -1,7 +1,8 @@
 // Vector hooks for the tle.js presets (tested with 5.0.3): each op goes through the library's public getters on a
 // valid line pair (the ISS baseline set of the corpus) with the one field substituted, checksums recomputed with the
-// library's own computeChecksum(). Protocol: {op, input} on stdin -> {result} | {error}. Moved into the package from
-// the corpus's hand run (D-139), unchanged but for how it finds the library (D-154).
+// library's own computeChecksum(). Protocol: {op, input} on stdin -> {result} | {error} | {unsupported} (D-205). Moved
+// into the package from the corpus's hand run (D-139), changed for how it finds the library (D-154) and for the
+// unsupported answer, which skips the items of the operations tle.js does not have (D-206).
 // gpconf runs this file as `node --input-type=module --eval <this source> -- <arguments>` from the working directory,
 // so the library resolves as it would for a script in the user's project; a file outside the project could not import
 // it (D-154). GPCONF_NODE_MODULE, set by `--module PATH`, names the library's entry file instead.
@@ -26,9 +27,9 @@ try {
     const tle = withChecksum(L1.slice(0, 18) + yy + L1.slice(20)) + '\n' + L2;
     r = { result: new Date(T.getEpochTimestamp(tle)).getUTCFullYear() };
   } else if (op === 'alpha5_encode') {
-    r = { error: 'tle.js has no TLE writer' };
+    r = { unsupported: 'tle.js has no TLE writer' };
   } else if (op === 'parse_epoch' || op === 'parse_catalog_id') {
-    r = { error: 'tle.js reads TLE lines only; it has no OMM (CSV/JSON/XML/KVN) epoch or catalog-id parser' };
+    r = { unsupported: 'tle.js reads TLE lines only; it has no OMM (CSV/JSON/XML/KVN) epoch or catalog-id parser' };
   } else r = { error: `unknown op ${op}` };
 } catch (e) { r = { error: `${e.name}: ${e.message}` }; }
 process.stdout.write(JSON.stringify(r));

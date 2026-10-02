@@ -5,7 +5,17 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
-## [Unreleased]
+## [0.5.0] - 2026-10-01
+
+A minor release under the versioning rule: an additive protocol change, the "unsupported" answer for vector hooks
+(D-205, D-206); the gate's record counts to one outcome per record (D-207, under D-194); and reproducible package
+builds (D-203). No frozen expected value changed and the eighteen cases are those of 0.4.0. The reference adapter
+passes all eighteen cases (seventeen exact, the SATCAT data check not exercised); the naive adapter fails 15 of them
+and python-sgp4 2.27 fails 8, as in 0.4.0. The independent audit in `AUDIT.md` covered v0.1.0; neither the
+writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0, the corrupt-input case
+of v0.4.0 nor the changes of this release have been separately audited. The version DOI is added here and to
+`CITATION.cff` after Zenodo mints it at the release; the concept DOI 10.5281/zenodo.22867654 resolves to the latest
+release.
 
 Added `docs/LETTER-IN-FIELD.md`, on the corrupt-input case's input 3, the letter O in place of a 0 in line 1's epoch
 field: four TLE readers read the field up to the letter with no error, reported to PyEphem, satellite.js, Gpredict
@@ -16,6 +26,25 @@ Fixed: the `satellite.js` preset emits an epoch it cannot form as `null` and not
 (a field that is not wholly numeric, from satellite.js's #197 on) became a string the runner reported as its own
 internal error (D-199). The README names Vallado's C++ as part of the stack, python-sgp4's accelerated `Satrec`
 run against every case (D-197, promised on PyEphem #297), and states the Alpha-5 rule as the vectors do (D-196).
+
+Added: reproducible package builds. `tools/stage_package.py` needs the build time as `SOURCE_DATE_EPOCH`, stamps the
+staged tree with it, passes it to the build and repacks the wheel and the sdist so that two builds of the same export
+with the same epoch are byte-identical whatever the umask or the moment; from this release the files on PyPI can be
+rebuilt from the tag and matched by SHA-256 with the toolchain the release notes name (D-203).
+
+Added: a vectors command may answer `{"unsupported": "<reason>"}` and a Python hook may raise
+`gpconf.runner.Unsupported` for an operation the library does not have; the hook's item then skips with the reason
+instead of failing its valid vectors, for all of the hook's vectors or none; a non-zero exit stays a rejection, exit 3
+included (D-205). The shipped tle.js, libsgp4 and astroz vector harnesses give the answer, so their `alpha5-encode`
+items, and tle.js's `ccsds-epoch-strings` and `catalog-number-is-integer`, skip instead of failing; no case count
+moves (D-206).
+
+Changed: the record counts behind the gate follow one outcome per expected record. `dropped` is now the expected
+records with no record returned at all and no refusal, so a record returned under a wrong catalog number is counted
+once, as misidentified, where it was also counted as a dropped expected one before; the count `dropped` carried
+before stays in the report as `ids_not_returned`, and misidentified records beyond the records left are counted as
+`extra`. For a parser that returns 0 for every Alpha-5 field, the headline reads "256 misidentified" where it read
+"256 misidentified, 256 dropped silently" (D-207, under D-194).
 
 ## [0.4.0] - 2026-09-27
 

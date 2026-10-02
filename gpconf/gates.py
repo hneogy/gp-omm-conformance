@@ -14,6 +14,11 @@ An adapter that declares the channel makes "dropped" mean "dropped silently"; wi
 "refusals not reported by this adapter", since zero refusals then means only that none were reported. Every result carries the snapshot's date, its
 record count and id range, and the letters its Alpha-5 fields begin with, because a decoder that is wrong from J upward
 passes a snapshot whose ids all begin with A.
+
+From corpus 0.5.0 the counts behind the headline follow this definition exactly (D-194, D-207): a record returned
+under a wrong id is counted once, as misidentified, so the four outcomes sum to the expected count; the per-id count
+the runner kept before, the expected ids no record came back under, stays in the report as ids_not_returned; and
+misidentified records beyond the expected records left are counted as extra, never subtracted below zero.
 """
 import json
 import os
@@ -58,7 +63,8 @@ def format_result(items):
         if it.check in ("values", "records-returned") and it.counts is not None:
             c = it.counts
             return {"state": "measured", "expected": c["expected"], "returned": c["returned"], "loaded": c["loaded"],
-                    "misidentified": c["misidentified"], "dropped": c["dropped"], "refused": c.get("refused_matched", 0),
+                    "misidentified": c["misidentified"], "dropped": c["dropped"], "extra": c.get("extra", 0),
+                    "ids_not_returned": c.get("ids_not_returned"), "refused": c.get("refused_matched", 0),
                     "refusals_reported": c.get("refusals_reported"), "top_refusal_reason": c.get("top_refusal_reason")}
     for it in items:
         if it.check == "parse" and it.status == "fail":
@@ -105,6 +111,8 @@ def _numbers(r, expected):
         parts.append(f"{r['refused']} refused" + (f" ({r['top_refusal_reason'][:80]})" if r.get("top_refusal_reason") else ""))
     if r.get("dropped"):
         parts.append(f"{r['dropped']} dropped " + ("silently" if r.get("refusals_reported") else "(refusals not reported by this adapter)"))
+    if r.get("extra"):
+        parts.append(f"{r['extra']} of them beyond the file's records")
     return ", ".join(parts) if parts else "0 returned"
 
 
@@ -125,7 +133,8 @@ def headline(formats, gate, snap):
     if not measured:
         text = "not measured: " + "; ".join(f"{labels[f]}: {st}" for f, st in unmeasured.items())
     elif len(full) == len(measured):
-        text = f"reads {gate['name']} in every format {scope}{left_out}: " + ", ".join(f"{labels[f]}: {measured[f]['loaded']} loaded" for f in full)
+        # every expected record loaded; the numbers still name anything returned beyond them (D-207)
+        text = f"reads {gate['name']} in every format {scope}{left_out}: " + ", ".join(f"{labels[f]}: {_numbers(measured[f], _expected(measured[f], n))}" for f in full)
     elif full:
         text = "only via " + " and ".join(f.upper() for f in full) + (" of the formats measured here" if unknown else "") + left_out + ": " + "; ".join(
             f"{labels[f]}: {_numbers(r, _expected(r, n))}" for f, r in measured.items())

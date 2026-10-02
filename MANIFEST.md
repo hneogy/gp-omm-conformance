@@ -1,6 +1,6 @@
-# Corpus manifest (0.4.0)
+# Corpus manifest (0.5.0)
 
-Generated 2026-09-27T19:32:42Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-10-02T02:07:13Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
 

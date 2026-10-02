@@ -10,12 +10,15 @@ traceable to a provider response whose URL, retrieval time and SHA-256 are recor
 (`tle-writer-alpha5`) asks the same of code that *writes* TLEs: Alpha-5 in the catalog field,
 valid lines, and a refusal for the numbers the format cannot carry.
 
-Status: version `0.4.0`, a minor release: an eighteenth case, `corrupt-input`, hands a parser corrupt
-input between valid records and counts what comes back (D-171); no frozen expected value changed and the
-adapter protocol is as in 0.3.0, and the naive and python-sgp4 adapters fail 15 and 8 of the eighteen
-cases. The independent audit (`AUDIT.md`) covered v0.1.0; neither the writer-side case of v0.2.0, the
-fixes of v0.2.1, the packaging and protocol changes of v0.3.0 nor the corrupt-input case of v0.4.0 have
-been separately audited. Maintainer: Honorius Neogy (NEOGY LLC).
+Status: version `0.5.0`, a minor release: an additive protocol change, a vectors command or a Python
+hook may declare an operation unsupported and its item skips instead of failing (D-205, D-206); the
+gate's record counts follow one outcome per record (D-207, under D-194); and package builds are
+reproducible, so the files on PyPI can be rebuilt from the tag and matched by SHA-256 (D-203). No frozen
+expected value changed, the eighteen cases are those of 0.4.0, and the naive and python-sgp4 adapters
+fail 15 and 8 of them, as before. The independent audit (`AUDIT.md`) covered v0.1.0; neither the
+writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0, the
+corrupt-input case of v0.4.0 nor the changes of v0.5.0 have been separately audited. Maintainer:
+Honorius Neogy (NEOGY LLC).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22867654.svg)](https://doi.org/10.5281/zenodo.22867654) See `DECISIONS.md` for the full decision log and `MANIFEST.md` for every case,
 source and known gap.
@@ -141,7 +144,7 @@ nothing ran and that this says nothing about the library (D-153, D-154). The ada
 In a GitHub Actions job, from v0.3.0, three lines run a preset against your library:
 
 ```yaml
-- uses: hneogy/gp-omm-conformance@v0.4.0
+- uses: hneogy/gp-omm-conformance@v0.5.0
   with:
     preset: sgp4
 ```
@@ -467,7 +470,7 @@ and correction to be recorded.
   appendix table (a sample entry from the SupGP case, per D-033/D-049) and says so in a notice; the
   auditor's text is otherwise unchanged and the private original is intact. It covered v0.1.0; neither
   the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0 nor the
-  corrupt-input case of v0.4.0 have been separately audited.
+  corrupt-input case of v0.4.0 nor the changes of v0.5.0 have been separately audited.
 
 If you find an error, the most useful report names the case id, the source file's SHA-256 and
 the field, so that the discrepancy can be traced to a specific fetched byte sequence.
@@ -484,11 +487,12 @@ makes this data freely available; please respect its usage policy. Standards: CC
 Alpha-5 definition: Space-Track, https://www.space-track.org/documentation.
 
 To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, H. (NEOGY LLC).
-gp-omm-conformance, version 0.4.0, 2026-09-27, https://github.com/hneogy/gp-omm-conformance.*
+gp-omm-conformance, version 0.5.0, 2026-10-01, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** for this release, v0.4.0, is
-[10.5281/zenodo.23002261](https://doi.org/10.5281/zenodo.23002261); v0.3.0 keeps its own, [10.5281/zenodo.22986178](https://doi.org/10.5281/zenodo.22986178),
+general. The **version DOI** for this release, v0.5.0, is added here and to `CITATION.cff` after Zenodo
+mints it at the release; v0.4.0 keeps its own, [10.5281/zenodo.23002261](https://doi.org/10.5281/zenodo.23002261),
+v0.3.0 its own, [10.5281/zenodo.22986178](https://doi.org/10.5281/zenodo.22986178),
 v0.2.1 its own, [10.5281/zenodo.22926017](https://doi.org/10.5281/zenodo.22926017), v0.2.0 its own,
 [10.5281/zenodo.22906966](https://doi.org/10.5281/zenodo.22906966), and v0.1.0, the release the
 independent audit covered, keeps [10.5281/zenodo.22867655](https://doi.org/10.5281/zenodo.22867655). Use a version DOI

@@ -170,5 +170,64 @@ class GateFromARun(unittest.TestCase):
         self.assertTrue(g["headline"].startswith("not measured"))
 
 
+class SplitCounts(unittest.TestCase):
+    """D-194, D-207: one outcome per expected record. A record returned under a wrong id is counted once, as
+    misidentified, and stands in for an expected record; ids_not_returned keeps the per-id count; a surplus of
+    misidentified records is extra, never a negative dropped; the headline prints the split."""
+    CASE = "alpha5-tle-derived"
+    FILE = "derived/alpha5-tle/alpha5-A-last-30-days-snapshot.tle"
+
+    def counts_and_headline(self, parser):
+        """-> the values item's counts, the gate's TLE result and the TLE part of the headline (one case run, so the CSV
+        format is "not run" and the headline takes the D-148 wording; the numbers are what these tests pin)."""
+        results = Runner(parser, root=ROOT).run(case_ids=[self.CASE])
+        item = next(i for r in results for i in r.items if i.check == "values" and i.file == self.FILE)
+        g = gates.compute_gates(results, ROOT)[0]
+        tle_part = g["headline"].split("CelesTrak CSV capture): ", 1)[1].split(" [snapshot", 1)[0].split("; CSV", 1)[0]
+        return item.counts, g["formats"]["tle"], tle_part
+
+    def test_a_record_under_a_wrong_id_is_counted_once(self):
+        class ZeroIds(Reference):  # what PyEphem and Gpredict do with an Alpha-5 field
+            def parse(self, raw, fmt):
+                recs = super().parse(raw, fmt)
+                for r in recs:
+                    r["norad_cat_id"] = 0
+                return recs
+        c, f, h = self.counts_and_headline(ZeroIds())
+        self.assertEqual((c["expected"], c["loaded"], c["misidentified"], c["dropped"], c["extra"], c["ids_not_returned"]), (256, 0, 256, 0, 0, 256))
+        self.assertEqual(c["loaded"] + c["misidentified"] + c["refused_matched"] + c["dropped"], c["expected"] + c["extra"])
+        self.assertEqual((f["misidentified"], f["dropped"], f["ids_not_returned"]), (256, 0, 256))
+        self.assertEqual(h, "256 misidentified")
+
+    def test_one_record_for_many_leaves_the_rest_dropped(self):
+        class OneRecord(Reference):  # what gods-eye-view does: every Alpha-5 object collapses onto one NaN-keyed entry
+            def parse(self, raw, fmt):
+                recs = super().parse(raw, fmt)
+                recs[0]["norad_cat_id"] = None
+                return recs[:1]
+        c, f, h = self.counts_and_headline(OneRecord())
+        self.assertEqual((c["loaded"], c["misidentified"], c["dropped"], c["extra"], c["ids_not_returned"]), (0, 1, 255, 0, 256))
+        self.assertEqual(h, "1 misidentified, 255 dropped (refusals not reported by this adapter)")
+
+    def test_more_records_than_the_file_holds_are_extra_not_negative(self):
+        class Surplus(Reference):  # every record right, plus ten under ids the file does not hold
+            def parse(self, raw, fmt):
+                recs = super().parse(raw, fmt)
+                for i in range(10):
+                    extra = dict(recs[0])
+                    extra["norad_cat_id"] = 900000 + i
+                    recs.append(extra)
+                return recs
+        c, f, h = self.counts_and_headline(Surplus())
+        self.assertEqual((c["loaded"], c["misidentified"], c["dropped"], c["extra"], c["ids_not_returned"]), (256, 10, 0, 10, 0))
+        self.assertEqual(c["loaded"] + c["misidentified"] + c["refused_matched"] + c["dropped"], c["expected"] + c["extra"])
+        self.assertEqual(h, "256 loaded, 10 misidentified, 10 of them beyond the file's records")
+
+    def test_the_reference_sums_to_the_expected_count_with_nothing_extra(self):
+        c, f, h = self.counts_and_headline(Reference())
+        self.assertEqual((c["loaded"], c["misidentified"], c["dropped"], c["extra"], c["ids_not_returned"]), (256, 0, 0, 0, 0))
+        self.assertEqual(h, "256 loaded")
+
+
 if __name__ == "__main__":
     unittest.main()

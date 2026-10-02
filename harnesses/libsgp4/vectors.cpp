@@ -3,8 +3,8 @@
 //   two_digit_year(yy):   the same pair with the epoch year set -> Tle::Epoch().Year()
 //   parse_epoch(text):    a valid CSV data line with EPOCH replaced -> Tle::FromCsv().Epoch()      (master only)
 //   parse_catalog_id(t):  a valid CSV data line with NORAD_CAT_ID replaced -> Tle::FromCsv().NoradNumber() (master only)
-//   alpha5_encode:        the library has no encoder or writer
-// Input: JSON {"op":..,"input":..} on stdin; output {"result":..} or {"error":..}.
+//   alpha5_encode:        the library has no encoder or writer: answered unsupported, so the item skips (D-205, D-206)
+// Input: JSON {"op":..,"input":..} on stdin; output {"result":..}, {"error":..} or {"unsupported":..}.
 #include <iostream>
 #include <regex>
 #include <sstream>
@@ -43,6 +43,7 @@ int main() {
             Tle t = Tle::FromCsv(row); printf("{\"result\":%u}", t.NoradNumber()); return 0;
         }
 #endif
+        if (op == "alpha5_encode") { printf("{\"unsupported\":\"the library has no alpha5_encode: no TLE writer or Alpha-5 encoder\"}"); return 0; }
         printf("{\"error\":\"the library has no %s\"}", op.c_str()); return 1;
     } catch (TleException &e) { printf("{\"error\":\"TleException: %s\"}", e.what()); return 1; }
       catch (std::exception &e) { printf("{\"error\":\"%s\"}", e.what()); return 1; }

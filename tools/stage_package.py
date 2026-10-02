@@ -26,6 +26,17 @@ link to a path the export does not hold is refused, since the page would carry a
 Building (--build, with the `build` frontend and setuptools installed) runs `python -m build --no-isolation` on the
 staged tree, which makes the sdist and then the wheel from it, and audits both.
 
+A build is reproducible (D-203): it needs the build time as SOURCE_DATE_EPOCH, an argument or the environment, and
+refuses to build without it (the release checklist passes the tag's commit time). Before building, every staged file
+and folder is given that time and the modes 0644 and 0755, so neither the staging time nor the builder's umask reaches
+the archives; the variable is passed to the build, which setuptools' wheel writer honours for the zip entries' times;
+and both archives are then repacked so that each depends on its members' names and bytes alone: the sdist's writer
+ignores the variable and records the staging time, the builder's user and group and the umask in the tar and the
+build time and a file name in the gzip header; the wheel's writer honours it for the entries' times but takes their
+modes from the tree the frontend unpacks under the builder's umask. Two builds of the same export with the same epoch,
+seconds apart and under different umasks, give byte-identical files; anyone with the pinned toolchain, the export of
+the tag and the epoch can rebuild and match.
+
 Auditing (--audit, or after --build) opens a wheel or an sdist and checks every file under gpconf/ against the export
 manifest: a corpus file under gpconf/corpus/X must hash to the manifest's entry for X, a package file to its own
 entry. It fails on a hash mismatch, a file the manifest does not list, a provider file, any other unexpected member,
@@ -36,13 +47,16 @@ Standard library only.
 """
 import argparse
 import glob
+import gzip
 import hashlib
+import io
 import os
 import posixpath
 import re
 import subprocess
 import sys
 import tarfile
+import time
 import zipfile
 
 MANIFEST = "EXPORT-MANIFEST.txt"
@@ -113,8 +127,9 @@ def plan(export):
     return pairs
 
 
-def stage(export, out):
-    """Copy the planned files into out and check each against the export manifest -> the plan."""
+def stage(export, out, epoch=None):
+    """Copy the planned files into out and check each against the export manifest -> the plan. With `epoch`, the
+    staged tree is normalised for a reproducible build (D-203)."""
     manifest = check_export(export)
     if os.path.exists(out) and os.listdir(out):
         raise Refused(f"{out} is not empty")
@@ -129,7 +144,88 @@ def stage(export, out):
         os.makedirs(os.path.dirname(target), exist_ok=True)
         with open(target, "wb") as f:
             f.write(data)
+    if epoch is not None:
+        normalise_tree(out, epoch)
     return pairs
+
+
+# --------------------------------------------------------------------------- reproducible builds (D-203)
+FILE_MODE, DIR_MODE = 0o644, 0o755
+
+
+def source_date_epoch(given=None):
+    """The build time: the argument, else $SOURCE_DATE_EPOCH, as an integer number of seconds; None when neither is set."""
+    raw = given if given is not None else os.environ.get("SOURCE_DATE_EPOCH")
+    if raw is None or str(raw).strip() == "":
+        return None
+    try:
+        return int(str(raw).strip())
+    except ValueError:
+        raise Refused(f"SOURCE_DATE_EPOCH must be an integer number of seconds, not {raw!r}") from None
+
+
+def normalise_tree(root, epoch):
+    """Give every file and folder under root the mode 0644 or 0755 and the modification time `epoch`, folders after
+    their files, so that neither the builder's umask nor the staging time reaches the archives."""
+    for base, dirs, files in os.walk(root, topdown=False):
+        for f in files:
+            path = os.path.join(base, f)
+            os.chmod(path, FILE_MODE)
+            os.utime(path, (epoch, epoch))
+        for d in dirs:
+            path = os.path.join(base, d)
+            os.chmod(path, DIR_MODE)
+            os.utime(path, (epoch, epoch))
+    os.chmod(root, DIR_MODE)
+    os.utime(root, (epoch, epoch))
+
+
+def repack_wheel(path, epoch):
+    """Rewrite a wheel in place so that it depends on its entries' names and bytes alone: entries sorted by name, each
+    dated `epoch` with mode 0644, deflated; the contents, RECORD included, untouched. setuptools' wheel writer dates
+    the entries with SOURCE_DATE_EPOCH but gives them the modes of the tree the build frontend unpacked from the sdist
+    under the builder's umask (measured, D-203)."""
+    if epoch < 315532800:
+        raise Refused(f"SOURCE_DATE_EPOCH {epoch} is before 1980, which a zip entry cannot hold")
+    with zipfile.ZipFile(path) as z:
+        entries = sorted((i.filename, z.read(i.filename)) for i in z.infolist() if not i.is_dir())
+    stamp = time.gmtime(epoch)[:6]
+    raw = io.BytesIO()
+    with zipfile.ZipFile(raw, "w", compression=zipfile.ZIP_DEFLATED) as out:
+        for name, data in entries:
+            info = zipfile.ZipInfo(name, date_time=stamp)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system = 3
+            info.external_attr = (0o100000 | FILE_MODE) << 16
+            out.writestr(info, data)
+    with open(path, "wb") as f:
+        f.write(raw.getvalue())
+
+
+def repack_sdist(path, epoch):
+    """Rewrite a .tar.gz in place so that it depends on its members' names and bytes alone: members sorted by name,
+    each stamped `epoch`, owner 0:0 with empty names, mode 0644 or 0755, GNU tar format; gzip with `epoch` as its
+    header time and no file name. setuptools' sdist writer records the staging time, the builder's user and group
+    names and the umask in the tar and the build time and the file name in the gzip header (measured, D-203)."""
+    with tarfile.open(path, "r:gz") as t:
+        members = []
+        for m in t.getmembers():
+            if not (m.isfile() or m.isdir()):
+                raise Refused(f"{path} holds {m.name}, which is neither a file nor a folder: nothing staged is one")
+            members.append((m, t.extractfile(m).read() if m.isfile() else None))
+    members.sort(key=lambda mb: mb[0].name)
+    raw = io.BytesIO()
+    with tarfile.open(fileobj=raw, mode="w", format=tarfile.GNU_FORMAT, encoding="utf-8") as out:
+        for m, data in members:
+            info = tarfile.TarInfo(m.name)
+            info.type = m.type
+            info.size = len(data) if data is not None else 0
+            info.mtime, info.uid, info.gid, info.uname, info.gname = epoch, 0, 0, "", ""
+            info.mode = DIR_MODE if m.isdir() else FILE_MODE
+            out.addfile(info, io.BytesIO(data) if data is not None else None)
+    with open(path, "wb") as f:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=f, mtime=epoch) as g:
+            g.write(raw.getvalue())
 
 
 # --------------------------------------------------------------------------- the README as the PyPI description (D-159)
@@ -305,7 +401,8 @@ def audit(archive, manifest, pairs, top=None):
     return report, problems
 
 
-def build(staged, dist):
+def build(staged, dist, epoch):
+    """Build the sdist and the wheel from the staged tree with SOURCE_DATE_EPOCH set, then repack the sdist (D-203)."""
     try:
         import build  # noqa: F401  (the frontend; setuptools is its backend here)
         import setuptools  # noqa: F401
@@ -313,10 +410,17 @@ def build(staged, dist):
         raise Refused(f"building needs the `build` frontend and setuptools in this interpreter ({e}); install them into "
                       "a separate environment, never into the runner's") from e
     os.makedirs(dist, exist_ok=True)
-    p = subprocess.run([sys.executable, "-m", "build", "--no-isolation", "--outdir", dist, staged], capture_output=True, text=True)
+    env = dict(os.environ, SOURCE_DATE_EPOCH=str(epoch))
+    p = subprocess.run([sys.executable, "-m", "build", "--no-isolation", "--outdir", dist, staged], capture_output=True, text=True, env=env)
     if p.returncode != 0:
         raise Refused(f"the build failed (exit {p.returncode}):\n{p.stdout[-2000:]}\n{p.stderr[-2000:]}")
-    return sorted(os.path.join(dist, f) for f in os.listdir(dist) if f.endswith((".whl", ".tar.gz")))
+    archives = sorted(os.path.join(dist, f) for f in os.listdir(dist) if f.endswith((".whl", ".tar.gz")))
+    for archive in archives:
+        if archive.endswith(".tar.gz"):
+            repack_sdist(archive, epoch)
+        else:
+            repack_wheel(archive, epoch)
+    return archives
 
 
 def main(argv=None):
@@ -325,21 +429,28 @@ def main(argv=None):
     ap.add_argument("--out", help="the staging folder, empty or absent")
     ap.add_argument("--build", metavar="DIST", help="build the sdist and the wheel into DIST and audit both")
     ap.add_argument("--audit", nargs="+", metavar="ARCHIVE", help="audit wheels or sdists already built")
+    ap.add_argument("--source-date-epoch", type=int, metavar="SECONDS",
+                    help="the build time stamped into the staged tree and the archives (else $SOURCE_DATE_EPOCH); --build refuses without it")
     a = ap.parse_args(argv)
     try:
+        epoch = source_date_epoch(a.source_date_epoch)
+        if a.build and epoch is None:
+            raise Refused("--build needs the build time as SOURCE_DATE_EPOCH, an argument or the environment: a build without it "
+                          "is not reproducible (D-203); the release checklist passes the tag's commit time")
         manifest = check_export(a.export)
         pairs = plan(a.export)
         top = expected_top(a.export, manifest)
         archives = list(a.audit or [])
         if a.out:
-            stage(a.export, a.out)
+            stage(a.export, a.out, epoch)
             links = staged_readme(a.export)[1]
             print(f"staged {len(pairs)} files into {a.out}: {sum(1 for _, d in pairs if d.startswith(BUNDLED + '/'))} corpus files, "
                   f"{sum(1 for _, d in pairs if d.startswith('gpconf/') and not d.startswith(BUNDLED + '/'))} package files, "
                   f"{len(TOP)} top-level files; every one matches {MANIFEST}; README.md staged as the PyPI description with "
-                  f"{len(links)} relative link(s) made absolute at v{version_of(a.export)}: {', '.join(links) or 'none'}")
+                  f"{len(links)} relative link(s) made absolute at v{version_of(a.export)}: {', '.join(links) or 'none'}"
+                  + (f"; every file and folder stamped SOURCE_DATE_EPOCH {epoch} with modes 0644 and 0755" if epoch is not None else ""))
             if a.build:
-                archives += build(a.out, a.build)
+                archives += build(a.out, a.build, epoch)
         elif a.build:
             ap.error("--build needs --out")
         failed = False

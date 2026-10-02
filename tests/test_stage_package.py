@@ -6,16 +6,27 @@ audits a built wheel or sdist file by file. These tests build no real package (C
 exercised on archives made here from a staged tree, correct and then damaged in each way it must catch.
 
 D-159, stage 8: README.md is staged as the PyPI description, its relative links made absolute and pinned to the release
-tag, while the repository's README keeps them relative; the audit fails a long description with a relative link."""
+tag, while the repository's README keeps them relative; the audit fails a long description with a relative link.
+
+D-203, v0.5.0 item 1: a build needs SOURCE_DATE_EPOCH, the staged tree is normalised to it, and both archives are
+repacked so that they depend on their contents alone; two builds under different umasks are byte-identical. The
+repacks and the refusal are tested here on archives made in the test; the real double build runs only where the build
+frontend and setuptools are importable (the throwaway build environment), and is skipped in the runner's."""
+import gzip
+import hashlib
 import io
 import os
 import re
+import stat
+import struct
+import time
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
 import unittest
+import unittest.mock
 import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -235,3 +246,123 @@ class Metadata(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
+def can_build():
+    try:
+        import build  # noqa: F401
+        import setuptools  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+class Reproducible(unittest.TestCase):
+    """D-203: the staged tree normalised, the archives repacked, a build refused without the epoch, and two builds alike."""
+    EPOCH = 1759363200  # 2025-10-02T00:00:00Z
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp()
+        cls.export = os.path.join(cls.tmp, "export")
+        p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "export_public.py"), "--dest", cls.export], capture_output=True, text=True)
+        assert p.returncode == 0, p.stderr
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def test_the_epoch_comes_from_the_argument_or_the_environment_as_an_integer(self):
+        with unittest.mock.patch.dict(os.environ, {"SOURCE_DATE_EPOCH": "1700000000"}):
+            self.assertEqual(sp.source_date_epoch(), 1700000000)
+            self.assertEqual(sp.source_date_epoch(5), 5)  # the argument wins
+        with unittest.mock.patch.dict(os.environ, {}, clear=True):
+            self.assertIsNone(sp.source_date_epoch())
+        with unittest.mock.patch.dict(os.environ, {"SOURCE_DATE_EPOCH": "yesterday"}):
+            with self.assertRaises(sp.Refused):
+                sp.source_date_epoch()
+
+    def test_the_staged_tree_is_stamped_with_the_epoch_and_fixed_modes(self):
+        old = os.umask(0o077)
+        try:
+            out = os.path.join(self.tmp, "stage-epoch")
+            sp.stage(self.export, out, self.EPOCH)
+        finally:
+            os.umask(old)
+        for base, dirs, files in os.walk(out):
+            for d in dirs:
+                st = os.stat(os.path.join(base, d))
+                self.assertEqual((stat.S_IMODE(st.st_mode), int(st.st_mtime)), (0o755, self.EPOCH), d)
+            for f in files:
+                st = os.stat(os.path.join(base, f))
+                self.assertEqual((stat.S_IMODE(st.st_mode), int(st.st_mtime)), (0o644, self.EPOCH), f)
+        self.assertEqual(stat.S_IMODE(os.stat(out).st_mode), 0o755)
+
+    def test_repacked_archives_depend_on_their_contents_alone(self):
+        stage_dir = os.path.join(self.tmp, "stage-repack")
+        sp.stage(self.export, stage_dir)
+        paths = []
+        for i, mask in enumerate((0o022, 0o077)):   # two umasks and two moments: what varies between real builds
+            old = os.umask(mask)
+            try:
+                s, w = os.path.join(self.tmp, f"r{i}.tar.gz"), os.path.join(self.tmp, f"r{i}.whl")
+                make_sdist(stage_dir, s)
+                make_wheel(stage_dir, w)
+            finally:
+                os.umask(old)
+            paths.append((s, w))
+            time.sleep(1.1)
+        digests = []
+        for s, w in paths:
+            self.assertNotEqual(hashlib.sha256(open(s, "rb").read()).hexdigest(), digests[0][0] if digests else None)
+            sp.repack_sdist(s, self.EPOCH)
+            sp.repack_wheel(w, self.EPOCH)
+            digests.append((hashlib.sha256(open(s, "rb").read()).hexdigest(), hashlib.sha256(open(w, "rb").read()).hexdigest()))
+        self.assertEqual(digests[0], digests[1])
+        s, w = paths[0]
+        with tarfile.open(s, "r:gz") as t:
+            members = t.getmembers()
+            self.assertEqual([m.name for m in members], sorted(m.name for m in members))
+            for m in members:
+                self.assertEqual((m.mtime, m.uid, m.gid, m.uname, m.gname), (self.EPOCH, 0, 0, "", ""), m.name)
+                self.assertEqual(m.mode, 0o755 if m.isdir() else 0o644, m.name)
+        head = open(s, "rb").read(10)
+        self.assertEqual(struct.unpack("<I", head[4:8])[0], self.EPOCH)  # the gzip header's time
+        self.assertFalse(head[3] & 8)                                      # and no file name in it
+        self.assertEqual(gzip.decompress(open(s, "rb").read())[:3], b"gpc")  # still a tar of the package
+        with zipfile.ZipFile(w) as z:
+            infos = z.infolist()
+            self.assertEqual([i.filename for i in infos], sorted(i.filename for i in infos))
+            for i in infos:
+                self.assertEqual((i.date_time, i.external_attr >> 16, i.compress_type), (time.gmtime(self.EPOCH)[:6], 0o100644, zipfile.ZIP_DEFLATED), i.filename)
+            self.assertEqual(z.read("gpconf-0.0.0.dist-info/METADATA"), b"Name: gpconf\n")  # contents untouched
+        self.assertEqual(sp.audit(w, sp.read_manifest(self.export), sp.plan(self.export), sp.expected_top(self.export, sp.read_manifest(self.export)))[1], [])
+
+    def test_a_build_is_refused_without_the_epoch(self):
+        env = {k: v for k, v in os.environ.items() if k != "SOURCE_DATE_EPOCH"}
+        p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "stage_package.py"), "--export", self.export, "--out",
+                            os.path.join(self.tmp, "no-epoch"), "--build", os.path.join(self.tmp, "no-epoch-dist")],
+                           capture_output=True, text=True, env=env)
+        self.assertEqual(p.returncode, 2, p.stderr)
+        self.assertIn("SOURCE_DATE_EPOCH", p.stderr)
+        self.assertFalse(os.path.exists(os.path.join(self.tmp, "no-epoch")))  # refused before anything was staged
+
+    @unittest.skipUnless(can_build(), "needs the build frontend and setuptools in this interpreter (the build environment)")
+    def test_two_builds_seconds_apart_under_different_umasks_are_byte_identical(self):
+        digests = []
+        for i, mask in enumerate((0o022, 0o077)):
+            old = os.umask(mask)
+            try:
+                out, dist = os.path.join(self.tmp, f"b{i}"), os.path.join(self.tmp, f"b{i}-dist")
+                p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "stage_package.py"), "--export", self.export, "--out", out,
+                                    "--build", dist, "--source-date-epoch", str(self.EPOCH)], capture_output=True, text=True)
+            finally:
+                os.umask(old)
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            self.assertIn("0 problem(s)", p.stdout)
+            files = sorted(os.listdir(dist))
+            self.assertEqual(len(files), 2, files)
+            digests.append({f: hashlib.sha256(open(os.path.join(dist, f), "rb").read()).hexdigest() for f in files})
+            time.sleep(2)
+        self.assertEqual(digests[0], digests[1])

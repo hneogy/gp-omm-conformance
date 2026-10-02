@@ -17,6 +17,8 @@ Parser protocol (duck-typed):
         two_digit_year(yy: str) -> int
         parse_epoch(text: str) -> datetime        raise for invalid input
         parse_catalog_id(text: str) -> int        raise for invalid input
+        any of the five: raise gpconf.runner.Unsupported for an operation the library does not have, and the
+        item skips with the reason; an operation is unsupported for all of its vectors or none (D-205)
     optional hook used by the writer case (see gpconf/writer.py):
         write_tle(record: dict) -> (line1, line2) | (line0, line1, line2)
                                                   raise to refuse; refusing a number above 339999 is correct
@@ -55,7 +57,8 @@ KEYWORD_TO_FIELD = {"EPHEMERIS_TYPE": "ephemeris_type", "CLASSIFICATION_TYPE": "
 
 
 class Unsupported(Exception):
-    """Raise from parse() for a format the parser does not implement."""
+    """Raise from parse() for a format the parser does not implement, from write_tle() when it has no writer, or from
+    a vector hook for an operation the library does not have (D-205)."""
 
 
 class CorpusIncomplete(Exception):
@@ -383,6 +386,38 @@ def describe_bytes(raw, fmt=None, limit=48):
     return f"{n} bytes, starts with {raw[:limit]!r}" + (f"; looks like: {', '.join(guesses)}" if guesses else "")
 
 
+class _HookCalls:
+    """One vector hook, counting the vectors it declares unsupported (a raise of Unsupported), so that an operation the
+    library does not have skips its item, for all of its vectors or none (D-205)."""
+
+    def __init__(self, name, hook):
+        self.name, self.hook, self.calls, self.unsupported, self.reasons = name, hook, 0, 0, []
+
+    def __call__(self, value):
+        self.calls += 1
+        try:
+            return self.hook(value)
+        except Unsupported as e:
+            self.unsupported += 1
+            reason = str(e).strip() or "no reason given"
+            if reason not in self.reasons:
+                self.reasons.append(reason)
+            raise
+
+
+def _vector_item(res, check, file, calls, bad, ok_detail):
+    """The item for one hook: skip when the parser declared every vector unsupported, fail when it declared only some,
+    since an operation is unsupported for all of its vectors or none, else pass or fail on the vectors (D-205)."""
+    if calls.unsupported and calls.unsupported == calls.calls:
+        res.add(check, "skip", file, f"parser reports {calls.name} unsupported: {'; '.join(calls.reasons)}")
+    elif calls.unsupported:
+        res.add(check, "fail", file, f"{calls.name} answered unsupported for {calls.unsupported} of {calls.calls} vectors "
+                f"({'; '.join(calls.reasons)}) and answered the rest: an operation is unsupported for all of its vectors or none"
+                + (f"; {'; '.join(bad[:8])}" if bad else ""))
+    else:
+        res.add(check, "fail" if bad else "pass", file, "; ".join(bad[:8]) if bad else ok_detail)
+
+
 class Runner:
     def __init__(self, parser, root=None, verbose=False, data=None, data_why=None, fetch_hints=True):
         self.parser = parser
@@ -507,6 +542,7 @@ class Runner:
             matched = {r["id"] for r in with_reason if r["id"] in want}
             top = sorted(((sum(1 for r in with_reason if r["reason"] == reason), reason) for reason in {r["reason"] for r in with_reason}), reverse=True)
             counts = {"expected": len(refrecs), "returned": 0, "loaded": 0, "misidentified": 0, "dropped": len(refrecs) - len(matched),
+                      "extra": 0, "ids_not_returned": len(refrecs) - len(matched),
                       "non_integer_id": 0, "refused": len(with_reason), "refused_matched": len(matched),
                       "refused_without_reason": len(refs) - len(with_reason), "refusals_reported": self._declared,
                       "top_refusal_reason": top[0][1] if top else None}
@@ -594,12 +630,19 @@ class Runner:
                 elif result == "tolerance":
                     tol.add(field, diff)
         label = oracle_label or ("frozen expected values" if mode == "snapshot" else "reference-reader values (live bytes; not the human-verified snapshot)")
-        # Record counts by identity (D-142): loaded = returned with the expected integer id; misidentified = returned with an
-        # id that is absent, not an integer, or not one the oracle expects; dropped = expected ids no record came back for.
+        # Record counts by identity (D-142), one outcome per expected record (D-194, D-207): loaded = returned with the
+        # expected integer id; misidentified = returned with an id that is absent, not an integer, or not one the oracle
+        # expects; refused_matched = refused with a reason and credited to an expected record; dropped = the expected records
+        # left, with no record returned at all and no refusal. A record returned under a wrong id is counted once, as
+        # misidentified, and stands in for one of the expected records left; ids_not_returned keeps the count of expected
+        # ids no record came back under (what dropped meant before 0.5.0); when more misidentified records come back than
+        # there are expected records left, the surplus is counted as extra, never subtracted below zero.
         top = sorted(((sum(1 for r in with_reason if r["reason"] == reason), reason) for reason in {r["reason"] for r in with_reason}), reverse=True)
-        counts = {"expected": len(oracle), "returned": len(parsed), "loaded": compared,
-                  "misidentified": sum(len(v) for k, v in by_id.items() if k is None or k not in oracle),
-                  "dropped": max(0, len(oracle) - compared - len(refused_ids)),
+        misidentified = sum(len(v) for k, v in by_id.items() if k is None or k not in oracle)
+        unaccounted = max(0, len(oracle) - compared - len(refused_ids))
+        counts = {"expected": len(oracle), "returned": len(parsed), "loaded": compared, "misidentified": misidentified,
+                  "dropped": max(0, unaccounted - misidentified), "extra": max(0, misidentified - unaccounted),
+                  "ids_not_returned": unaccounted,
                   "non_integer_id": len([p for p in by_id.get(None, []) if p.get("_bad", {}).get("norad_cat_id")]),
                   "refused": len(with_reason), "refused_matched": len(refused_ids),
                   "refused_without_reason": len(refusals) - len(with_reason),
@@ -987,7 +1030,8 @@ class Runner:
                 res.add("satcat-record", "info", path, f"{mode}; SATCAT records are not parsed by the GP parser under test")
 
     def run_vectors(self, case, exp, res):
-        hooks = {h: getattr(self.parser, h, None) for h in ("alpha5_decode", "alpha5_encode", "two_digit_year", "parse_epoch", "parse_catalog_id")}
+        hooks = {h: _HookCalls(h, getattr(self.parser, h, None)) if getattr(self.parser, h, None) else None
+                 for h in ("alpha5_decode", "alpha5_encode", "two_digit_year", "parse_epoch", "parse_catalog_id")}
         vec = exp["case_specific"]
         a5 = next((v for k, v in vec.items() if k.endswith("alpha5.json")), None)
         if a5:
@@ -997,6 +1041,8 @@ class Runner:
                     for v in a5[group]:
                         try:
                             got = hooks["alpha5_decode"](v["field"])
+                        except Unsupported:
+                            continue
                         except Exception as e:
                             got = f"raised {type(e).__name__}"
                         if got != v["norad_cat_id"]:
@@ -1007,7 +1053,7 @@ class Runner:
                         bad.append(f"{v['field']} accepted as {got} (should be rejected: {v['reason']})")
                     except Exception:
                         pass
-                res.add("alpha5-decode", "fail" if bad else "pass", "vectors/alpha5.json", "; ".join(bad[:8]) if bad else "all decode vectors and all invalid inputs handled")
+                _vector_item(res, "alpha5-decode", "vectors/alpha5.json", hooks["alpha5_decode"], bad, "all decode vectors and all invalid inputs handled")
             else:
                 res.add("alpha5-decode", "skip", "vectors/alpha5.json", "parser exposes no alpha5_decode hook")
             if hooks["alpha5_encode"]:
@@ -1016,6 +1062,8 @@ class Runner:
                     for v in a5[group]:
                         try:
                             got = hooks["alpha5_encode"](v["norad_cat_id"])
+                        except Unsupported:
+                            continue
                         except Exception as e:
                             got = f"raised {type(e).__name__}"
                         if got != v["field"]:
@@ -1026,7 +1074,7 @@ class Runner:
                         bad.append(f"{v['norad_cat_id']} encoded as {got!r} (should be rejected: {v['reason']})")
                     except Exception:
                         pass
-                res.add("alpha5-encode", "fail" if bad else "pass", "vectors/alpha5.json", "; ".join(bad[:8]) if bad else "all encode vectors and all unrepresentable inputs handled")
+                _vector_item(res, "alpha5-encode", "vectors/alpha5.json", hooks["alpha5_encode"], bad, "all encode vectors and all unrepresentable inputs handled")
             else:
                 res.add("alpha5-encode", "skip", "vectors/alpha5.json", "parser exposes no alpha5_encode hook")
         yy = next((v for k, v in vec.items() if k.endswith("two-digit-epoch-year.json")), None)
@@ -1036,12 +1084,14 @@ class Runner:
                 for v in yy["vectors"]:
                     try:
                         got = hooks["two_digit_year"](v["yy"])
+                    except Unsupported:
+                        continue
                     except Exception as e:  # a raising hook fails this vector, not the case (D-118)
                         bad.append(f"{v['yy']} -> raised {type(e).__name__}: {e}")
                         continue
                     if got != v["year"]:
                         bad.append(f"{v['yy']} -> {got}")
-                res.add("two-digit-year-pivot", "fail" if bad else "pass", "vectors/two-digit-epoch-year.json", "; ".join(bad) if bad else f"{len(yy['vectors'])} pivot vectors correct")
+                _vector_item(res, "two-digit-year-pivot", "vectors/two-digit-epoch-year.json", hooks["two_digit_year"], bad, f"{len(yy['vectors'])} pivot vectors correct")
             else:
                 res.add("two-digit-year-pivot", "skip", "vectors/two-digit-epoch-year.json", "parser exposes no two_digit_year hook")
         ep = next((v for k, v in vec.items() if k.endswith("ccsds-epoch-strings.json")), None)
@@ -1050,6 +1100,8 @@ class Runner:
             for v in ep["valid"]:
                 try:
                     got = hooks["parse_epoch"](v["text"])
+                except Unsupported:
+                    continue
                 except Exception as e:
                     bad.append(f"valid {v['text']!r} rejected ({type(e).__name__})")
                     continue
@@ -1069,8 +1121,8 @@ class Runner:
                     bad.append(f"invalid {v['text']!r} accepted")
                 except Exception:
                     pass
-            res.add("ccsds-epoch-strings", "fail" if bad else "pass", "vectors/ccsds-epoch-strings.json", "; ".join(bad[:8]) if bad else
-                    f"{len(ep['valid'])} valid epoch strings parsed to the instants they denote (within {EPOCH_TOLERANCE_US} us) and {len(ep['invalid'])} invalid strings rejected")
+            _vector_item(res, "ccsds-epoch-strings", "vectors/ccsds-epoch-strings.json", hooks["parse_epoch"], bad,
+                         f"{len(ep['valid'])} valid epoch strings parsed to the instants they denote (within {EPOCH_TOLERANCE_US} us) and {len(ep['invalid'])} invalid strings rejected")
         elif ep:
             res.add("ccsds-epoch-strings", "skip", "vectors/ccsds-epoch-strings.json", "parser exposes no parse_epoch hook")
         cid = next((v for k, v in vec.items() if k.endswith("norad-cat-id-text.json")), None)
@@ -1079,6 +1131,8 @@ class Runner:
             for v in cid["valid"]:
                 try:
                     got = hooks["parse_catalog_id"](v["text"])
+                except Unsupported:
+                    continue
                 except Exception as e:
                     got = f"raised {type(e).__name__}"
                 if got != v["value"] or type(got) is not int:
@@ -1090,8 +1144,8 @@ class Runner:
                 except Exception:
                     pass
             nine = sum(1 for v in cid["valid"] if v["value"] >= 100_000_000)
-            res.add("catalog-number-is-integer", "fail" if bad else "pass", "vectors/norad-cat-id-text.json",
-                    "; ".join(bad[:8]) if bad else f"{len(cid['valid'])} valid text forms parsed as int ({nine} nine-digit) and {len(cid['invalid_in_omm'])} invalid forms rejected")
+            _vector_item(res, "catalog-number-is-integer", "vectors/norad-cat-id-text.json", hooks["parse_catalog_id"], bad,
+                         f"{len(cid['valid'])} valid text forms parsed as int ({nine} nine-digit) and {len(cid['invalid_in_omm'])} invalid forms rejected")
         elif cid:
             res.add("catalog-number-is-integer", "skip", "vectors/norad-cat-id-text.json", "parser exposes no parse_catalog_id hook")
 
@@ -1448,6 +1502,9 @@ class CommandParser:
     """Runs an external program per file: raw bytes on stdin, JSON array of records on stdout.
     {fmt} in the command is replaced with the file's format, the only placeholder. Exit 3 = format unsupported; any
     other non-zero exit, or output that is not a JSON array = parse failure (docs/ADAPTERS.md, D-161).
+    vectors_cmd (optional): {"op", "input"} on stdin, one of {"result": value}, {"error": reason} (a rejection) or,
+    from 0.5.0, {"unsupported": reason} (the operation the library does not have: the item skips) on stdout; any
+    non-zero exit is a rejection, 3 included, since the vectors protocol never gave it a meaning (D-205).
     write_cmd (optional): one JSON record on stdin, the TLE lines on stdout (2 or 3 lines); exit 0 =
     written, exit 3 = writing unsupported, any other non-zero exit = the record was refused.
 
@@ -1507,10 +1564,17 @@ class CommandParser:
             out = json.loads(p.stdout.decode("utf-8") or "{}")
         except ValueError as e:
             raise ValueError(f"the command's output is not JSON: {e}")
-        if p.returncode != 0 or "error" in out:
+        if p.returncode != 0:  # any non-zero exit is a rejection, 3 included (D-205)
             raise ValueError(out.get("error", f"exit {p.returncode}"))
-        if "result" not in out:  # a well-formed answer carries result or error (D-118)
-            raise ValueError("the command's answer carries neither 'result' nor 'error'")
+        if "unsupported" in out:  # an operation the library does not have: the item skips (D-205)
+            reason = out["unsupported"]
+            if not isinstance(reason, str) or not reason.strip():
+                raise ValueError("the command's unsupported answer carries no reason")
+            raise Unsupported(reason.strip())
+        if "error" in out:
+            raise ValueError(out["error"])
+        if "result" not in out:  # a well-formed answer carries result, error or unsupported (D-118, D-205)
+            raise ValueError("the command's answer carries neither 'result', 'error' nor 'unsupported'")
         return out["result"]
 
     def __getattr__(self, name):

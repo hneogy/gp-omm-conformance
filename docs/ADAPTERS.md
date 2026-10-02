@@ -404,17 +404,23 @@ harnesses read `process.argv.slice(1)` because under `--eval` there is no script
 ### Vector hooks by command
 
 `--vectors-cmd` gives a second command, run once per vector. It gets `{"op": "<hook name>", "input": <value>}` on
-standard input and prints `{"result": <value>}`, or `{"error": "<reason>"}` to reject the input. A non-zero exit also
-counts as a rejection, and so does an answer that carries neither key. `parse_epoch` answers with an ISO string.
+standard input and prints `{"result": <value>}`, `{"error": "<reason>"}` to reject the input, or, from corpus 0.5.0,
+`{"unsupported": "<reason>"}` for an operation your library does not have, which skips that hook's item with the
+reason, as the item skips for a Python adapter without the hook; an operation answers unsupported for all of its
+vectors or for none, and a mix fails the item. A non-zero exit counts as a rejection, exit 3 included (the vectors
+protocol never gave it the meaning the parse and write commands do), and so does an answer that carries none of the
+three keys. `parse_epoch` answers with an ISO string. A Python adapter's hook raises `gpconf.runner.Unsupported` for
+the same effect.
 
-Once `--vectors-cmd` is given, the runner asks it for all five hooks: there is no per-hook "unsupported". An operation
-your library does not have answers with an error, and its valid vectors then fail rather than skip. tle.js has no TLE
-writer, so its `alpha5_encode` answers an error and the `alpha5-encode` item fails. Without `--vectors-cmd`, every
-vector item skips.
+Once `--vectors-cmd` is given, the runner asks it for all five hooks. tle.js has no TLE writer and no OMM parser, so
+its harness answers unsupported for `alpha5_encode`, `parse_epoch` and `parse_catalog_id`, and those three items skip
+with the reason; before 0.5.0 there was no such answer, and an operation the library did not have answered an error,
+which failed its valid vectors. Without `--vectors-cmd`, every vector item skips.
 
 From [`gpconf/adapters/tlejs_vectors.mjs`](../gpconf/adapters/tlejs_vectors.mjs), lines 8 to 34:
 
 ```javascript
+// it (D-154). GPCONF_NODE_MODULE, set by `--module PATH`, names the library's entry file instead.
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -436,12 +442,11 @@ try {
     const tle = withChecksum(L1.slice(0, 18) + yy + L1.slice(20)) + '\n' + L2;
     r = { result: new Date(T.getEpochTimestamp(tle)).getUTCFullYear() };
   } else if (op === 'alpha5_encode') {
-    r = { error: 'tle.js has no TLE writer' };
+    r = { unsupported: 'tle.js has no TLE writer' };
   } else if (op === 'parse_epoch' || op === 'parse_catalog_id') {
-    r = { error: 'tle.js reads TLE lines only; it has no OMM (CSV/JSON/XML/KVN) epoch or catalog-id parser' };
+    r = { unsupported: 'tle.js reads TLE lines only; it has no OMM (CSV/JSON/XML/KVN) epoch or catalog-id parser' };
   } else r = { error: `unknown op ${op}` };
 } catch (e) { r = { error: `${e.name}: ${e.message}` }; }
-process.stdout.write(JSON.stringify(r));
 ```
 
 Each operation puts the input into a valid line pair, recomputes the checksums with the library's own function and
@@ -496,8 +501,9 @@ A command reports refusals the same way: the same objects, in its JSON array.
 ## How your records are counted
 
 Each file's values item carries counts, printed in its detail and written to the JSON report under `counts`:
-`expected`, `returned` (records, not refusals), `loaded`, `misidentified`, `dropped`, `non_integer_id`, `refused`,
-`refused_matched`, `refused_without_reason`, `refusals_reported` (the declaration) and `top_refusal_reason`.
+`expected`, `returned` (records, not refusals), `loaded`, `misidentified`, `dropped`, `extra`, `ids_not_returned`,
+`non_integer_id`, `refused`, `refused_matched`, `refused_without_reason`, `refusals_reported` (the declaration) and
+`top_refusal_reason`.
 
 - **loaded**: an expected record that came back with the expected integer catalog number. Loaded is about identity
   only: the record's values are checked separately, and may still fail.
@@ -505,14 +511,23 @@ Each file's values item carries counts, printed in its detail and written to the
   0, NaN, a raw string such as `"A0000"`, a wrong number.
 - **refused**: a refusal with a reason; **refused_matched** counts those credited to an expected record through
   `_field`, which are not counted as dropped.
-- **dropped**: an expected record with no returned record and no refusal credited to it.
+- **dropped**: an expected record with no returned record and no refusal credited to it, and no misidentified record
+  standing in for it: the expected count less loaded, refused_matched and misidentified, never below 0.
+- **ids_not_returned**: the expected ids no record came back under, whatever came back under other ids; the count
+  `dropped` carried before corpus 0.5.0, kept so that nothing is lost.
+- **extra**: misidentified records beyond the expected records left unaccounted for, when a parser returns more
+  records than the file holds.
 
-A record returned with the wrong catalog number is counted twice, as a misidentified record and as a dropped expected
-one: an adapter that returns 0 for every Alpha-5 field of a 256-record file shows 256 misidentified and 256 dropped.
+One outcome per expected record (corpus 0.5.0, D-207): loaded, misidentified, refused_matched and dropped sum to the
+expected count, plus `extra`. A record returned with the wrong catalog number is counted once, as misidentified, and
+stands in for one expected record: an adapter that returns 0 for every Alpha-5 field of a 256-record file shows 256
+misidentified, 0 dropped and 256 ids_not_returned. Before 0.5.0 such a record was also counted as a dropped expected
+one, and the same file showed 256 dropped as well.
 
 The gate below the case table reads the same counts for its two files and puts them in words: "256 loaded", "256
 misidentified", "256 dropped silently", or "(refusals not reported by this adapter)" when the declaration is absent,
-"1 refused" with the top reason, and "dropped (the parser raised on the file)". The README's
+"1 misidentified, 255 dropped silently" for one record returned under a wrong id and nothing for the rest, "1 refused"
+with the top reason, and "dropped (the parser raised on the file)". The README's
 [gate section](../README.md#the-gate-this-months-launches) describes the headline.
 
 ## The vector hooks
@@ -528,6 +543,9 @@ optional methods on your adapter instead:
 | `parse_epoch(text)` | a CCSDS epoch, `str` | a `datetime`, or an ISO string, compared within 2 microseconds | the text is not a CCSDS epoch (a one-digit month, a space for the `T`, an offset, a TLE epoch) | `ccsds-epoch-strings` |
 | `parse_catalog_id(text)` | a `NORAD_CAT_ID` as text | the number, exactly an `int` | the text is not an integer of up to nine digits (`A0000`, ten digits, `25544.0`, empty) | `catalog-number-is-integer` |
 | `write_tle(record)` | one record: integers for the catalog number and the counters, decimal strings for the elements, the epoch as an ISO string | two lines, three with a name, or one string holding them | the record cannot be written as a TLE; raise `Unsupported` to skip the case | the writer case |
+
+Any of the five vector hooks may raise `gpconf.runner.Unsupported` for an operation your library does not have; the
+item then skips with the reason, provided every vector of that hook gets the same answer (D-205).
 
 The writer case reads the lines `write_tle` returns back with the corpus's own reader. They must be two 69-character
 lines with valid checksums, with every field in its fixed columns, and with the catalog field as five digits below
@@ -615,7 +633,7 @@ their tags; `-v` prints every item, not only the failures and the passes within 
 The command above prints:
 
 ```text
-gpconf 0.4.0 | corpus 0.4.0 | parser: gpconf.adapters.reference:Parser
+gpconf 0.5.0 | corpus 0.5.0 | parser: gpconf.adapters.reference:Parser
 
 case                                     status          exact  tol fail skip n/e n/f
 alpha5-encoding-vectors                  pass                5    0    0    0   0   0
