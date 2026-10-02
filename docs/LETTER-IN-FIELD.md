@@ -4,7 +4,10 @@ Four TLE readers named on this page accept a line 1 whose epoch field has the le
 the field as if it ended at the letter: the epoch comes back 14 minutes 16 seconds early, with no error and every
 other value right. The line's checksum still holds, because the TLE checksum counts a letter as 0, as it counted the
 0 the letter replaced. Two other readers named here refuse the line. The difference is whether the reader checks
-that it converted the whole field. This page is not a survey: it covers the readers named on it.
+that it converted the whole field. A seventh reader, python-sgp4's accelerated path, does a third thing: where the
+four readers get one field wrong and the rest right, it accepts the line, stops reading it at the letter and leaves
+four more fields unread, the two derivatives, BSTAR and the element-set number, with no error (below, for
+comparison). This page is not a survey: it covers the readers named on it.
 
 ## The line
 
@@ -86,8 +89,15 @@ Zig's own test rejects `"1abc"`,
 [`#L77`](https://codeberg.org/ziglang/zig/src/tag/0.16.0/lib/std/fmt/parse_float.zig#L77)). The check is the
 language's, not code of astroz's own.
 
-For comparison, outside the libraries above: python-sgp4 2.27's accelerated `Satrec.twoline2rv` accepts the line (day
-189.7) and its pure-Python `sgp4.io.twoline2rv` raises `ValueError`, a split its maintainer documents as by design
+For comparison, outside the libraries above: python-sgp4 2.27's accelerated `Satrec.twoline2rv`, Vallado's C++
+`twoline2rv` as python-sgp4 ships it, accepts the line, but not as the four readers above do. Its `sscanf` over line 1
+([`extension/SGP4.cpp#L2235`](https://github.com/brandon-rhodes/python-sgp4/blob/2.27/extension/SGP4.cpp#L2235))
+converts the epoch field up to the letter, day 189.7, and stops there: the first and second derivatives, BSTAR and
+the element-set number are never read and keep what the structure held, zero in python-sgp4, and `error` stays 0;
+line 2 is read in full. Run on the library and, with sentinel values in the structure, on the C++ alone, 2026-10-01.
+So the epoch is 14 min 16 s early and the drag term is gone, with no error: propagated about seven hours, the
+position is 5,195.5 km from the unedited line's. Its pure-Python `sgp4.io.twoline2rv` raises `ValueError` on the
+line, a split its maintainer documents as by design
 ([python-sgp4 #116](https://github.com/brandon-rhodes/python-sgp4/issues/116), and the README's "Double-checking your
 TLE lines"). The corpus's own reference reader refuses the line with "TLE epoch field '26189.7O990935' is not a
 number" ([`gpconf/reference.py`](../gpconf/reference.py)).
@@ -107,6 +117,9 @@ Refuse a field unless the conversion consumed all of it.
 - C: pass an end pointer to `strtod()` (or `g_ascii_strtod()`) and refuse the field unless it reaches the end of the
   field; `strtod()` skips leading spaces itself. `atof()` and `atoi()` cannot report where they stopped, so use
   `strtod()` and `strtol()` instead.
+- C with `sscanf()`: a conversion that fails part-way returns fewer items than asked for and leaves the rest
+  unassigned. Compare the return value with the count expected, or add `%n` and check that it reached the end of the
+  line.
 - C++: the same, or a character check before converting, as libsgp4's `Tle::ExtractDouble()` does (linked above).
 - JavaScript: `parseFloat()` and `parseInt()` read a prefix. Test the trimmed field against a number pattern first, or
   convert it with `Number()`, which returns `NaN` for `"26189.7O990935"`; `Number()` returns 0 for a blank field, so
@@ -124,7 +137,8 @@ and the recipes in [`harnesses/`](../harnesses/) cover libraries a preset cannot
 
 ---
 
-Runs of 2026-09-27 against corpus v0.4.0, recorded in the corpus's decision log (D-174 to D-185; this page, D-193).
+Runs of 2026-09-27 against corpus v0.4.0, recorded in the corpus's decision log (D-174 to D-185; this page, D-193);
+the python-sgp4 comparison re-run 2026-10-01 (D-197) and restated under D-211.
 Reported on 2026-09-28 to PyEphem ([#297](https://github.com/brandon-rhodes/pyephem/issues/297)), satellite.js
 ([#190](https://github.com/shashwatak/satellite-js/issues/190)), Gpredict
 ([#427](https://github.com/csete/gpredict/issues/427)) and tle.js
