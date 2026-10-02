@@ -12,6 +12,11 @@ field: four TLE readers read the field up to the letter with no error, reported 
 and tle.js; libsgp4 v3.0 and astroz v0.14.0 refuse the line; with the fix in each language (D-193). Documentation
 only.
 
+Fixed: the `satellite.js` preset emits an epoch it cannot form as `null` and notes it on stderr, where a NaN day
+(a field that is not wholly numeric, from satellite.js's #197 on) became a string the runner reported as its own
+internal error (D-199). The README names Vallado's C++ as part of the stack, python-sgp4's accelerated `Satrec`
+run against every case (D-197, promised on PyEphem #297), and states the Alpha-5 rule as the vectors do (D-196).
+
 ## [0.4.0] - 2026-09-27
 
 A minor release under the versioning rule: one case added, the eighteenth, `corrupt-input`, the first case to hand a

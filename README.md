@@ -29,9 +29,9 @@ what the rest of the block is used for is reported by secondary sources only. Ev
 since has a six-digit number. The fixed-width
 TLE format has room for five characters, so two coexisting answers exist:
 
-- **Alpha-5** (US Space Force stopgap; Space-Track serves it, CelesTrak does not): the first digit is replaced
-  by a letter, A=10 ... Z=33 with I and O skipped, so 100000 becomes `A0000` and the ceiling is
-  339999. Only TLE/3LE lines carry it.
+- **Alpha-5** (US Space Force stopgap; Space-Track serves it, CelesTrak does not): the first two digits of a
+  six-digit number are written as one letter, A=10 ... Z=33 with I and O skipped, and the last four are kept, so
+  100000 becomes `A0000` and the ceiling is 339999. Only TLE/3LE lines carry it.
 - **OMM** (CCSDS 502.0-B-3, served by CelesTrak since May 2020 and by Space-Track's GP class): `NORAD_CAT_ID` is
   an integer of up to nine digits; four-digit years; no fixed widths.
 
@@ -128,7 +128,10 @@ A preset runs a shipped adapter with nothing written. `python3 -m gpconf presets
 installed where you run the command: `satellite.js`, `tle.js`, which reads the epoch from the raw
 year and day fields, and `tle.js-api`, which reads it through `getEpochTimestamp()`. A library
 preset records the version it was tested against and the report prints the version it found beside
-it, since a count is a result against one version. A Node preset's harness runs from the working
+it, since a count is a result against one version. The `sgp4` preset runs python-sgp4's accelerated
+`Satrec` class, which is Vallado's C++ reference implementation as python-sgp4 ships it, so the
+reference's own readings are measured against every case; the corrupt-input case document records
+what it does with a letter in a numeric field. A Node preset's harness runs from the working
 directory, so the library resolves as it would for a script in your project; `--module PATH` names
 the library's entry file instead, for a checkout that cannot import itself by name. A preset whose
 library is missing is refused before any case runs, with exit status 2 and a message saying that

@@ -36,7 +36,8 @@ function record(s, name) {
     norad_cat_id: id,
     _catalog_field: raw,
     object_name: name || null,
-    epoch: isoEpoch(s.epochyr, s.epochdays),
+    // a NaN year or day (a field that is not wholly numeric, from 7.1.0's successor on) has no epoch: null, noted below
+    epoch: Number.isFinite(s.epochyr) && Number.isFinite(s.epochdays) ? isoEpoch(s.epochyr, s.epochdays) : null,
     mean_motion: mm * XPDOTP,
     eccentricity: s.ecco,
     inclination: s.inclo * RAD2DEG,
@@ -74,5 +75,8 @@ if (fmt === 'tle' || fmt === '2le') {
   process.exit(3);
 }
 // NaN and Infinity have no JSON form: JSON.stringify writes null, which the runner reads as "absent"; say so on stderr
-for (const r of out) for (const [k, v] of Object.entries(r)) if (typeof v === 'number' && !Number.isFinite(v)) process.stderr.write(`non-finite ${k} for ${r.norad_cat_id}: ${v} -> null\n`);
+for (const r of out) {
+  if (r.epoch === null) process.stderr.write(`non-finite epoch for ${r.norad_cat_id}\n`);
+  for (const [k, v] of Object.entries(r)) if (typeof v === 'number' && !Number.isFinite(v)) process.stderr.write(`non-finite ${k} for ${r.norad_cat_id}\n`);
+}
 process.stdout.write(JSON.stringify(out));

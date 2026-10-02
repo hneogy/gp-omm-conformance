@@ -145,3 +145,36 @@ class WithTheLibraries(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(NODE, "Node.js not installed")
+class SatelliteJsNaNEpoch(unittest.TestCase):
+    """With #190's fix (Number() for parseFloat()), satellite.js gives NaN for a field that is not wholly numeric and
+    keeps error 0; the harness must emit such an epoch as null and say so on stderr, as it already does for the other
+    non-finite fields, instead of building the string 2026-NaNTNaN:NaN:NaN.000NaN that the runner reported as its own
+    internal error (the branch run of 2026-10-01, D-199)."""
+
+    SET = ("1 69999U 58002D   26189.7O990935 -.00000023  00000+0 -70517-5 0  9996\n"
+           "2 69999  34.2417 341.8745 1487004  19.9191 345.3718 11.62373363189308\n")
+
+    def test_a_nan_epoch_is_emitted_as_null_and_noted(self):
+        harness = os.path.join(ROOT, "gpconf", "adapters", presets.PRESETS["satellite.js"]["harness"])
+        with open(harness, encoding="utf-8") as f:
+            source = f.read()
+        with tempfile.TemporaryDirectory() as tmp:
+            stub = os.path.join(tmp, "stub.mjs")
+            with open(stub, "w", encoding="utf-8") as f:   # what the library returns for the letter line, after the fix
+                f.write("export function twoline2satrec(l1) { return { satnum: l1.substring(2, 7), epochyr: 26, epochdays: NaN,"
+                        " no: 0.0506912634, ecco: 0.1487004, inclo: 0.5976, nodeo: 5.9665, argpo: 0.3476, mo: 6.0271,"
+                        " bstar: -7.0517e-6, ndot: -6.97e-13, nddot: 0, error: 0 }; }\n"
+                        "export function json2satrec() { throw new Error('unused'); }\n")
+            env = dict(os.environ, GPCONF_NODE_MODULE=stub)
+            p = subprocess.run([NODE, "--input-type=module", "--eval", source, "--", "tle"], input=self.SET,
+                               capture_output=True, text=True, env=env, cwd=tmp)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        out = json.loads(p.stdout)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0]["norad_cat_id"], 69999)
+        self.assertIsNone(out[0]["epoch"])
+        self.assertAlmostEqual(out[0]["bstar"], -7.0517e-6)   # the fields around it still come through
+        self.assertIn("non-finite epoch for 69999", p.stderr)
