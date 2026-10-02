@@ -13,9 +13,8 @@ builds (D-203). No frozen expected value changed and the eighteen cases are thos
 passes all eighteen cases (seventeen exact, the SATCAT data check not exercised); the naive adapter fails 15 of them
 and python-sgp4 2.27 fails 8, as in 0.4.0. The independent audit in `AUDIT.md` covered v0.1.0; neither the
 writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0, the corrupt-input case
-of v0.4.0 nor the changes of this release have been separately audited. The version DOI is added here and to
-`CITATION.cff` after Zenodo mints it at the release; the concept DOI 10.5281/zenodo.22867654 resolves to the latest
-release.
+of v0.4.0 nor the changes of this release have been separately audited. Version DOI 10.5281/zenodo.23093982 (Zenodo
+record 23093982); the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
 
 Added `docs/LETTER-IN-FIELD.md`, on the corrupt-input case's input 3, the letter O in place of a 0 in line 1's epoch
 field: four TLE readers read the field up to the letter with no error, reported to PyEphem, satellite.js, Gpredict
