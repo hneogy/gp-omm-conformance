@@ -10,7 +10,7 @@ from it and never from the private repository, whose expected.json files still h
 scrubs. The script refuses a folder that lacks EXPORT-MANIFEST.txt, holds any provider file (fixtures/<case>/raw/),
 or holds docs/handoff/, which only the private repository has.
 
-Staging (--out, an empty or absent folder) copies pyproject.toml, README.md and LICENSE; the whole gpconf package,
+Staging (--out, an empty or absent folder) copies pyproject.toml, README.md, LICENSE and NOTICE; the whole gpconf package,
 walked recursively so that no subfolder can be missed (the fault D-151 and D-153 found in two patterns written for a
 flat package); and the shipped corpus files into gpconf/corpus/: manifest.json, tools/fetchlist.json, every
 fixtures/<case>/expected.json and case.md, derived/ and vectors/. Every staged file must match the export manifest's
@@ -60,11 +60,11 @@ import time
 import zipfile
 
 MANIFEST = "EXPORT-MANIFEST.txt"
-TOP = ["pyproject.toml", "README.md", "LICENSE"]
+TOP = ["pyproject.toml", "README.md", "LICENSE", "NOTICE"]
 CORPUS = ["manifest.json", "tools/fetchlist.json", "fixtures/*/expected.json", "fixtures/*/case.md", "derived/**/*", "vectors/**/*"]
 BUNDLED = "gpconf/corpus"
 RAW = re.compile(r"(^|/)fixtures/[^/]+/raw(/|$)")
-SDIST_OTHER = re.compile(r"^(PKG-INFO|setup\.cfg|pyproject\.toml|README\.md|LICENSE|gpconf\.egg-info/.+)$")
+SDIST_OTHER = re.compile(r"^(PKG-INFO|setup\.cfg|pyproject\.toml|README\.md|LICENSE|NOTICE|gpconf\.egg-info/.+)$")
 WHEEL_OTHER = re.compile(r"^gpconf-[^/]+\.dist-info/.+$")
 REPO_URL = "https://github.com/hneogy/gp-omm-conformance"
 RAW_URL = "https://raw.githubusercontent.com/hneogy/gp-omm-conformance"
@@ -325,7 +325,7 @@ def staged_readme(export):
 
 
 def expected_top(export, manifest):
-    """-> {top-level file: SHA-256 as staged}: the export's own for pyproject.toml and LICENSE, the PyPI copy for README.md."""
+    """-> {top-level file: SHA-256 as staged}: the export's own for pyproject.toml, LICENSE and NOTICE, the PyPI copy for README.md."""
     top = {name: manifest.get(name) for name in TOP}
     top["README.md"] = sha256_bytes(staged_readme(export)[0])
     return top

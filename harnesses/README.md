@@ -25,11 +25,17 @@ code before trusting a count.
 | [satdump](satdump/) | master f3d82ad, and release 1.2.2 at 7aef0fe | GPL-3.0 | internal source files of `src-core/` and its bundled predict fork | a C++17 compiler (Apple clang 21 as run), libcurl |
 | [astroz](astroz/) | main d558933, and release v0.14.0 at 67ca74c | GPL-3.0 through v0.13.0, MIT from v0.14.0 | the library's `src/Tle.zig`, used directly as a module | Zig 0.16.0 (as run; the harness uses interfaces new in 0.16) |
 | [gods-eye-view](gods-eye-view/) | main ce671ce | MIT | the application's satellites layer, by its internal module paths, with Cesium stood in | Node.js (26.5.0 as run) |
+| [vallado](vallado/) | CelesTrak/fundamentals-of-astrodynamics at 4b04ddc, the SGP4 files as 7e0078a left them | the repository is AGPL-3.0; its NOTICE, in the tree at that commit, gives the SGP4 C++ folder its original unrestricted terms | `SGP4.cpp` and `SGP4.h` alone: the reader `twoline2rv()` and the `elsetrec` structure, as `SGP4.h` declares them | a C++17 compiler (Apple clang 21 as run) |
+
+The sixth recipe is of another kind. `vallado/` is not one of the eight libraries: it is the SGP4 C++ they descend
+from, Vallado's reference implementation as CelesTrak publishes it, read directly and not through a library that
+wraps it (decision D-216, 2026-10-03). It has no row on the site.
 
 The counts each run produced are in the hand-run table on the site's library page
 (https://gpconf.neogy.dev/library/), recorded with the runner of 2026-09-24 (gpconf 0.2.1). Later runners add checks,
 such as the provider's empty answers (D-143), so a run today can differ in its pass and skip counts. These five were
-not run again when they moved here.
+not run again when they moved here. The `vallado` recipe was built and run in this folder's form, against corpus
+v0.5.0; its count is in its own README.
 
 Each folder's README gives the pinned commit in full, the licence, what the harness compiles against, the build
 commands as they were run, and the run command. Build in the recipe's folder; the commands clone the project into a

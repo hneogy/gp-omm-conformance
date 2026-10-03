@@ -1,0 +1,10 @@
+gp-omm-conformance
+Copyright (c) 2026 NEOGY LLC
+
+Scope note. The MIT licence in the LICENSE file covers the corpus's code,
+documentation, specification vectors, derived files and expected values. It
+does not cover, and the repository does not contain, raw data served by
+CelesTrak or any other provider; tools/fetch.py, which is `gpconf fetch` in the
+installed package, retrieves such data to your machine under the provider's own
+terms (https://celestrak.org/usage-policy.php). The XML schemas under schemas/
+are CCSDS/SANA publications redistributed unmodified; see schemas/SOURCE.md.

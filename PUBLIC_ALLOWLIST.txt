@@ -3,6 +3,8 @@
 # (raw provider bytes) is never exported; tools/export_public.py refuses it even if listed, and
 # scrubs SupGP-derived snapshot values out of expected.json on the way out (tools/public_scrub.py).
 LICENSE
+# What the licence covers and what it does not: moved out of LICENSE so that the file is the MIT text alone (D-219).
+NOTICE
 README.md
 CHANGELOG.md
 AUDIT.md

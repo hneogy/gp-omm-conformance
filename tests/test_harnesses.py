@@ -1,4 +1,5 @@
-"""D-155, v0.3.0 stage 4: harnesses/, the recipes for the five hand-run libraries that cannot be presets.
+"""D-155, v0.3.0 stage 4: harnesses/, the recipes for the five hand-run libraries that cannot be presets; and, since
+D-216, a sixth recipe of another kind, Vallado's SGP4 C++ as CelesTrak publishes it.
 
 Each recipe folder holds exactly its harness files and a README that names the pinned commits in full, the project's
 licence, and says it is best-effort, not installable by pip, and tied to what may break silently. SatDump follows
@@ -25,8 +26,14 @@ RECIPES = {
                "commits": ["d558933ec3a9c9ee826eb8de665b6e5d229ebecb", "67ca74c8313c5c42159217e2bbddfaedad07e0cd"]},
     "gods-eye-view": {"files": {"README.md", "harness.mjs", "register.mjs", "cesium-hook.mjs", "cesium-stub.mjs"}, "licence": "MIT",
                       "commits": ["ce671ce500a393be27e3cbb2a08799fbca9b6e28"]},
+    # D-216: the reference reader itself. The repository is AGPL-3.0 and its NOTICE, which gives the SGP4 C++ folder its
+    # original unrestricted terms, entered the tree at 4b04ddc: the recipe pins that commit, the first whose checkout
+    # carries the terms, and names 7e0078a, which last changed the code and whose tree has no NOTICE; the files are identical.
+    "vallado": {"files": {"README.md", "harness.cpp", "vectors.cpp", "common.h"}, "licence": ("AGPL-3.0", "unrestricted"),
+                "commits": ["4b04ddce172a3f5d958b4256a29ea996c8e666be", "7e0078a10e9aed2a44eef0ab646c0018ca69e1ad"]},
 }
-ORIGINAL_DIR = {"libsgp4": "libsgp4", "gpredict": "gpredict", "satdump": "satdump", "astroz": "astroz", "gods-eye-view": "gods-eye-view"}
+ORIGINAL_DIR = {"libsgp4": "libsgp4", "gpredict": "gpredict", "satdump": "satdump", "astroz": "astroz", "gods-eye-view": "gods-eye-view",
+                "vallado": "vallado/recipe-run"}
 ORIGINAL_FILE = {("astroz", "harness.zig"): "round-2/harness.zig",  # round two's harness, with the refusal channel (D-185)
                  ("gpredict", "harness.c"): "round-2/harness.c",  # round two's harness, with the refusal channel (D-178)
                  ("libsgp4", "harness.cpp"): "round-2/harness.cpp"}  # likewise (D-182)
@@ -52,7 +59,7 @@ def satdump_readme_names():
 
 
 class Recipes(unittest.TestCase):
-    def test_the_folder_holds_the_five_recipes_and_its_readme(self):
+    def test_the_folder_holds_the_recipes_and_its_readme(self):
         self.assertEqual({x for x in os.listdir(H) if not x.startswith(".")}, set(RECIPES) | {"README.md"})
         self.assertTrue(os.path.exists(os.path.join(H, ".gitignore")))
 
@@ -72,6 +79,10 @@ class Recipes(unittest.TestCase):
                 self.assertIn("Best-effort, not installable by pip.", text)
                 self.assertIn("with nothing to say so", text)  # the break-silently statement
                 self.assertIn("published result", text)
+        # the build commands check out the pinned commit, the first of each recipe's list where the recipe has one checkout
+        vallado = open(os.path.join(H, "vallado", "README.md"), encoding="utf-8").read()
+        self.assertIn("git -C repo checkout " + RECIPES["vallado"]["commits"][0], vallado)
+        self.assertNotIn("git -C repo checkout " + RECIPES["vallado"]["commits"][1], vallado)
 
     def test_the_folder_readme_says_what_a_recipe_is_and_is_not(self):
         text = " ".join(open(os.path.join(H, "README.md"), encoding="utf-8").read().split())

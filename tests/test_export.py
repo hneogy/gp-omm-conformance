@@ -144,5 +144,23 @@ class ExportGuardTests(unittest.TestCase):
         self.assertEqual(hits, [], f"SupGP-derived values found in the export: {hits[:10]}")
 
 
+class LicenceFiles(unittest.TestCase):
+    """D-219: LICENSE is the MIT text and nothing else, so that a licence detector names it; what the licence covers and
+    what it does not is in NOTICE, which is exported and packaged beside it."""
+
+    def test_license_is_the_mit_text_alone_and_the_scope_note_is_in_notice(self):
+        licence = open(os.path.join(ROOT, "LICENSE"), encoding="utf-8").read()
+        self.assertTrue(licence.startswith("MIT License\n\nCopyright (c) 2026 NEOGY LLC\n"))
+        self.assertTrue(licence.rstrip("\n").endswith("SOFTWARE."))
+        self.assertEqual(len(licence.splitlines()), 21)
+        self.assertNotIn("Scope note", licence)
+        notice = open(os.path.join(ROOT, "NOTICE"), encoding="utf-8").read()
+        for phrase in ("Scope note.", "raw data served by", "CelesTrak", "schemas/SOURCE.md", "LICENSE"):
+            self.assertIn(phrase, notice)
+        allow = open(os.path.join(ROOT, "PUBLIC_ALLOWLIST.txt"), encoding="utf-8").read().splitlines()
+        self.assertIn("NOTICE", allow)
+        self.assertIn('license-files = ["LICENSE", "NOTICE"]', open(os.path.join(ROOT, "pyproject.toml"), encoding="utf-8").read())
+
+
 if __name__ == "__main__":
     unittest.main()

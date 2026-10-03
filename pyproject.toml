@@ -9,7 +9,7 @@ description = "Runner for the GP/OMM conformance corpus (Alpha-5, 6- and 9-digit
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE"]
 dependencies = []
 
 [project.optional-dependencies]
