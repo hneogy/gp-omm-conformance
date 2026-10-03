@@ -24,7 +24,7 @@ code before trusting a count.
 | [gpredict](gpredict/) | tag v2.6, c9fa018 | GPL-2.0 | the internal SGP4 module `src/sgpsdp/` of the application, compiled on its own, with a stand-in for its one GLib call | a C compiler (Apple clang 21 as run) |
 | [satdump](satdump/) | master f3d82ad, and release 1.2.2 at 7aef0fe | GPL-3.0 | internal source files of `src-core/` and its bundled predict fork | a C++17 compiler (Apple clang 21 as run), libcurl |
 | [astroz](astroz/) | main d558933, and release v0.14.0 at 67ca74c | GPL-3.0 through v0.13.0, MIT from v0.14.0 | the library's `src/Tle.zig`, used directly as a module | Zig 0.16.0 (as run; the harness uses interfaces new in 0.16) |
-| [gods-eye-view](gods-eye-view/) | main ce671ce | MIT | the application's satellites layer, by its internal module paths, with Cesium stood in | Node.js (26.5.0 as run) |
+| [gods-eye-view](gods-eye-view/) | release v0.2.1 at aa16b7c, and main ce671ce before it | MIT | the application's satellites layer, by its internal module paths, with Cesium stood in | Node.js (26.5.0 as run) |
 | [vallado](vallado/) | CelesTrak/fundamentals-of-astrodynamics at 4b04ddc, the SGP4 files as 7e0078a left them | the repository is AGPL-3.0; its NOTICE, in the tree at that commit, gives the SGP4 C++ folder its original unrestricted terms | `SGP4.cpp` and `SGP4.h` alone: the reader `twoline2rv()` and the `elsetrec` structure, as `SGP4.h` declares them | a C++17 compiler (Apple clang 21 as run) |
 
 The sixth recipe is of another kind. `vallado/` is not one of the eight libraries: it is the SGP4 C++ they descend

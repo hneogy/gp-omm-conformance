@@ -25,7 +25,8 @@ RECIPES = {
     "astroz": {"files": {"README.md", "harness.zig", "vectors.zig", "common.zig"}, "licence": ("GPL-3.0", "MIT"),
                "commits": ["d558933ec3a9c9ee826eb8de665b6e5d229ebecb", "67ca74c8313c5c42159217e2bbddfaedad07e0cd"]},
     "gods-eye-view": {"files": {"README.md", "harness.mjs", "register.mjs", "cesium-hook.mjs", "cesium-stub.mjs"}, "licence": "MIT",
-                      "commits": ["ce671ce500a393be27e3cbb2a08799fbca9b6e28"]},
+                      # D-221: pinned to release v0.2.1; ce671ce, the first two rounds' commit, stays named beside it
+                      "commits": ["aa16b7c3b0166a89d8c7a6089e0aff53a22faaee", "ce671ce500a393be27e3cbb2a08799fbca9b6e28"]},
     # D-216: the reference reader itself. The repository is AGPL-3.0 and its NOTICE, which gives the SGP4 C++ folder its
     # original unrestricted terms, entered the tree at 4b04ddc: the recipe pins that commit, the first whose checkout
     # carries the terms, and names 7e0078a, which last changed the code and whose tree has no NOTICE; the files are identical.
@@ -83,6 +84,9 @@ class Recipes(unittest.TestCase):
         vallado = open(os.path.join(H, "vallado", "README.md"), encoding="utf-8").read()
         self.assertIn("git -C repo checkout " + RECIPES["vallado"]["commits"][0], vallado)
         self.assertNotIn("git -C repo checkout " + RECIPES["vallado"]["commits"][1], vallado)
+        gev = open(os.path.join(H, "gods-eye-view", "README.md"), encoding="utf-8").read()
+        self.assertIn("git -C main checkout " + RECIPES["gods-eye-view"]["commits"][0], gev)  # D-221: the release, v0.2.1
+        self.assertNotIn("git -C main checkout " + RECIPES["gods-eye-view"]["commits"][1], gev)
 
     def test_the_folder_readme_says_what_a_recipe_is_and_is_not(self):
         text = " ".join(open(os.path.join(H, "README.md"), encoding="utf-8").read().split())
