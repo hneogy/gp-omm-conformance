@@ -63,7 +63,7 @@ import time
 import urllib.error
 import urllib.request
 
-from . import locate
+from . import __version__, locate
 from .words import pick, qty
 
 FETCHLIST = os.path.join("tools", "fetchlist.json")   # relative to the corpus root
@@ -75,12 +75,18 @@ TOOL_VERSION = "tools/fetch.py v3 (full header capture; stops on any unexpected 
 NO_DATA_TEXTS = ("No GP data found", "No SupGP data found")  # CelesTrak's body for a query with nothing to return
 UNEXPECTED = ".unexpected"          # suffix of a response the fetch list did not expect, kept beside the data (D-228)
 REFUSALS = (403, 429)               # the provider refusing the address: no request for two hours afterwards (D-228)
-ISSUES_URL = "https://github.com/hneogy/gp-omm-conformance/issues"
+REPO_URL = "https://github.com/hneogy/gp-omm-conformance"
+ISSUES_URL = REPO_URL + "/issues"
 
 
 def user_agent():
-    ua = os.environ.get("GPCONF_USER_AGENT") or (
-        "gp-omm-conformance-corpus/0.1 (fixture fetch, each URL once; see repository README)")
+    """The User-Agent every request carries: the kit's name, the version that asks and the repository, so that the
+    provider can tell this fetch's requests from any other's and can find what makes them (D-252). Up to 0.6.0 the
+    header read "gp-omm-conformance-corpus/0.1 (fixture fetch, each URL once; see repository README)": no name a
+    reader of a log could look up, a version that was never the corpus's, and no address of the repository it pointed
+    at. No contact detail of the person running the fetch is in it (D-007): GPCONF_CONTACT appends one for whoever
+    chooses to, and GPCONF_USER_AGENT replaces the whole string."""
+    ua = os.environ.get("GPCONF_USER_AGENT") or f"gpconf/{__version__} (+{REPO_URL}; fetch, each URL once)"
     contact = os.environ.get("GPCONF_CONTACT")
     return f"{ua} {contact}" if contact else ua
 

@@ -41,21 +41,21 @@ traceable to a provider response whose URL, retrieval time and SHA-256 are recor
 (`tle-writer-alpha5`) asks the same of code that *writes* TLEs: Alpha-5 in the catalog field,
 valid lines, and a refusal for the numbers the format cannot carry.
 
-Status: version `0.6.0`, a minor release: the JSON report gains `summary`, the number of cases in each status,
-an addition a script is told to rely on in place of the printed lines (D-240). Every count the runner, the
-fetch and the Action print now agrees in number with the words beside it (D-239); the table of
-`docs/FAILURES.md` says "(1 failing)" where it said "(1 fail)" (D-240); and the project names itself gpconf, with
-`docs/BRAND.md` the single source for its name and the lines it describes itself with (D-241, D-242). A user's
-fetch is now 46 requests and asks for nothing it knows will answer 404: CelesTrak's 16-byte answer `No GP data
-found` ships with the corpus as a recorded response, the one provider response it carries, and the fetch writes it
-where it used to request it (D-247). The corpus says "TLE set" for an object's lines and "line" for one line: 604
-derived Alpha-5 TLE sets, 304 fetched TLE sets (D-248). No case and no frozen expected value changed, and the
-adapter protocol is as in 0.5.1. The naive and python-sgp4 adapters fail 15 and 8 of the eighteen cases, as
-before; those counts were measured with launch-window files that a new user's fetch cannot obtain, and a fresh
-fetch reproduces 14 and 6 (D-229). The independent audit (`AUDIT.md`) covered v0.1.0; neither the writer-side case
-of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0, the corrupt-input case of v0.4.0,
-the changes of v0.5.0, those of v0.5.1 nor those of v0.6.0 have been separately audited. Maintainer: Honorius
-Neogy (NEOGY LLC).
+Status: version `0.6.1`, a patch release, tooling and documentation only. The fetch's `User-Agent` names the
+kit, the version that asks and this repository, `gpconf/0.6.1 (+https://github.com/hneogy/gp-omm-conformance; fetch,
+each URL once)`; up to 0.6.0 it named neither gpconf nor the corpus's version, and CelesTrak could not tell from a log
+what was asking (D-252). The README gives the size of a user's fetch as it was measured, 3.2 MB, where it gave the sum
+of the corpus's own captures, 3.1 MB (D-252), and `docs/RESEARCH.md` quotes the paragraph of CelesTrak's usage policy
+on addresses that many users share (D-253, D-254). A user's fetch is 46 requests, the same 46 as in 0.6.0, and asks
+for nothing it knows will answer 404: CelesTrak's 16-byte answer `No GP data found` ships with the corpus as a
+recorded response, the one provider response it carries, and the fetch writes it where it used to request it (D-247).
+The corpus says "TLE set" for an object's lines and "line" for one line: 604 derived Alpha-5 TLE sets, 304 fetched
+TLE sets (D-248). No case, check or frozen expected value changed, and the adapter protocol is as in 0.5.1. The naive
+and python-sgp4 adapters fail 15 and 8 of the eighteen cases, as before; those counts were measured with
+launch-window files that a new user's fetch cannot obtain, and a fresh fetch reproduces 14 and 6 (D-229). The
+independent audit (`AUDIT.md`) covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the
+packaging and protocol changes of v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1,
+those of v0.6.0 nor those of v0.6.1 have been separately audited. Maintainer: Honorius Neogy (NEOGY LLC).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22867654.svg)](https://doi.org/10.5281/zenodo.22867654) See `DECISIONS.md` for the full decision log and `MANIFEST.md` for every case,
 source and known gap.
@@ -155,7 +155,7 @@ into a per-user cache:
 ```bash
 pip install gpconf
 gpconf run --preset reference   # before any fetch: the 5 cases whose files ship in the package run; 11 need provider data, 1 needs data no fetch brings, 1 is a data check not made by default
-gpconf fetch                    # once per corpus version: 46 requests, 3.1 MB, one at a time; kept on disk, not requested again
+gpconf fetch                    # once per corpus version: 46 requests, 3.2 MB, one at a time; kept on disk, not requested again
 gpconf run --preset reference   # then sixteen run, as in a clone: one case needs launch-window data no fetch brings, and the SATCAT data check its own file (--include-satcat)
 ```
 
@@ -163,7 +163,7 @@ Or from a clone, as before:
 
 ```bash
 git clone https://github.com/hneogy/gp-omm-conformance.git && cd gp-omm-conformance
-python3 tools/fetch.py            # once per corpus version: 46 requests, 3.1 MB, one at a time; kept on disk, not requested again
+python3 tools/fetch.py            # once per corpus version: 46 requests, 3.2 MB, one at a time; kept on disk, not requested again
 python3 -m gpconf run --preset reference   # the control: 16 cases pass; one is not-available, its files being launch-window captures no fetch requests; the SATCAT case is a data check on a file the fetch brings only with --include-satcat, and reports not-exercised for every parser, with the file or without; the nine-digit check says not-exercised outside a launch window
 python3 -m gpconf run --preset naive       # the parser most projects have: a demonstration of failure, not a parser to use
 ```
@@ -195,7 +195,7 @@ the same. The [adapter guide](docs/ADAPTERS.md) describes the report field by fi
 In a GitHub Actions job, from v0.3.0, three lines run a preset against your library:
 
 ```yaml
-- uses: hneogy/gp-omm-conformance@v0.6.0
+- uses: hneogy/gp-omm-conformance@v0.6.1
   with:
     preset: sgp4
 ```
@@ -246,8 +246,10 @@ CelesTrak asks four things of software that downloads from it, in its usage poli
   a recorded response, and the fetch writes it where it used to ask. Anything that is not a 200 ends
   the run with exit status 2 and is kept beside the data as `<file>.unexpected`, never read as data (D-228). A
   403 is a refusal: read the kept response, which says why. The fetch then makes no request for two hours.
-- **Stay under 50 errors in two hours and 100 MB a day from one address.** One run is 46 requests and 3.1 MB, and
-  none of them is expected to answer with an error. Do not run it in a loop or in CI; the GitHub Action runs offline for that reason.
+- **Stay under 50 errors in two hours and 100 MB a day from one address.** One run is 46 requests and 3.2 MB, and
+  none of them is expected to answer with an error. The size is measured: the first-time fetch timed at the 0.6.0 release
+  downloaded 3,200,451 bytes, where the corpus's own captures of the same files sum to 3.1 MB; the live files change size.
+  Do not run it in a loop or in CI; the GitHub Action runs offline for that reason.
 - **Only download the data you need.** The legacy SATCAT file, 9.4 MB, would be three quarters of the download, and
   it serves `satcat-70000-cutoff`, a data check in which no parser takes part. The fetch leaves it out unless you
   pass `--include-satcat` (D-231). Without the file the case reports `not-exercised`, as it does with it, and a
@@ -256,7 +258,11 @@ CelesTrak asks four things of software that downloads from it, in its usage poli
 
 The rest is the corpus's own choice and not something CelesTrak asks for (D-230): requests go one at a time with
 a two-second pause, no redirect is followed, nothing is retried, and no URL is requested twice in one run (a
-re-capture entry is requested only when its original is on disk and two hours old).
+re-capture entry is requested only when its original is on disk and two hours old). Every request carries the header
+`User-Agent: gpconf/<version> (+https://github.com/hneogy/gp-omm-conformance; fetch, each URL once)`: the kit's name,
+the version that asks and this repository, so that CelesTrak can tell the fetch's requests from any other's (D-252).
+It carries nothing about you (D-007). Set `GPCONF_CONTACT` to append a contact of your own, or `GPCONF_USER_AGENT`
+to replace the string.
 
 After each run the fetch compares every file with the SHA-256 recorded in `manifest.json`, prints a `DRIFT` line for any stable-tier source whose bytes differ and exits 2
 (`--check-drift` does the comparison without fetching).
@@ -558,8 +564,8 @@ and correction to be recorded.
   appendix table (a sample entry from the SupGP case, per D-033/D-049) and says so in a notice; the
   auditor's text is otherwise unchanged and the private original is intact. It covered v0.1.0; neither
   the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0 nor the
-  corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1 nor those of v0.6.0 have been separately
-  audited.
+  corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1, those of v0.6.0 nor those of v0.6.1 have been
+  separately audited.
 
 If you find an error, the most useful report names the case id, the source file's SHA-256 and
 the field, so that the discrepancy can be traced to a specific fetched byte sequence.
@@ -577,12 +583,13 @@ makes this data freely available; please respect its usage policy. Standards: CC
 Alpha-5 definition: Space-Track, https://www.space-track.org/documentation.
 
 To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, H. (NEOGY LLC).
-gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary, version 0.6.0,
+gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary, version 0.6.1,
 2026-10-04, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** for this release, v0.6.0, is
-[10.5281/zenodo.23140585](https://doi.org/10.5281/zenodo.23140585); v0.5.1 keeps its own, [10.5281/zenodo.23130868](https://doi.org/10.5281/zenodo.23130868),
+general. The **version DOI** for this release, v0.6.1, is added here and to `CITATION.cff` after Zenodo
+mints it at the release; v0.6.0 keeps its own, [10.5281/zenodo.23140585](https://doi.org/10.5281/zenodo.23140585),
+v0.5.1 its own, [10.5281/zenodo.23130868](https://doi.org/10.5281/zenodo.23130868),
 v0.5.0 its own, [10.5281/zenodo.23093982](https://doi.org/10.5281/zenodo.23093982),
 v0.4.0 its own, [10.5281/zenodo.23002261](https://doi.org/10.5281/zenodo.23002261),
 v0.3.0 its own, [10.5281/zenodo.22986178](https://doi.org/10.5281/zenodo.22986178),

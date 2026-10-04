@@ -5,6 +5,39 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
+## [0.6.1] - 2026-10-04
+
+A patch release under the versioning rule, tooling and documentation only: the fetch's `User-Agent` names the kit,
+the version that asks and the repository (D-252); the README gives the size of a user's fetch as it was measured
+(D-252); and `docs/RESEARCH.md` gains one quotation from CelesTrak's usage policy (D-253, D-254). The fetch list is
+0.6.0's: 46 requests, and four answers written from the corpus's record and never requested. No case, check or frozen
+expected value changed, the eighteen cases are those of 0.6.0, and the adapter protocol is as in 0.5.1. On the
+maintainer's copy the reference adapter passes all eighteen cases (seventeen exact, the SATCAT data check not
+exercised), the naive adapter fails 15 and python-sgp4 2.27 fails 8, as in 0.6.0; from a fresh fetch they read 16,
+14 and 6, since one case cannot run without launch-window files that a new user's fetch cannot obtain (D-229). The
+eight libraries run by hand and Vallado's C++ were run again under this release's tree, on the maintainer's copy and
+in the environments of their latest runs, and each report compared with the latest one kept, by case status and by
+count: none differs, in status, in count or in the text of any item (D-255). The independent audit in `AUDIT.md`
+covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of
+v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1, those of v0.6.0 nor those of this
+release have been separately audited. The version DOI is added here once Zenodo mints it at the release; the concept
+DOI 10.5281/zenodo.22867654 resolves to the latest release.
+
+Changed: the fetch's `User-Agent` names the kit, the version that asks and the repository:
+`gpconf/<version> (+https://github.com/hneogy/gp-omm-conformance; fetch, each URL once)`. Up to 0.6.0 it read
+`gp-omm-conformance-corpus/0.1 (fixture fetch, each URL once; see repository README)`, which named neither gpconf nor
+the corpus's version and gave no address, so CelesTrak's operator could not tell from a log what was asking.
+`GPCONF_CONTACT` still appends a contact and `GPCONF_USER_AGENT` still replaces the string; without them the header
+says nothing about the person running the fetch (D-007, D-252).
+
+Corrected: the README gave the size of a user's fetch as 3.1 MB in three places. That was the figure computed from
+the corpus's own captures; the two timed first-time fetches, at the releases of 0.5.1 and 0.6.0, each downloaded 3.2
+MB, and the README now says 3.2 MB, with the measurement and the captures' sum beside it (D-252). The sections below
+keep the figure they were published with.
+
+Added to `docs/RESEARCH.md`, section 3: the usage policy's paragraph on addresses that many users share, quoted as
+the project owner read it on the page on 2026-10-04 (D-253, D-254).
+
 ## [0.6.0] - 2026-10-04
 
 A minor release under the versioning rule: an additive change to the JSON report, `summary`, the number of cases in

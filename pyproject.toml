@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gpconf"
-version = "0.6.0"
+version = "0.6.1"
 # The About line of docs/BRAND.md, word for word (D-242).
 description = "Free test kit: does your satellite software handle catalog numbers above 99,999? Built from real CelesTrak data."
 readme = "README.md"

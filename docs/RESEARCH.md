@@ -208,6 +208,27 @@ the corpus follows the stricter, later one.
 Also: use `https://celestrak.org` (the `.com` domain issues 301s, which now count toward the
 error limit). Legacy static `.txt` files were all removed 2024 Dec 24.
 
+**Addresses that many users share (added 2026-10-04).** From the usage policy
+(https://celestrak.org/usage-policy.php, "2026 May 15, Updated 2026 May 22"), as the project owner read it on the
+page on 2026-10-04 and gave it to this record:
+
+> And while we realize that many companies or organizations have chosen to set up NATs to have all
+> of their users coming from the same IP address, instead of implementing IPv6 (which has been an
+> Internet standard since 2017), we have no way to know how many users are accessing CelesTrak via
+> a single IP address. It is up to those organizations to figure out a way to set up a proxy to
+> cache these queries in a way that doesn't get all of their employees or devices blocked, by
+> caching requests on their end.
+
+The owner read the page and supplied the paragraph; no session fetched it, so it is not in the fetch logs below. The
+page carries the date line it carried when a session read it in full on 2026-09-21 (section 11.1), so the paragraph
+was on the page then; that reading was made for redistribution terms and quoted nothing on this point [inferred from
+the unchanged "Updated" date]. The quotation replaces the owner's account of the paragraph, which stood here first
+(D-253, D-254). What it bears on: the limits above are counted per IP address, so software that runs from an address
+many users share, a hosted CI runner for one, adds to a count that neither its operator nor CelesTrak can split by
+user [inferred: the paragraph speaks of companies and organizations that put their users behind one address, and of
+a caching proxy as theirs to set up; that a hosted runner's address is such an address is this record's reading, not
+the page's].
+
 ## 4. Alpha-5 (Space-Track)
 
 Source: https://www.space-track.org/documentation (public FAQ and "Alpha 5" section; the

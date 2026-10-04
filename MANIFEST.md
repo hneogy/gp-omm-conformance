@@ -1,6 +1,6 @@
-# Corpus manifest (0.6.0)
+# Corpus manifest (0.6.1)
 
-Generated 2026-10-04T15:07:55Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-10-04T19:46:28Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No provider data is shipped, and one provider response is: CelesTrak's 16-byte answer `No GP data found`, in `recorded/` with its provenance, which holds no orbital data (D-247, a named exception to D-023). Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped), and writes the recorded answer where it used to request it.
 

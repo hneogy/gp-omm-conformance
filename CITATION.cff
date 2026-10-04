@@ -3,7 +3,7 @@ cff-version: 1.2.0
 message: "If you use this corpus, please cite it as below. Use the concept DOI to refer to the corpus in general (it resolves to the latest release) and the version DOI to refer to exactly the release you used."
 type: dataset
 title: "gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary"
-version: "0.6.0"
+version: "0.6.1"
 date-released: "2026-10-04"
 doi: 10.5281/zenodo.22867654
 license: MIT

@@ -639,7 +639,7 @@ their tags; `-v` prints every item, not only the failures and the passes within 
 The command above prints:
 
 ```text
-gpconf 0.6.0 | corpus 0.6.0 | parser: gpconf.adapters.reference:Parser
+gpconf 0.6.1 | corpus 0.6.1 | parser: gpconf.adapters.reference:Parser
 
 case                                     status          exact  tol fail skip n/e n/f n/a
 alpha5-encoding-vectors                  pass                5    0    0    0   0   0   0

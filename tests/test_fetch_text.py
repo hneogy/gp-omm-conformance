@@ -4,7 +4,9 @@ CelesTrak did not ask for.
 The README's "Fetching responsibly" used to open "`tools/fetch.py` follows CelesTrak's published usage policy" and
 list "2 s between requests" under it. CelesTrak publishes no interval between requests: the pause is the corpus's
 own choice. The section now says what CelesTrak asks, what the fetch does about each, and then what is the corpus's
-own. The figures it states are held to the fetch list and the manifest here, so they cannot drift from them.
+own. The figures it states are held to the fetch list and the manifest here, so they cannot drift from them; the size of a
+user's fetch is the one exception since D-252, a measured figure held to the constant below and to the manifest's sum
+within a twentieth.
 
 Run: python -m unittest tests.test_fetch_text"""
 import contextlib
@@ -18,6 +20,12 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from gpconf import fetch  # noqa: E402
+
+
+# The size of a user's fetch is measured, not computed (D-252): the owner's timed first-time fetch at the 0.6.0 release
+# (D-250). The live files change size, so the sum of the corpus's own captures, which this test held the README to
+# until then, read 3.1 MB while both timed fetches, at the 0.5.1 and the 0.6.0 release, downloaded 3.2 MB.
+MEASURED_BYTES = 3_200_451
 
 
 def read(rel):
@@ -73,9 +81,14 @@ class FetchingResponsibly(unittest.TestCase):
 
     def test_the_figures_are_the_fetch_lists(self):
         entries, size, known = users_run()
-        mb = f"{size / 1e6:.1f} MB"
+        snapshot, mb = f"{size / 1e6:.1f} MB", f"{MEASURED_BYTES / 1e6:.1f} MB"
         self.assertEqual((len(entries), len(known)), (46, 4))
+        self.assertEqual((snapshot, mb), ("3.1 MB", "3.2 MB"))
+        # the measurement stands for this fetch list only: one that moved the captures' sum a twentieth away needs a new one
+        self.assertLess(abs(MEASURED_BYTES - size) / size, 0.05)
         self.assertIn(f"One run is {len(entries)} requests and {mb}, and none of them is expected to answer with an error.", self.section)
+        self.assertIn(f"The size is measured: the first-time fetch timed at the 0.6.0 release downloaded {MEASURED_BYTES:,} bytes, where the "
+                      f"corpus's own captures of the same files sum to {snapshot}; the live files change size.", self.section)
         self.assertIn("The fetch stops at the first one, with no exception (D-247).", self.section)
         self.assertIn("four TLE requests for objects numbered above 99999, which answer 404 with `No GP data found`. It no longer makes them", self.section)
         self.assertFalse([e["file"] for e in entries if e.get("expect_status")])      # no request of a user's run expects anything but a 200

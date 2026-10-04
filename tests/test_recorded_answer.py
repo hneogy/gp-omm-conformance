@@ -329,7 +329,8 @@ class TheExceptionIsNamed(unittest.TestCase):
                       "`recorded/celestrak-no-gp-data-found.txt`.", readme)
         self.assertIn("It holds no orbital data: no element, no catalog number, nothing that stands in for a fetch.", readme)
         self.assertIn("It is CelesTrak's text, and the MIT licence does not cover it.", readme)
-        self.assertIn("A user's fetch is now 46 requests and asks for nothing it knows will answer 404", readme)
+        # the status paragraph: "is now 46 requests" at 0.6.0, where the change was made; from 0.6.1 it says the list is 0.6.0's
+        self.assertIn("A user's fetch is 46 requests, the same 46 as in 0.6.0, and asks for nothing it knows will answer 404", readme)
 
     def test_the_notice_the_citation_and_the_manifest_document_name_it(self):
         self.assertIn('One response from CelesTrak is in the repository, and the licence does not cover it either: the 16-byte text "No GP data found" in recorded/',
