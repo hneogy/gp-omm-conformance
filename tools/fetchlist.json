@@ -4,35 +4,40 @@
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-g15-27.csv",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=CSV",
-  "purpose": "SupGP post-deployment file for Starlink G15-27 (launched 2026-09-20 01:47 UTC); expected to carry 18 SDS 9-digit launch-nominal ids (799xxxxxx)."
+  "purpose": "SupGP post-deployment file for Starlink G15-27 (launched 2026-09-20 01:47 UTC); expected to carry 18 SDS 9-digit launch-nominal ids (799xxxxxx).",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "A",
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-g15-27.json",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=JSON",
-  "purpose": "Same as CSV, JSON encoding."
+  "purpose": "Same as CSV, JSON encoding.",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "A",
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-g15-27.xml",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=XML",
-  "purpose": "Same as CSV, CCSDS OMM XML."
+  "purpose": "Same as CSV, CCSDS OMM XML.",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "A",
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-g15-27.kvn",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=KVN",
-  "purpose": "Same as CSV, CCSDS OMM KVN."
+  "purpose": "Same as CSV, CCSDS OMM KVN.",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "A",
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-g15-27.tle",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=starlink-g15-27&FORMAT=TLE",
-  "purpose": "What the TLE format does with 9-digit ids (expected: those objects are omitted)."
+  "purpose": "What the TLE format does with 9-digit ids (expected: those objects are omitted).",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "B",
@@ -115,7 +120,7 @@
   "stage": "B",
   "case": "six-digit-omm-saramago",
   "file": "saramago.tle",
-  "allow_error": true,
+  "expect_status": 404,
   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=TLE",
   "purpose": "What a TLE request for a 6-digit object returns. Any status is recorded; never repeated (DECISIONS D-009)."
  },
@@ -146,7 +151,7 @@
   "file": "last-30-days.tle",
   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=TLE",
   "purpose": "Same group as TLE; expected to omit every id >= 100000.",
-  "allow_error": true
+  "expect_status": 404
  },
  {
   "stage": "B",
@@ -181,16 +186,14 @@
   "case": "analyst-objects",
   "file": "analyst.tle",
   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=TLE",
-  "purpose": "Same, TLE (expected: only 8xxxx ids present).",
-  "allow_error": true
+  "purpose": "Same, TLE (expected: only 8xxxx ids present)."
  },
  {
   "stage": "B",
   "case": "bstar-and-derivative-forms",
   "file": "decaying.tle",
   "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=TLE",
-  "purpose": "High-drag objects: large/positive-exponent BSTAR, large ndot, non-zero nddot candidates.",
-  "allow_error": true
+  "purpose": "High-drag objects: large/positive-exponent BSTAR, large ndot, non-zero nddot candidates."
  },
  {
   "stage": "B",
@@ -204,16 +207,14 @@
   "case": "epoch-year-19xx",
   "file": "iss-first.tle",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=TLE",
-  "purpose": "Earliest GP record CelesTrak holds for the ISS; hoped to be 1998 (two-digit year 98).",
-  "allow_error": true
+  "purpose": "Earliest GP record CelesTrak holds for the ISS; hoped to be 1998 (two-digit year 98)."
  },
  {
   "stage": "B",
   "case": "epoch-year-19xx",
   "file": "iss-first.json",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=JSON",
-  "purpose": "Same record as OMM JSON (4-digit year).",
-  "allow_error": true
+  "purpose": "Same record as OMM JSON (4-digit year)."
  },
  {
   "stage": "B",
@@ -241,47 +242,49 @@
   "case": "satcat-70000-cutoff",
   "file": "satcat.txt",
   "url": "https://celestrak.org/pub/satcat.txt",
-  "purpose": "Legacy fixed-width SATCAT (HEAD showed 9,379,866 bytes, Last-Modified 2026-09-20 22:21:59 GMT). Documented to contain only ids below 70000. Fetched once; only an excerpt plus the full-file hash will be committed."
+  "purpose": "Legacy fixed-width SATCAT (HEAD showed 9,379,866 bytes, Last-Modified 2026-09-20 22:21:59 GMT). Documented to contain only ids below 70000. Fetched once; only an excerpt plus the full-file hash will be committed.",
+  "opt_in": "satcat"
  },
  {
   "stage": "D",
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-38381-799501621.csv",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=CSV",
-  "allow_error": false,
-  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in CSV; TLE request expected to fail or omit."
+  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in CSV; TLE request expected to fail or omit.",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "D",
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-38381-799501621.json",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=JSON",
-  "allow_error": false,
-  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in JSON; TLE request expected to fail or omit."
+  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in JSON; TLE request expected to fail or omit.",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "D",
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-38381-799501621.xml",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=XML",
-  "allow_error": false,
-  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in XML; TLE request expected to fail or omit."
+  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in XML; TLE request expected to fail or omit.",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "D",
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-38381-799501621.kvn",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=KVN",
-  "allow_error": false,
-  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in KVN; TLE request expected to fail or omit."
+  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in KVN; TLE request expected to fail or omit.",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "D",
   "case": "nine-digit-supgp-launch-nominals",
   "file": "starlink-38381-799501621.tle",
   "url": "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?CATNR=799501621&FORMAT=TLE",
-  "allow_error": true,
-  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in TLE; TLE request expected to fail or omit."
+  "expect_status": 404,
+  "purpose": "Single 9-digit launch-nominal object (STARLINK-38381, id 799501621, from the G15-27 launch) in TLE; TLE request expected to fail or omit.",
+  "launch_window": "Starlink G15-27, launched 2026-09-20"
  },
  {
   "stage": "D",
@@ -301,7 +304,7 @@
   "stage": "E",
   "case": "tle-omits-six-digit-objects",
   "file": "last-30-days-recapture.tle",
-  "allow_error": true,
+  "expect_status": 404,
   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=tle",
   "recapture_of": "last-30-days.tle",
   "purpose": "Clean re-capture of the rolling-window 404 whose first observation was hand-transcribed (D-013). Supersedes last-30-days.tle for citation."
@@ -310,7 +313,6 @@
   "stage": "E",
   "case": "analyst-objects",
   "file": "analyst-recapture.tle",
-  "allow_error": true,
   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=analyst&FORMAT=tle",
   "recapture_of": "analyst.tle",
   "purpose": "Clean re-capture with full headers so the 565-vs-219 partial-omission count has full provenance (window-dependent)."
@@ -319,7 +321,6 @@
   "stage": "E",
   "case": "bstar-and-derivative-forms",
   "file": "decaying-recapture.tle",
-  "allow_error": true,
   "url": "https://celestrak.org/NORAD/elements/gp.php?SPECIAL=DECAYING&FORMAT=tle",
   "recapture_of": "decaying.tle",
   "purpose": "Clean re-capture with full headers so the 82-vs-79 partial-omission count has full provenance (window-dependent)."
@@ -365,7 +366,7 @@
   "file": "saramago-first.tle",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=TLE",
   "purpose": "First GP record for catalog 100000 in TLE; stable 6-digit source.",
-  "allow_error": true
+  "expect_status": 404
  },
  {
   "stage": "F",
@@ -401,78 +402,69 @@
   "file": "analyst-270449-first.tle",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=TLE",
   "purpose": "First GP record for Space Fence analyst id 270449 (Alpha-5 letter T) in TLE; stable source.",
-  "allow_error": true
+  "expect_status": 404
  },
  {
   "stage": "F",
   "case": "analyst-objects",
   "file": "analyst-270449-first.csv",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=CSV",
-  "purpose": "First GP record for Space Fence analyst id 270449 (Alpha-5 letter T) in CSV; stable source.",
-  "allow_error": true
+  "purpose": "First GP record for Space Fence analyst id 270449 (Alpha-5 letter T) in CSV; stable source."
  },
  {
   "stage": "F",
   "case": "analyst-objects",
   "file": "analyst-270449-first.json",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=JSON",
-  "purpose": "First GP record for Space Fence analyst id 270449 (Alpha-5 letter T) in JSON; stable source.",
-  "allow_error": true
+  "purpose": "First GP record for Space Fence analyst id 270449 (Alpha-5 letter T) in JSON; stable source."
  },
  {
   "stage": "F",
   "case": "analyst-objects",
   "file": "analyst-270449-first.xml",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=XML",
-  "purpose": "First GP record for Space Fence analyst id 270449 (Alpha-5 letter T) in XML; stable source.",
-  "allow_error": true
+  "purpose": "First GP record for Space Fence analyst id 270449 (Alpha-5 letter T) in XML; stable source."
  },
  {
   "stage": "F",
   "case": "analyst-objects",
   "file": "analyst-270449-first.kvn",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=KVN",
-  "purpose": "First GP record for Space Fence analyst id 270449 (Alpha-5 letter T) in KVN; stable source.",
-  "allow_error": true
+  "purpose": "First GP record for Space Fence analyst id 270449 (Alpha-5 letter T) in KVN; stable source."
  },
  {
   "stage": "F",
   "case": "analyst-objects",
   "file": "analyst-81011-first.tle",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=TLE",
-  "purpose": "First GP record for 8xxxx analyst id 81011 in TLE; stable source.",
-  "allow_error": true
+  "purpose": "First GP record for 8xxxx analyst id 81011 in TLE; stable source."
  },
  {
   "stage": "F",
   "case": "analyst-objects",
   "file": "analyst-81011-first.csv",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=CSV",
-  "purpose": "First GP record for 8xxxx analyst id 81011 in CSV; stable source.",
-  "allow_error": true
+  "purpose": "First GP record for 8xxxx analyst id 81011 in CSV; stable source."
  },
  {
   "stage": "F",
   "case": "analyst-objects",
   "file": "analyst-81011-first.json",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=81011&FORMAT=JSON",
-  "purpose": "First GP record for 8xxxx analyst id 81011 in JSON; stable source.",
-  "allow_error": true
+  "purpose": "First GP record for 8xxxx analyst id 81011 in JSON; stable source."
  },
  {
   "stage": "F",
   "case": "satcat-70000-cutoff",
   "file": "gp-69999-first.tle",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=TLE",
-  "purpose": "First GP record for the largest 5-digit id in TLE; stable source.",
-  "allow_error": true
+  "purpose": "First GP record for the largest 5-digit id in TLE; stable source."
  },
  {
   "stage": "F",
   "case": "satcat-70000-cutoff",
   "file": "gp-69999-first.csv",
   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=69999&FORMAT=CSV",
-  "purpose": "First GP record for the largest 5-digit id in CSV; stable source.",
-  "allow_error": true
+  "purpose": "First GP record for the largest 5-digit id in CSV; stable source."
  }
 ]

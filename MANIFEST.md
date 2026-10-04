@@ -1,6 +1,6 @@
-# Corpus manifest (0.5.0)
+# Corpus manifest (0.5.1)
 
-Generated 2026-10-02T02:07:13Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-10-04T01:35:55Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
 
@@ -11,7 +11,7 @@ No raw provider files are shipped. Each case lists the exact source URLs, retrie
 | 3 | `six-digit-omm-saramago` | gp | 2 | 5/7 | 1 |
 | 4 | `tle-omits-six-digit-objects` | gp | 256 | 0/3 | 1 |
 | 5 | `analyst-objects` | gp | 567 | 8/6 | 2 |
-| 6 | `nine-digit-supgp-launch-nominals` | gp | 28 | 0/6 | 3 |
+| 6 | `nine-digit-supgp-launch-nominals` | gp | 28 | 0/6 | 4 |
 | 7 | `supgp-celestrak-classification-c` | gp | 2 | 0/5 | 3 |
 | 8 | `bstar-and-derivative-forms` | gp | 83 | 2/3 | 2 |
 | 9 | `satcat-70000-cutoff` | satcat | 0 | 0/7 | 1 |
@@ -87,6 +87,7 @@ Tests: 9-digit-catalog-number, tle-unavailable-above-99999
 Coverage gaps:
 
 - perishable: nominals exist only for roughly 5-8 days after a launch (CelesTrak); a user's fetch may contain none, in which case the check nine-digit-ids-parse reports not-exercised rather than failing
+- the five files for 799501621 are the corpus's own capture of that launch window and no fetch requests them (D-229): from a fetch they are not-available, a nine-digit id in JSON, XML and KVN is exercised only on the maintainer's copy, and the case is judged on the full Starlink SupGP file alone
 - no 9-digit id exists in 18 SDS GP data; only SupGP
 - identity over time is out of scope, stated here as an open question: a nine-digit id is a launch nominal that CelesTrak serves "for the typical 5-8 days between launch and when 18 SDS starts releasing GP data" (docs/RESEARCH.md, TLE Retriever help quotation), after which the same object is expected in GP data under a catalog number of 100000 or above [inferred from that statement and "all newly cataloged objects will have 6-digit catalog numbers of 100000+"; no source states how the two records are linked]. The corpus checks that both forms parse (this case; six-digit ids in six-digit-omm-saramago and tle-omits-six-digit-objects) and holds no object in both: the 27 nominals captured on 2026-09-21 belong to launch 2026-219 (epochs 2026-09-20), and the last-30-days group fetched the same day lists launches 2026-156 to 2026-220 but not 2026-219 [tested]. What a tracker should store as the stable key across the change, and how a nominal's history merges into the catalogued object's, the corpus cannot say: it has no ground truth for the correlation, and the one link it observed, OBJECT_ID, is not one-to-one at this stage, since the placeholders 72000 and 72001 carry 2026-219A and 2026-219B and so do two of the per-satellite nominals [tested]. That is a data-relationship question for the provider's documentation, not a parsing property a fixture can freeze, which is why it is out of scope rather than missing
 
@@ -98,7 +99,7 @@ Tests: supgp-extra-fields, classification-c
 
 Coverage gaps:
 
-- perishable: this post-deployment file is replaced after cataloguing
+- perishable: this post-deployment file is replaced after cataloguing, so the five files are the corpus's own capture of that launch window, no fetch requests them, and from a fetch the case is not-available: only the maintainer's copy can run it (D-229)
 - the meaning of the 72000-series ids (the 70000-79999 block) is described only by a secondary source (RESEARCH.md §1); primary sources cover only the 80000-89999 analyst range and the 69999 end of the legacy range
 - the 72000-series placeholders raise the same identity-over-time question as the nine-digit nominals, stated as an open question in that case's gaps: 72000 and 72001 share their OBJECT_IDs, 2026-219A and 2026-219B, with two of the per-satellite nominals [tested]
 
@@ -121,7 +122,7 @@ Tests: legacy-satcat-cutoff-70000
 
 Coverage gaps:
 
-- the 9.4 MB legacy file is not shipped; users fetch it once and the check recomputes the facts
+- the 9.4 MB legacy file is not shipped, and the fetch brings it only on request (--include-satcat, D-231): no parser takes part in the check that reads it, so a fetch does not download it by default; with it, the check recomputes the facts; without it the check is not made and the case reports not-exercised, as it does with it, naming the flag (D-232)
 
 ## 10. `csv-json-omitted-mandatory-fields`
 

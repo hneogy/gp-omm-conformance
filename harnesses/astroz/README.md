@@ -7,6 +7,7 @@
 | what the harness compiles against | the library's source file `src/Tle.zig`, used directly as a module named `astroz` rather than through the package's build: `Tle.MultiIterator` and `Tle.parseLines` for TLE and 2LE, `Tle.parseOmmArray` for OMM JSON |
 | toolchain as run | Zig 0.16.0 (Homebrew), macOS; built and run on 2026-09-24, and at v0.14.0 on 2026-09-27. The library's own parser tests passed on it (`zig test src/Tle.zig`, 10 of 10 at d558933, 14 of 14 at v0.14.0). The harness uses Zig 0.16's process and I/O interfaces, so earlier Zig versions will not build it; later ones were not tried |
 | published result | 9 of 17 cases failed at d558933, with the runner of 2026-09-24 (corpus D-140); 9 of 17 at v0.14.0, with the same runner (corpus D-166); round two, v0.14.0 on v0.4.0's eighteen cases: 10 of 18 in both modes (corpus D-185) |
+| from a fresh fetch | These counts were measured with the corpus's launch-window captures, files a new user's fetch cannot obtain (corpus D-229). One of the failing cases, `supgp-celestrak-classification-c`, cannot run without them, so a run from a fresh fetch reproduces fewer. |
 
 Best-effort, not installable by pip. This harness compiles a source file of the library directly, by its path in the
 tree, and depends on Zig's standard library as of 0.16. If astroz moves, renames or reshapes `src/Tle.zig`, or Zig

@@ -13,9 +13,14 @@ parsers were run:
 
 A failure here is a statement about the parser, not about the corpus: the reference parser
 passes every case that exercises a parser; `satcat-70000-cutoff` is a data check the runner makes itself and
-reports as not exercised for every parser. Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
+reports as not exercised for every parser, on a file the fetch brings only on request (D-231). Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
 
-Generated 2026-10-02T02:07:16Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-10-02T02:07:14Z with gpconf 0.5.0 on corpus 0.5.0 (parser preset reference); naive: run 2026-10-02T02:07:15Z with gpconf 0.5.0 on corpus 0.5.0 (parser preset naive (a demonstration of failure, not a parser anyone should use)); sgp4: run 2026-10-02T02:07:16Z with gpconf 0.5.0 on corpus 0.5.0 (parser preset sgp4 (python-sgp4 2.27, the version it was tested with)).
+The counts below were measured on the maintainer's copy, with ten launch-window captures that a new user's fetch
+cannot obtain (D-229). A run from a fresh fetch reproduces fewer: `supgp-celestrak-classification-c` cannot run at
+all and reports `not-available`, and the failures that rest on the nominal 799501621 do not occur, so the naive
+adapter fails 14 cases where 15 are listed here and python-sgp4 fails 6 where 8 are; the reference passes 16.
+
+Generated 2026-10-04T01:35:59Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-10-04T01:35:57Z with gpconf 0.5.1 on corpus 0.5.1 (parser preset reference); naive: run 2026-10-04T01:35:57Z with gpconf 0.5.1 on corpus 0.5.1 (parser preset naive (a demonstration of failure, not a parser anyone should use)); sgp4: run 2026-10-04T01:35:58Z with gpconf 0.5.1 on corpus 0.5.1 (parser preset sgp4 (python-sgp4 2.27, the version it was tested with)).
 
 ## Status by case
 

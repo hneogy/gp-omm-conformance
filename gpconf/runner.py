@@ -75,6 +75,33 @@ def is_provider_data(path):
     return len(parts) >= 4 and parts[0] == "fixtures" and parts[2] == "raw"
 
 
+def launch_window_files(root):
+    """Provider files that are the corpus's own captures of a launch window -> {path: which launch} (D-229).
+
+    CelesTrak serves launch nominals and post-deployment files for the days after a launch, so no fetch requests
+    these files and a user cannot obtain them: a case that needs one reports not-available for it, never
+    not-fetched, which would send the user to a fetch that does not bring it. The list is read from the fetch list,
+    which ships with the corpus; a bare copy without it has none."""
+    try:
+        with open(os.path.join(root, "tools", "fetchlist.json")) as f:
+            entries = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return {f"fixtures/{e['case']}/raw/{e['file']}": e["launch_window"] for e in entries if e.get("launch_window")}
+
+
+def opt_in_files(root):
+    """Provider files the fetch brings only on request -> {path: the flag that asks for it} (D-231): the legacy SATCAT
+    file, most of the bytes of the whole fetch list, which one data check reads and no parser. Read from the fetch
+    list; a bare copy without it has none."""
+    try:
+        with open(os.path.join(root, "tools", "fetchlist.json")) as f:
+            entries = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return {f"fixtures/{e['case']}/raw/{e['file']}": "--include-" + e["opt_in"] for e in entries if e.get("opt_in")}
+
+
 def fetch_hint(root, *args, data=None, data_why=None):
     """The command that fetches provider data into the folder this run reads, naming a command that exists
     (D-148, D-150).
@@ -312,6 +339,8 @@ class CaseResult:
         self.drift = {}  # path -> {recorded_sha256, actual_sha256}: stable-tier sources whose bytes changed (D-115)
         self.refusals, self.declared = {}, {}  # path -> the adapter's refusal entries; path -> its capability declaration (D-144)
         self.reused = {}  # path -> the corpus version whose cache the file was copied from, not fetched (D-157)
+        self.unexpected = {}  # path -> what the fetch recorded when the answer for that file was not one it expected (D-228)
+        self.on_request = {}  # path -> the fetch's flag for a file it brings only on request, when a data check waits on it (D-232)
 
     def add(self, check, status, file=None, detail="", tolerance=None, counts=None):
         if tolerance and status == "pass":
@@ -324,18 +353,25 @@ class CaseResult:
         # not-fetched ranks above skip: a case with no provider data on disk says so, and never borrows skip, which
         # means the parser has no reader for the format (D-148). A case that ran on some of its files keeps the
         # result of those files; its missing ones are counted under not-fetched and named below the table.
+        # not-available ranks below not-fetched (D-229): a case with anything still to fetch says that, since it is
+        # what the user can act on; a case all of whose provider files are launch-window captures can never run
+        # from a fetch and says not-available.
         st = {i.status for i in self.items}
-        for s in ("fail", "pass-tolerance", "pass", "not-exercised", "not-fetched"):
+        for s in ("fail", "pass-tolerance", "pass", "not-exercised", "not-fetched", "not-available"):
             if s in st:
                 return s
         return "skip"
 
     def missing(self):
-        """Provider files this case names that were not on disk (D-148)."""
+        """Provider files this case names that were not on disk and that a fetch can bring (D-148)."""
         return [i.file for i in self.items if i.status == "not-fetched"]
 
+    def unavailable(self):
+        """Provider files this case names that no fetch requests: launch-window captures (D-229)."""
+        return [i.file for i in self.items if i.status == "not-available"]
+
     def counts(self):
-        c = {"pass": 0, "pass-tolerance": 0, "fail": 0, "skip": 0, "not-exercised": 0, "not-fetched": 0, "info": 0}
+        c = {"pass": 0, "pass-tolerance": 0, "fail": 0, "skip": 0, "not-exercised": 0, "not-fetched": 0, "not-available": 0, "info": 0}
         for i in self.items:
             c[i.status] = c.get(i.status, 0) + 1
         return c
@@ -345,6 +381,10 @@ class CaseResult:
              "modes": self.modes, "drift": self.drift, "items": [i.as_dict() for i in self.items]}
         if self.reused:
             d["reused"] = self.reused
+        if self.unexpected:
+            d["unexpected"] = self.unexpected
+        if self.on_request:
+            d["on_request"] = self.on_request
         return d
 
 
@@ -437,6 +477,8 @@ class Runner:
         self.fetch_hints = fetch_hints
         self.verbose = verbose
         self.manifest = json.load(open(os.path.join(self.root, "manifest.json")))
+        self.launch_window = launch_window_files(self.root)
+        self.opt_in = opt_in_files(self.root)
 
     def path(self, rel):
         """A source's path on disk: provider data under the data root, everything that ships under the corpus root."""
@@ -459,12 +501,51 @@ class Runner:
             out.append(n)
         return out
 
+    def launch_window_detail(self, path):
+        return (f"not on disk: a launch-window capture ({self.launch_window[path]}). CelesTrak serves launch nominals for "
+                "the days after a launch; the corpus captured this file then, and no fetch requests it")
+
+    def unexpected_response(self, path):
+        """What the fetch kept when its last answer for this provider file was not one it expected (D-228): the
+        response sits beside the data as <file>.unexpected, never in its place -> {'http_status', 'at', 'why',
+        'kept'}, or None when there is none."""
+        full = self.path(path)
+        if not os.path.exists(full + ".unexpected"):
+            return None
+        try:
+            with open(full + ".unexpected.meta.json") as f:
+                meta = json.load(f)
+        except (OSError, ValueError):
+            meta = {}
+        status = meta.get("http_status")
+        return {"http_status": status, "at": meta.get("retrieved_at"),
+                "why": meta.get("unexpected") or (f"HTTP {status}" if status else "a response it did not expect"),
+                "kept": os.path.basename(full) + ".unexpected"}
+
     def report_missing(self, res, path):
         """A source file that is not on disk. Provider data is reported as not-fetched with the command that fetches
-        it; a file that ships with the corpus stops the run, since the copy itself is incomplete (D-148)."""
+        it; a file that ships with the corpus stops the run, since the copy itself is incomplete (D-148). When the
+        fetch asked for the file and got a response it did not expect, the item says so and names no command: a
+        plain fetch does not ask again (D-228)."""
         if not is_provider_data(path):
             raise CorpusIncomplete(f"{path} ships with the corpus and is not on disk under {self.root}: "
                                    f"this copy of the corpus is incomplete; re-clone {REPO_URL} or reinstall")
+        if path in self.launch_window:
+            res.add("source-present", "not-available", path, self.launch_window_detail(path))
+            return
+        unexp = self.unexpected_response(path)
+        if unexp:
+            res.unexpected[path] = unexp
+            res.add("source-present", "not-fetched", path,
+                    f"not on disk: the fetch got {unexp['why']} for it" + (f" at {unexp['at']}" if unexp["at"] else "")
+                    + f" and kept that response as {unexp['kept']}, which is not provider data and is not read"
+                    + ("; the fetch asks again only with --force, two hours or more after that answer" if self.fetch_hints else ""))
+            return
+        if path in self.opt_in:  # a plain fetch does not bring it, so the command names the flag that does (D-231)
+            res.add("source-present", "not-fetched", path,
+                    "not on disk: the fetch brings this file only on request, since no parser takes part in the check that reads it"
+                    + (f"; fetch it with {self.hint(self.opt_in[path])}" if self.fetch_hints else ""))
+            return
         res.add("source-present", "not-fetched", path, "not on disk: provider data is not shipped with the corpus"
                 + (f"; fetch it with {self.hint()}" if self.fetch_hints else ""))
 
@@ -475,14 +556,32 @@ class Runner:
         if not os.path.exists(full):
             self.report_missing(res, path)
             return "missing", fmt, None, None, None, None
-        if is_provider_data(path) and os.path.exists(full + ".meta.json"):  # reused rather than fetched (D-157)
+        if is_provider_data(path) and os.path.exists(full + ".meta.json"):
             try:
                 with open(full + ".meta.json") as f:
-                    came = json.load(f).get("reused_from")
+                    meta = json.load(f)
             except ValueError:
-                came = None
+                meta = {}
+            came = meta.get("reused_from")  # reused rather than fetched (D-157)
             if came:
                 res.reused[path] = came.get("corpus_version")
+            got = meta.get("http_status")
+            if got not in (None, 200) and got != src.get("http_status", 200):
+                # A fetch before v0.5.1 wrote a response it did not expect to the data path itself, "so it is never
+                # re-requested". It is not the source, and reading it would charge the parser with an error page or
+                # with the provider's no-data text where data is recorded (D-228).
+                if path in self.launch_window:  # what a fetch before v0.5.1 met once the window had closed (D-229)
+                    res.add("source-present", "not-available", path, self.launch_window_detail(path)
+                            + f"; the file on disk holds an HTTP {got} response that an earlier fetch saved in its place, and is not read")
+                    return "missing", fmt, None, None, None, None
+                res.unexpected[path] = {"http_status": got, "at": meta.get("retrieved_at"), "why": f"HTTP {got}", "kept": os.path.basename(full)}
+                res.add("source-present", "not-fetched", path,
+                        f"holds an HTTP {got} response that an earlier fetch saved in the data's place"
+                        + (f" at {meta['retrieved_at']}" if meta.get("retrieved_at") else "")
+                        + ", where the corpus records HTTP " + str(src.get("http_status", 200))
+                        + ": not provider data, and not read"
+                        + ("; delete the file and its .meta.json, then fetch it again" if self.fetch_hints else ""))
+                return "missing", fmt, None, None, None, None
         actual = sha256(full)
         mode = "snapshot" if actual == src.get("sha256") else "live"
         res.modes[path] = mode
@@ -1014,6 +1113,18 @@ class Runner:
         for path, src in exp["sources"].items():
             full = self.path(path)
             if not os.path.exists(full):
+                if path in self.opt_in and src.get("format") == "satcat-legacy-fixed-width" and not self.unexpected_response(path):
+                    # The legacy file comes only on request (D-231), and the check that reads it involves no parser.
+                    # Without the file the case says what it says with it, not-exercised, and names the flag that
+                    # runs the check: "needs fetched data" would tell every user to fetch the file that was made
+                    # optional so that they would not (D-232, reversing the status D-231 chose).
+                    res.on_request[path] = self.opt_in[path]
+                    res.add("satcat-legacy-below-70000", "not-exercised", path,
+                            "the data check was not made: the fetch brings the legacy SATCAT file only on request, and the parser "
+                            "under test is not involved in the check"
+                            + (f"; to run it, fetch the file with {self.hint(self.opt_in[path])}" if self.fetch_hints
+                               else f"; the fetch brings the file with {self.opt_in[path]}"))
+                    continue
                 self.report_missing(res, path)
                 continue
             mode = "snapshot" if sha256(full) == src.get("sha256") else "live"

@@ -6,28 +6,45 @@ clone (D-150). It reads the fetch list and the manifest from the corpus root and
 root: in a clone both are the repository; installed, the data root is a per-user cache folder unless --data or the
 GPCONF_DATA environment variable names another (see gpconf/locate.py).
 
-Rules (CelesTrak usage policy; see docs/RESEARCH.md sections 3 and 11):
-  * each URL is requested at most once per run and, across runs, an existing file
-    is never re-fetched, with or without its metadata, unless --force is given AND
-    its recorded retrieved_at is at least 2 hours old (CelesTrak refreshes GP data
-    every 2 hours at most; a file's mtime is not used because a checkout or a sync
-    rewrites it). A re-capture entry (--include-recaptures) is requested only when
-    its original is on disk, was retrieved at least 2 hours earlier and was not
-    requested in the same run; the run's exit code is 2 when a stable-tier source
-    drifted (D-119);
-  * requests are sequential with a fixed pause between them;
-  * redirects are not followed and nothing is retried. Any unexpected response is
-    saved (so it is never requested again), then the run stops for a human;
-  * every response gets a sibling .meta.json recording the URL, UTC timestamps,
-    the status line, every response header in order, the request headers sent,
-    byte count and SHA-256;
-  * after a run (and on demand with --check-drift) every file on disk is compared
-    with the SHA-256 recorded in manifest.json; a stable-tier source whose bytes
-    differ is reported as DRIFT, because the frozen expected values then no longer
-    apply to it (live-tier differences are expected and only counted).
+What CelesTrak asks of software that downloads from it, in its usage policy and in the
+FAQ of its GP formats page (as recorded in docs/RESEARCH.md sections 3 and 11), and
+what the fetch does about each:
+  * download data once per update, and GP data updates every 2 hours at most. Each URL
+    is requested at most once per run and, across runs, an existing file is never
+    re-fetched, with or without its metadata, unless --force is given AND its recorded
+    retrieved_at is at least 2 hours old (a file's mtime is not used because a checkout
+    or a sync rewrites it). A re-capture entry (--include-recaptures) is requested only
+    when its original is on disk, was retrieved at least 2 hours earlier and was not
+    requested in the same run (D-119);
+  * stop on any response that is not an HTTP 200 and have a person look; a 403 or 404
+    will not change by repeating the request. The run stops for a human at the first
+    response the list does not expect (D-228): anything that is not an HTTP 200, except
+    the provider's 404 with its no-data text on an entry that names it (expect_status),
+    and a 200 that is an HTML page or empty. That response is kept beside the data as
+    <file>.unexpected, never in its place, and the URL is not requested again unless
+    --force is given two hours or more later. After a refusal (HTTP 403 or 429) no
+    request at all is made for two hours;
+  * no more than 50 errors in 2 hours and 100 MB a day from one address. The fetch list
+    is static (tools/fetchlist.json): no discovery and no wildcard expansion, so the
+    number of requests a run can make is known in advance. An entry that names a launch
+    window (launch_window) is the record of one of the corpus's own captures and is
+    never requested, under any flag (D-229): CelesTrak serves launch nominals and
+    post-deployment files for the days after a launch, so a fetch that asked for them
+    would stop for every user once the window closed;
+  * only download the data you need. The legacy SATCAT file, three quarters of the
+    bytes of the whole list, is read by one data check in which no parser takes part,
+    so it is requested only with --include-satcat (D-231).
 
-The fetch list is static (tools/fetchlist.json). There is no discovery and no
-wildcard expansion, so the number of requests a run can make is known in advance.
+The fetch's own choices, which CelesTrak does not ask for (D-230):
+  * requests are sequential with a fixed pause between them, redirects are not
+    followed and nothing is retried;
+  * every response gets a sibling .meta.json recording the URL, UTC timestamps, the
+    status line, every response header in order, the request headers sent, byte count
+    and SHA-256;
+  * after a run (and on demand with --check-drift) every file on disk is compared with
+    the SHA-256 recorded in manifest.json; a stable-tier source whose bytes differ is
+    reported as DRIFT, because the frozen expected values then no longer apply to it
+    (live-tier differences are expected and only counted), and the run's exit code is 2.
 """
 import argparse
 import datetime as dt
@@ -47,7 +64,11 @@ FETCHLIST = os.path.join("tools", "fetchlist.json")   # relative to the corpus r
 PAUSE_SECONDS = 2.0
 MIN_REFETCH_AGE_SECONDS = 2 * 3600
 TIMEOUT = 60
-TOOL_VERSION = "tools/fetch.py v2 (full header capture)"
+TOOL_VERSION = "tools/fetch.py v3 (full header capture; stops on any unexpected response)"
+NO_DATA_TEXTS = ("No GP data found", "No SupGP data found")  # CelesTrak's body for a query with nothing to return
+UNEXPECTED = ".unexpected"          # suffix of a response the fetch list did not expect, kept beside the data (D-228)
+REFUSALS = (403, 429)               # the provider refusing the address: no request for two hours afterwards (D-228)
+ISSUES_URL = "https://github.com/hneogy/gp-omm-conformance/issues"
 
 
 def user_agent():
@@ -97,6 +118,73 @@ def is_cached(entry, root=None):
     """A raw file on disk counts as fetched whether or not its metadata is present: a URL is never re-requested
     because a sibling file went missing (D-119). plan() reports the missing metadata."""
     return os.path.exists(target_paths(entry, root)[1])
+
+
+def unexpected_paths(entry, root=None):
+    """Where a response the fetch list did not expect is kept: beside the data file, never in its place, so that
+    nothing reads an error page as provider data (D-228) -> (body path, metadata path)."""
+    _, path, _ = target_paths(entry, root)
+    return path + UNEXPECTED, path + UNEXPECTED + ".meta.json"
+
+
+def read_unexpected(entry, root=None):
+    """The metadata of the unexpected response kept for this entry, {} when the response is there without its
+    metadata, or None when there is none."""
+    body, meta_path = unexpected_paths(entry, root)
+    if not os.path.exists(body):
+        return None
+    try:
+        with open(meta_path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def unexpected_age_seconds(entry, now, root=None):
+    """Seconds since the unexpected response kept for this entry arrived: its metadata's retrieved_at, else the
+    file's mtime."""
+    body, _ = unexpected_paths(entry, root)
+    meta = read_unexpected(entry, root) or {}
+    try:
+        t = dt.datetime.strptime(meta["retrieved_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
+        return (now - t).total_seconds()
+    except (KeyError, ValueError):
+        return now.timestamp() - os.path.getmtime(body)
+
+
+def why_unexpected(entry, status, body):
+    """Why a response is not one the fetch list expects for this entry, or None when it is (D-228).
+
+    Expected: an HTTP 200 that carries something other than an HTML page or nothing; or, on an entry that names
+    it with expect_status, the provider's 404 with its no-data text, which is the answer the corpus records for a
+    TLE request with nothing to return. CelesTrak asks software to stop at any other response and to have a
+    person look, so the old allow_error flag, which let any HTTP error pass on the entries that carried it, a 403
+    included, is gone."""
+    if status == 200:
+        head = body[:1024].lstrip().lower()
+        if not body.strip():
+            return "an empty body under HTTP 200"
+        if head.startswith(b"<!doctype html") or b"<html" in head:
+            return "an HTML page under HTTP 200"
+        return None
+    if status == entry.get("expect_status") and body.decode("utf-8", "replace").strip() in NO_DATA_TEXTS:
+        return None
+    return f"HTTP {status}"
+
+
+def recent_refusal(entries, now, root=None):
+    """The newest refusal (HTTP 403 or 429) kept for any entry, if it is less than two hours old
+    -> (entry, metadata, seconds since it arrived), else None. While one is in force a run makes no request at
+    all: without this each re-run would ask the next URL of the list and collect one more refusal (D-228)."""
+    newest = None
+    for e in entries:
+        meta = read_unexpected(e, root)
+        if meta is None or meta.get("http_status") not in REFUSALS:
+            continue
+        age = unexpected_age_seconds(e, now, root)
+        if age < MIN_REFETCH_AGE_SECONDS and (newest is None or age < newest[2]):
+            newest = (e, meta, age)
+    return newest
 
 
 def age_seconds(entry, now, root=None):
@@ -169,11 +257,13 @@ def reuse_one(entry, version, src, root=None):
     return f"reused from {version}"
 
 
-def plan(entries, force=False, include_recaptures=False, root=None, now=None, reuse=None):
+def plan(entries, force=False, include_recaptures=False, root=None, now=None, reuse=None, include_satcat=False):
     """What a run would do for each entry, without touching the network -> [{'entry', 'action', 'reason'}], action
-    'fetch' | 'cached' | 'skip'. One request per URL per run. A re-capture entry (the same endpoint a second time,
-    for the recapture cases) is planned only with include_recaptures, and requested only when its original is on
-    disk, was retrieved at least two hours earlier and is not itself requested in this run (D-119)."""
+    'fetch' | 'cached' | 'skip' | 'reuse' | 'unexpected'. One request per URL per run. A re-capture entry (the same
+    endpoint a second time, for the recapture cases) is planned only with include_recaptures, and requested only
+    when its original is on disk, was retrieved at least two hours earlier and is not itself requested in this run
+    (D-119). An entry whose last answer was unexpected ('unexpected': the response is kept beside the data) is not
+    requested again unless force is given and that answer is at least two hours old (D-228)."""
     now = now or dt.datetime.now(dt.timezone.utc)
     by_file = {(e["case"], e["file"]): e for e in entries}
     requested, out = set(), []
@@ -185,17 +275,42 @@ def plan(entries, force=False, include_recaptures=False, root=None, now=None, re
         recap = e.get("recapture_of")
         if recap and not include_recaptures:
             continue
-        if is_cached(e, root):
+        if e.get("launch_window"):  # a capture of a launch window: never requested (D-229)
+            continue
+        # the legacy SATCAT file is requested only when asked for (D-231): not planned when absent, and not refreshed by
+        # --force when an earlier fetch left it on disk, where it is kept and still compared with the manifest
+        opted_out = e.get("opt_in") == "satcat" and not include_satcat
+        if opted_out and not is_cached(e, root):
+            continue
+        unexp = read_unexpected(e, root)
+        rel = f"fixtures/{e['case']}/raw/{e['file']}"
+        if unexp is not None and not (reuse and rel in reuse and not is_cached(e, root)):
+            # the URL's last answer was one the list did not expect: whatever else is true of the entry, it is not
+            # asked again inside two hours, and after that only with --force
+            u_age = unexpected_age_seconds(e, now, root)
+            what = f"HTTP {unexp['http_status']}" if unexp.get("http_status") else "an unexpected response"
+            if unexp.get("unexpected", "").startswith("an "):
+                what = unexp["unexpected"]
+            kept = os.path.basename(unexpected_paths(e, root)[0])
+            if force and u_age >= MIN_REFETCH_AGE_SECONDS and not opted_out:
+                action, reason = "fetch", f"--force: answered {what} {hours(u_age)} ago"
+            else:
+                action = "cached" if is_cached(e, root) else "unexpected"
+                reason = (f"answered {what} {hours(u_age)} ago: kept as {kept}, not requested again"
+                          + (" (less than two hours: --force does not apply)" if force else " (--force applies after two hours)"))
+        elif is_cached(e, root):
             age, basis = age_seconds(e, now, root)
             if read_meta(e, root) is None:
-                if force and age >= MIN_REFETCH_AGE_SECONDS:
+                if force and age >= MIN_REFETCH_AGE_SECONDS and not opted_out:
                     action, reason = "fetch", f"--force: on disk without metadata, mtime {hours(age)} old"
                 else:
                     action, reason = "cached", "on disk without metadata: kept, not re-requested (delete the file to fetch it again)"
-            elif force and age >= MIN_REFETCH_AGE_SECONDS:
+            elif force and age >= MIN_REFETCH_AGE_SECONDS and not opted_out:
                 action, reason = "fetch", f"--force: retrieved {hours(age)} ago"
             else:
-                action, reason = "cached", f"retrieved {hours(age)} ago" + (" (less than two hours: --force does not apply)" if force else "")
+                action, reason = "cached", f"retrieved {hours(age)} ago" + (
+                    " (refreshed only with --include-satcat)" if force and opted_out
+                    else " (less than two hours: --force does not apply)" if force else "")
         elif recap:
             orig = by_file.get((e["case"], recap))
             if orig is None or not is_cached(orig, root):
@@ -208,8 +323,8 @@ def plan(entries, force=False, include_recaptures=False, root=None, now=None, re
                     action, reason = "skip", f"re-capture of {recap}: the original was retrieved {hours(age)} ago, less than two hours (CelesTrak refreshes at most every two hours)"
                 else:
                     action, reason = "fetch", f"re-capture of {recap}, whose original was retrieved {hours(age)} ago"
-        elif reuse and f"fixtures/{e['case']}/raw/{e['file']}" in reuse:
-            version = reuse[f"fixtures/{e['case']}/raw/{e['file']}"][0]
+        elif reuse and rel in reuse:
+            version = reuse[rel][0]
             action, reason = "reuse", (f"stable tier: the copy in corpus {version}'s cache holds the bytes this version's "
                                        f"manifest records; copied, not requested")
         else:
@@ -299,7 +414,6 @@ def fetch_one(entry, root=None):
     req = urllib.request.Request(entry["url"], headers=req_headers)
     started = now_utc(precise=True)
     t0 = time.monotonic()
-    unexpected = False
     try:
         with _opener.open(req, timeout=TIMEOUT) as resp:
             status, reason, version = resp.status, resp.reason, resp.version
@@ -309,14 +423,12 @@ def fetch_one(entry, root=None):
         status, reason, version = e.code, e.reason, getattr(e, "version", None) or 11
         body = e.read() or b""
         headers_all = [[k, v] for k, v in e.headers.items()] if e.headers is not None else []
-        unexpected = not entry.get("allow_error")
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         print(f"\nSTOP: network error for {entry['url']}: {e}\nNot retrying.", file=sys.stderr)
         sys.exit(3)
     finished = now_utc(precise=True)
     elapsed_ms = round((time.monotonic() - t0) * 1000)
-    with open(path, "wb") as f:
-        f.write(body)
+    why = why_unexpected(entry, status, body)
     meta = {
         "url": entry["url"],
         "retrieved_at": started[:19] + "Z",
@@ -338,27 +450,51 @@ def fetch_one(entry, root=None):
         "tool": TOOL_VERSION,
         "user_agent": user_agent(),
     }
+    u_path, u_meta_path = unexpected_paths(entry, root)
+    if why:
+        # Kept beside the data, never in its place (D-228): the runner would otherwise read an error page as provider
+        # data. The file is what stops a later run asking this URL again.
+        meta["unexpected"] = why
+        meta["note"] = (meta["note"] + " " if meta["note"] else "") + (
+            f"Unexpected response ({why}): kept beside the data, not in its place, and not requested again.")
+        with open(u_path, "wb") as f:
+            f.write(body)
+        with open(u_meta_path, "w") as f:
+            json.dump(meta, f, indent=2, sort_keys=True)
+            f.write("\n")
+        kept = os.path.relpath(u_path, root or default_roots()[1])
+        lines = [f"\nSTOP: {why} for {entry['url']}",
+                 f"The response is kept as {kept} (with its metadata), beside the data and not in its place.",
+                 "Nothing was retried and no further request was made."]
+        if status in REFUSALS:
+            lines.append("CelesTrak has refused this address. Read the kept response: it says why. The fetch makes no "
+                         "request at all for the next two hours, with or without --force.")
+        else:
+            lines.append(f"This is not the answer the corpus's fetch list expects for this URL, and CelesTrak states the "
+                         f"response will not change by repeating the request. Report it at {ISSUES_URL}: the list may be "
+                         f"out of date. The URL is asked again only with --force, two hours or more from now.")
+        lines.append(f"--- response body (first 2000 bytes) ---\n{body[:2000].decode('utf-8', 'replace')}\n---")
+        print("\n".join(lines), file=sys.stderr)
+        sys.exit(2)
+    with open(path, "wb") as f:
+        f.write(body)
     if status != 200:
         meta["note"] = (meta["note"] + " " if meta["note"] else "") + (
-            "Unexpected non-200 response; saved so it is never re-requested." if unexpected else
-            "Non-200 response deliberately recorded (fetch-list entry has allow_error).")
+            f"The answer the fetch list expects here (expect_status {status}): the provider's no-data text, recorded as the response.")
     with open(meta_path, "w") as f:
         json.dump(meta, f, indent=2, sort_keys=True)
         f.write("\n")
-    if unexpected:
-        print(f"\nSTOP: HTTP {status} for {entry['url']} (body and metadata saved)\n"
-              f"--- response body (first 2000 bytes) ---\n{body[:2000].decode('utf-8', 'replace')}\n---",
-              file=sys.stderr)
-        print("Not retrying: CelesTrak states the response will not change by repeating the "
-              "request. Fix the fetch list or stop.", file=sys.stderr)
-        sys.exit(2)
+    for stale in (u_path, u_meta_path):  # an earlier unexpected answer to this URL is superseded by this one
+        if os.path.exists(stale):
+            os.remove(stale)
     return f"{meta['status_line']}, {len(body)} bytes"
 
 
 def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, pause=PAUSE_SECONDS, corpus=None, prog=None,
         reuse_sources=None):
     """The command line, parameterised so the request logic can be tested with a stub in place of fetch_one and a
-    temporary root: returns the exit code (0; 1 for a bad fetch list; 2 when a stable-tier source drifted).
+    temporary root: returns the exit code (0; 1 for a bad fetch list; 2 when a stable-tier source drifted, or when
+    a refusal less than two hours old means no request is made).
     root is the data root and corpus the corpus root; given by a caller they bypass the command line's --root and
     --data, and corpus defaults to root, the layout of a clone and of the tests. Stable-tier files are reused from
     earlier corpus versions' folders when the data root is a per-user cache folder (D-157); reuse_sources, a list of
@@ -372,6 +508,9 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     ap.add_argument("--check-drift", action="store_true", help="do not fetch; compare the files already on disk with the manifest and report drift")
     ap.add_argument("--force", action="store_true", help="re-fetch cached files whose recorded retrieved_at is at least 2 hours old")
     ap.add_argument("--dry-run", action="store_true", help="print what would be requested and exit")
+    ap.add_argument("--include-satcat", action="store_true",
+                    help="also fetch the 9.4 MB legacy SATCAT file (pub/satcat.txt). Only the data check satcat-70000-cutoff reads it, "
+                         "and no parser takes part in that check, so a fetch leaves it out unless asked")
     ap.add_argument("--include-recaptures", action="store_true",
                     help="also fetch maintainer-only re-capture entries (same endpoint requested a second time when the corpus was built); "
                          "requested only when the original is on disk and at least 2 hours old")
@@ -404,18 +543,41 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
                 and (not args.case or e["case"] in args.case)
                 and e["case"] not in args.skip_case
                 and (args.include_recaptures or not e.get("recapture_of"))]
+    # Launch-window captures are never requested (D-229). Where one is on disk, as in the maintainer's clone, it is
+    # still compared with the manifest.
+    captures = [e for e in selected if e.get("launch_window")]
+    selected = [e for e in selected if not e.get("launch_window")]
     if args.check_drift:
-        present = [e for e in selected if is_cached(e, root)]
+        present = [e for e in selected + captures if is_cached(e, root)]
         n = print_drift(drift_report(present, root, corpus), out)
         return 2 if n else 0
+    left_out = [e for e in selected if e.get("opt_in") == "satcat" and not args.include_satcat and not is_cached(e, root)]
+    if left_out:
+        print("not requested: the legacy SATCAT file (pub/satcat.txt, 9.4 MB). Only the data check satcat-70000-cutoff reads it, "
+              "and no parser takes part in that check; pass --include-satcat to fetch it.", file=out)
+    if captures:
+        print(f"not requested: {len(captures)} launch-window capture(s) ({'; '.join(sorted({e['launch_window'] for e in captures}))}). "
+              "CelesTrak serves launch nominals for the days after a launch; these entries record the corpus's own capture "
+              "and no fetch asks for them.", file=out)
+    refused = recent_refusal(entries, now, root)
+    if refused:
+        # two quiet hours after a refusal, whatever is asked for (D-228); the dry run says the same and makes none either
+        e, meta, age = refused
+        left = MIN_REFETCH_AGE_SECONDS - age
+        kept = os.path.relpath(unexpected_paths(e, root)[0], root)
+        print(f"STOP: CelesTrak refused this address with HTTP {meta.get('http_status')} {age / 60:.0f} minute(s) ago "
+              f"({e['url']}). No request is made for two hours after a refusal, with or without --force: "
+              f"{left / 60:.0f} minute(s) remain. The refused response is kept as {kept}; read it, it says why.", file=out)
+        return 2
     sources = reuse_sources if reuse_sources is not None else (version_folders(root) if data_why == "per-user cache" else [])
     reuse = reusable(selected, root, corpus, sources) if sources else {}
-    planned = plan(selected, force=args.force, include_recaptures=args.include_recaptures, root=root, now=now, reuse=reuse)
+    planned = plan(selected, force=args.force, include_recaptures=args.include_recaptures, root=root, now=now, reuse=reuse,
+                   include_satcat=args.include_satcat)
     made = reused = 0
     for p in planned:
         e, label = p["entry"], f"{p['entry']['case']}/{p['entry']['file']}"
         if args.dry_run:
-            head = {"fetch": "FETCH   ", "reuse": "REUSE   "}.get(p["action"], f"{p['action']:8s}")
+            head = {"fetch": "FETCH   ", "reuse": "REUSE   "}.get(p["action"], f"{p['action']:7s} ")
             print(head + e["url"] + ("" if p["action"] == "fetch" else f"  ({p['reason']})"), file=out)
             continue
         if p["action"] == "reuse":
@@ -439,5 +601,5 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
         return 0
     also = f", {reused} file(s) reused from an earlier corpus version's cache" if reused else ""
     print(f"done: {made} request(s) made{also}, {len(planned) - made - reused} entries skipped", file=out)
-    n = print_drift(drift_report([p["entry"] for p in planned if is_cached(p["entry"], root)], root, corpus), out)
+    n = print_drift(drift_report([e for e in [p["entry"] for p in planned] + captures if is_cached(e, root)], root, corpus), out)
     return 2 if n else 0

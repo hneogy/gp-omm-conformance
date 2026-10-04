@@ -24,7 +24,7 @@ Provides:
 
 Gaps (stated explicitly for this case):
 
-- the 9.4 MB legacy file is not shipped; users fetch it once and the check recomputes the facts
+- the 9.4 MB legacy file is not shipped, and the fetch brings it only on request (--include-satcat, D-231): no parser takes part in the check that reads it, so a fetch does not download it by default; with it, the check recomputes the facts; without it the check is not made and the case reports not-exercised, as it does with it, naming the flag (D-232)
 
 ## Ambiguities recorded
 

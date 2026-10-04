@@ -37,6 +37,10 @@ such as the provider's empty answers (D-143), so a run today can differ in its p
 not run again when they moved here. The `vallado` recipe was built and run in this folder's form, against corpus
 v0.5.0; its count is in its own README.
 
+Those counts, and the ones in each folder's README, were measured with the corpus's launch-window captures, files a
+new user's fetch cannot obtain (D-229). A run from a fresh fetch cannot reproduce the failures that rest on them and
+reproduces fewer failing cases for every recipe here; each README says which case goes.
+
 Each folder's README gives the pinned commit in full, the licence, what the harness compiles against, the build
 commands as they were run, and the run command. Build in the recipe's folder; the commands clone the project into a
 subfolder there.

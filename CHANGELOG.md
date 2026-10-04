@@ -5,6 +5,52 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
+## [0.5.1] - 2026-10-03
+
+A patch release under the versioning rule: tooling and documentation only. The fetch stops depending on data that
+CelesTrak serves only around a launch, stops at any response it does not expect, and downloads a quarter of what it
+did: 50 requests and 3.1 MB for a user's run, where 0.5.0 made 61 requests for 12.5 MB (D-228, D-229, D-231). The
+runner has one new status, `not-available`, for a file that no fetch requests (D-229). No case, check or frozen
+expected value changed, and the adapter protocol is as in 0.5.0. On the maintainer's copy the reference adapter passes
+all eighteen cases (seventeen exact, the SATCAT data check not exercised), the naive adapter fails 15 and python-sgp4
+2.27 fails 8, as in 0.5.0; from a fresh fetch they read 16, 14 and 6, since one case cannot run without launch-window
+files that a new user's fetch cannot obtain (D-229). The independent audit in `AUDIT.md` covered v0.1.0; neither the
+writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0, the corrupt-input case
+of v0.4.0, the changes of v0.5.0 nor those of this release have been separately audited. The version DOI is added here
+and to `CITATION.cff` after Zenodo mints it at the release; the concept DOI 10.5281/zenodo.22867654 resolves to the
+latest release.
+
+Changed: `gpconf fetch` stops at the first response its list does not expect (D-228). The `allow_error` flag, which let
+any HTTP error pass on the entries that carried it, a 403 included, is replaced by `expect_status: 404` on the entries
+recorded as answering 404; a run goes on past a non-200 only when it is that 404 with CelesTrak's no-data text. Any
+other response ends the run with exit status 2, is kept beside the data as `<file>.unexpected` and is never read as
+provider data; the URL is not asked again short of `--force` two hours later; after an HTTP 403 or 429 no request is
+made for two hours. The runner reports such a file as `not-fetched`, and no longer reads an error page that an earlier
+fetch saved in the data's place, which used to count as a failed case for the parser under test.
+
+Changed: the fetch no longer requests ten launch-window files, and the runner says `not-available` for them (D-229).
+The Starlink G15-27 post-deployment file and the launch nominal 799501621, five formats each, are served by CelesTrak
+only for the days after a launch, so a fetch that asked for them would stop for every user once the window closed. They
+stay in the fetch list as the record of the corpus's own captures, marked `launch_window`; a user's run is 51 requests
+and 12.5 MB. One case, `supgp-celestrak-classification-c`, cannot run from a fetch and reports `not-available`; three
+others are judged on their remaining files. The table has an `n/a` column and the count line says how many cases are
+not available. The counts published so far were measured with those files, which a new user's fetch cannot obtain: a
+fresh fetch reproduces 16 passing cases for the reference adapter, 14 failing for the naive adapter and 6 for
+python-sgp4 2.27, where 17, 15 and 8 are published.
+
+Changed: the README's "Fetching responsibly" and the text `gpconf fetch --help` prints say what CelesTrak asks of
+software that downloads from it and what the fetch does about each, and then what is the corpus's own choice (D-230).
+The two-second pause between requests is the corpus's choice: CelesTrak publishes no interval, and the section used to
+list the pause under following its policy. The quick-start comments give a user's run as the fetch list has it. The
+advice to skip the legacy SATCAT with `--skip-case satcat-70000-cutoff` is withdrawn, since it also left out two
+first-record files that other cases read. The CSV default is said of GP and SupGP queries, whose default it is.
+
+Changed: the fetch leaves out the legacy SATCAT file unless it is asked for with `--include-satcat` (D-231). The file is
+9.4 MB, three quarters of what a fetch downloaded, and one case reads it, a data check in which no parser takes part. A
+user's run is now 50 requests and 3.1 MB. Without the file `satcat-70000-cutoff` reports `not-exercised`, as it does with
+it, and a line under the count says that the check was not made, that nothing about the parser under test depends on
+it, and that `--include-satcat` runs it (D-232).
+
 ## [0.5.0] - 2026-10-01
 
 A minor release under the versioning rule: an additive protocol change, the "unsupported" answer for vector hooks

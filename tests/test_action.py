@@ -118,7 +118,20 @@ class Behaviour(unittest.TestCase):
         missing = [i for r in report["results"] for i in r["items"] if i["status"] == "not-fetched"]
         self.assertTrue(missing)
         self.assertEqual({i["detail"] for i in missing}, {"not on disk: provider data is not shipped with the corpus"})
-        self.assertEqual(sum(1 for r in report["results"] if r["status"] == "not-fetched"), 13)
+        self.assertEqual(sum(1 for r in report["results"] if r["status"] == "not-fetched"), 11)
+        # D-232: the SATCAT data check is not made without its file and says so, with the flag and no command
+        (satcat,) = [r for r in report["results"] if r["case"] == "satcat-70000-cutoff"]
+        self.assertEqual(satcat["status"], "not-exercised")
+        (check,) = [i for i in satcat["items"] if i["status"] == "not-exercised"]
+        self.assertTrue(check["detail"].endswith("; the fetch brings the file with --include-satcat"), check["detail"])
+        self.assertIn("The fetch's --include-satcat runs it.", log)
+        # D-229: the case whose files are all launch-window captures is not "to be fetched" anywhere, here included
+        self.assertEqual([r["case"] for r in report["results"] if r["status"] == "not-available"], ["supgp-celestrak-classification-c"])
+        captures = [i for r in report["results"] for i in r["items"] if i["status"] == "not-available"]
+        # 18 in the maintainer's copy, 14 in the public one, where the two pair cases' supplemental pair is withheld
+        # (D-049) and the runner never opens it
+        self.assertIn(len(captures), (14, 18))
+        self.assertTrue(all("a launch-window capture (Starlink G15-27, launched 2026-09-20)" in i["detail"] for i in captures))
 
     def test_the_hint_is_suppressed_only_where_asked(self):
         # outside the Action, a run still names the command that fetches the missing files
@@ -161,7 +174,9 @@ class Behaviour(unittest.TestCase):
     def test_offline_whatever_the_job_sets(self):
         code, summary, out = run_step("reference", extra_env={"GPCONF_DATA": ROOT})
         self.assertEqual(code, 0, summary)
-        self.assertIn("13 need provider data, which this Action does not fetch", summary)
+        self.assertIn("11 need provider data, which this Action does not fetch; 1 need launch-window data that no fetch brings;", summary)
+        self.assertIn("1 not exercised.", summary)
+        self.assertIn("| case | status | exact | tol | fail | skip | n/e | n/f | n/a |", summary)
         self.assertEqual(out.get("exercised"), "5")
 
 

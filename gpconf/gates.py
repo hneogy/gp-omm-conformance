@@ -72,7 +72,7 @@ def format_result(items):
     for it in items:
         if it.check == "format-supported" and it.status == "skip":
             return {"state": "not read"}
-        if it.check == "source-present" and it.status == "not-fetched":
+        if it.check == "source-present" and it.status in ("not-fetched", "not-available"):
             return {"state": "not fetched"}
     return {"state": "not run"}
 

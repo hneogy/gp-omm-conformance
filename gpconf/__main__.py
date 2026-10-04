@@ -20,9 +20,27 @@ def load_adapter(spec):
 
 
 def print_missing(results, unfetched, runner):
-    """Below the count line: what was not fetched, so that neither a case with no data nor a case that ran on part
-    of its data reads as a result it has not earned (D-148)."""
+    """Below the count line: what was not fetched and what cannot be, so that neither a case with no data nor a case
+    that ran on part of its data reads as a result it has not earned (D-148, D-228, D-229, D-231)."""
     partial = [r for r in results if r.status != "not-fetched" and r.missing()]
+    never = [r for r in results if r.status == "not-available"]
+    lacking = [r for r in results if r.status != "not-available" and r.unavailable()]
+    if never or lacking:  # D-229: files no fetch requests are not "to be fetched", and the published counts used them
+        if never:
+            print(f"{len(never)} case(s) cannot run from a fetch and report not-available: {', '.join(r.case_id for r in never)}. "
+                  "Every provider file they need is a launch-window capture: CelesTrak serves launch nominals for the days after "
+                  "a launch, the corpus captured them then, and no fetch requests them.")
+        if lacking:
+            print(f"{len(lacking)} other case(s) name {sum(len(r.unavailable()) for r in lacking)} launch-window file(s) (column n/a) "
+                  f"and are judged on their other files: {', '.join(r.case_id for r in lacking)}.")
+        print("  The counts the corpus publishes were measured with those files. A run without them cannot reproduce the "
+              "failures that rest on them, so it can show fewer failing cases than a published count.")
+    on_request = [r for r in results if r.on_request]
+    if on_request:  # D-232: a data check that was not made by default says so, and says what runs it; it asks for nothing
+        flags = sorted({flag for r in on_request for flag in r.on_request.values()})
+        print(f"{', '.join(r.case_id for r in on_request)} is a data check on the legacy SATCAT file, 9.4 MB, which the fetch brings "
+              "only on request. It was not made, and no parser takes part in it: nothing about the parser under test depends on it. "
+              + (f"{' '.join(flags)} runs it: {runner.hint(*flags)}." if runner.fetch_hints else f"The fetch's {' '.join(flags)} runs it."))
     if not unfetched and not partial:
         return
     if unfetched:
@@ -36,8 +54,17 @@ def print_missing(results, unfetched, runner):
             # corrected by D-150: a normal fetch never requests a re-capture, so a later run does not bring it
             print("  A re-capture file is the same endpoint requested a second time when the corpus was built; the fetch requests it "
                   "only with --include-recaptures, once its original is at least two hours old, so a normal fetch leaves these cases without it.")
-    # the fetch command only where a normal fetch would bring something: a missing re-capture it never requests (D-150)
-    if runner.fetch_hints and any("recapture" not in os.path.basename(f) for r in results for f in r.missing()):
+    unexpected = {p: v for r in results for p, v in r.unexpected.items()}
+    if unexpected:  # D-228: the fetch asked and got something else; that response is kept out of the data and is not read
+        whys = ", ".join(sorted({str(v["why"]) for v in unexpected.values()}))
+        print(f"{len(unexpected)} provider file(s) are missing because the fetch got a response it did not expect for them ({whys}); "
+              "each response is kept beside the data, not in its place, and is not read."
+              + (" The fetch asks for such a file again only with --force, two hours or more after that answer." if runner.fetch_hints else ""))
+    # the fetch command only where a plain fetch would bring something: not for a re-capture, which it never requests
+    # (D-150), a file whose last answer was unexpected, which it does not ask for again (D-228), or one it brings only
+    # on request (D-231)
+    if runner.fetch_hints and any("recapture" not in os.path.basename(f) and f not in unexpected and f not in runner.opt_in
+                                  for r in results for f in r.missing()):
         print(f"Provider data is not shipped with the corpus; fetch it with {runner.hint()}.")
 
 
@@ -153,10 +180,10 @@ def main(argv=None):
     if runner.data != root:  # a clone's output is unchanged; elsewhere the reader is told where the provider files were looked for
         print(f"provider data: {runner.data} ({runner.data_why})")
     print()
-    print(f"{'case':40s} {'status':15s} exact  tol fail skip n/e n/f")
+    print(f"{'case':40s} {'status':15s} exact  tol fail skip n/e n/f n/a")
     for r in results:
         c = r.counts()
-        print(f"{r.case_id:40s} {r.status:15s} {c['pass']:5d} {c['pass-tolerance']:4d} {c['fail']:4d} {c['skip']:4d} {c['not-exercised']:3d} {c['not-fetched']:3d}")
+        print(f"{r.case_id:40s} {r.status:15s} {c['pass']:5d} {c['pass-tolerance']:4d} {c['fail']:4d} {c['skip']:4d} {c['not-exercised']:3d} {c['not-fetched']:3d} {c['not-available']:3d}")
     print()
     from .gates import compute_gates
     gates = compute_gates(results, root, runner.data)
@@ -188,7 +215,8 @@ def main(argv=None):
     tol = sum(1 for r in results if r.status == "pass-tolerance")
     unfetched = [r for r in results if r.status == "not-fetched"]
     print(f"\n{len(results)} case(s): {sum(1 for r in results if r.status == 'pass')} pass (exact), {tol} pass within tolerance, {failed} fail, "
-          f"{sum(1 for r in results if r.status == 'skip')} skip, {len(unfetched)} need fetched data, {sum(1 for r in results if r.status == 'not-exercised')} not exercised")
+          f"{sum(1 for r in results if r.status == 'skip')} skip, {len(unfetched)} need fetched data, "
+          f"{sum(1 for r in results if r.status == 'not-available')} not available, {sum(1 for r in results if r.status == 'not-exercised')} not exercised")
     print_missing(results, unfetched, runner)
     reused = {p: v for r in results for p, v in r.reused.items()}
     if reused:  # D-157: the report says which provider files were copied from an earlier version's cache, not fetched

@@ -85,13 +85,14 @@ def main():
              f"Parser: {md(data['parser'])}. Corpus {data['corpus_version']}, runner gpconf {data['gpconf']}.\n\n",
              f"**{exercised} of {len(results)} cases exercised**, offline: {by.get('pass', 0)} pass, {by.get('pass-tolerance', 0)} pass "
              f"within tolerance, {by.get('fail', 0)} fail. {by.get('not-fetched', 0)} need provider data, which this Action does "
-             f"not fetch; {by.get('skip', 0)} skip, where the parser has no reader for the format or no hook for the check; "
+             f"not fetch; {by.get('not-available', 0)} need launch-window data that no fetch brings; "
+             f"{by.get('skip', 0)} skip, where the parser has no reader for the format or no hook for the check; "
              f"{by.get('not-exercised', 0)} not exercised. Failed cases do not fail this job.\n\n",
-             "| case | status | exact | tol | fail | skip | n/e | n/f |\n|---|---|---|---|---|---|---|---|\n"]
+             "| case | status | exact | tol | fail | skip | n/e | n/f | n/a |\n|---|---|---|---|---|---|---|---|---|\n"]
     for r in results:
         c = r["counts"]
         lines.append(f"| `{r['case']}` | {r['status']} | {c.get('pass', 0)} | {c.get('pass-tolerance', 0)} | {c.get('fail', 0)} | "
-                     f"{c.get('skip', 0)} | {c.get('not-exercised', 0)} | {c.get('not-fetched', 0)} |\n")
+                     f"{c.get('skip', 0)} | {c.get('not-exercised', 0)} | {c.get('not-fetched', 0)} | {c.get('not-available', 0)} |\n")
     for g in data.get("gates", []):
         lines.append(f"\n**Gate, {md(g['name'])}:** {md(g['headline'])}\n")
     lines.append(f"\n{SITE_SENTENCE} See {SITE_URL} for what the corpus found across libraries, and the JSON report for every item.\n")

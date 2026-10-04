@@ -59,8 +59,12 @@ class SatcatCaseTests(unittest.TestCase):
                     self.assertEqual(r.status, "not-exercised", statuses)
                     item = next(i for i in r.items if i.check == "satcat-legacy-below-70000")
                     self.assertIn("not involved", item.detail)
-                else:  # public clone without the legacy file: source-present not-fetched items only (D-148)
-                    self.assertEqual(r.status, "not-fetched", statuses)
+                else:  # without the legacy file, which the fetch brings only on request: the same status, and the item
+                    # says the check was not made (D-232); the six small records are not-fetched until a fetch (D-148)
+                    self.assertEqual(r.status, "not-exercised", statuses)
+                    item = next(i for i in r.items if i.check == "satcat-legacy-below-70000")
+                    self.assertIn("the data check was not made", item.detail)
+                    self.assertIn("not involved", item.detail)
 
 
 class NaiveAdapterTests(unittest.TestCase):
@@ -85,16 +89,23 @@ class NaiveAdapterTests(unittest.TestCase):
         # parse failures on the provider's own bytes (six-digit ids, an empty OBJECT_ID, classification C), so the
         # cases are not driven from frozen records: rendering those back into provider formats would test the
         # corpus's rendering, not the provider's files, and the SupGP values are withheld from the export (D-049).
-        present = [c for c in self.FETCHED_MUST_FAIL if self.by_id[c].status != "not-fetched"]
+        # The third case's files are launch-window captures, which no fetch requests (D-229): without them it reports
+        # not-available, and only the maintainer's copy can show the naive parser failing it.
+        without = ("not-fetched", "not-available")
+        present = [c for c in self.FETCHED_MUST_FAIL if self.by_id[c].status not in without]
         for c in present:
             self.assertEqual(self.by_id[c].status, "fail", f"{c} should fail for the naive parser")
-        absent = [c for c in self.FETCHED_MUST_FAIL if self.by_id[c].status == "not-fetched"]
+        absent = [c for c in self.FETCHED_MUST_FAIL if self.by_id[c].status in without]
         for c in absent:
             items = self.by_id[c].items
-            self.assertTrue(items and all(i.check == "source-present" and i.status == "not-fetched" for i in items),
-                            f"{c}: a case without its sources must consist of source-present not-fetched items only, not {[(i.check, i.status) for i in items][:5]}")
+            self.assertTrue(items and all(i.check == "source-present" and i.status == self.by_id[c].status for i in items),
+                            f"{c}: a case without its sources must consist of source-present {self.by_id[c].status} items only, not {[(i.check, i.status) for i in items][:5]}")
         if absent:
-            self.skipTest(f"raw sources absent for {', '.join(absent)} (public clone): run tools/fetch.py to exercise these cases")
+            fetchable = [c for c in absent if self.by_id[c].status == "not-fetched"]
+            captures = [c for c in absent if self.by_id[c].status == "not-available"]
+            self.skipTest("raw sources absent (public clone)"
+                          + (f": run tools/fetch.py to exercise {', '.join(fetchable)}" if fetchable else "")
+                          + (f"; {', '.join(captures)} needs launch-window captures that no fetch requests" if captures else ""))
 
     def test_baseline_may_pass(self):
         # the naive parser reads a plain current ISS TLE/CSV correctly; the corpus must not fail it for that

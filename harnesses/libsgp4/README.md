@@ -7,6 +7,7 @@
 | what the harness compiles against | the library's own classes, `Tle` and `DateTime`, and every `.cc` file of `libsgp4/`, compiled without its CMake build. `Tle::FromCsv` exists only on master, so CSV is read only with `-DHAVE_CSV` |
 | toolchain as run | Apple clang 21, C++17, macOS; built and run on 2026-09-24 |
 | published result | 6 of 17 cases failed on master, 5 of 17 on PR #42, with the runner of 2026-09-24 (corpus D-138); round two, release v3.0 on v0.4.0's eighteen cases: 9 of 18 (corpus D-182, D-183) |
+| from a fresh fetch | These counts were measured with the corpus's launch-window captures, files a new user's fetch cannot obtain (corpus D-229). One of the failing cases, `supgp-celestrak-classification-c`, cannot run without them, so a run from a fresh fetch reproduces fewer. Two more of the nine, `mean-motion-derivative-convention` and `tle-vs-omm-precision-loss`, fail only on the supplemental pair, which the public copy of the corpus withholds and so never opens (corpus D-049): they were never reproducible from the public corpus, and the count stays as measured on the maintainer's copy (corpus D-233). |
 
 Best-effort, not installable by pip. This harness uses the library's classes rather than its internals, so it is the
 least likely of the five to break, but it is tied to the commits above: the constructor signatures and `FromCsv` are

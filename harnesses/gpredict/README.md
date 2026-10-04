@@ -7,6 +7,7 @@
 | what the harness compiles against | Gpredict's internal SGP4 module, the six files of `src/sgpsdp/` it needs, compiled on their own without the GTK application; the harness calls the module's `Get_Next_Tle_Set()` directly. `stubs/` stands in for GLib, whose only use by the module is `g_ascii_strtod`, mapped to the C library's `strtod`: in the C locale, which the harness never changes, the two are the same conversion |
 | toolchain as run | Apple clang 21 (`cc -std=gnu99`), macOS; built and run on 2026-09-24. Gpredict's own SGP4 test, `test-001.c`, built the same way, ran and exited 0 |
 | published result | 6 of 17 cases failed, with the runner of 2026-09-24 (corpus D-133); round two, with this harness on v0.4.0's eighteen cases: 7 of 18 (corpus D-178, unchanged under D-183) |
+| from a fresh fetch | These counts were measured with the corpus's launch-window captures, files a new user's fetch cannot obtain (corpus D-229). One of the failing cases, `supgp-celestrak-classification-c`, cannot run without them, so a run from a fresh fetch reproduces fewer. |
 
 Best-effort, not installable by pip. This harness compiles internal source files of an application, not a library
 interface. If a later Gpredict renames or splits those files, changes `Get_Next_Tle_Set()`, or starts using more of

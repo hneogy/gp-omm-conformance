@@ -29,7 +29,11 @@ from gpconf.__main__ import main as gpconf_main  # noqa: E402
 
 VERSION = locate.corpus_version(ROOT)
 FETCHLIST = json.load(open(os.path.join(ROOT, "tools", "fetchlist.json")))
-NORMAL_ENTRIES = [e for e in FETCHLIST if not e.get("recapture_of")]
+# What a fetch requests: no re-capture (D-150), no launch-window capture (D-229) and, unless asked, not the legacy
+# SATCAT file (D-231)
+NORMAL_ENTRIES = [e for e in FETCHLIST if not e.get("recapture_of") and not e.get("launch_window") and not e.get("opt_in")]
+CAPTURES = [e for e in FETCHLIST if e.get("launch_window")]
+ON_REQUEST = [e for e in FETCHLIST if e.get("opt_in")]
 
 
 def shipped_files(root):
@@ -70,11 +74,17 @@ def raw_present():
     return all(os.path.exists(os.path.join(ROOT, "fixtures", e["case"], "raw", e["file"])) for e in NORMAL_ENTRIES)
 
 
-def copy_raw(dest, include_recaptures=False):
+def copy_raw(dest, include_recaptures=False, include_captures=False, include_satcat=False):
     """The clone's provider files into a data folder: what a completed `gpconf fetch` leaves there (a normal fetch
-    requests no re-capture)."""
+    requests no re-capture, no fetch requests a launch-window capture, D-229, and the legacy SATCAT file comes only
+    on request, D-231). With include_captures and include_satcat the folder is the maintainer's, which holds the
+    corpus's own captures and that file as well."""
     for e in FETCHLIST:
         if e.get("recapture_of") and not include_recaptures:
+            continue
+        if e.get("launch_window") and not include_captures:
+            continue
+        if e.get("opt_in") and not include_satcat:
             continue
         for name in (e["file"], e["file"] + ".meta.json"):
             src = os.path.join(ROOT, "fixtures", e["case"], "raw", name)
@@ -150,7 +160,9 @@ class InstalledCopy(unittest.TestCase):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "run", "--adapter", "my_adapter:Parser")
         self.assertEqual(code, 0, out)
         self.assertIn(f"provider data: {self.cache} (per-user cache)", out)
-        self.assertIn("18 case(s): 5 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
+        self.assertIn("18 case(s): 5 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
+        self.assertIn("1 case(s) cannot run from a fetch and report not-available: supgp-celestrak-classification-c.", out)  # D-229
+        self.assertIn("--include-satcat runs it: python3 -m gpconf fetch --include-satcat.", out)                           # D-232
         self.assertIn("fetch it with python3 -m gpconf fetch.", out)
         self.assertNotIn("tools/fetch.py", out)
         self.assertIn("in every format measured here (CSV not measured: not fetched)", out)
@@ -167,6 +179,12 @@ class InstalledCopy(unittest.TestCase):
         self.assertIn(f"provider data: {self.cache} (per-user cache)", out)
         self.assertEqual(sum(1 for line in out.splitlines() if line.startswith("FETCH ")), len(NORMAL_ENTRIES), out)
         self.assertIn(f"dry run: no request made; a run would make {len(NORMAL_ENTRIES)} request(s) and leave 0 entries as they are", out)
+        self.assertEqual((len(NORMAL_ENTRIES), len(CAPTURES), [e["file"] for e in ON_REQUEST]), (50, 10, ["satcat.txt"]))
+        self.assertIn("not requested: the legacy SATCAT file (pub/satcat.txt, 9.4 MB).", out)                      # D-231
+        self.assertIn("pass --include-satcat to fetch it", out)
+        self.assertNotIn("FETCH   https://celestrak.org/pub/satcat.txt", out)
+        self.assertIn("not requested: 10 launch-window capture(s) (Starlink G15-27, launched 2026-09-20).", out)   # D-229
+        self.assertNotRegex(out, r"FETCH .*(g15-27|799501621)")
         self.assertFalse(os.path.exists(self.cache), "a dry run must not create the cache folder")
 
     def test_the_data_flag_and_the_variable_redirect_run_and_fetch(self):
@@ -189,11 +207,36 @@ class InstalledCopy(unittest.TestCase):
                                   extra_env={locate.DATA_ENV: data})
         self.assertEqual(code, 0, out)
         self.assertIn(f"provider data: {data} ({locate.DATA_ENV})", out)
-        self.assertIn("18 case(s): 17 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 1 not exercised", out)
+        # every case a fetch can feed runs; the one whose files are all launch-window captures cannot (D-229)
+        # and the SATCAT data check, whose file the fetch brings only on request (D-231), is not made and says so (D-232)
+        self.assertIn("18 case(s): 16 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 1 not available, 1 not exercised", out)
+        self.assertIn("satcat-70000-cutoff is a data check on the legacy SATCAT file, 9.4 MB, which the fetch brings only on request.", out)
+        self.assertIn("nothing about the parser under test depends on it. --include-satcat runs it: python3 -m gpconf fetch --include-satcat.", out)
+        self.assertNotIn("have none of their provider files on disk", out)
+        self.assertIn("1 case(s) cannot run from a fetch and report not-available: supgp-celestrak-classification-c.", out)
+        # five cases and 13 files in the maintainer's copy, the only one this test runs in; the public copy withholds the
+        # two pair cases' supplemental pair (D-049), so there the line names three cases and nine files
+        self.assertIn("5 other case(s) name 13 launch-window file(s) (column n/a) and are judged on their other files: "
+                      "nine-digit-supgp-launch-nominals, csv-json-omitted-mandatory-fields, mean-motion-derivative-convention, "
+                      "tle-vs-omm-precision-loss, omm-xml-schema.", out)
+        self.assertIn("The counts the corpus publishes were measured with those files.", out)
         self.assertIn("reads this month's launches in every format it reads here", out)
         self.assertIn("3 case(s) ran without 3 of their provider files", out)  # the re-captures a normal fetch leaves out
         self.assertIn("only with --include-recaptures", out)
         self.assertNotIn("fetch it with", out)  # nothing a normal fetch would bring is missing
+
+    def test_with_the_corpus_s_own_captures_every_case_runs(self):
+        """The maintainer's data folder holds the launch-window captures too: the state every published count was
+        measured in, which no fetch reproduces (D-229)."""
+        if not raw_present() or not all(os.path.exists(os.path.join(ROOT, "fixtures", e["case"], "raw", e["file"])) for e in CAPTURES):
+            self.skipTest("provider files absent (public clone): nothing to copy into the data folder")
+        data = os.path.join(self.tmp, "captured")
+        copy_raw(data, include_captures=True, include_satcat=True)
+        code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "run", "--adapter", "my_adapter:Parser",
+                                  extra_env={locate.DATA_ENV: data})
+        self.assertEqual(code, 0, out)
+        self.assertIn("18 case(s): 17 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 0 not available, 1 not exercised", out)
+        self.assertNotIn("launch-window", out)
 
 
 class InstalledPresets(unittest.TestCase):
@@ -215,11 +258,11 @@ class InstalledPresets(unittest.TestCase):
         code, out = self.run_preset("reference")
         self.assertEqual(code, 0, out)
         self.assertIn("parser: preset reference\n", out)
-        self.assertIn("18 case(s): 5 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
+        self.assertIn("18 case(s): 5 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
         code, out = self.run_preset("naive")
         self.assertEqual(code, 1, out)  # it fails the five offline cases, which is what it is for
         self.assertIn("parser: preset naive (a demonstration of failure, not a parser anyone should use)", out)
-        self.assertIn("18 case(s): 0 pass (exact), 0 pass within tolerance, 5 fail, 0 skip, 13 need fetched data, 0 not exercised", out)
+        self.assertIn("18 case(s): 0 pass (exact), 0 pass within tolerance, 5 fail, 0 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
 
     def test_the_library_presets_name_the_version_found(self):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "presets")

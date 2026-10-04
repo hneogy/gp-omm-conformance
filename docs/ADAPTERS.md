@@ -608,15 +608,21 @@ From [`gpconf/adapters/reference.py`](../gpconf/adapters/reference.py), lines 39
 ### Fetch the provider data, once
 
 Five cases run from files that ship with the corpus: the Alpha-5 vectors, the derived Alpha-5 lines, the KVN variants,
-the writer case and the corrupt-input case. The other thirteen read provider files, which you fetch once:
+the writer case and the corrupt-input case. Twelve of the other thirteen read provider files, which you fetch once;
+the thirteenth, `supgp-celestrak-classification-c`, reads a launch-window capture that no fetch requests, and reports
+`not-available` (D-229):
 
 ```bash
 python3 tools/fetch.py
 ```
 
-That is about 60 requests to CelesTrak, 2 seconds apart, each URL once, cached and never repeated; the README's
-[Fetching responsibly](../README.md#fetching-responsibly) section has the rules. `python3 tools/fetch.py --dry-run`
-lists what it would request without requesting anything. Until the fetch, the thirteen report `not-fetched`.
+That is 50 requests to CelesTrak, one at a time, each URL once, kept on disk and not requested again; the README's
+[Fetching responsibly](../README.md#fetching-responsibly) section says what CelesTrak asks and what the fetch does.
+The 9.4 MB legacy SATCAT file is not among them: one data check reads it and no parser, so the fetch brings it only
+with `--include-satcat`, and without it `satcat-70000-cutoff` reports `not-exercised`, as it does with it (D-231,
+D-232). `python3 tools/fetch.py --dry-run`
+lists what it would request without requesting anything. Until the fetch, eleven of the twelve report `not-fetched`;
+the twelfth is the SATCAT data check.
 
 ### Run
 
@@ -633,27 +639,29 @@ their tags; `-v` prints every item, not only the failures and the passes within 
 The command above prints:
 
 ```text
-gpconf 0.5.0 | corpus 0.5.0 | parser: gpconf.adapters.reference:Parser
+gpconf 0.5.1 | corpus 0.5.1 | parser: gpconf.adapters.reference:Parser
 
-case                                     status          exact  tol fail skip n/e n/f
-alpha5-encoding-vectors                  pass                5    0    0    0   0   0
-alpha5-tle-derived                       pass               12    0    0    0   0   0
+case                                     status          exact  tol fail skip n/e n/f n/a
+alpha5-encoding-vectors                  pass                5    0    0    0   0   0   0
+alpha5-tle-derived                       pass               12    0    0    0   0   0   0
 ```
 
 followed by the gate and a count line. The first line names the runner, the corpus and the parser. Each case has one
-status, the first of `fail`, `pass-tolerance`, `pass`, `not-exercised`, `not-fetched` and `skip` that any of its items
-has, and counts of its items: passed exactly, passed within tolerance, failed, skipped, not exercised (a data check,
-or data that did not occur, such as nine-digit ids outside a launch window) and not fetched. Below the table come the
+status, the first of `fail`, `pass-tolerance`, `pass`, `not-exercised`, `not-fetched`, `not-available` and `skip` that
+any of its items has, and counts of its items: passed exactly, passed within tolerance, failed, skipped, not exercised
+(a data check, or data that did not occur, such as nine-digit ids outside a launch window), not fetched, and not
+available (a launch-window capture, which no fetch requests, D-229). Below the table come the
 gate over this month's launches, then the failing items and the passes within tolerance, grouped by case, and last
-the count line, which says how many cases need fetched data. The exit status is 0 when no case failed, 1 when one did, and 2 when nothing could run: a
+the count line, which says how many cases need fetched data and how many cannot run from a fetch. The exit status is 0 when no case failed, 1 when one did, and 2 when nothing could run: a
 preset whose library is missing, or a corpus copy that is incomplete.
 
 ### Keep the report: `--json`
 
 `--json FILE` writes all of it. The top level holds `gpconf`, `corpus_version`, `parser` (and `preset` for a preset),
 `generated_at`, `results` and `gates`. Each result holds `case`, `title`, `status`, `counts`, `modes` (whether each
-file matched the tested snapshot or was compared live), `drift`, `items`, and `reused` when provider files were copied
-from an earlier version's cache. Each item holds `check`, `status`, `file` and `detail`; a values item adds `counts`,
+file matched the tested snapshot or was compared live), `drift`, `items`, `reused` when provider files were copied
+from an earlier version's cache, and `unexpected` when the fetch kept a response it did not expect for one of the
+case's files (D-228). Each item holds `check`, `status`, `file` and `detail`; a values item adds `counts`,
 the numbers above, and a pass within tolerance adds `tolerance_stats`.
 
 ## What not to do

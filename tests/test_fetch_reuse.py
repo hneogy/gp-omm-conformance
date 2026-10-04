@@ -129,7 +129,8 @@ HAVE_RAW = all(os.path.exists(os.path.join(RAW, e["case"], "raw", e["file"])) fo
 @unittest.skipUnless(HAVE_RAW, "provider files absent (public clone)")
 class RealCorpus(unittest.TestCase):
     """With this repository's fetched files as an earlier version's cache, the 22 stable-tier entries are reused and the
-    39 live ones requested; the runner's report names the reused files."""
+    28 live ones a fetch asks for are requested; the ten launch-window captures and the legacy SATCAT file, which that
+    earlier cache holds here, are neither (D-229, D-231); the runner's report names the reused files."""
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -146,13 +147,16 @@ class RealCorpus(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def test_22_reused_39_requested(self):
+    def test_22_reused_28_requested(self):
         calls, out = [], io.StringIO()
         fetch.run(["--dry-run"], root=self.new, corpus=ROOT, entries=FETCHLIST, fetch_one=lambda e, root=None: calls.append(e), out=out,
                   pause=0, reuse_sources=fetch.version_folders(self.new))
         heads = [line.split()[0] for line in out.getvalue().splitlines() if line.startswith(("REUSE", "FETCH"))]
-        self.assertEqual((heads.count("REUSE"), heads.count("FETCH")), (22, 39))
+        self.assertEqual((heads.count("REUSE"), heads.count("FETCH")), (22, 28))
+        self.assertNotIn("satcat.txt", "".join(l for l in out.getvalue().splitlines() if l.startswith(("REUSE", "FETCH"))))
         self.assertEqual(calls, [])
+        self.assertNotRegex(out.getvalue(), r"(REUSE|FETCH) .*(g15-27|799501621)")
+        self.assertIn("not requested: 10 launch-window capture(s)", out.getvalue())
         man = fetch.manifest_sources(ROOT)
         reused = [line.split()[1] for line in out.getvalue().splitlines() if line.startswith("REUSE")]
         urls = {e["url"]: f"fixtures/{e['case']}/raw/{e['file']}" for e in NORMAL}

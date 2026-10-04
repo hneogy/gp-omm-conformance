@@ -7,6 +7,7 @@
 | what the harness compiles against | `SGP4.cpp` and `SGP4.h`, the two source files of `software/cpp/SGP4/SGP4/`, and nothing else of the repository: the one reader, `SGP4Funcs::twoline2rv()`, and the `elsetrec` structure it fills, both declared in `SGP4.h` |
 | toolchain as run | Apple clang 21, C++17, macOS; built and run on 2026-10-03 |
 | published result | none: this recipe has no row on the site. Run on 2026-10-03 against corpus v0.5.0's eighteen cases, 8 of 18 cases failed (corpus D-216) |
+| from a fresh fetch | These counts were measured with the corpus's launch-window captures, files a new user's fetch cannot obtain (corpus D-229). One of the failing cases, `supgp-celestrak-classification-c`, cannot run without them, so a run from a fresh fetch reproduces fewer. |
 
 Best-effort, not installable by pip. The harness calls one function and reads one structure, both part of the code's
 own header, so it is less exposed than a harness built on internals, but it is tied to the commit above: a change to
