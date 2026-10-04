@@ -20,7 +20,7 @@ cannot obtain (D-229). A run from a fresh fetch reproduces fewer: `supgp-celestr
 all and reports `not-available`, and the failures that rest on the nominal 799501621 do not occur, so the naive
 adapter fails 14 cases where 15 are listed here and python-sgp4 fails 6 where 8 are; the reference passes 16.
 
-Generated 2026-10-04T12:20:51Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-10-04T12:20:49Z with gpconf 0.5.1 on corpus 0.5.1 (parser preset reference); naive: run 2026-10-04T12:20:50Z with gpconf 0.5.1 on corpus 0.5.1 (parser preset naive (a demonstration of failure, not a parser anyone should use)); sgp4: run 2026-10-04T12:20:51Z with gpconf 0.5.1 on corpus 0.5.1 (parser preset sgp4 (python-sgp4 2.27, the version it was tested with)).
+Generated 2026-10-04T15:15:44Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-10-04T15:15:42Z with gpconf 0.6.0 on corpus 0.6.0 (parser preset reference); naive: run 2026-10-04T15:15:43Z with gpconf 0.6.0 on corpus 0.6.0 (parser preset naive (a demonstration of failure, not a parser anyone should use)); sgp4: run 2026-10-04T15:15:44Z with gpconf 0.6.0 on corpus 0.6.0 (parser preset sgp4 (python-sgp4 2.27, the version it was tested with)).
 
 ## Status by case
 

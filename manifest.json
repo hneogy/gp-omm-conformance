@@ -1,15 +1,37 @@
 {
  "corpus": "gp-omm-conformance",
- "corpus_version": "0.5.1",
- "generated_at": "2026-10-04T01:35:55Z",
+ "corpus_version": "0.6.0",
+ "generated_at": "2026-10-04T15:07:55Z",
  "generator": "tools/make_manifest.py",
  "design": {
-  "raw_provider_files_shipped": false,
+  "provider_data_shipped": false,
+  "raw_provider_files_shipped": [
+   "recorded/celestrak-no-gp-data-found.txt"
+  ],
+  "provider_responses_shipped": [
+   {
+    "path": "recorded/celestrak-no-gp-data-found.txt",
+    "provenance_file": "recorded/celestrak-no-gp-data-found.provenance.json",
+    "text": "No GP data found",
+    "bytes": 16,
+    "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+    "http_status": 404,
+    "holds_orbital_data": false,
+    "decision": "D-247",
+    "written_by_the_fetch_as": [
+     "fixtures/analyst-objects/raw/analyst-270449-first.tle",
+     "fixtures/six-digit-omm-saramago/raw/saramago-first.tle",
+     "fixtures/six-digit-omm-saramago/raw/saramago.tle",
+     "fixtures/tle-omits-six-digit-objects/raw/last-30-days.tle"
+    ]
+   }
+  ],
   "what_is_shipped": [
    "specification vectors (vectors/)",
    "derived, labelled re-encodings of provider records (derived/)",
    "expected values and structural checks per case (fixtures/<case>/expected.json)",
    "SHA-256, URL and retrieval time of every source file tested",
+   "one provider response, CelesTrak's 16-byte answer 'No GP data found' to a query with nothing to return, which holds no orbital data (recorded/; D-247)",
    "the fetch script and static fetch list that rebuild fixtures/<case>/raw/ on the user's machine under CelesTrak's own usage policy (tools/fetch.py, tools/fetchlist.json)"
   ],
   "tiers": {
@@ -38,9 +60,9 @@
   "xml-ndm-wrapper-omm-2.0": "CelesTrak XML has an <ndm> root containing one <omm> per record with id=CCSDS_OMM_VERS and version=2.0; CREATION_DATE and ORIGINATOR elements are present but empty.",
   "kvn-blank-mandatory-values": "CelesTrak KVN writes CREATION_DATE and ORIGINATOR with blank values and blank OBJECT_ID for analyst objects; MEAN_ELEMENT_THEORY is 'SGP/SGP4'.",
   "leading-dot-decimals": "CSV, KVN and XML values may start with '.' or '-.' (no leading zero) and use 'E' exponents; JSON carries numbers.",
-  "tle-format-omits-ids-above-99999": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'.",
-  "empty-answer-yields-no-records": "A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143).",
-  "tle-count-equals-omm-count-below-100000": "The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query.",
+  "tle-format-omits-ids-above-99999": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'. Where the TLE file is the corpus's own record of that answer, which a fetch writes without requesting it (D-247), and the fetched OMM set holds an id below 100000, the record no longer describes that day: the comparison is not made and the item reports not-exercised.",
+  "empty-answer-yields-no-records": "A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143). From v0.6.0 a fetch does not request the four GP answers of this kind: it writes them from the one provider response the corpus ships, recorded/celestrak-no-gp-data-found.txt (D-247).",
+  "tle-count-equals-omm-count-below-100000": "The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query. With the corpus's record of the TLE answer in place of a fetched one (D-247), it is compared only while the fetched OMM set holds no id below 100000.",
   "nine-digit-ids-parse": "NORAD_CAT_ID values >= 100000000 parse and round-trip as integers in CSV, JSON, XML and KVN.",
   "supgp-extra-keys-tolerated": "SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail.",
   "classification-c": "CLASSIFICATION_TYPE may be 'C' (CelesTrak supplemental) rather than 'U'.",
@@ -74,8 +96,8 @@
   "omm-version-2-vs-3": "CelesTrak declares OMM version 2.0 (Silver Book 2009) although the current standard is 3.0 (Blue Book 2023). The 2.0 XML schema set is still downloadable from SANA by direct URL; against the current 4.0.0/3.0 set the documents fail on the fixed version attribute.",
   "met-sgp-sgp4-vs-sgp4": "For the same record CelesTrak writes MEAN_ELEMENT_THEORY = SGP/SGP4 in KVN and SGP4 in XML. Both appear in CCSDS examples; parsers should accept both.",
   "leading-dot-decimals": "CCSDS 7.5.6 requires at least one digit before and after the decimal point in KVN fixed-point values; CelesTrak writes '.00048259' and '.15975118E-3'. Most decimal parsers accept this; strict KVN validators may not.",
-  "mmdot-convention": "CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (304/304 records), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6.",
-  "ecc-truncation-vs-mantissa-rounding": "CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304/304 CelesTrak records reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0.",
+  "mmdot-convention": "CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (in 304 of 304 fetched TLE sets, each compared with its OMM record), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6.",
+  "ecc-truncation-vs-mantissa-rounding": "CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304 of 304 fetched TLE sets reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0.",
   "object-id-launch-year-pivot": "No document defines how a two-digit launch year in the TLE international designator maps to a century. The corpus applies the same 57 pivot as the epoch year (python-sgp4 export_omm does the same); CelesTrak's OMM OBJECT_ID carries four-digit years, so the mapping matters only for TLE input.",
   "tle-epoch-resolution": "The TLE epoch has 1e-8 day (864 microsecond) resolution. CelesTrak GP epochs convert exactly between the two representations; SupGP epochs do not (86 microsecond difference observed), so a TLE->OMM epoch comparison needs a tolerance of half the TLE resolution.",
   "supgp-extra-keys": "SupGP CSV/JSON carry RMS and DATA_SOURCE, which are not OMM keywords (CCSDS 7.9.2.2 allows only Table 4-x keywords in an OMM); CelesTrak's CSV/JSON are OMM-keyword-based formats, not OMM instances, so this is a format extension rather than a violation. Parsers must tolerate unknown keys.",
@@ -371,7 +393,8 @@
      "SATCAT record verifying designator 2026-067CY and launch 2026-03-30"
     ],
     "gaps": [
-     "only one object; other 6-digit objects are in last-30-days and analyst cases"
+     "only one object; other 6-digit objects are in last-30-days and analyst cases",
+     "the TLE answer is the corpus's record of it, HTTP 404 with the 16-byte text 'No GP data found', captured 2026-09-21 and received again 2026-10-04: it ships in recorded/ and a fetch writes it without requesting it (D-247), so a user's run does not observe CelesTrak giving that answer; both TLE files of this case are that record"
     ]
    },
    "ambiguities": [
@@ -393,7 +416,8 @@
      "bytes": 16,
      "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
      "provenance": "live",
-     "record_count": 0
+     "record_count": 0,
+     "recorded_response": "recorded/celestrak-no-gp-data-found.txt"
     },
     {
      "path": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
@@ -501,7 +525,8 @@
      "bytes": 16,
      "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
      "provenance": "live",
-     "record_count": 0
+     "record_count": 0,
+     "recorded_response": "recorded/celestrak-no-gp-data-found.txt"
     },
     {
      "path": "fixtures/six-digit-omm-saramago/raw/saramago.satcat.json",
@@ -552,7 +577,8 @@
      "negative BSTAR values"
     ],
     "gaps": [
-     "window-dependent: once objects below 100000 re-enter the 30-day window the TLE request will return data again; the structural check covers both outcomes"
+     "window-dependent: once objects below 100000 re-enter the 30-day window the TLE request will return data again; the structural check covers both outcomes",
+     "the TLE answer is the corpus's record of it, HTTP 404 with the 16-byte text 'No GP data found', captured 2026-09-21 and received again 2026-10-04: it ships in recorded/ and a fetch writes it without requesting it (D-247), so a user's run does not observe CelesTrak giving that answer; if the fetched group ever holds an id below 100000 the record no longer describes that day, and the two TLE-against-OMM checks report not-exercised instead of comparing"
     ]
    },
    "ambiguities": [],
@@ -584,7 +610,8 @@
      "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
      "provenance": "live",
      "record_count": 0,
-     "superseded_for_citation_by": "last-30-days-recapture.tle.meta.json"
+     "superseded_for_citation_by": "last-30-days-recapture.tle.meta.json",
+     "recorded_response": "recorded/celestrak-no-gp-data-found.txt"
     },
     {
      "path": "fixtures/tle-omits-six-digit-objects/raw/last-30-days-recapture.tle",
@@ -631,6 +658,7 @@
     ],
     "gaps": [
      "no analyst record with an empty OBJECT_NAME was observed; that variant is untested",
+     "for the first record of 270449, the TLE answer is the corpus's record of it, HTTP 404 with the 16-byte text 'No GP data found', captured 2026-09-21 and received again 2026-10-04: it ships in recorded/ and a fetch writes it without requesting it (D-247), so a user's run does not observe CelesTrak giving that answer; the group's own TLE file, which holds the 219 five-digit sets, is still fetched",
      "the 90000 block is not observed"
     ]
    },
@@ -729,7 +757,8 @@
      "bytes": 16,
      "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
      "provenance": "live",
-     "record_count": 0
+     "record_count": 0,
+     "recorded_response": "recorded/celestrak-no-gp-data-found.txt"
     },
     {
      "path": "fixtures/analyst-objects/raw/analyst-270449-first.csv",
@@ -1439,7 +1468,7 @@
    "evidence_basis": [],
    "coverage": {
     "provides": [
-     "304 TLE/OMM record pairs compared"
+     "304 fetched TLE sets compared, each with its OMM record"
     ],
     "gaps": [
      "no record with a non-zero second derivative whose OMM text has more than 5 significant digits was observed, so the DDOT comparison is exact-equality only"
@@ -1635,8 +1664,8 @@
     "tle-values-match-omm-within-tle-precision"
    ],
    "evidence_basis": [
-    "The rendering rule stated by this case (eccentricity truncated to 7 digits; BSTAR and second-derivative mantissa rounded half up to 5 digits) was derived empirically from a sample of 304 CelesTrak TLE/OMM record pairs fetched 2026-09-21 (219 analyst, 79 decaying, 2 SupGP, 4 single objects). It is not documented in any specification or provider document we located (CCSDS 502.0-B-3, CelesTrak TLE format documentation, Space-Track TLE documentation); it is observed provider behaviour, and the sample is what supports it.",
-    "With these rules the renderer in gpconf/tle.py reproduced 304 of 304 records byte for byte; with eccentricity rounded instead, 257 of 304; with the mantissa truncated instead, 251 of 304.",
+    "The rendering rule stated by this case (eccentricity truncated to 7 digits; BSTAR and second-derivative mantissa rounded half up to 5 digits) was derived empirically from a sample of 304 TLE sets fetched from CelesTrak on 2026-09-21, each with the OMM record of the same object (219 analyst, 79 decaying, 2 SupGP, 4 single objects). It is not documented in any specification or provider document we located (CCSDS 502.0-B-3, CelesTrak TLE format documentation, Space-Track TLE documentation); it is observed provider behaviour, and the sample is what supports it.",
+    "With these rules the renderer in gpconf/tle.py reproduced 304 of 304 TLE sets byte for byte, the name line, line 1 and line 2 of each (912 lines); with eccentricity rounded instead, 257 of 304; with the mantissa truncated instead, 251 of 304.",
     "The rule is CelesTrak's, not the TLE format's. Space-Track rounds the eccentricity: confirmed by prediction (D-071). From the CelesTrak OMM sources of the 21 records whose epochs matched in the owner's Space-Track run, rounding to 7 digits differs from truncation for exactly 8 (T0000, T0003, T0008, T0011, T0016, T0018, T0020, T0449; three of them with a carry into the sixth digit), and exactly those 8 Space-Track lines differed from the CelesTrak-rendered lines at column 33 (the three carries at columns 32-33); the other 13, where rounding equals truncation, matched. All 21 derived lines carry a zero second derivative, so the column-51 difference present on every one of them is the +0 (CelesTrak) versus -0 (Space-Track) sign of that field. A parser comparing a TLE to its OMM must therefore know which provider rendered the TLE."
    ],
    "coverage": {
@@ -1644,11 +1673,11 @@
      "eccentricity: OMM has up to 8 decimals, TLE keeps the first 7 (truncation)",
      "BSTAR / DDOT: OMM has up to 8 significant digits, TLE keeps 5, rounded half up",
      "epoch: GP records convert exactly; SupGP records differ by up to half the 864 us TLE resolution",
-     "TLE -> OMM -> TLE round trip through these rules is byte-exact (tests/test_roundtrip.py, every CelesTrak TLE record in the corpus plus the 604 derived lines)"
+     "TLE -> OMM -> TLE round trip through these rules is byte-exact (tests/test_roundtrip.py, every TLE and 2LE set CelesTrak served in the corpus's captures, 604 of them, plus the 604 derived Alpha-5 TLE sets, 1,208 sets in all)"
     ],
     "gaps": [
      "no rounding tie (mantissa digit 6 exactly 5 followed by zeros) was observed, so half-up versus half-even at the tie is not distinguished",
-     "the 24-character limit of TLE line 0 is a rule of the CelesTrak format document, not an observation: no name longer than 24 characters occurs in the 304 provider pairs; the cut appears only in one derived line (catalog 100465)"
+     "the 24-character limit of TLE line 0 is a rule of the CelesTrak format document, not an observation: no name longer than 24 characters occurs in the 304 fetched TLE sets; the cut appears only in one derived line (catalog 100465)"
     ]
    },
    "ambiguities": [
@@ -2045,25 +2074,25 @@
     "tle-values-match-omm-within-tle-precision"
    ],
    "evidence_basis": [
-    "The renderer that produced these lines applies a rendering rule (eccentricity truncated to 7 digits; BSTAR and second-derivative mantissa rounded half up to 5 digits) that was derived empirically from 304 CelesTrak TLE/OMM record pairs and is not documented in any specification we located. See case tle-vs-omm-precision-loss.",
-    "The renderer was validated only against CelesTrak output for catalog numbers below 100000, because CelesTrak emits no Alpha-5 TLE at all. The Alpha-5 encoding step itself is corroborated by python-sgp4's independent implementation (all 604 derived lines decode to the source catalog number) and by the official Space-Track vectors.",
+    "The renderer that produced these lines applies a rendering rule (eccentricity truncated to 7 digits; BSTAR and second-derivative mantissa rounded half up to 5 digits) that was derived empirically from 304 TLE sets fetched from CelesTrak, each with its OMM record, and is not documented in any specification we located. See case tle-vs-omm-precision-loss.",
+    "The renderer was validated only against CelesTrak output for catalog numbers below 100000, because CelesTrak emits no Alpha-5 TLE at all. The Alpha-5 encoding step itself is corroborated by python-sgp4's independent implementation (all 604 derived TLE sets decode to the source catalog number) and by the official Space-Track vectors.",
     "Provider corroboration of the encoding (D-070): on 2026-09-21 the project owner ran tools/verify_against_spacetrack.py against their own Space-Track account (44 records: current GP for 100000-100020 and 270000-270020, and the first historical record of 100000 and of 270449). Zero defects: every Alpha-5 field decoded to the queried catalog number, every line-2 field equalled line 1, and both observed letters (A and T) matched the derived encoding; where epochs matched, the international designator and elements agreed. No line was byte-identical, for rendering reasons that are not encoding differences: Space-Track writes a zero second derivative as 00000-0 (column 51, plus the checksum) where CelesTrak writes 00000+0, and Space-Track's line-2 eccentricity differs in its last one or two digits (columns 32-33) from CelesTrak's truncated rendering. No Space-Track data is in this repository; this paragraph describes the verification, not the data."
    ],
    "coverage": {
     "provides": [
-     "604 Alpha-5 lines: 257 with letter A (ids 100000-100789), 347 with letter T (ids 270000-270449)"
+     "604 Alpha-5 TLE sets, each a name line, line 1 and line 2 (1,208 element lines, 1,812 lines in the four files): 257 with letter A (ids 100000-100789), 347 with letter T (ids 270000-270449)"
     ],
     "gaps": [
      "letters B-H, J-N, P-S and U-Z appear in no real catalog number yet (the catalog is at ~100789 and the only other 6-digit block is 27xxxx); those letters are covered by vectors only",
      "these lines are derived, not provider output: CelesTrak serves no Alpha-5 and Space-Track data is not used",
-     "renderer validation gap: the byte-for-byte validation (304/304) used only sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding step has since been corroborated against Space-Track output by the project owner (D-070: 44 records, 0 defects, letters A and T), but the derived lines are CelesTrak-style renderings and differ from Space-Track's own TLE lines in two conventions (zero second-derivative sign at column 51; eccentricity rounding versus truncation at columns 32-33), so they are not byte-identical to Space-Track output. No Space-Track data enters this repository; the public claim describes that verification, not the data."
+     "renderer validation gap: the byte-for-byte validation (304 of 304 fetched TLE sets) used only sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding step has since been corroborated against Space-Track output by the project owner (D-070: 44 records, 0 defects, letters A and T), but the derived lines are CelesTrak-style renderings and differ from Space-Track's own TLE lines in two conventions (zero second-derivative sign at column 51; eccentricity rounding versus truncation at columns 32-33), so they are not byte-identical to Space-Track output. No Space-Track data enters this repository; the public claim describes that verification, not the data."
     ]
    },
    "ambiguities": [
     "ecc-truncation-vs-mantissa-rounding"
    ],
    "library_findings": [
-    "python-sgp4 2.27 twoline2rv decodes all 604 derived Alpha-5 lines to the correct integer (from_alpha5)."
+    "python-sgp4 2.27 twoline2rv decodes all 604 derived Alpha-5 TLE sets to the correct integer (from_alpha5)."
    ],
    "expected": "fixtures/alpha5-tle-derived/expected.json",
    "case_doc": "fixtures/alpha5-tle-derived/case.md",
@@ -2257,18 +2286,18 @@
     "tle-writer-matches-provider-rendering"
    ],
    "evidence_basis": [
-    "Inputs are records already frozen in this corpus (the v0.1.0 expected values of stable-tier sources): the 604 derived Alpha-5 records (603 distinct ids, letters A and T), the first ISS record (1998 epoch, negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative BSTAR and first derivative) and the first record of analyst 81011 (blank international designator, empty OBJECT_ID). No new provider request and no new raw bytes.",
+    "Inputs are records already frozen in this corpus (the v0.1.0 expected values of stable-tier sources): the 604 derived Alpha-5 TLE sets (603 distinct ids, letters A and T), the first ISS record (1998 epoch, negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative BSTAR and first derivative) and the first record of analyst 81011 (blank international designator, empty OBJECT_ID). No new provider request and no new raw bytes.",
     "Three inputs are synthetic-derived (PLAN.md section 2.1; owner approval 2026-09-22, DECISIONS D-096): the SARAMAGO first record with NORAD_CAT_ID replaced by 340000, 799501621 and -1, the values of vectors/alpha5.json encode_unrepresentable. The elements are real; the ids are specification vectors that no catalogued object carries. The correct output for them is a refusal.",
     "One input is synthetic-derived for a field form (DECISIONS D-125): SARAMAGO's elements with the catalog number replaced by the five-digit vector 99999 and BSTAR replaced by 1.2345, the positive-exponent form (' 12345+1') that no fetched record carries; its expected TLE fields are rendered by the corpus, and it is a specification vector, not a catalogued object.",
-    "The precision rule (a written field equals the input quantised at the field's resolution by truncation or by rounding half up) rests on the evidence of tle-vs-omm-precision-loss: CelesTrak truncates the eccentricity and rounds the mantissas (304/304 records), Space-Track rounds the eccentricity (D-070, D-071). A writer may follow either provider; the corpus reports which convention it observed."
+    "The precision rule (a written field equals the input quantised at the field's resolution by truncation or by rounding half up) rests on the evidence of tle-vs-omm-precision-loss: CelesTrak truncates the eccentricity and rounds the mantissas (304 of 304 fetched TLE sets), Space-Track rounds the eccentricity (D-070, D-071). A writer may follow either provider; the corpus reports which convention it observed."
    ],
    "coverage": {
     "provides": [
-     "606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived lines carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)",
+     "606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived TLE sets carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)",
      "a 1998 epoch, a negative first derivative, a non-zero second derivative, zero and negative BSTAR, a blank international designator, an empty OBJECT_ID",
      "three numbers the TLE catalog field cannot represent (340000, 799501621, -1), for which the correct output is a refusal",
      "one positive-exponent BSTAR (1.2345, TLE field ' 12345+1') on a synthetic-derived input with the five-digit vector id 99999, rendered by the corpus (D-125)",
-     "provider-rendered field substrings for the three five-digit records and the CelesTrak-style derived fields for the 604 Alpha-5 records, for an information-only byte comparison"
+     "provider-rendered field substrings for the three five-digit records and the CelesTrak-style derived fields for the 604 Alpha-5 TLE sets, for an information-only byte comparison"
     ],
     "gaps": [
      "letters B-S and U-Z occur in no real catalog number; a writer's encoding of those letters is covered by the alpha5_encode vectors only",
@@ -2445,7 +2474,7 @@
    ],
    "evidence_basis": [
     "Corrupt provider output cannot be captured on demand, so the inputs are made, under the D-096 precedent for synthetic-derived provenance (PLAN.md section 2.1 reserves it for owner approval): the owner approved these five inputs on 2026-09-27 (DECISIONS D-171). Each is a real record frozen in this corpus with one stated edit, placed between valid real records; each file's provenance record (derived/corrupt-input/*.provenance.json) names the records, the files their values were frozen from with those files' SHA-256, and the edit.",
-    "Every record is rendered by the corpus from values in this corpus's public expected.json files (tools/derive_corrupt_inputs.py reads no provider file). The TLE lines use the renderer that reproduces CelesTrak's lines for 304 of 304 records, checked here against each record's frozen TLE fields, so the unedited lines equal CelesTrak's own; the CSV and JSON follow CelesTrak's column order and line endings and write the frozen values in plain decimal notation.",
+    "Every record is rendered by the corpus from values in this corpus's public expected.json files (tools/derive_corrupt_inputs.py reads no provider file). The TLE lines use the renderer that reproduces CelesTrak's lines for 304 of 304 fetched TLE sets, checked here against each record's frozen TLE fields, so the unedited lines equal CelesTrak's own; the CSV and JSON follow CelesTrak's column order and line endings and write the frozen values in plain decimal notation.",
     "Owner decisions of 2026-09-25 (v0.4.0 plan, section 10) applied here: a parser that validates no checksum is reported, not failed, since the corpus's own reference reader treats the checksum as data (decision 2); a whole-file refusal of a cut file passes, with the complete records it gives up counted (decision 3); the shifted-column input is held (decision 4).",
     "The outcomes are counted in the vocabulary of D-142 and D-144: loaded (returned with its id and exactly the values the same parser returns for it from the unedited file), misidentified (a record built from garbage: returned with other values than from the unedited file, or with an id the file does not hold), refused (with a reason, through the refusal channel or by the parser raising on the file) and dropped (neither).",
     "Every record a parser returns from an input is compared with the same parser's reading of the matching unedited file (derived/corrupt-input/unedited-*: the same records laid out as the input lays them out, with no edit), exactly, so the case measures what the edit changes (D-175). Comparing with the frozen expected values, as the case first did, graded how exactly a parser reads these records a second time: a parser that reads them imprecisely everywhere failed the neighbours item in every file whatever it did with the corrupt input. That is the values check's question, asked of the same records in epoch-year-19xx and bstar-and-derivative-forms. Where a parser does not return a record from the unedited file either, the items that would rest on it are not exercised: nothing then isolates the edit."

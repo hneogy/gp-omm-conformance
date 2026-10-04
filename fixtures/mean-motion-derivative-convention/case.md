@@ -8,7 +8,7 @@ MEAN_MOTION_DOT / MEAN_MOTION_DDOT in the OMM equal the TLE fields as printed
 
 ## How to read a failure
 
-In 304 of 304 pairs the OMM MEAN_MOTION_DOT equals the TLE first-derivative field as printed, i.e. the OMM carries the TLE convention (ndot/2, nddot/6). A parser that treats the OMM value as the true derivative is off by a factor of 2 (and 6). The standard leaves this open (4.2.4.7 NOTE 2); this case records what the provider does.
+In 304 of 304 fetched TLE sets, each compared with its OMM record, the OMM MEAN_MOTION_DOT equals the TLE first-derivative field as printed, i.e. the OMM carries the TLE convention (ndot/2, nddot/6). A parser that treats the OMM value as the true derivative is off by a factor of 2 (and 6). The standard leaves this open (4.2.4.7 NOTE 2); this case records what the provider does.
 
 ## Checks
 
@@ -18,7 +18,7 @@ In 304 of 304 pairs the OMM MEAN_MOTION_DOT equals the TLE first-derivative fiel
 
 Provides:
 
-- 304 TLE/OMM record pairs compared
+- 304 fetched TLE sets compared, each with its OMM record
 
 Gaps (stated explicitly for this case):
 
@@ -26,7 +26,7 @@ Gaps (stated explicitly for this case):
 
 ## Ambiguities recorded
 
-- **mmdot-convention** — CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (304/304 records), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6.
+- **mmdot-convention** — CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (in 304 of 304 fetched TLE sets, each compared with its OMM record), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6.
 
 ## Sources
 

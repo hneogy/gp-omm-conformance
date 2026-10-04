@@ -177,9 +177,13 @@ class InstalledCopy(unittest.TestCase):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "fetch", "--dry-run")
         self.assertEqual(code, 0, out)
         self.assertIn(f"provider data: {self.cache} (per-user cache)", out)
-        self.assertEqual(sum(1 for line in out.splitlines() if line.startswith("FETCH ")), len(NORMAL_ENTRIES), out)
-        self.assertIn(f"dry run: no request made; a run would make {len(NORMAL_ENTRIES)} requests and leave 0 entries as they are", out)
-        self.assertEqual((len(NORMAL_ENTRIES), len(CAPTURES), [e["file"] for e in ON_REQUEST]), (50, 10, ["satcat.txt"]))
+        asked = [e for e in NORMAL_ENTRIES if not e.get("recorded")]
+        self.assertEqual(sum(1 for line in out.splitlines() if line.startswith("FETCH ")), len(asked), out)
+        self.assertEqual(sum(1 for line in out.splitlines() if line.startswith("RECORD ")), 4, out)   # read from the bundled recorded/ (D-247)
+        self.assertIn(f"dry run: no request made; a run would make {len(asked)} requests, write 4 files from the corpus's record of the "
+                      "provider's answer and leave 0 entries as they are", out)
+        self.assertEqual((len(NORMAL_ENTRIES), len(asked), len(CAPTURES), [e["file"] for e in ON_REQUEST]), (50, 46, 10, ["satcat.txt"]))
+        self.assertIn("not requested: 4 TLE requests for objects numbered above 99999", out)
         self.assertIn("not requested: the legacy SATCAT file (pub/satcat.txt, 9.4 MB).", out)                      # D-231
         self.assertIn("pass --include-satcat to fetch it", out)
         self.assertNotIn("FETCH   https://celestrak.org/pub/satcat.txt", out)
@@ -306,9 +310,14 @@ class FetchSubcommand(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out = io.StringIO()
             code = gfetch.run(["--data", tmp, "--case", "analyst-objects"], fetch_one=stub, out=out, pause=0)
+            # the one entry of the case whose answer ships with the corpus is written into the data root, not requested (D-247)
+            written = os.path.join(tmp, "fixtures", "analyst-objects", "raw", "analyst-270449-first.tle")
+            with open(written, "rb") as f:
+                self.assertEqual(f.read(), b"No GP data found")
         self.assertEqual(code, 0, out.getvalue())
         self.assertIn(f"provider data: {tmp} (--data)", out.getvalue())
-        want = [(e["case"], e["file"]) for e in NORMAL_ENTRIES if e["case"] == "analyst-objects"]
+        want = [(e["case"], e["file"]) for e in NORMAL_ENTRIES if e["case"] == "analyst-objects" and not e.get("recorded")]
+        self.assertEqual(len(want) + 1, sum(1 for e in NORMAL_ENTRIES if e["case"] == "analyst-objects"))
         self.assertEqual([(c, f) for c, f, _ in calls], want)
         self.assertTrue(all(r == tmp for _, _, r in calls), calls)
 

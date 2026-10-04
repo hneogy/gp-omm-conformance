@@ -6,7 +6,8 @@ Standard library only. Also imported by tools/tlerender.py (shim).
 
 Purpose: produce the derived Alpha-5 TLE fixtures. To be trustworthy, the renderer must
 reproduce CelesTrak's own TLE rendering byte for byte on records that CelesTrak *does* render
-as TLE (tools/validate_render.py: 304/304 CelesTrak records reproduced byte for byte), so that a derived Alpha-5 line differs from what
+as TLE (tools/validate_render.py: 304 of 304 fetched CelesTrak TLE sets reproduced byte for byte, the name line, line 1
+and line 2 of each), so that a derived Alpha-5 TLE set differs from what
 CelesTrak would emit only in the catalog-number field.
 
 Text in, text out. Values are handled as decimal strings, never as binary floats.

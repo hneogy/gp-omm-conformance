@@ -11,7 +11,7 @@ gpconf fetch
 gpconf run --preset reference
 ```
 
-The fetch runs once per corpus version: 50 requests to CelesTrak, about 3 MB, kept on disk. Then name your
+The fetch runs once per corpus version: 46 requests to CelesTrak, about 3 MB, kept on disk. Then name your
 library's preset (`sgp4`, `pyephem`, `satellite.js`, `tle.js`) or point the runner at your own parser; Quick start,
 below, has both.
 
@@ -41,17 +41,21 @@ traceable to a provider response whose URL, retrieval time and SHA-256 are recor
 (`tle-writer-alpha5`) asks the same of code that *writes* TLEs: Alpha-5 in the catalog field,
 valid lines, and a refusal for the numbers the format cannot carry.
 
-Status: version `0.5.1`, a patch release, tooling and documentation only. The fetch no longer requests ten
-launch-window files, which CelesTrak serves only for the days after a launch (D-229); it stops at the first
-response it does not expect and never reads one as data (D-228); and it leaves the 9.4 MB legacy SATCAT file
-out unless asked (D-231, D-232). A user's fetch is now 50 requests and 3.1 MB. The runner reports a file that
-no fetch requests as `not-available`, and the README says what CelesTrak asks of a fetch and what is the
-corpus's own choice (D-230). No case, check or frozen expected value changed. The naive and python-sgp4
-adapters fail 15 and 8 of the eighteen cases, as before; those counts were measured with launch-window files
-that a new user's fetch cannot obtain, and a fresh fetch reproduces 14 and 6 (D-229). The independent audit
-(`AUDIT.md`) covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and
-protocol changes of v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0 nor those of v0.5.1 have
-been separately audited. Maintainer: Honorius Neogy (NEOGY LLC).
+Status: version `0.6.0`, a minor release: the JSON report gains `summary`, the number of cases in each status,
+an addition a script is told to rely on in place of the printed lines (D-240). Every count the runner, the
+fetch and the Action print now agrees in number with the words beside it (D-239); the table of
+`docs/FAILURES.md` says "(1 failing)" where it said "(1 fail)" (D-240); and the project names itself gpconf, with
+`docs/BRAND.md` the single source for its name and the lines it describes itself with (D-241, D-242). A user's
+fetch is now 46 requests and asks for nothing it knows will answer 404: CelesTrak's 16-byte answer `No GP data
+found` ships with the corpus as a recorded response, the one provider response it carries, and the fetch writes it
+where it used to request it (D-247). The corpus says "TLE set" for an object's lines and "line" for one line: 604
+derived Alpha-5 TLE sets, 304 fetched TLE sets (D-248). No case and no frozen expected value changed, and the
+adapter protocol is as in 0.5.1. The naive and python-sgp4 adapters fail 15 and 8 of the eighteen cases, as
+before; those counts were measured with launch-window files that a new user's fetch cannot obtain, and a fresh
+fetch reproduces 14 and 6 (D-229). The independent audit (`AUDIT.md`) covered v0.1.0; neither the writer-side case
+of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0, the corrupt-input case of v0.4.0,
+the changes of v0.5.0, those of v0.5.1 nor those of v0.6.0 have been separately audited. Maintainer: Honorius
+Neogy (NEOGY LLC).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22867654.svg)](https://doi.org/10.5281/zenodo.22867654) See `DECISIONS.md` for the full decision log and `MANIFEST.md` for every case,
 source and known gap.
@@ -127,13 +131,21 @@ catalog number as Alpha-5 above 99999 and refuse numbers above 339999 (or below 
 | `docs/`: the adapter guide (`docs/ADAPTERS.md`), research notes with verbatim sources, cross-check, breakage catalogue, upstream bug-report drafts, the letter-in-field reference (`docs/LETTER-IN-FIELD.md`); `AUDIT.md`: the independent audit and its resolutions | |
 
 The pip package, `gpconf`, carries the runner and the corpus's own files: every case's `expected.json` and
-`case.md`, `derived/`, `vectors/`, `manifest.json` and the fetch list. It carries no provider data; the schemas,
-the other documents, the build tools, the test suite and the recipes stay in the repository.
+`case.md`, `derived/`, `vectors/`, `recorded/`, `manifest.json` and the fetch list. It carries no provider data,
+and one provider response, named below; the schemas, the other documents, the build tools, the test suite and the
+recipes stay in the repository.
 
 Why no raw files: CelesTrak's site states no redistribution terms for its data
 (`docs/RESEARCH.md` §11), and silence is not permission. Rebuilding locally means the
 provider's terms apply to you directly, fixtures cannot rot unnoticed, and SHA-256 hashes tell
 you whether you are looking at the exact bytes we tested.
+
+One exception, named here because the rule has no other (D-247, which amends D-023): the corpus ships one response
+from CelesTrak, `recorded/celestrak-no-gp-data-found.txt`. It is the 16 bytes `No GP data found`, which CelesTrak
+returns with HTTP 404 to a TLE request for an object numbered above 99999. It holds no orbital data: no element, no
+catalog number, nothing that stands in for a fetch. It ships so that a fetch does not have to request four answers
+it already knows to be errors; the file beside it gives the URL, time and SHA-256 of each capture, and the fetch
+writes the body where it used to ask for it. It is CelesTrak's text, and the MIT licence does not cover it.
 
 ## Quick start
 
@@ -143,7 +155,7 @@ into a per-user cache:
 ```bash
 pip install gpconf
 gpconf run --preset reference   # before any fetch: the 5 cases whose files ship in the package run; 11 need provider data, 1 needs data no fetch brings, 1 is a data check not made by default
-gpconf fetch                    # once per corpus version: 50 requests, 3.1 MB, one at a time; kept on disk, not requested again
+gpconf fetch                    # once per corpus version: 46 requests, 3.1 MB, one at a time; kept on disk, not requested again
 gpconf run --preset reference   # then sixteen run, as in a clone: one case needs launch-window data no fetch brings, and the SATCAT data check its own file (--include-satcat)
 ```
 
@@ -151,7 +163,7 @@ Or from a clone, as before:
 
 ```bash
 git clone https://github.com/hneogy/gp-omm-conformance.git && cd gp-omm-conformance
-python3 tools/fetch.py            # once per corpus version: 50 requests, 3.1 MB, one at a time; kept on disk, not requested again
+python3 tools/fetch.py            # once per corpus version: 46 requests, 3.1 MB, one at a time; kept on disk, not requested again
 python3 -m gpconf run --preset reference   # the control: 16 cases pass; one is not-available, its files being launch-window captures no fetch requests; the SATCAT case is a data check on a file the fetch brings only with --include-satcat, and reports not-exercised for every parser, with the file or without; the nine-digit check says not-exercised outside a launch window
 python3 -m gpconf run --preset naive       # the parser most projects have: a demonstration of failure, not a parser to use
 ```
@@ -175,15 +187,15 @@ nothing ran and that this says nothing about the library (D-153, D-154). The ada
 `gpconf/adapters/`; the older names `tests.adapters.reference:Parser` and the like still work (D-151).
 
 A script should read the JSON report or the exit status, never the printed lines, whose wording can change from one
-version to the next (D-240). `--json FILE` writes the report: its `summary`, in releases after 0.5.1, holds the number
-of cases in each status, and `results` holds each case with its status and its item counts; the exit status is 0 when no case failed, 1 when one
+version to the next (D-240). `--json FILE` writes the report: its `summary`, from 0.6.0, holds the number of
+cases in each status, and `results` holds each case with its status and its item counts; the exit status is 0 when no case failed, 1 when one
 did and 2 when nothing could run. In a GitHub Actions job the Action's outputs `failed`, `exercised` and `report` carry
 the same. The [adapter guide](docs/ADAPTERS.md) describes the report field by field.
 
 In a GitHub Actions job, from v0.3.0, three lines run a preset against your library:
 
 ```yaml
-- uses: hneogy/gp-omm-conformance@v0.5.1
+- uses: hneogy/gp-omm-conformance@v0.6.0
   with:
     preset: sgp4
 ```
@@ -229,12 +241,13 @@ CelesTrak asks four things of software that downloads from it, in its usage poli
   less than two hours old. Do not run the fetch more than once per two hours. A new corpus version fetches the
   live files again and copies the stable ones from the earlier version's folder (below).
 - **Stop on any response that is not an HTTP 200, and have a person look.** The fetch stops at the first one,
-  with four exceptions it knows in advance: four TLE requests for objects numbered above 99999, which answer 404
-  with `No GP data found`. That answer is what the corpus tests, and each is requested once. Anything else ends
+  with no exception (D-247). Up to 0.5.1 it knew four in advance, four TLE requests for objects numbered above
+  99999, which answer 404 with `No GP data found`. It no longer makes them: that answer ships with the corpus as
+  a recorded response, and the fetch writes it where it used to ask. Anything that is not a 200 ends
   the run with exit status 2 and is kept beside the data as `<file>.unexpected`, never read as data (D-228). A
   403 is a refusal: read the kept response, which says why. The fetch then makes no request for two hours.
-- **Stay under 50 errors in two hours and 100 MB a day from one address.** One run is 50 requests, 3.1 MB and
-  those four 404s. Do not run it in a loop or in CI; the GitHub Action runs offline for that reason.
+- **Stay under 50 errors in two hours and 100 MB a day from one address.** One run is 46 requests and 3.1 MB, and
+  none of them is expected to answer with an error. Do not run it in a loop or in CI; the GitHub Action runs offline for that reason.
 - **Only download the data you need.** The legacy SATCAT file, 9.4 MB, would be three quarters of the download, and
   it serves `satcat-70000-cutoff`, a data check in which no parser takes part. The fetch leaves it out unless you
   pass `--include-satcat` (D-231). Without the file the case reports `not-exercised`, as it does with it, and a
@@ -341,7 +354,7 @@ and that the parser was compared against the reference reader instead.
 
 ### The provider's empty answer
 
-Four cases hold a recorded answer with no data in it: CelesTrak's HTTP 404 body, `No GP data found` or `No SupGP data found`, for a group with nothing in that format. The runner hands that body to the parser under test (check `empty-answer-yields-no-records`): zero records and no error is the pass, an exception or an invented record is a failure, and a parser without the format skips. The point is the distinction: an empty but valid answer is one of three outcomes a parser must keep apart from "this file is unreadable" and "this value cannot be represented", and an error here collapses the first into the second.
+Four cases hold a recorded answer with no data in it: CelesTrak's HTTP 404 body, `No GP data found` or `No SupGP data found`, for a group with nothing in that format. From v0.6.0 a fetch does not request the four `No GP data found` answers: it writes each from `recorded/celestrak-no-gp-data-found.txt`, the one provider response the corpus ships, and a run says of those files that they are the corpus's record and were not requested (D-247). The fifth such file, with the SupGP text, is a launch-window capture that no fetch requests. The runner hands the body to the parser under test (check `empty-answer-yields-no-records`): zero records and no error is the pass, an exception or an invented record is a failure, and a parser without the format skips. The point is the distinction: an empty but valid answer is one of three outcomes a parser must keep apart from "this file is unreadable" and "this value cannot be represented", and an error here collapses the first into the second.
 
 ### The gate: this month's launches
 
@@ -361,11 +374,11 @@ Below the case table the runner prints one gate, a headline read across existing
 | `bstar-and-derivative-forms` | negative BSTAR and first derivative, non-zero second derivative, implied-decimal fields |
 | `satcat-70000-cutoff` | legacy SATCAT stops at 69999; CSV/JSON SATCAT continues; a data check, with no parser involved, on a 9.4 MB file the fetch brings only with `--include-satcat` (D-231) |
 | `csv-json-omitted-mandatory-fields` | CelesTrak CSV/JSON omit the constant CCSDS-mandatory keywords |
-| `mean-motion-derivative-convention` | OMM `MEAN_MOTION_DOT` equals the TLE field as printed (304/304) |
+| `mean-motion-derivative-convention` | OMM `MEAN_MOTION_DOT` equals the TLE field as printed (in 304 of 304 fetched TLE sets) |
 | `tle-vs-omm-precision-loss` | eccentricity truncated, mantissa rounded half up, SupGP epochs quantised; TLE→OMM→TLE round trip tested (the 24-character name limit is a format rule, not observed in provider data) |
 | `omm-xml-schema` | valid NDM/XML 2.0, invalid against 3.0 on the version attribute alone |
 | `alpha5-encoding-vectors` | the Space-Track table, official examples, boundaries, invalid inputs |
-| `alpha5-tle-derived` | 604 derived Alpha-5 lines (letters A and T) from real CelesTrak records |
+| `alpha5-tle-derived` | 604 derived Alpha-5 TLE sets, 1,208 element lines (letters A and T), from real CelesTrak records |
 | `kvn-syntax-variants` | six CCSDS-legal KVN renderings CelesTrak never emits |
 | `tle-writer-alpha5` | writer side: 610 inputs written through `write_tle`: 606 frozen records (603 Alpha-5 ids and three five-digit), plus four synthetic-derived: the five-digit vector 99999 with the positive-exponent BSTAR ` 12345+1` no fetched record carries (D-125), and three numbers the TLE field cannot carry (340000, 799501621, -1), for which a refusal is the correct output |
 | `corrupt-input` | corrupt input between valid records: a wrong checksum digit, line 2 one character short, a letter in the epoch field, a set with no line 2, a CSV cut in its last row, a JSON array left open; each a frozen record with one stated edit (synthetic-derived, D-171); the right answer is a refusal with a reason, and the records around it load as they do without it (D-175) |
@@ -376,8 +389,8 @@ Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case
 
 - Real catalog numbers exist only for Alpha-5 letters **A** (100000-100789) and **T**
   (270000-270449, Space Fence analyst objects). Other letters are covered by vectors only.
-- The renderer behind the derived Alpha-5 lines was validated (304 of 304 lines byte for byte)
-  only against sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding
+- The renderer behind the derived Alpha-5 TLE sets was validated (304 of 304 fetched TLE sets byte for byte:
+  the name line, line 1 and line 2 of each) only against sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding
   step is corroborated by python-sgp4's independent implementation, by the official vectors, and
   by the maintainer's run of `tools/verify_against_spacetrack.py` against their own Space-Track
   account (44 records, zero defects, letters A and T; D-070). The derived lines remain
@@ -385,7 +398,7 @@ Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case
   written for a zero second derivative and in the last eccentricity digits, so they are not
   byte-identical to Space-Track output. The rendering rule the corpus applies (eccentricity
   truncated, BSTAR and second-derivative mantissa rounded half up) is CelesTrak's, derived
-  empirically from those 304 records and documented in no specification we located.
+  empirically from those 304 TLE sets and documented in no specification we located.
 - No positive-exponent BSTAR (>= 1.0) exists in the fetched data. One synthetic-derived writer input (id 99999,
   BSTAR 1.2345, TLE field ` 12345+1`, rendered by the corpus, D-125) covers the field's form on the writer side only.
 - Two cases rest on launch-window captures that no fetch requests (D-229). A supplemental record in five formats,
@@ -532,8 +545,8 @@ and correction to be recorded.
   each with a `.provenance.json`).
 - **Verification:** the expected values were produced by reference readers written from the
   format documents and cross-checked, record by record, against python-sgp4 and Skyfield
-  (`docs/CROSSCHECK.md`); the renderer used for derived TLE lines was validated by reproducing
-  304 of 304 CelesTrak TLE lines byte for byte. Where a specification and the provider's
+  (`docs/CROSSCHECK.md`); the renderer used for the derived TLE sets was validated by reproducing
+  304 of 304 fetched CelesTrak TLE sets byte for byte. Where a specification and the provider's
   practice disagree, both are recorded (`manifest.json` → `ambiguities`) and neither is silently
   chosen.
 - **Independent audit:** completed on 2026-09-21, before publication; the report is
@@ -545,7 +558,8 @@ and correction to be recorded.
   appendix table (a sample entry from the SupGP case, per D-033/D-049) and says so in a notice; the
   auditor's text is otherwise unchanged and the private original is intact. It covered v0.1.0; neither
   the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0 nor the
-  corrupt-input case of v0.4.0, the changes of v0.5.0 nor those of v0.5.1 have been separately audited.
+  corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1 nor those of v0.6.0 have been separately
+  audited.
 
 If you find an error, the most useful report names the case id, the source file's SHA-256 and
 the field, so that the discrepancy can be traced to a specific fetched byte sequence.
@@ -554,7 +568,8 @@ the field, so that the discrepancy can be traced to a specific fetched byte sequ
 
 MIT, copyright NEOGY LLC (see `LICENSE`, and `NOTICE` for what the licence covers), for the corpus's code,
 documentation, vectors, derived files and expected values. Provider data is not included; `tools/fetch.py` retrieves it under CelesTrak's own
-terms. The schemas under `schemas/` are CCSDS/SANA publications redistributed unmodified.
+terms. The one provider response that is included, CelesTrak's 16-byte answer in `recorded/`, is CelesTrak's text and is not under this licence (D-247).
+The schemas under `schemas/` are CCSDS/SANA publications redistributed unmodified.
 
 Data source: CelesTrak (Dr. T.S. Kelso), https://celestrak.org, a 501(c)(3) non-profit that
 makes this data freely available; please respect its usage policy. Standards: CCSDS 502.0-B-3
@@ -562,12 +577,13 @@ makes this data freely available; please respect its usage policy. Standards: CC
 Alpha-5 definition: Space-Track, https://www.space-track.org/documentation.
 
 To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, H. (NEOGY LLC).
-gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary, version 0.5.1,
-2026-10-03, https://github.com/hneogy/gp-omm-conformance.*
+gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary, version 0.6.0,
+2026-10-04, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** for this release, v0.5.1, is
-[10.5281/zenodo.23130868](https://doi.org/10.5281/zenodo.23130868); v0.5.0 keeps its own, [10.5281/zenodo.23093982](https://doi.org/10.5281/zenodo.23093982),
+general. The **version DOI** for this release, v0.6.0, is added here and to `CITATION.cff` after Zenodo
+mints it at the release; v0.5.1 keeps its own, [10.5281/zenodo.23130868](https://doi.org/10.5281/zenodo.23130868),
+v0.5.0 its own, [10.5281/zenodo.23093982](https://doi.org/10.5281/zenodo.23093982),
 v0.4.0 its own, [10.5281/zenodo.23002261](https://doi.org/10.5281/zenodo.23002261),
 v0.3.0 its own, [10.5281/zenodo.22986178](https://doi.org/10.5281/zenodo.22986178),
 v0.2.1 its own, [10.5281/zenodo.22926017](https://doi.org/10.5281/zenodo.22926017), v0.2.0 its own,

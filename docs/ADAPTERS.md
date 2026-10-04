@@ -616,7 +616,7 @@ the thirteenth, `supgp-celestrak-classification-c`, reads a launch-window captur
 python3 tools/fetch.py
 ```
 
-That is 50 requests to CelesTrak, one at a time, each URL once, kept on disk and not requested again; the README's
+That is 46 requests to CelesTrak, one at a time, each URL once, kept on disk and not requested again; the README's
 [Fetching responsibly](../README.md#fetching-responsibly) section says what CelesTrak asks and what the fetch does.
 The 9.4 MB legacy SATCAT file is not among them: one data check reads it and no parser, so the fetch brings it only
 with `--include-satcat`, and without it `satcat-70000-cutoff` reports `not-exercised`, as it does with it (D-231,
@@ -639,7 +639,7 @@ their tags; `-v` prints every item, not only the failures and the passes within 
 The command above prints:
 
 ```text
-gpconf 0.5.1 | corpus 0.5.1 | parser: gpconf.adapters.reference:Parser
+gpconf 0.6.0 | corpus 0.6.0 | parser: gpconf.adapters.reference:Parser
 
 case                                     status          exact  tol fail skip n/e n/f n/a
 alpha5-encoding-vectors                  pass                5    0    0    0   0   0   0
@@ -659,8 +659,8 @@ preset whose library is missing, or a corpus copy that is incomplete.
 
 `--json FILE` writes all of it. A script should read this report or the exit status, never the printed lines, whose
 wording can change from one version to the next (D-240). The top level holds `gpconf`, `corpus_version`, `parser` (and
-`preset` for a preset), `generated_at`, `summary`, `results` and `gates`. `summary`, in releases after 0.5.1, holds the
-case totals as numbers:
+`preset` for a preset), `generated_at`, `summary`, `results` and `gates`. `summary`, from 0.6.0, holds the case totals
+as numbers:
 `cases`, the number of cases run, and one count for each status a case can end in, `pass`, `pass-tolerance`, `fail`,
 `skip`, `not-fetched`, `not-available` and `not-exercised`, zeros included; they are the numbers of the count line and
 they add up to `cases`. Each result holds `case`, `title`, `status`, `counts`, `modes` (whether each

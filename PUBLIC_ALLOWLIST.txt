@@ -39,6 +39,11 @@ fixtures/*/expected.json
 fixtures/*/case.md
 derived/**/*
 vectors/*.json
+# The one provider response the corpus ships (D-247, a named exception to D-023): CelesTrak's 16-byte answer to a query
+# with nothing to return, and its provenance. Named file by file, never as a pattern: nothing else belongs in recorded/,
+# and tools/export_public.py refuses anything else there.
+recorded/celestrak-no-gp-data-found.txt
+recorded/celestrak-no-gp-data-found.provenance.json
 schemas/**/*
 # Patterns do not recurse: a new folder under gpconf/ or tests/ needs its own line, or the export silently leaves
 # it out (D-151; tests/test_export.py checks that every module is exported).

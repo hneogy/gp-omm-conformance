@@ -47,7 +47,7 @@ A TLE field has a fixed resolution: epoch 1e-8 day, mean motion 8 decimals, the 
 eccentricity 7 digits, BSTAR and the second derivative a 5-digit mantissa. A written field is correct
 when it equals the input quantised at that resolution **either by truncation or by rounding half up**,
 because the two providers differ: CelesTrak truncates the eccentricity and rounds the mantissas
-(304 of 304 records, case `tle-vs-omm-precision-loss`), Space-Track rounds the eccentricity (D-070,
+(304 of 304 fetched TLE sets, case `tle-vs-omm-precision-loss`), Space-Track rounds the eccentricity (D-070,
 D-071). The runner reports which convention it observed per field, and reports mixed conventions
 without failing them. This is the format's resolution, not a tolerance: the comparison is exact against
 one of two renderings, and the corpus's own renderer stays exact.
@@ -60,7 +60,7 @@ failed.
 ## The case `tle-writer-alpha5`
 
 Inputs are records already frozen in the corpus, so the case runs offline, with no CelesTrak request:
-the 604 derived Alpha-5 records (603 distinct ids, letters A and T: 270449 appears twice, once from its
+the 604 derived Alpha-5 TLE sets (603 distinct ids, letters A and T: 270449 appears twice, once from its
 first record and once from the analyst snapshot), the first ISS record (1998 epoch,
 negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative
 BSTAR and first derivative) and of analyst 81011 (blank designator, empty OBJECT_ID): 606 records, each

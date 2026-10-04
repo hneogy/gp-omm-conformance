@@ -1,16 +1,16 @@
-# Corpus manifest (0.5.1)
+# Corpus manifest (0.6.0)
 
-Generated 2026-10-04T01:35:55Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-10-04T15:07:55Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
-No raw provider files are shipped. Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped).
+No provider data is shipped, and one provider response is: CelesTrak's 16-byte answer `No GP data found`, in `recorded/` with its provenance, which holds no orbital data (D-247, a named exception to D-023). Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped), and writes the recorded answer where it used to request it.
 
 | # | case | kind | records | sources (stable/live) | coverage gaps |
 |---|---|---|---|---|---|
 | 1 | `epoch-year-19xx` | gp | 1 | 7/0 | 1 |
 | 2 | `baseline-iss-five-formats` | gp | 1 | 0/7 | 1 |
-| 3 | `six-digit-omm-saramago` | gp | 2 | 5/7 | 1 |
-| 4 | `tle-omits-six-digit-objects` | gp | 256 | 0/3 | 1 |
-| 5 | `analyst-objects` | gp | 567 | 8/6 | 2 |
+| 3 | `six-digit-omm-saramago` | gp | 2 | 5/7 | 2 |
+| 4 | `tle-omits-six-digit-objects` | gp | 256 | 0/3 | 2 |
+| 5 | `analyst-objects` | gp | 567 | 8/6 | 3 |
 | 6 | `nine-digit-supgp-launch-nominals` | gp | 28 | 0/6 | 4 |
 | 7 | `supgp-celestrak-classification-c` | gp | 2 | 0/5 | 3 |
 | 8 | `bstar-and-derivative-forms` | gp | 83 | 2/3 | 2 |
@@ -56,6 +56,7 @@ Tests: 6-digit-catalog-number, tle-unavailable-above-99999, same-object-all-omm-
 Coverage gaps:
 
 - only one object; other 6-digit objects are in last-30-days and analyst cases
+- the TLE answer is the corpus's record of it, HTTP 404 with the 16-byte text 'No GP data found', captured 2026-09-21 and received again 2026-10-04: it ships in recorded/ and a fetch writes it without requesting it (D-247), so a user's run does not observe CelesTrak giving that answer; both TLE files of this case are that record
 
 ## 4. `tle-omits-six-digit-objects`
 
@@ -66,6 +67,7 @@ Tests: tle-unavailable-above-99999, 6-digit-catalog-number
 Coverage gaps:
 
 - window-dependent: once objects below 100000 re-enter the 30-day window the TLE request will return data again; the structural check covers both outcomes
+- the TLE answer is the corpus's record of it, HTTP 404 with the 16-byte text 'No GP data found', captured 2026-09-21 and received again 2026-10-04: it ships in recorded/ and a fetch writes it without requesting it (D-247), so a user's run does not observe CelesTrak giving that answer; if the fetched group ever holds an id below 100000 the record no longer describes that day, and the two TLE-against-OMM checks report not-exercised instead of comparing
 
 ## 5. `analyst-objects`
 
@@ -76,6 +78,7 @@ Tests: analyst-objects-no-object-id, 6-digit-catalog-number, tle-unavailable-abo
 Coverage gaps:
 
 - no analyst record with an empty OBJECT_NAME was observed; that variant is untested
+- for the first record of 270449, the TLE answer is the corpus's record of it, HTTP 404 with the 16-byte text 'No GP data found', captured 2026-09-21 and received again 2026-10-04: it ships in recorded/ and a fetch writes it without requesting it (D-247), so a user's run does not observe CelesTrak giving that answer; the group's own TLE file, which holds the 219 five-digit sets, is still fetched
 - the 90000 block is not observed
 
 ## 6. `nine-digit-supgp-launch-nominals`
@@ -153,7 +156,7 @@ Tests: precision-loss, round-trip-lossiness
 Coverage gaps:
 
 - no rounding tie (mantissa digit 6 exactly 5 followed by zeros) was observed, so half-up versus half-even at the tie is not distinguished
-- the 24-character limit of TLE line 0 is a rule of the CelesTrak format document, not an observation: no name longer than 24 characters occurs in the 304 provider pairs; the cut appears only in one derived line (catalog 100465)
+- the 24-character limit of TLE line 0 is a rule of the CelesTrak format document, not an observation: no name longer than 24 characters occurs in the 304 fetched TLE sets; the cut appears only in one derived line (catalog 100465)
 
 ## 13. `omm-xml-schema`
 
@@ -185,7 +188,7 @@ Coverage gaps:
 
 - letters B-H, J-N, P-S and U-Z appear in no real catalog number yet (the catalog is at ~100789 and the only other 6-digit block is 27xxxx); those letters are covered by vectors only
 - these lines are derived, not provider output: CelesTrak serves no Alpha-5 and Space-Track data is not used
-- renderer validation gap: the byte-for-byte validation (304/304) used only sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding step has since been corroborated against Space-Track output by the project owner (D-070: 44 records, 0 defects, letters A and T), but the derived lines are CelesTrak-style renderings and differ from Space-Track's own TLE lines in two conventions (zero second-derivative sign at column 51; eccentricity rounding versus truncation at columns 32-33), so they are not byte-identical to Space-Track output. No Space-Track data enters this repository; the public claim describes that verification, not the data.
+- renderer validation gap: the byte-for-byte validation (304 of 304 fetched TLE sets) used only sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding step has since been corroborated against Space-Track output by the project owner (D-070: 44 records, 0 defects, letters A and T), but the derived lines are CelesTrak-style renderings and differ from Space-Track's own TLE lines in two conventions (zero second-derivative sign at column 51; eccentricity rounding versus truncation at columns 32-33), so they are not byte-identical to Space-Track output. No Space-Track data enters this repository; the public claim describes that verification, not the data.
 
 ## 16. `kvn-syntax-variants`
 
@@ -240,9 +243,9 @@ Coverage gaps:
 - **xml-ndm-wrapper-omm-2.0** — CelesTrak XML has an <ndm> root containing one <omm> per record with id=CCSDS_OMM_VERS and version=2.0; CREATION_DATE and ORIGINATOR elements are present but empty.
 - **kvn-blank-mandatory-values** — CelesTrak KVN writes CREATION_DATE and ORIGINATOR with blank values and blank OBJECT_ID for analyst objects; MEAN_ELEMENT_THEORY is 'SGP/SGP4'.
 - **leading-dot-decimals** — CSV, KVN and XML values may start with '.' or '-.' (no leading zero) and use 'E' exponents; JSON carries numbers.
-- **tle-format-omits-ids-above-99999** — A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'.
-- **empty-answer-yields-no-records** — A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143).
-- **tle-count-equals-omm-count-below-100000** — The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query.
+- **tle-format-omits-ids-above-99999** — A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'. Where the TLE file is the corpus's own record of that answer, which a fetch writes without requesting it (D-247), and the fetched OMM set holds an id below 100000, the record no longer describes that day: the comparison is not made and the item reports not-exercised.
+- **empty-answer-yields-no-records** — A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143). From v0.6.0 a fetch does not request the four GP answers of this kind: it writes them from the one provider response the corpus ships, recorded/celestrak-no-gp-data-found.txt (D-247).
+- **tle-count-equals-omm-count-below-100000** — The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query. With the corpus's record of the TLE answer in place of a fetched one (D-247), it is compared only while the fetched OMM set holds no id below 100000.
 - **nine-digit-ids-parse** — NORAD_CAT_ID values >= 100000000 parse and round-trip as integers in CSV, JSON, XML and KVN.
 - **supgp-extra-keys-tolerated** — SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail.
 - **classification-c** — CLASSIFICATION_TYPE may be 'C' (CelesTrak supplemental) rather than 'U'.
@@ -277,8 +280,8 @@ Coverage gaps:
 - **omm-version-2-vs-3** — CelesTrak declares OMM version 2.0 (Silver Book 2009) although the current standard is 3.0 (Blue Book 2023). The 2.0 XML schema set is still downloadable from SANA by direct URL; against the current 4.0.0/3.0 set the documents fail on the fixed version attribute.
 - **met-sgp-sgp4-vs-sgp4** — For the same record CelesTrak writes MEAN_ELEMENT_THEORY = SGP/SGP4 in KVN and SGP4 in XML. Both appear in CCSDS examples; parsers should accept both.
 - **leading-dot-decimals** — CCSDS 7.5.6 requires at least one digit before and after the decimal point in KVN fixed-point values; CelesTrak writes '.00048259' and '.15975118E-3'. Most decimal parsers accept this; strict KVN validators may not.
-- **mmdot-convention** — CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (304/304 records), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6.
-- **ecc-truncation-vs-mantissa-rounding** — CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304/304 CelesTrak records reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0.
+- **mmdot-convention** — CCSDS 4.2.4.7 NOTE 2 says TLE-sourced MEAN_MOTION_DOT/DDOT 'need to be divided by 2 and 6 respectively' but does not say which convention the OMM value carries. Observed: CelesTrak's OMM values equal the TLE fields as printed (in 304 of 304 fetched TLE sets, each compared with its OMM record), i.e. the halved / sixth-ed values. Parsers converting to true derivatives must multiply by 2 and 6.
+- **ecc-truncation-vs-mantissa-rounding** — CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304 of 304 fetched TLE sets reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0.
 - **object-id-launch-year-pivot** — No document defines how a two-digit launch year in the TLE international designator maps to a century. The corpus applies the same 57 pivot as the epoch year (python-sgp4 export_omm does the same); CelesTrak's OMM OBJECT_ID carries four-digit years, so the mapping matters only for TLE input.
 - **tle-epoch-resolution** — The TLE epoch has 1e-8 day (864 microsecond) resolution. CelesTrak GP epochs convert exactly between the two representations; SupGP epochs do not (86 microsecond difference observed), so a TLE->OMM epoch comparison needs a tolerance of half the TLE resolution.
 - **supgp-extra-keys** — SupGP CSV/JSON carry RMS and DATA_SOURCE, which are not OMM keywords (CCSDS 7.9.2.2 allows only Table 4-x keywords in an OMM); CelesTrak's CSV/JSON are OMM-keyword-based formats, not OMM instances, so this is a format extension rather than a violation. Parsers must tolerate unknown keys.

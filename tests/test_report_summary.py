@@ -110,7 +110,7 @@ class WhatAScriptIsTold(unittest.TestCase):
     def test_the_readme_says_it_and_names_where_the_numbers_are(self):
         readme = flat(read("README.md"))
         self.assertIn("A script " + self.SENTENCE, readme)
-        self.assertIn("`--json FILE` writes the report: its `summary`, in releases after 0.5.1, holds the number of cases in each status", readme)
+        self.assertIn("`--json FILE` writes the report: its `summary`, from 0.6.0, holds the number of cases in each status", readme)
         self.assertIn("the exit status is 0 when no case failed, 1 when one did and 2 when nothing could run", readme)
         self.assertIn("the Action's outputs `failed`, `exercised` and `report` carry the same", readme)
 

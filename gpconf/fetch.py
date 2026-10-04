@@ -18,12 +18,17 @@ what the fetch does about each:
     requested in the same run (D-119);
   * stop on any response that is not an HTTP 200 and have a person look; a 403 or 404
     will not change by repeating the request. The run stops for a human at the first
-    response the list does not expect (D-228): anything that is not an HTTP 200, except
-    the provider's 404 with its no-data text on an entry that names it (expect_status),
-    and a 200 that is an HTML page or empty. That response is kept beside the data as
+    response the list does not expect (D-228): anything that is not an HTTP 200, and a
+    200 that is an HTML page or empty. That response is kept beside the data as
     <file>.unexpected, never in its place, and the URL is not requested again unless
     --force is given two hours or more later. After a refusal (HTTP 403 or 429) no
-    request at all is made for two hours;
+    request at all is made for two hours. No request of a user's run is expected to
+    answer anything but 200 (D-247): the four TLE requests for objects numbered above
+    99999, which answer HTTP 404 with the 16-byte text "No GP data found", are not
+    made. That answer ships with the corpus as a recorded response (recorded/), and
+    the fetch writes it where it used to request it. Only a maintainer's re-capture
+    entry (--include-recaptures) still names a 404 as its expected answer
+    (expect_status);
   * no more than 50 errors in 2 hours and 100 MB a day from one address. The fetch list
     is static (tools/fetchlist.json): no discovery and no wildcard expansion, so the
     number of requests a run can make is known in advance. An entry that names a launch
@@ -62,6 +67,7 @@ from . import locate
 from .words import pick, qty
 
 FETCHLIST = os.path.join("tools", "fetchlist.json")   # relative to the corpus root
+RECORDED_PROVENANCE = "recorded"   # a file's metadata says so when the fetch wrote it from the corpus's record (D-247)
 PAUSE_SECONDS = 2.0
 MIN_REFETCH_AGE_SECONDS = 2 * 3600
 TIMEOUT = 60
@@ -158,7 +164,9 @@ def why_unexpected(entry, status, body):
 
     Expected: an HTTP 200 that carries something other than an HTML page or nothing; or, on an entry that names
     it with expect_status, the provider's 404 with its no-data text, which is the answer the corpus records for a
-    TLE request with nothing to return. CelesTrak asks software to stop at any other response and to have a
+    TLE request with nothing to return. Since D-247 the entries of a user's run that name it are never requested
+    (their answer ships with the corpus), so this second case is reached only by a maintainer's re-capture.
+    CelesTrak asks software to stop at any other response and to have a
     person look, so the old allow_error flag, which let any HTTP error pass on the entries that carried it, a 403
     included, is gone."""
     if status == 200:
@@ -230,8 +238,8 @@ def reusable(entries, root, corpus, sources):
     for e in entries:
         rel = f"fixtures/{e['case']}/raw/{e['file']}"
         m = man.get(rel) or {}
-        if m.get("tier") != "stable" or not m.get("sha256") or is_cached(e, root):
-            continue
+        if m.get("tier") != "stable" or not m.get("sha256") or is_cached(e, root) or e.get("recorded"):
+            continue   # a recorded answer is written from the corpus itself, never copied from another version
         for version, d in sources:
             src = os.path.join(d, rel)
             if os.path.isfile(src) and os.path.isfile(src + ".meta.json"):
@@ -258,9 +266,63 @@ def reuse_one(entry, version, src, root=None):
     return f"reused from {version}"
 
 
+def recorded_answer(entry, corpus):
+    """The provider response the corpus ships for this entry -> (body, the provenance file's content). Refuses a
+    record that is not the bytes its own provenance and the manifest give for this file: the fetch writes nothing it
+    cannot tie to a capture (D-247)."""
+    rel = entry["recorded"]
+    path = os.path.join(corpus, *rel.split("/"))
+    with open(path, "rb") as f:
+        body = f.read()
+    with open(os.path.splitext(path)[0] + ".provenance.json") as f:
+        prov = json.load(f)
+    actual = hashlib.sha256(body).hexdigest()
+    want = (manifest_sources(corpus).get(f"fixtures/{entry['case']}/raw/{entry['file']}") or {}).get("sha256")
+    if actual != prov.get("sha256") or (want and actual != want):
+        raise ValueError(f"{rel} does not hold the bytes its provenance and the manifest record for {entry['file']}")
+    return body, prov
+
+
+def record_one(entry, corpus, root=None):
+    """Write the corpus's recorded answer for this entry into the data folder, with metadata that says where it came
+    from. No request is made (D-247). The metadata gives the status and the time of the corpus's own capture of this
+    URL, so that the runner reads the file as it reads a fetched one, and says in so many words that this fetch did not
+    ask for it."""
+    body, prov = recorded_answer(entry, corpus)
+    capture = next((c for c in prov.get("captures", []) if c.get("url") == entry["url"]), {})
+    d, path, meta_path = target_paths(entry, root)
+    os.makedirs(d, exist_ok=True)
+    status = capture.get("http_status", prov.get("http_status"))
+    meta = {
+        "url": entry["url"],
+        "retrieved_at": capture.get("retrieved_at"),
+        "http_status": status,
+        "bytes": len(body),
+        "sha256": hashlib.sha256(body).hexdigest(),
+        "provenance": RECORDED_PROVENANCE,
+        "requested": False,
+        "recorded": {"file": entry["recorded"], "written_at": now_utc(),
+                     "captured_at": capture.get("retrieved_at"),
+                     "received_again": sorted(r["retrieved_at"] for r in prov.get("received_again", []) if r.get("url") == entry["url"])},
+        "case": entry["case"],
+        "purpose": entry.get("purpose", ""),
+        "note": (f"Not requested by this fetch. Written from the corpus's record of CelesTrak's answer to this URL: HTTP {status}, "
+                 f"{qty(len(body), 'byte')}, the text {body.decode('utf-8', 'replace').strip()!r}, captured {capture.get('retrieved_at')}. "
+                 f"The record ships with the corpus as {entry['recorded']} (D-247)."),
+        "tool": TOOL_VERSION,
+    }
+    with open(path, "wb") as f:
+        f.write(body)
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2, sort_keys=True)
+        f.write("\n")
+    return f"written from the record, {qty(len(body), 'byte')}"
+
+
 def plan(entries, force=False, include_recaptures=False, root=None, now=None, reuse=None, include_satcat=False):
     """What a run would do for each entry, without touching the network -> [{'entry', 'action', 'reason'}], action
-    'fetch' | 'cached' | 'skip' | 'reuse' | 'unexpected'. One request per URL per run. A re-capture entry (the same
+    'fetch' | 'cached' | 'skip' | 'reuse' | 'record' | 'unexpected'. One request per URL per run. An entry whose answer
+    ships with the corpus ('record') is written from that record and requested under no flag (D-247). A re-capture entry (the same
     endpoint a second time, for the recapture cases) is planned only with include_recaptures, and requested only
     when its original is on disk, was retrieved at least two hours earlier and is not itself requested in this run
     (D-119). An entry whose last answer was unexpected ('unexpected': the response is kept beside the data) is not
@@ -277,6 +339,12 @@ def plan(entries, force=False, include_recaptures=False, root=None, now=None, re
         if recap and not include_recaptures:
             continue
         if e.get("launch_window"):  # a capture of a launch window: never requested (D-229)
+            continue
+        if e.get("recorded"):  # the provider's answer to this URL ships with the corpus: never requested (D-247)
+            if is_cached(e, root):
+                out.append({"entry": e, "action": "cached", "reason": "on disk; this URL's answer is the corpus's record and is never requested"})
+            else:
+                out.append({"entry": e, "action": "record", "reason": f"the corpus's record of this URL's answer, {e['recorded']}: written from it, not requested"})
             continue
         # the legacy SATCAT file is requested only when asked for (D-231): not planned when absent, and not refreshed by
         # --force when an earlier fetch left it on disk, where it is kept and still compared with the manifest
@@ -412,16 +480,25 @@ def refusal_line(status, age, left, url, kept):
             f"{qty(remain, 'minute')} {pick(remain, 'remains', 'remain')}. The refused response is kept as {kept}; read it, it says why.")
 
 
-def dry_run_line(n_fetch, n_reuse, left):
+def recorded_line(n):
+    """What the fetch says of the requests it does not make because their answer ships with the corpus (D-247)."""
+    return (f"not requested: {qty(n, 'TLE request')} for {pick(n, 'an object', 'objects')} numbered above 99999, which CelesTrak answers with HTTP 404 and the "
+            f"text 'No GP data found'. That answer ships with the corpus as a recorded response (recorded/); "
+            f"{pick(n, 'the file is', 'the files are')} written from it.")
+
+
+def dry_run_line(n_fetch, n_reuse, left, n_record=0):
     """What a dry run says a real run would do (D-150), agreeing in number (D-239)."""
     also = f", reuse {qty(n_reuse, 'file')} from an earlier corpus version's cache" if n_reuse else ""
+    also += f", write {qty(n_record, 'file')} from the corpus's record of the provider's answer" if n_record else ""
     return (f"dry run: no request made; a run would make {qty(n_fetch, 'request')}{also} and leave "
             f"{qty(left, 'entry', 'entries')} as {pick(left, 'it is', 'they are')}")
 
 
-def done_line(made, reused, skipped):
+def done_line(made, reused, skipped, recorded=0):
     """The fetch's closing line, agreeing in number (D-239)."""
     also = f", {qty(reused, 'file')} reused from an earlier corpus version's cache" if reused else ""
+    also += f", {qty(recorded, 'file')} written from the corpus's record of the provider's answer" if recorded else ""
     return f"done: {qty(made, 'request')} made{also}, {qty(skipped, 'entry', 'entries')} skipped"
 
 
@@ -592,6 +669,9 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
               "and no parser takes part in that check; pass --include-satcat to fetch it.", file=out)
     if captures:
         print(captures_line(len(captures), sorted({e["launch_window"] for e in captures})), file=out)
+    from_record = [e for e in selected if e.get("recorded") and not is_cached(e, root)]
+    if from_record:
+        print(recorded_line(len(from_record)), file=out)
     refused = recent_refusal(entries, now, root)
     if refused:
         # two quiet hours after a refusal, whatever is asked for (D-228); the dry run says the same and makes none either
@@ -604,12 +684,16 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     reuse = reusable(selected, root, corpus, sources) if sources else {}
     planned = plan(selected, force=args.force, include_recaptures=args.include_recaptures, root=root, now=now, reuse=reuse,
                    include_satcat=args.include_satcat)
-    made = reused = 0
+    made = reused = recorded = 0
     for p in planned:
         e, label = p["entry"], f"{p['entry']['case']}/{p['entry']['file']}"
         if args.dry_run:
-            head = {"fetch": "FETCH   ", "reuse": "REUSE   "}.get(p["action"], f"{p['action']:7s} ")
+            head = {"fetch": "FETCH   ", "reuse": "REUSE   ", "record": "RECORD  "}.get(p["action"], f"{p['action']:7s} ")
             print(head + e["url"] + ("" if p["action"] == "fetch" else f"  ({p['reason']})"), file=out)
+            continue
+        if p["action"] == "record":
+            recorded += 1
+            print(f"{record_one(e, corpus, root=root):>34}  {label}  (the corpus's record of this URL's answer; no request)", file=out)
             continue
         if p["action"] == "reuse":
             version, src = reuse[f"fixtures/{e['case']}/raw/{e['file']}"]
@@ -626,8 +710,9 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     if args.dry_run:  # the planned requests are not "skipped" (D-150): say what a real run would do
         n_fetch = sum(1 for p in planned if p["action"] == "fetch")
         n_reuse = sum(1 for p in planned if p["action"] == "reuse")
-        print(dry_run_line(n_fetch, n_reuse, len(planned) - n_fetch - n_reuse), file=out)
+        n_record = sum(1 for p in planned if p["action"] == "record")
+        print(dry_run_line(n_fetch, n_reuse, len(planned) - n_fetch - n_reuse - n_record, n_record), file=out)
         return 0
-    print(done_line(made, reused, len(planned) - made - reused), file=out)
+    print(done_line(made, reused, len(planned) - made - reused - recorded, recorded), file=out)
     n = print_drift(drift_report([e for e in [p["entry"] for p in planned] + captures if is_cached(e, root)], root, corpus), out)
     return 2 if n else 0

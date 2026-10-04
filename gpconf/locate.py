@@ -1,9 +1,11 @@
 """Where the corpus's own files are, and where the fetched provider data is (D-150).
 
 Two roots. The corpus root holds what ships with the corpus: manifest.json, every fixtures/<case>/expected.json and
-case.md, derived/, vectors/ and tools/fetchlist.json. It is read-only. The data root holds what the user's machine
-fetched: fixtures/<case>/raw/<file> and its .meta.json, the same layout as in a clone. Provider data is never
-shipped (D-019), so an installed runner keeps it in a folder of the user's.
+case.md, derived/, vectors/, recorded/ and tools/fetchlist.json. It is read-only. The data root holds what the user's
+machine fetched: fixtures/<case>/raw/<file> and its .meta.json, the same layout as in a clone. Provider data is never
+shipped (D-019), so an installed runner keeps it in a folder of the user's. recorded/ holds the one provider response
+that is shipped, the provider's 16-byte answer to a query with nothing to return, which holds no data; the fetch
+writes it into the data root where it used to request it (D-247).
 
 Corpus root, first match wins:
   1. --root DIR;

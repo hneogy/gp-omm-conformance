@@ -238,6 +238,10 @@ def main(argv=None):
     if reused:  # D-157: the report says which provider files were copied from an earlier version's cache, not fetched
         print(f"{qty(len(reused), 'provider file')} {pick(len(reused), 'was', 'were')} reused from corpus {', '.join(sorted(set(map(str, reused.values()))))}'s cache "
               "rather than fetched: stable tier, bytes matching this version's recorded SHA-256.")
+    recorded = {p: v for r in results for p, v in r.recorded.items()}
+    if recorded:  # D-247: the report says which files hold the corpus's record of the provider's empty answer, not a fetched one
+        print(f"{qty(len(recorded), 'provider file')} {pick(len(recorded), 'holds', 'hold')} the corpus's record of CelesTrak's empty answer "
+              "(HTTP 404, 'No GP data found', to a TLE request above 99999): written by the fetch from recorded/, not requested.")
     if tol:
         print("'pass within tolerance' items list per-field count, mean signed difference and maximum, so a systematic bias is visible (see README, Tolerances).")
     return 1 if failed else 0

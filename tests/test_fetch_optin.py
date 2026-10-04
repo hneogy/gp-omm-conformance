@@ -54,6 +54,8 @@ class TheList(unittest.TestCase):
         self.assertEqual((len(user), size(user)), (51, 12511746))
         default = [e for e in user if not e.get("opt_in")]
         self.assertEqual((len(default), size(default)), (50, 3131880))
+        asked = [e for e in default if not e.get("recorded")]              # four are written from the corpus's record (D-247)
+        self.assertEqual((len(asked), size(asked)), (46, 3131816))
         self.assertGreater(size(on_request) / size(user), 0.74)                        # three quarters
 
     def test_only_the_data_check_reads_it(self):
@@ -89,19 +91,19 @@ class TheFetch(unittest.TestCase):
 
     def test_a_plain_fetch_leaves_it_out_and_says_how_to_ask(self):
         code, asked, out = self.run_fetch([])
-        self.assertEqual(len(asked), 50)
+        self.assertEqual(len(asked), 46)
         self.assertNotIn(URL, asked)
         self.assertIn("not requested: the legacy SATCAT file (pub/satcat.txt, 9.4 MB).", out)
         self.assertIn("no parser takes part in that check; pass --include-satcat to fetch it.", out)
 
     def test_the_flag_brings_it(self):
         code, asked, out = self.run_fetch(["--include-satcat"])
-        self.assertEqual(len(asked), 51)
+        self.assertEqual(len(asked), 47)
         self.assertIn(URL, asked)
         self.assertNotIn("not requested: the legacy SATCAT file", out)
 
     def test_the_dry_run_counts_the_same(self):
-        for argv, n in ((["--dry-run"], 50), (["--dry-run", "--include-satcat"], 51)):
+        for argv, n in ((["--dry-run"], 46), (["--dry-run", "--include-satcat"], 47)):
             code, asked, out = self.run_fetch(argv)
             self.assertEqual(asked, [])
             self.assertIn(f"a run would make {n} requests", out)
@@ -123,7 +125,7 @@ class TheFetch(unittest.TestCase):
         """--skip-case satcat-70000-cutoff leaves out every entry filed under the case, two of which other cases read
         (D-230 withdrew that advice)."""
         code, asked, out = self.run_fetch(["--skip-case", CASE])
-        self.assertEqual(len(asked), 44)
+        self.assertEqual(len(asked), 40)
         self.assertFalse([u for u in asked if "gp-first.php?CATNR=69999" in u])
 
 

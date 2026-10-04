@@ -6,5 +6,10 @@ documentation, specification vectors, derived files and expected values. It
 does not cover, and the repository does not contain, raw data served by
 CelesTrak or any other provider; tools/fetch.py, which is `gpconf fetch` in the
 installed package, retrieves such data to your machine under the provider's own
-terms (https://celestrak.org/usage-policy.php). The XML schemas under schemas/
+terms (https://celestrak.org/usage-policy.php). One response from CelesTrak is
+in the repository, and the licence does not cover it either: the 16-byte text
+"No GP data found" in recorded/, which CelesTrak returns with HTTP 404 to a TLE
+request for an object numbered above 99999. It holds no orbital data and is
+reproduced as recorded, with the provenance of each capture beside it
+(DECISIONS.md, D-247). The XML schemas under schemas/
 are CCSDS/SANA publications redistributed unmodified; see schemas/SOURCE.md.

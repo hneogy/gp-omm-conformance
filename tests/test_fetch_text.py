@@ -37,17 +37,17 @@ def section(text, title):
 
 
 def users_run():
-    """What a user's fetch requests -> (entries, bytes, expected 404s), from the fetch list and the manifest."""
+    """What a user's fetch requests -> (requested entries, their bytes, the entries written from the corpus's record),
+    from the fetch list and the manifest. The four entries whose answer is the provider's 404 are not requested: the
+    answer ships with the corpus and the fetch writes it (D-247)."""
     entries = [e for e in json.loads(read("tools/fetchlist.json")) if not e.get("recapture_of") and not e.get("launch_window") and not e.get("opt_in")]
-    recorded = {}
+    sources = {}
     for c in json.loads(read("manifest.json"))["cases"]:
         for s in c.get("sources", []):
-            recorded.setdefault(s["path"], s)
-    size = sum(recorded[f"fixtures/{e['case']}/raw/{e['file']}"]["bytes"] for e in entries)
-    return entries, size, [e for e in entries if e.get("expect_status") == 404]
-
-
-WORDS = {4: "four", 5: "five", 6: "six"}
+            sources.setdefault(s["path"], s)
+    requested = [e for e in entries if not e.get("recorded")]
+    size = sum(sources[f"fixtures/{e['case']}/raw/{e['file']}"]["bytes"] for e in requested)
+    return requested, size, [e for e in entries if e.get("recorded")]
 
 
 class FetchingResponsibly(unittest.TestCase):
@@ -74,17 +74,21 @@ class FetchingResponsibly(unittest.TestCase):
     def test_the_figures_are_the_fetch_lists(self):
         entries, size, known = users_run()
         mb = f"{size / 1e6:.1f} MB"
-        self.assertIn(f"One run is {len(entries)} requests, {mb} and those {WORDS[len(known)]} 404s.", self.section)
-        self.assertIn(f"with {WORDS[len(known)]} exceptions it knows in advance: {WORDS[len(known)]} TLE requests for objects numbered above 99999", self.section)
+        self.assertEqual((len(entries), len(known)), (46, 4))
+        self.assertIn(f"One run is {len(entries)} requests and {mb}, and none of them is expected to answer with an error.", self.section)
+        self.assertIn("The fetch stops at the first one, with no exception (D-247).", self.section)
+        self.assertIn("four TLE requests for objects numbered above 99999, which answer 404 with `No GP data found`. It no longer makes them", self.section)
+        self.assertFalse([e["file"] for e in entries if e.get("expect_status")])      # no request of a user's run expects anything but a 200
         for line in self.readme.splitlines():
             if line.startswith(("gpconf fetch ", "python3 tools/fetch.py ")) and "#" in line:
                 self.assertIn(f"{len(entries)} requests, {mb}", line, line)
                 self.assertNotIn("2 s apart", line)
         self.assertIn(f"That is {len(entries)} requests to CelesTrak, one at a time", flat(read("docs/ADAPTERS.md")))
 
-    def test_the_known_404s_are_tle_requests_for_objects_above_99999(self):
+    def test_the_answers_written_from_the_record_are_tle_requests_for_objects_above_99999(self):
         _, _, known = users_run()
         for e in known:
+            self.assertEqual((e.get("expect_status"), e["recorded"]), (404, "recorded/celestrak-no-gp-data-found.txt"))
             self.assertRegex(e["url"], r"FORMAT=TLE$")
             self.assertRegex(e["url"], r"CATNR=(100000|270449)&|GROUP=last-30-days&")   # the group holds six-digit objects only
 

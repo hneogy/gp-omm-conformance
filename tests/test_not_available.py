@@ -63,11 +63,13 @@ class TheList(unittest.TestCase):
         self.assertEqual(marked, by_url)
         self.assertFalse([e["file"] for e in CAPTURES if e.get("recapture_of")])
 
-    def test_a_users_run_has_four_known_404s(self):
+    def test_a_users_list_has_four_known_404s_and_none_is_requested(self):
         user = [e for e in FETCHLIST if not e.get("recapture_of") and not e.get("launch_window")]
         self.assertEqual(len(user), 51)                                              # 50 without the SATCAT file, which is on request (D-231)
-        self.assertEqual(sorted(e["file"] for e in user if e.get("expect_status") == 404),
-                         ["analyst-270449-first.tle", "last-30-days.tle", "saramago-first.tle", "saramago.tle"])
+        known = sorted(e["file"] for e in user if e.get("expect_status") == 404)
+        self.assertEqual(known, ["analyst-270449-first.tle", "last-30-days.tle", "saramago-first.tle", "saramago.tle"])
+        # each is written from the response the corpus ships, so a user's run requests 46 URLs and expects a 200 from every one (D-247)
+        self.assertEqual(sorted(e["file"] for e in user if e.get("recorded")), known)
 
     def test_every_capture_is_a_source_of_some_case(self):
         with open(os.path.join(ROOT, "manifest.json")) as f:
@@ -94,8 +96,9 @@ class TheFetchNeverAsks(unittest.TestCase):
             with self.subTest(opts=opts):
                 planned = fetch.plan(FETCHLIST, root=self.root, **opts)
                 self.assertFalse([p["entry"]["file"] for p in planned if p["entry"].get("launch_window")])
-                self.assertEqual(sum(1 for p in planned if p["action"] == "fetch"), 50)
-                self.assertEqual(sum(1 for p in fetch.plan(FETCHLIST, root=self.root, include_satcat=True, **opts) if p["action"] == "fetch"), 51)
+                self.assertEqual(sum(1 for p in planned if p["action"] == "fetch"), 46)
+                self.assertEqual(sum(1 for p in planned if p["action"] == "record"), 4)       # never requested, under any flag (D-247)
+                self.assertEqual(sum(1 for p in fetch.plan(FETCHLIST, root=self.root, include_satcat=True, **opts) if p["action"] == "fetch"), 47)
 
     def test_no_run_requests_one_and_the_run_says_why(self):
         for argv in ([], ["--force"], ["--include-recaptures"], ["--case", PARTLY], ["--stage", "A"], ["--stage", "D"]):

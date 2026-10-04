@@ -61,7 +61,9 @@ import zipfile
 
 MANIFEST = "EXPORT-MANIFEST.txt"
 TOP = ["pyproject.toml", "README.md", "LICENSE", "NOTICE"]
-CORPUS = ["manifest.json", "tools/fetchlist.json", "fixtures/*/expected.json", "fixtures/*/case.md", "derived/**/*", "vectors/**/*"]
+# recorded/ holds the one provider response the corpus ships, named file by file (D-247); the fetch reads it from here.
+CORPUS = ["manifest.json", "tools/fetchlist.json", "fixtures/*/expected.json", "fixtures/*/case.md", "derived/**/*", "vectors/**/*",
+          "recorded/celestrak-no-gp-data-found.txt", "recorded/celestrak-no-gp-data-found.provenance.json"]
 BUNDLED = "gpconf/corpus"
 RAW = re.compile(r"(^|/)fixtures/[^/]+/raw(/|$)")
 SDIST_OTHER = re.compile(r"^(PKG-INFO|setup\.cfg|pyproject\.toml|README\.md|LICENSE|NOTICE|gpconf\.egg-info/.+)$")

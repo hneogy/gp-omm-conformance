@@ -24,6 +24,10 @@ sys.path.insert(0, os.path.join(ROOT, "tools"))
 from public_scrub import scrub_expected, scrub_audit_md  # noqa: E402
 RAW = re.compile(r"(^|/)fixtures/[^/]+/raw(/|$)")
 SPACETRACK = re.compile(r"space[-_ .]?track", re.I)
+# The one provider response that is exported (D-247): the provider's 16-byte answer to a query with nothing to return,
+# by its exact bytes, and its provenance file. Anything else under recorded/ is refused.
+RECORDED = {"recorded/celestrak-no-gp-data-found.txt": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+            "recorded/celestrak-no-gp-data-found.provenance.json": None}
 
 
 def main():
@@ -46,6 +50,11 @@ def main():
         if RAW.search(rel):
             refused.append((rel, "raw provider file"))
             continue
+        if rel.replace(os.sep, "/").startswith("recorded/"):
+            want = RECORDED.get(rel.replace(os.sep, "/"), "")
+            if want == "" or (want and hashlib.sha256(open(os.path.join(ROOT, rel), "rb").read()).hexdigest() != want):
+                refused.append((rel, "not the one provider response the corpus ships (D-247)"))
+                continue
         if (SPACETRACK.search(os.path.basename(rel)) or SPACETRACK.search(rel)) and rel != "tools/verify_against_spacetrack.py":
             refused.append((rel, "matches the Space-Track name guard"))
             continue

@@ -3,8 +3,8 @@ cff-version: 1.2.0
 message: "If you use this corpus, please cite it as below. Use the concept DOI to refer to the corpus in general (it resolves to the latest release) and the version DOI to refer to exactly the release you used."
 type: dataset
 title: "gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary"
-version: "0.5.1"
-date-released: "2026-10-03"
+version: "0.6.0"
+date-released: "2026-10-04"
 doi: 10.5281/zenodo.22867654
 license: MIT
 authors:
@@ -14,12 +14,13 @@ authors:
     # role: author and maintainer; copyright holder is NEOGY LLC
 repository-code: "https://github.com/hneogy/gp-omm-conformance"
 abstract: >-
-  Expected values, structural checks, specification vectors, derived Alpha-5 TLE lines and a
+  Expected values, structural checks, specification vectors, derived Alpha-5 TLE sets and a
   standard-library runner that test whether an orbital-data parser handles the 2026 migration of
   the US satellite catalog past five-digit numbers: Alpha-5 encoding, six- and nine-digit catalog
   numbers, and the CCSDS Orbit Mean-Elements Message in CSV, JSON, XML and KVN as served by
-  CelesTrak. Raw provider data is not redistributed; a fetch script rebuilds it locally under the
-  provider's terms and SHA-256 hashes identify the tested snapshot. Built with AI assistance under
+  CelesTrak. No provider data is redistributed, and one provider response is, the 16-byte answer
+  "No GP data found"; a fetch script rebuilds the data locally under the provider's terms and
+  SHA-256 hashes identify the tested snapshot. Built with AI assistance under
   human direction; v0.1.0 was audited by a separate AI session with no access to the build context
   (AUDIT.md); decision log in DECISIONS.md.
 keywords:

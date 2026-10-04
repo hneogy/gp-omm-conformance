@@ -71,7 +71,8 @@ REPO_URL = "https://github.com/hneogy/gp-omm-conformance"
 
 
 def is_provider_data(path):
-    """A provider response under fixtures/<case>/raw/: never shipped with the corpus, always fetched (D-019)."""
+    """A provider response under fixtures/<case>/raw/: never shipped there with the corpus (D-019). A fetch brings it,
+    or, for the provider's recorded empty answer, writes it from the one response the corpus ships, in recorded/ (D-247)."""
     parts = path.replace("\\", "/").split("/")
     return len(parts) >= 4 and parts[0] == "fixtures" and parts[2] == "raw"
 
@@ -356,6 +357,8 @@ class CaseResult:
         self.reused = {}  # path -> the corpus version whose cache the file was copied from, not fetched (D-157)
         self.unexpected = {}  # path -> what the fetch recorded when the answer for that file was not one it expected (D-228)
         self.on_request = {}  # path -> the fetch's flag for a file it brings only on request, when a data check waits on it (D-232)
+        self.recorded = {}  # path -> the corpus's record the fetch wrote this file from, where it requested nothing (D-247)
+        self.empty_answers = {}  # path -> the provider's no-data text the file holds
 
     def add(self, check, status, file=None, detail="", tolerance=None, counts=None):
         if tolerance and status == "pass":
@@ -400,6 +403,8 @@ class CaseResult:
             d["unexpected"] = self.unexpected
         if self.on_request:
             d["on_request"] = self.on_request
+        if self.recorded:
+            d["recorded"] = self.recorded
         return d
 
 
@@ -580,6 +585,9 @@ class Runner:
             came = meta.get("reused_from")  # reused rather than fetched (D-157)
             if came:
                 res.reused[path] = came.get("corpus_version")
+            if meta.get("provenance") == "recorded":  # written by the fetch from the corpus's record, not requested (D-247)
+                res.recorded[path] = {"file": (meta.get("recorded") or {}).get("file"), "http_status": meta.get("http_status"),
+                                      "captured_at": meta.get("retrieved_at")}
             got = meta.get("http_status")
             if got not in (None, 200) and got != src.get("http_status", 200):
                 # A fetch before v0.5.1 wrote a response it did not expect to the data path itself, "so it is never
@@ -612,6 +620,7 @@ class Runner:
         text = raw.decode("utf-8", "replace")
         if src.get("http_status", 200) != 200 or text.strip() in ("No GP data found", "No SupGP data found"):
             if text.strip() in ("No GP data found", "No SupGP data found"):
+                res.empty_answers[path] = text.strip()
                 if "empty-answer-yields-no-records" in case.get("checks", []):
                     self.check_empty_answer(res, path, fmt, raw, text.strip(), src.get("http_status"))
                 return "empty-404", fmt, mode, [], [], {}
@@ -969,15 +978,30 @@ class Runner:
             tby = {p.get("norad_cat_id"): p for p in (tparsed or [])}
             if "tle-format-omits-ids-above-99999" in active or "tle-count-equals-omm-count-below-100000" in active:
                 below = {i for i in oby if i is not None and i < 100000}
+                status = None
                 if tstate == "empty-404":
                     ok = not below
-                    detail = f"TLE request returned 'No GP data found'; OMM set has {qty(len(below), 'id')} below 100000 (expected 0)"
+                    body = res.empty_answers.get(tpath, "No GP data found")  # the text the file holds: GP or SupGP
+                    rec = res.recorded.get(tpath)
+                    if rec is None:
+                        detail = f"TLE request returned {body!r}; OMM set has {qty(len(below), 'id')} below 100000 (expected 0)"
+                    elif ok:
+                        # The answer is the corpus's record, written by the fetch, which did not request it (D-247).
+                        detail = (f"the corpus's record of the TLE answer is {body!r} (HTTP {rec['http_status']}, captured {rec['captured_at']}; "
+                                  f"not requested by this fetch); OMM set has {qty(len(below), 'id')} below 100000 (expected 0)")
+                    else:
+                        # A record cannot be wrong about today: where the fetched OMM set now holds ids the TLE format can
+                        # carry, CelesTrak's answer today is not the recorded one, and the comparison is not made.
+                        status = "not-exercised"
+                        detail = (f"the corpus's record of the TLE answer is {body!r} (captured {rec['captured_at']}), from when this set held no id "
+                                  f"below 100000; the OMM set fetched now holds {len(below)}, so CelesTrak's TLE answer today is not the recorded one, "
+                                  f"and this fetch did not request it: not compared")
                 else:
                     ok = set(tby) == below
                     detail = f"TLE has {qty(len(tby), 'record')}, OMM has {qty(len(below), 'id')} below 100000 and {len(oby) - len(below)} at or above"
                 for c in ("tle-format-omits-ids-above-99999", "tle-count-equals-omm-count-below-100000"):
                     if c in active:
-                        res.add(c, "pass" if ok else "fail", set_name, detail)
+                        res.add(c, status or ("pass" if ok else "fail"), set_name, detail)
             if tstate == "ok" and ("tle-values-match-omm-within-tle-precision" in active or "mmdot-is-tle-field-value" in active):
                 bad, bad_dot, n = [], [], 0
                 tol, tol_dot, quant = TolStats(), TolStats(), TolStats()  # quant: the provider's own TLE epoch quantisation, not a parser tolerance
@@ -1050,7 +1074,9 @@ class Runner:
                 files[path] = (state, fmt, parsed, refrecs)
                 if state != "ok":
                     if state == "empty-404":
-                        res.add("sha256-matches-tested-snapshot", "info", path, f"{mode}: empty response body preserved")
+                        rec = res.recorded.get(path)
+                        res.add("sha256-matches-tested-snapshot", "info", path, f"{mode}: empty response body preserved" if rec is None else
+                                f"{mode}: the corpus's record of the provider's empty answer (captured {rec['captured_at']}), written by the fetch and not requested")
                     continue
                 res.add("sha256-matches-tested-snapshot", "info", path, "drift: stable-tier source differs from the tested snapshot" if path in res.drift else mode)
                 exempt = set()

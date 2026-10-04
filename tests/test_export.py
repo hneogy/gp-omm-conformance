@@ -73,6 +73,21 @@ class ExportGuardTests(unittest.TestCase):
         rels = {os.path.relpath(f, self.dest) for f in self.files}
         self.assertIn(os.path.join("docs", "ADAPTERS.md"), rels)
 
+    def test_the_one_provider_response_is_exported_and_it_is_the_sixteen_bytes(self):
+        # D-247, a named exception to D-023: the provider's answer to a query with nothing to return, and its provenance
+        rels = sorted(os.path.relpath(f, self.dest).replace(os.sep, "/") for f in self.files)
+        self.assertEqual([r for r in rels if r.startswith("recorded/")],
+                         ["recorded/celestrak-no-gp-data-found.provenance.json", "recorded/celestrak-no-gp-data-found.txt"])
+        with open(os.path.join(self.dest, "recorded", "celestrak-no-gp-data-found.txt"), "rb") as f:
+            self.assertEqual(f.read(), b"No GP data found")
+
+    def test_anything_else_under_recorded_is_refused(self):
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        import export_public
+        self.assertEqual(sorted(export_public.RECORDED), ["recorded/celestrak-no-gp-data-found.provenance.json", "recorded/celestrak-no-gp-data-found.txt"])
+        src = open(os.path.join(ROOT, "tools", "export_public.py"), encoding="utf-8").read()
+        self.assertIn('refused.append((rel, "not the one provider response the corpus ships (D-247)"))', src)
+
     def test_no_raw_and_no_spacetrack_paths(self):
         rels = [os.path.relpath(f, self.dest) for f in self.files]
         self.assertFalse([r for r in rels if re.search(r"(^|/)fixtures/[^/]+/raw(/|$)", r)])

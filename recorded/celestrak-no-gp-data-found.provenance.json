@@ -1,0 +1,94 @@
+{
+ "file": "recorded/celestrak-no-gp-data-found.txt",
+ "what": "CelesTrak's answer to a GP query with nothing to return in the format asked for: HTTP 404 with this body. Here, to TLE requests for objects numbered above 99999, which the TLE format cannot carry.",
+ "text": "No GP data found",
+ "bytes": 16,
+ "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+ "http_status": 404,
+ "holds_orbital_data": false,
+ "exception": "The one provider response shipped with the corpus: a named exception to D-023, which ships no raw CelesTrak bytes (DECISIONS.md, D-247). No other provider response is shipped.",
+ "licence": "CelesTrak's text, reproduced as recorded. The corpus's MIT licence does not cover it (NOTICE).",
+ "how_it_is_used": "gpconf fetch writes this body to each path of written_by_the_fetch_as, with metadata that says it was written from this record, and requests none of those URLs. The runner hands it to the parser under test (check empty-answer-yields-no-records).",
+ "written_by_the_fetch_as": [
+  "fixtures/analyst-objects/raw/analyst-270449-first.tle",
+  "fixtures/six-digit-omm-saramago/raw/saramago-first.tle",
+  "fixtures/six-digit-omm-saramago/raw/saramago.tle",
+  "fixtures/tle-omits-six-digit-objects/raw/last-30-days.tle"
+ ],
+ "captures": [
+  {
+   "file": "fixtures/six-digit-omm-saramago/raw/saramago.tle",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:09:59Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683"
+  },
+  {
+   "file": "fixtures/six-digit-omm-saramago/raw/saramago-first.tle",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:43:53Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683"
+  },
+  {
+   "file": "fixtures/tle-omits-six-digit-objects/raw/last-30-days.tle",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:10:10Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
+   "note": "the fetch tool discarded this body at the time, and it was written back by hand from the tool's log (D-013); last-30-days-recapture.tle is the same endpoint captured cleanly 31 minutes later (D-022)"
+  },
+  {
+   "file": "fixtures/tle-omits-six-digit-objects/raw/last-30-days-recapture.tle",
+   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=tle",
+   "retrieved_at": "2026-09-21T00:41:28Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683"
+  },
+  {
+   "file": "fixtures/analyst-objects/raw/analyst-270449-first.tle",
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=TLE",
+   "retrieved_at": "2026-09-21T00:44:05Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683"
+  }
+ ],
+ "received_again": [
+  {
+   "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=TLE",
+   "retrieved_at": "2026-10-04T03:25:04Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683"
+  },
+  {
+   "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=last-30-days&FORMAT=TLE",
+   "retrieved_at": "2026-10-04T03:25:14Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683"
+  },
+  {
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=TLE",
+   "retrieved_at": "2026-10-04T03:26:08Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683"
+  },
+  {
+   "url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=270449&FORMAT=TLE",
+   "retrieved_at": "2026-10-04T03:26:20Z",
+   "http_status": 404,
+   "bytes": 16,
+   "sha256": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683"
+  }
+ ],
+ "received_again_by": "the maintainer's first-time fetch at the release of v0.5.1, from a clean install (DECISIONS.md, D-235)",
+ "generator": "tools/make_recorded.py",
+ "generated_at": "2026-10-04T15:04:41Z"
+}

@@ -83,8 +83,12 @@ class StagePackage(unittest.TestCase):
     def test_the_staged_tree_holds_the_whole_package_and_the_shipped_corpus(self):
         staged = {d for _, d in self.pairs}
         for want in ("gpconf/adapters/tlejs.mjs", "gpconf/adapters/sgp4_adapter.py", "gpconf/corpus/manifest.json",
-                     "gpconf/corpus/tools/fetchlist.json", "gpconf/corpus/vectors/alpha5.json", "pyproject.toml", "LICENSE", "NOTICE"):
+                     "gpconf/corpus/tools/fetchlist.json", "gpconf/corpus/vectors/alpha5.json", "pyproject.toml", "LICENSE", "NOTICE",
+                     # the one provider response the corpus ships, which the installed fetch reads (D-247)
+                     "gpconf/corpus/recorded/celestrak-no-gp-data-found.txt", "gpconf/corpus/recorded/celestrak-no-gp-data-found.provenance.json"):
             self.assertIn(want, staged)
+        self.assertEqual(sorted(d for d in staged if d.startswith("gpconf/corpus/recorded/")),
+                         ["gpconf/corpus/recorded/celestrak-no-gp-data-found.provenance.json", "gpconf/corpus/recorded/celestrak-no-gp-data-found.txt"])
         cases = [d for d in os.listdir(os.path.join(self.export, "fixtures")) if not d.startswith(".")]
         for c in cases:
             self.assertIn(f"gpconf/corpus/fixtures/{c}/expected.json", staged)

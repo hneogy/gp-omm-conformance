@@ -4,7 +4,9 @@ CelesTrak asks software to stop querying on any response that is not an HTTP 200
 403 or 404 will not change by repeating the request. The fetch used to carry an allow_error flag that let any HTTP
 error pass on the entries that had it, a 403 included, and it wrote an unexpected response to the data path itself,
 where the runner read it as provider data. Now: the run goes on past a non-200 only when it is the provider's 404
-with its no-data text on an entry that names it (expect_status); anything else ends the run at once; the response is
+with its no-data text on an entry that names it (expect_status), which since D-247 only a maintainer's re-capture entry
+does: the four such entries of a user's run are written from the response the corpus ships and are never requested
+(tests/test_recorded_answer.py). Anything else ends the run at once; the response is
 kept beside the data as <file>.unexpected; the URL is not asked again short of --force two hours later; and after a
 refusal (403 or 429) no request at all is made for two hours.
 

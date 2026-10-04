@@ -4,10 +4,10 @@ Writing TLEs across the five-digit boundary: Alpha-5 catalog field, valid lines,
 
 ## Evidence basis
 
-- Inputs are records already frozen in this corpus (the v0.1.0 expected values of stable-tier sources): the 604 derived Alpha-5 records (603 distinct ids, letters A and T), the first ISS record (1998 epoch, negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative BSTAR and first derivative) and the first record of analyst 81011 (blank international designator, empty OBJECT_ID). No new provider request and no new raw bytes.
+- Inputs are records already frozen in this corpus (the v0.1.0 expected values of stable-tier sources): the 604 derived Alpha-5 TLE sets (603 distinct ids, letters A and T), the first ISS record (1998 epoch, negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative BSTAR and first derivative) and the first record of analyst 81011 (blank international designator, empty OBJECT_ID). No new provider request and no new raw bytes.
 - Three inputs are synthetic-derived (PLAN.md section 2.1; owner approval 2026-09-22, DECISIONS D-096): the SARAMAGO first record with NORAD_CAT_ID replaced by 340000, 799501621 and -1, the values of vectors/alpha5.json encode_unrepresentable. The elements are real; the ids are specification vectors that no catalogued object carries. The correct output for them is a refusal.
 - One input is synthetic-derived for a field form (DECISIONS D-125): SARAMAGO's elements with the catalog number replaced by the five-digit vector 99999 and BSTAR replaced by 1.2345, the positive-exponent form (' 12345+1') that no fetched record carries; its expected TLE fields are rendered by the corpus, and it is a specification vector, not a catalogued object.
-- The precision rule (a written field equals the input quantised at the field's resolution by truncation or by rounding half up) rests on the evidence of tle-vs-omm-precision-loss: CelesTrak truncates the eccentricity and rounds the mantissas (304/304 records), Space-Track rounds the eccentricity (D-070, D-071). A writer may follow either provider; the corpus reports which convention it observed.
+- The precision rule (a written field equals the input quantised at the field's resolution by truncation or by rounding half up) rests on the evidence of tle-vs-omm-precision-loss: CelesTrak truncates the eccentricity and rounds the mantissas (304 of 304 fetched TLE sets), Space-Track rounds the eccentricity (D-070, D-071). A writer may follow either provider; the corpus reports which convention it observed.
 
 ## What it tests
 
@@ -33,11 +33,11 @@ The writer-side mirror of the corpus. Each input record is handed to the adapter
 
 Provides:
 
-- 606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived lines carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)
+- 606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived TLE sets carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)
 - a 1998 epoch, a negative first derivative, a non-zero second derivative, zero and negative BSTAR, a blank international designator, an empty OBJECT_ID
 - three numbers the TLE catalog field cannot represent (340000, 799501621, -1), for which the correct output is a refusal
 - one positive-exponent BSTAR (1.2345, TLE field ' 12345+1') on a synthetic-derived input with the five-digit vector id 99999, rendered by the corpus (D-125)
-- provider-rendered field substrings for the three five-digit records and the CelesTrak-style derived fields for the 604 Alpha-5 records, for an information-only byte comparison
+- provider-rendered field substrings for the three five-digit records and the CelesTrak-style derived fields for the 604 Alpha-5 TLE sets, for an information-only byte comparison
 
 Gaps (stated explicitly for this case):
 
@@ -53,7 +53,7 @@ Gaps (stated explicitly for this case):
 
 ## Ambiguities recorded
 
-- **ecc-truncation-vs-mantissa-rounding** — CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304/304 CelesTrak records reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0.
+- **ecc-truncation-vs-mantissa-rounding** — CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304 of 304 fetched TLE sets reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0.
 
 ## Sources
 

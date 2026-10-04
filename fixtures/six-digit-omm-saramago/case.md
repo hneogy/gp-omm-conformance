@@ -16,8 +16,8 @@ The first six-digit object. A parser must accept NORAD_CAT_ID 100000 in every OM
 
 - **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 - **omm-formats-agree** — For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them.
-- **tle-format-omits-ids-above-99999** — A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'.
-- **empty-answer-yields-no-records** — A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143).
+- **tle-format-omits-ids-above-99999** — A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'. Where the TLE file is the corpus's own record of that answer, which a fetch writes without requesting it (D-247), and the fetched OMM set holds an id below 100000, the record no longer describes that day: the comparison is not made and the item reports not-exercised.
+- **empty-answer-yields-no-records** — A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143). From v0.6.0 a fetch does not request the four GP answers of this kind: it writes them from the one provider response the corpus ships, recorded/celestrak-no-gp-data-found.txt (D-247).
 - **csv-json-omit-constant-metadata** — CelesTrak CSV/JSON carry no CENTER_NAME, REF_FRAME, TIME_SYSTEM or MEAN_ELEMENT_THEORY; parsers must default them (EARTH, TEME, UTC, SGP4) rather than fail.
 - **xml-ndm-wrapper-omm-2.0** — CelesTrak XML has an <ndm> root containing one <omm> per record with id=CCSDS_OMM_VERS and version=2.0; CREATION_DATE and ORIGINATOR elements are present but empty.
 - **sha256-matches-tested-snapshot** — If the user's fetched bytes hash to the recorded SHA-256, the frozen expected values apply exactly; otherwise only structural checks apply and the tool says so.
@@ -33,6 +33,7 @@ Provides:
 Gaps (stated explicitly for this case):
 
 - only one object; other 6-digit objects are in last-30-days and analyst cases
+- the TLE answer is the corpus's record of it, HTTP 404 with the 16-byte text 'No GP data found', captured 2026-09-21 and received again 2026-10-04: it ships in recorded/ and a fetch writes it without requesting it (D-247), so a user's run does not observe CelesTrak giving that answer; both TLE files of this case are that record
 
 ## Ambiguities recorded
 
@@ -41,11 +42,11 @@ Gaps (stated explicitly for this case):
 
 ## Sources
 
-The `raw/` files below are not in the repository: `tools/fetch.py` creates them on your machine, one request per URL under CelesTrak's usage policy, and until they exist the runner reports this case's checks as skipped, not failed.
+The `raw/` files below are not in the repository: `tools/fetch.py` creates them on your machine, one request per URL under CelesTrak's usage policy, and until they exist the runner reports this case's checks as skipped, not failed. A file marked recorded is the exception: the fetch writes it from `recorded/celestrak-no-gp-data-found.txt`, the one provider response that ships with the corpus, and makes no request for it (D-247).
 
 | file | tier | HTTP | bytes | retrieved (UTC) | sha256 |
 |---|---|---|---|---|---|
-| `fixtures/six-digit-omm-saramago/raw/saramago-first.tle` | stable | 404, expected: the body is "No GP data found" | 16 | 2026-09-21T00:43:53Z | `000844fd5b7a7b64…` |
+| `fixtures/six-digit-omm-saramago/raw/saramago-first.tle` | stable | 404, recorded: the body is "No GP data found"; written by the fetch from `recorded/celestrak-no-gp-data-found.txt`, not requested | 16 | 2026-09-21T00:43:53Z | `000844fd5b7a7b64…` |
 | `fixtures/six-digit-omm-saramago/raw/saramago-first.csv` | stable | 200 | 374 | 2026-09-21T00:43:55Z | `2a1913dc0c5e2bab…` |
 | `fixtures/six-digit-omm-saramago/raw/saramago-first.json` | stable | 200 | 420 | 2026-09-21T00:43:58Z | `1d04dc3b4e49d6f7…` |
 | `fixtures/six-digit-omm-saramago/raw/saramago-first.xml` | stable | 200 | 1204 | 2026-09-21T00:44:00Z | `c2523a59549f0e95…` |
@@ -54,7 +55,7 @@ The `raw/` files below are not in the repository: `tools/fetch.py` creates them 
 | `fixtures/six-digit-omm-saramago/raw/saramago.json` | live | 200 | 421 | 2026-09-21T00:09:52Z | `7d06887037002ed0…` |
 | `fixtures/six-digit-omm-saramago/raw/saramago.xml` | live | 200 | 1205 | 2026-09-21T00:09:55Z | `763990333a9a4f48…` |
 | `fixtures/six-digit-omm-saramago/raw/saramago.kvn` | live | 200 | 633 | 2026-09-21T00:09:57Z | `8e9591ef376a57d8…` |
-| `fixtures/six-digit-omm-saramago/raw/saramago.tle` | live | 404, expected: the body is "No GP data found" | 16 | 2026-09-21T00:09:59Z | `000844fd5b7a7b64…` |
+| `fixtures/six-digit-omm-saramago/raw/saramago.tle` | live | 404, recorded: the body is "No GP data found"; written by the fetch from `recorded/celestrak-no-gp-data-found.txt`, not requested | 16 | 2026-09-21T00:09:59Z | `000844fd5b7a7b64…` |
 | `fixtures/six-digit-omm-saramago/raw/saramago.satcat.json` | live | 200 | 332 | 2026-09-21T00:10:02Z | `235cf52e5287a8b3…` |
 | `fixtures/six-digit-omm-saramago/raw/saramago.satcat.csv` | live | 200 | 269 | 2026-09-21T00:10:04Z | `ad32c117b2a0ad4c…` |
 

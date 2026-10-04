@@ -5,7 +5,54 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
-## [Unreleased]
+## [0.6.0] - 2026-10-04
+
+A minor release under the versioning rule: an additive change to the JSON report, `summary`, the number of cases in
+each status, which a script is now told to rely on in place of the printed lines (D-240). With it, every count the
+runner, the fetch and the Action print agrees in number with the words beside it (D-239), and the project names itself
+gpconf (D-241, D-242). A user's fetch drops from 50 requests to 46 and no longer asks for anything it knows will
+answer 404: CelesTrak's 16-byte answer `No GP data found` ships with the corpus as a recorded response, the one
+provider response it carries and a named exception to its rule of shipping no raw provider bytes (D-247). The words
+"TLE set" and "line" are used strictly (D-248). No case and no frozen expected value changed, the eighteen cases are
+those of 0.5.1, and the adapter protocol is as in 0.5.1. On the maintainer's copy the reference adapter passes all
+eighteen cases (seventeen exact, the SATCAT data check not exercised), the naive adapter fails 15 and python-sgp4 2.27
+fails 8, as in 0.5.1; from a fresh fetch they read 16, 14 and 6, since one case cannot run without launch-window files
+that a new user's fetch cannot obtain (D-229). The eight libraries run by hand and Vallado's C++ were run again under
+this release's tree, on the maintainer's copy and in the environments of their latest runs, and each report compared
+with the latest one kept, by case status and by count: none differs, and the item texts that differ do so in the
+number agreement of D-239 and, for one item, in the provider's text it quotes (D-245, D-249). The independent audit in
+`AUDIT.md` covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol
+changes of v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1 nor those of this release
+have been separately audited. The version DOI is added here and to `CITATION.cff` after Zenodo mints it at the
+release; the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
+
+Changed: a fetch requests no answer it knows to be an error (D-247). Four entries of the fetch list are TLE requests
+for objects numbered above 99999; CelesTrak answers each with HTTP 404 and the 16-byte text `No GP data found`, and up
+to 0.5.1 the fetch made them and let them pass as its one exception to "stop on any response that is not a 200". They
+are no longer made, under any flag. The answer ships with the corpus, `recorded/celestrak-no-gp-data-found.txt`, with
+a provenance file giving the URL, time, status and SHA-256 of the five captures of 2026-09-21 and of the four answers
+the maintainer's fetch received on 2026-10-04, and the fetch writes it to the four paths with metadata saying that it
+was written from that record and not requested. A user's first fetch is 46 requests and 3.1 MB, every one expected to
+answer 200, and any other answer stops the run; a later version on a machine that has a cache requests the 26 live
+files, copies 20 stable ones and writes these four. This is the one provider response the corpus ships and a named
+exception to D-023, which ships no raw CelesTrak bytes: the body holds no orbital data, and the README, `NOTICE`,
+`MANIFEST.md`, `CITATION.cff` and the manifest's `design` block say so where they said that nothing raw is shipped. A
+run on fetched data keeps every status and count: the parser is still handed the empty answer, and the items that rest
+on the four files say that the answer is the corpus's record, captured on its date, and was not requested. What a
+user's run no longer does is observe CelesTrak giving that answer. Where the record could be wrong about the day, a
+fetched group that holds an id below 100000, the two checks that compare the TLE answer with the OMM set report
+`not-exercised` instead of comparing. Runs with no fetched data do not change.
+
+Fixed: the item that compares a TLE answer with its OMM set quoted `No GP data found` for a file whose body is `No
+SupGP data found`, the SupGP launch-window capture; it now quotes the text the file holds (D-247).
+
+Changed: "TLE set" and "line" are used strictly (D-248). A TLE set is one object's lines, line 1 and line 2 with the
+name line where the format has one; a line is one line. Both figures the corpus quotes most are counts of sets: the
+604 derived Alpha-5 TLE sets it ships, 1,208 element lines in four files, and the 304 fetched TLE sets, each with its
+OMM record, from which the rendering rules were derived and of which the renderer reproduces the name line, line 1 and
+line 2 byte for byte. The README, the case documents, `MANIFEST.md` and the writer guide said "lines" of both in
+places. The frozen `expected.json` files keep the prose they were generated with; the runner reads none of it. A test
+counts the derived files and fails on either figure said of lines.
 
 Changed: the project calls itself gpconf, everywhere a person reads its name (D-241, D-242). `docs/BRAND.md` is the
 single source for the name, what it means and the lines the project describes itself with; the repository stays
@@ -21,7 +68,7 @@ No case, check, expected value or printed result changes.
 Changed: every count the runner, the fetch and the Action print agrees in number with the words beside it (D-239). The
 Action's summary said "1 need launch-window data", and the count line could say "1 need fetched data" under a heading
 of "1 case(s)". One case now passes, fails, skips or needs fetched data where two pass, fail, skip or need it, and no
-line hedges a plural with a bracketed s: "18 cases", "50 requests made", "0 of 1 record", "1 record matches" beside
+line hedges a plural with a bracketed s: "18 cases", "46 requests made", "0 of 1 record", "1 record matches" beside
 "256 records match". Only wording changes: no status, count or check moves, and a line whose counts are all other than
 one differs from 0.5.1's by the bracketed s alone. `docs/FAILURES.md` is regenerated with the same rows.
 
