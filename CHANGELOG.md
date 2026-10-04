@@ -16,9 +16,9 @@ all eighteen cases (seventeen exact, the SATCAT data check not exercised), the n
 2.27 fails 8, as in 0.5.0; from a fresh fetch they read 16, 14 and 6, since one case cannot run without launch-window
 files that a new user's fetch cannot obtain (D-229). The independent audit in `AUDIT.md` covered v0.1.0; neither the
 writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0, the corrupt-input case
-of v0.4.0, the changes of v0.5.0 nor those of this release have been separately audited. The version DOI is added here
-and to `CITATION.cff` after Zenodo mints it at the release; the concept DOI 10.5281/zenodo.22867654 resolves to the
-latest release.
+of v0.4.0, the changes of v0.5.0 nor those of this release have been separately audited. Version DOI
+10.5281/zenodo.23130868 (Zenodo record 23130868); the concept DOI 10.5281/zenodo.22867654 resolves to the latest
+release.
 
 Changed: `gpconf fetch` stops at the first response its list does not expect (D-228). The `allow_error` flag, which let
 any HTTP error pass on the entries that carried it, a 403 included, is replaced by `expect_status: 404` on the entries

@@ -528,8 +528,8 @@ To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, 
 gp-omm-conformance, version 0.5.1, 2026-10-03, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** for this release, v0.5.1, is added here and to `CITATION.cff` after Zenodo
-mints it at the release; v0.5.0 keeps its own, [10.5281/zenodo.23093982](https://doi.org/10.5281/zenodo.23093982),
+general. The **version DOI** for this release, v0.5.1, is
+[10.5281/zenodo.23130868](https://doi.org/10.5281/zenodo.23130868); v0.5.0 keeps its own, [10.5281/zenodo.23093982](https://doi.org/10.5281/zenodo.23093982),
 v0.4.0 its own, [10.5281/zenodo.23002261](https://doi.org/10.5281/zenodo.23002261),
 v0.3.0 its own, [10.5281/zenodo.22986178](https://doi.org/10.5281/zenodo.22986178),
 v0.2.1 its own, [10.5281/zenodo.22926017](https://doi.org/10.5281/zenodo.22926017), v0.2.0 its own,
