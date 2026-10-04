@@ -20,8 +20,8 @@ in the environments of their latest runs, and each report compared with the late
 count: none differs, in status, in count or in the text of any item (D-255). The independent audit in `AUDIT.md`
 covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of
 v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1, those of v0.6.0 nor those of this
-release have been separately audited. The version DOI is added here once Zenodo mints it at the release; the concept
-DOI 10.5281/zenodo.22867654 resolves to the latest release.
+release have been separately audited. Version DOI 10.5281/zenodo.23144821 (Zenodo record 23144821); the concept DOI
+10.5281/zenodo.22867654 resolves to the latest release.
 
 Changed: the fetch's `User-Agent` names the kit, the version that asks and the repository:
 `gpconf/<version> (+https://github.com/hneogy/gp-omm-conformance; fetch, each URL once)`. Up to 0.6.0 it read
