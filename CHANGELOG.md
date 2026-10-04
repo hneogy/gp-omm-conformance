@@ -23,8 +23,8 @@ with the latest one kept, by case status and by count: none differs, and the ite
 number agreement of D-239 and, for one item, in the provider's text it quotes (D-245, D-249). The independent audit in
 `AUDIT.md` covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol
 changes of v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1 nor those of this release
-have been separately audited. The version DOI is added here and to `CITATION.cff` after Zenodo mints it at the
-release; the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
+have been separately audited. Version DOI 10.5281/zenodo.23140585 (Zenodo record 23140585); the concept DOI
+10.5281/zenodo.22867654 resolves to the latest release.
 
 Changed: a fetch requests no answer it knows to be an error (D-247). Four entries of the fetch list are TLE requests
 for objects numbered above 99999; CelesTrak answers each with HTTP 404 and the 16-byte text `No GP data found`, and up

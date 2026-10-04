@@ -581,8 +581,8 @@ gpconf: a conformance corpus for orbital-data parsers crossing the five-digit ca
 2026-10-04, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** for this release, v0.6.0, is added here and to `CITATION.cff` after Zenodo
-mints it at the release; v0.5.1 keeps its own, [10.5281/zenodo.23130868](https://doi.org/10.5281/zenodo.23130868),
+general. The **version DOI** for this release, v0.6.0, is
+[10.5281/zenodo.23140585](https://doi.org/10.5281/zenodo.23140585); v0.5.1 keeps its own, [10.5281/zenodo.23130868](https://doi.org/10.5281/zenodo.23130868),
 v0.5.0 its own, [10.5281/zenodo.23093982](https://doi.org/10.5281/zenodo.23093982),
 v0.4.0 its own, [10.5281/zenodo.23002261](https://doi.org/10.5281/zenodo.23002261),
 v0.3.0 its own, [10.5281/zenodo.22986178](https://doi.org/10.5281/zenodo.22986178),
