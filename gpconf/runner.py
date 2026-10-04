@@ -41,6 +41,7 @@ from decimal import Decimal, InvalidOperation, ROUND_DOWN
 from . import reference as ref
 from . import tle as tlemod
 from . import writer as W
+from .words import pick, qty
 
 CORE_FIELDS = ["norad_cat_id", "epoch", "mean_motion", "eccentricity", "inclination", "ra_of_asc_node",
                "arg_of_pericenter", "mean_anomaly", "bstar", "mean_motion_dot", "mean_motion_ddot"]
@@ -333,6 +334,20 @@ class Item:
         return d
 
 
+# The statuses a case can end in, in the order the count line names them (D-240).
+CASE_STATUSES = ("pass", "pass-tolerance", "fail", "skip", "not-fetched", "not-available", "not-exercised")
+
+
+def status_totals(results):
+    """How many cases ended in each status, as numbers: `cases`, the number of cases run, then every status with its
+    count, zeros included. It is the JSON report's `summary` and what the count line is written from, so that a script
+    reads the totals and never the printed line (D-240)."""
+    totals = {"cases": len(results), **{s: 0 for s in CASE_STATUSES}}
+    for r in results:
+        totals[r.status] = totals.get(r.status, 0) + 1
+    return totals
+
+
 class CaseResult:
     def __init__(self, case_id, title):
         self.case_id, self.title, self.items, self.modes = case_id, title, [], {}
@@ -423,7 +438,7 @@ def describe_bytes(raw, fmt=None, limit=48):
         guesses.append("a TLE line 1 without a line 2 (truncated?)")
     if fmt == "csv" and n and raw.count(b"\n") <= 1 and b"," in raw:
         guesses.append("CSV header only")
-    return f"{n} bytes, starts with {raw[:limit]!r}" + (f"; looks like: {', '.join(guesses)}" if guesses else "")
+    return f"{qty(n, 'byte')}, starts with {raw[:limit]!r}" + (f"; looks like: {', '.join(guesses)}" if guesses else "")
 
 
 class _HookCalls:
@@ -451,7 +466,7 @@ def _vector_item(res, check, file, calls, bad, ok_detail):
     if calls.unsupported and calls.unsupported == calls.calls:
         res.add(check, "skip", file, f"parser reports {calls.name} unsupported: {'; '.join(calls.reasons)}")
     elif calls.unsupported:
-        res.add(check, "fail", file, f"{calls.name} answered unsupported for {calls.unsupported} of {calls.calls} vectors "
+        res.add(check, "fail", file, f"{calls.name} answered unsupported for {calls.unsupported} of {qty(calls.calls, 'vector')} "
                 f"({'; '.join(calls.reasons)}) and answered the rest: an operation is unsupported for all of its vectors or none"
                 + (f"; {'; '.join(bad[:8])}" if bad else ""))
     else:
@@ -615,11 +630,11 @@ class Runner:
         expected_n = src.get("record_count")
         if isinstance(expected_n, int) and expected_n > 0 and not refrecs:
             res.add("source-readable", "fail", path,
-                    f"reference reader found 0 of {expected_n} expected records; the file is {describe_bytes(raw, fmt)}")
+                    f"reference reader found 0 of {qty(expected_n, 'expected record')}; the file is {describe_bytes(raw, fmt)}")
             return "unreadable", fmt, mode, None, refrecs, reffacts
         if mode == "snapshot" and isinstance(expected_n, int) and len(refrecs) != expected_n:
             res.add("source-readable", "fail", path,
-                    f"internal: reference reader found {len(refrecs)} of {expected_n} recorded records in a file whose hash matches the tested snapshot")
+                    f"internal: reference reader found {len(refrecs)} of {qty(expected_n, 'recorded record')} in a file whose hash matches the tested snapshot")
             return "unreadable", fmt, mode, None, refrecs, reffacts
         try:
             parsed = self.parse(full, fmt)
@@ -647,7 +662,7 @@ class Runner:
                       "top_refusal_reason": top[0][1] if top else None}
             what = (f"{len(matched)} refused with a reason ({top[0][1][:120]})" if matched else "") + (", " if matched and counts["dropped"] else "") + \
                    (f"{counts['dropped']} dropped" + (" silently" if self._declared else " (refusals not reported by this adapter)") if counts["dropped"] else "")
-            res.add("records-returned", "fail", path, f"parser returned 0 of {len(refrecs)} record(s): {what}", counts=counts)
+            res.add("records-returned", "fail", path, f"parser returned 0 of {qty(len(refrecs), 'record')}: {what}", counts=counts)
             return "parse-error", fmt, mode, None, refrecs, reffacts
         return "ok", fmt, mode, parsed, refrecs, reffacts
 
@@ -663,7 +678,7 @@ class Runner:
         text = f"{len(refusals) - no_reason} refused with a reason" + ("" if not reasons else ": " + "; ".join(
             f"{reason[:120]!r} x{n}" for reason, n in sorted(reasons.items(), key=lambda kv: -kv[1])[:5]))
         if no_reason:
-            text += f"; {no_reason} refusal(s) without a reason, counted as dropped: a refusal that gives no reason is no better than a drop"
+            text += f"; {qty(no_reason, 'refusal')} without a reason, counted as dropped: a refusal that gives no reason is no better than a drop"
         res.add("refusals", "fail" if no_reason else "info", path, text)
 
     # ---- value comparison
@@ -682,9 +697,9 @@ class Runner:
             non_int = [p["_bad"]["norad_cat_id"] for p in by_id[None] if p.get("_bad", {}).get("norad_cat_id")]
             absent = len(by_id[None]) - len(non_int)
             if non_int:
-                fails.append(f"{len(non_int)} record(s) whose norad_cat_id is not an integer, e.g. " + ", ".join(non_int[:3]))
+                fails.append(f"{qty(len(non_int), 'record')} whose norad_cat_id is not an integer, e.g. " + ", ".join(non_int[:3]))
             if absent:
-                fails.append(f"{absent} record(s) without norad_cat_id")
+                fails.append(f"{qty(absent, 'record')} without norad_cat_id")
         missing_ids = [i for i in oracle if i not in by_id]
         refusals = res.refusals.get(path, [])
         with_reason = [r for r in refusals if r["ok"]]
@@ -693,13 +708,13 @@ class Runner:
             if refused_ids:
                 silent = [i for i in missing_ids if i not in refused_ids]
                 eg = next((r for r in with_reason if r["id"] in refused_ids), None)
-                fails.append(f"{len(missing_ids)} expected record(s) not returned: {len(refused_ids)} refused with a reason"
+                fails.append(f"{qty(len(missing_ids), 'expected record')} not returned: {len(refused_ids)} refused with a reason"
                              + (f" (e.g. {eg['field']!r}: {eg['reason'][:100]})" if eg else "") + f", {len(silent)} silently" + (f", e.g. {silent[:3]}" if silent else ""))
             else:
-                fails.append(f"{len(missing_ids)} expected record(s) not returned, e.g. {missing_ids[:3]}")
+                fails.append(f"{qty(len(missing_ids), 'expected record')} not returned, e.g. {missing_ids[:3]}")
         extra = [i for i in by_id if i is not None and i not in oracle]
         if extra and not partial:
-            fails.append(f"{len(extra)} unexpected record id(s), e.g. {extra[:3]}")
+            fails.append(f"{qty(len(extra), 'unexpected record id')}, e.g. {extra[:3]}")
         compared = 0
         for cat, want in oracle.items():
             got_list = by_id.get(cat) if "norad_cat_id" not in exempt else (by_id.get(cat) or by_id.get(None))
@@ -749,7 +764,7 @@ class Runner:
         if fails:
             res.add(check, "fail", path, f"{compared} compared vs {label}; " + "; ".join(fails[:12]) + (" ..." if len(fails) > 12 else ""), counts=counts)
         else:
-            res.add(check, "pass", path, f"{compared} record(s) match {label}", tolerance=tol, counts=counts)
+            res.add(check, "pass", path, f"{qty(compared, 'record')} {pick(compared, 'matches', 'match')} {label}", tolerance=tol, counts=counts)
         return not fails
 
     def oracle_for(self, case_exp, path, fmt, mode, refrecs):
@@ -803,16 +818,16 @@ class Runner:
             fields = sorted({ref.DECIMAL_KEYS[k] for k in kws if k in ref.DECIMAL_KEYS})  # only decimal keywords can start with '.'
             if fields:
                 n, bad, tol = compare(fields)
-                report("leading-dot-decimals", n, bad, tol, f"{n} value(s) written without a leading zero ({', '.join(sorted(kws))}) parsed to the expected values")
+                report("leading-dot-decimals", n, bad, tol, f"{qty(n, 'value')} written without a leading zero ({', '.join(sorted(kws))}) parsed to the expected {pick(n, 'value', 'values')}")
         if "bstar-implied-decimal-exponent" in active and fmt in ("tle", "2le"):
             n, bad, tol = compare(["bstar", "mean_motion_ddot"])
             if n:
-                report("bstar-implied-decimal-exponent", n, bad, tol, f"{n} BSTAR and second-derivative field(s) with an implied decimal point and exponent decoded to the expected values")
+                report("bstar-implied-decimal-exponent", n, bad, tol, f"{qty(n, 'BSTAR and second-derivative field')} with an implied decimal point and exponent decoded to the expected {pick(n, 'value', 'values')}")
         if "negative-bstar-and-ndot" in active:
             ids = {cat for cat, o in oracle.items() if any(o.get(f) is not None and Decimal(str(o[f])) < 0 for f in ("bstar", "mean_motion_dot"))}
             if ids:
                 n, bad, tol = compare(["bstar", "mean_motion_dot"], ids)
-                report("negative-bstar-and-ndot", n, bad, tol, f"{len(ids)} record(s) with a negative BSTAR or first derivative: sign and value preserved")
+                report("negative-bstar-and-ndot", n, bad, tol, f"{qty(len(ids), 'record')} with a negative BSTAR or first derivative: sign and value preserved")
 
     # ---- structural checks
     def check_ints(self, res, path, parsed, active):
@@ -822,22 +837,22 @@ class Runner:
         examples = [p["_bad"]["norad_cat_id"] for p in bad if p.get("_bad", {}).get("norad_cat_id")][:3]
         if "catalog-number-is-integer" in active:
             res.add("catalog-number-is-integer", "fail" if bad else "pass", path,
-                    (f"{len(bad)} record(s) whose norad_cat_id is not an int" + (", e.g. " + ", ".join(examples) if examples else "")) if bad else f"{len(parsed)} record(s) with integer norad_cat_id")
+                    (f"{qty(len(bad), 'record')} whose norad_cat_id is not an int" + (", e.g. " + ", ".join(examples) if examples else "")) if bad else f"{qty(len(parsed), 'record')} with integer norad_cat_id")
         if "nine-digit-ids-parse" in active:
             nine = [p for p in parsed if (p.get("norad_cat_id") or 0) >= 100_000_000]
             if nine:
-                res.add("nine-digit-ids-parse", "pass", path, f"{len(nine)} nine-digit id(s) returned as integers")
+                res.add("nine-digit-ids-parse", "pass", path, f"{qty(len(nine), 'nine-digit id')} returned as {pick(len(nine), 'an integer', 'integers')}")
 
     def check_tle_lines(self, res, path, parsed, refrecs, active):
         if "tle-checksums-valid" in active:
             bad = [r["norad_cat_id"] for r in refrecs if not r["tle"]["checksums_valid"] or r["tle"]["line_lengths"][1:] != [69, 69]]
-            res.add("tle-checksums-valid", "fail" if bad else "pass", path, f"invalid lines for ids {bad[:5]}" if bad else f"{len(refrecs)} record(s), all checksums valid (data check)")
+            res.add("tle-checksums-valid", "fail" if bad else "pass", path, f"invalid lines for ids {bad[:5]}" if bad else f"{qty(len(refrecs), 'record')}, all checksums valid (data check)")
         if "tle-catalog-field-decodes" in active or "alpha5-decode" in active:
             want = {r["norad_cat_id"] for r in refrecs}
             got = {p.get("norad_cat_id") for p in parsed}
             miss = sorted(want - got)
             res.add("tle-catalog-field-decodes", "fail" if miss else "pass", path,
-                    f"{len(miss)} catalog field(s) not decoded to the right integer, e.g. {miss[:3]}" if miss else f"{len(want)} catalog field(s) decoded correctly" +
+                    f"{qty(len(miss), 'catalog field')} not decoded to the right integer, e.g. {miss[:3]}" if miss else f"{qty(len(want), 'catalog field')} decoded correctly" +
                     (" (Alpha-5)" if any(r["tle"]["catalog_field_is_alpha5"] for r in refrecs) else ""))
         if "two-digit-year-pivot" in active:
             got = {p.get("norad_cat_id"): p.get("epoch") for p in parsed}
@@ -858,28 +873,28 @@ class Runner:
             if empty:
                 bad = [r["norad_cat_id"] for r in empty if got.get(r["norad_cat_id"], {}).get("object_id") not in (None,)]
                 res.add("object-id-may-be-empty", "fail" if bad else "pass", path,
-                        f"parser invented or kept a value for empty OBJECT_ID on ids {bad[:3]}" if bad else f"{len(empty)} empty OBJECT_ID record(s) handled")
+                        f"parser invented or kept a value for empty OBJECT_ID on ids {bad[:3]}" if bad else f"{qty(len(empty), 'empty OBJECT_ID record')} handled")
         if "object-name-unknown-literal" in active:
             unk = [r for r in refrecs if r.get("object_name") == "UNKNOWN"]
             if unk:
                 bad = [r["norad_cat_id"] for r in unk if got.get(r["norad_cat_id"], {}).get("object_name") != "UNKNOWN"]
-                res.add("object-name-unknown-literal", "fail" if bad else "pass", path, f"UNKNOWN not preserved for {bad[:3]}" if bad else f"{len(unk)} UNKNOWN name(s) preserved")
+                res.add("object-name-unknown-literal", "fail" if bad else "pass", path, f"UNKNOWN not preserved for {bad[:3]}" if bad else f"{qty(len(unk), 'UNKNOWN name')} preserved")
         if "classification-c" in active:
             cc = [r for r in refrecs if r.get("classification_type") == "C"]
             if cc:
                 bad = [r["norad_cat_id"] for r in cc if "classification_type" in got.get(r["norad_cat_id"], {}) and got[r["norad_cat_id"]]["classification_type"] != "C"]
-                res.add("classification-c", "fail" if bad else "pass", path, f"C not preserved for {bad[:3]}" if bad else f"{len(cc)} record(s) with classification C accepted")
+                res.add("classification-c", "fail" if bad else "pass", path, f"C not preserved for {bad[:3]}" if bad else f"{qty(len(cc), 'record')} with classification C accepted")
         if "element-set-zero-and-rev-one" in active:
             z = [r for r in refrecs if r.get("element_set_no") == 0 or r.get("rev_at_epoch") in (0, 1)]
             if z:
                 bad = [r["norad_cat_id"] for r in z if ("element_set_no" in got.get(r["norad_cat_id"], {}) and got[r["norad_cat_id"]]["element_set_no"] != r["element_set_no"])
                        or ("rev_at_epoch" in got.get(r["norad_cat_id"], {}) and got[r["norad_cat_id"]]["rev_at_epoch"] != r["rev_at_epoch"])]
-                res.add("element-set-zero-and-rev-one", "fail" if bad else "pass", path, f"mismatch for {bad[:3]}" if bad else f"{len(z)} record(s) with element set 0 / rev 0-1 preserved")
+                res.add("element-set-zero-and-rev-one", "fail" if bad else "pass", path, f"mismatch for {bad[:3]}" if bad else f"{qty(len(z), 'record')} with element set 0 / rev 0-1 preserved")
 
     def check_empty_answer(self, res, path, fmt, raw, body, status):
         """The provider's empty answer is presented to the parser under test (D-143): an empty but valid result must
         come back as zero records and no error, or 'nothing to load' is indistinguishable from 'unreadable'."""
-        what = f"the provider's empty answer (HTTP {status or 404}, body {body!r}, {len(raw)} bytes)"
+        what = f"the provider's empty answer (HTTP {status or 404}, body {body!r}, {qty(len(raw), 'byte')})"
         try:
             got = self.parser.parse(raw, fmt)
         except Unsupported:
@@ -900,7 +915,7 @@ class Runner:
             res.add("empty-answer-yields-no-records", "pass", path, f"{what} read as zero records, no error")
         else:
             res.add("empty-answer-yields-no-records", "fail", path,
-                    f"parser returned {n if n is not None else 'a non-list'} record(s) from {what}; an empty answer must yield none")
+                    f"parser returned {qty(n, 'record') if n is not None else 'a non-list'} from {what}; an empty answer must yield none")
 
     def check_format_facts(self, res, path, fmt, parsed, reffacts, active):
         if fmt in ("csv", "json") and "csv-json-omit-constant-metadata" in active:
@@ -920,9 +935,9 @@ class Runner:
         if fmt == "xml" and "xml-ndm-wrapper-omm-2.0" in active:
             n = reffacts.get("omm_count")
             res.add("xml-ndm-wrapper-omm-2.0", "pass" if len(parsed) == n else "fail", path,
-                    f"{len(parsed)} record(s) from <{reffacts.get('root_element')}> with {n} <omm> (version {reffacts.get('version_attributes')})")
+                    f"{qty(len(parsed), 'record')} from <{reffacts.get('root_element')}> with {n} <omm> (version {reffacts.get('version_attributes')})")
         if fmt == "kvn" and "kvn-blank-mandatory-values" in active:
-            res.add("kvn-blank-mandatory-values", "pass", path, f"{len(parsed)} message(s) parsed despite blank CREATION_DATE/ORIGINATOR")
+            res.add("kvn-blank-mandatory-values", "pass", path, f"{qty(len(parsed), 'message')} parsed despite blank CREATION_DATE/ORIGINATOR")
 
     def check_set_relations(self, res, case_exp, set_name, files, active):
         """files: {path: (state, fmt, parsed, refrecs)}"""
@@ -946,7 +961,7 @@ class Runner:
                 for f, d in vals.items():
                     if len(d) > 1:
                         bad.append(f"id {cat} {f}: {d}")
-            res.add("omm-formats-agree", "fail" if bad else "pass", set_name, "; ".join(bad[:6]) if bad else f"{len(omm)} OMM renderings agree on {len(ids)} record(s)")
+            res.add("omm-formats-agree", "fail" if bad else "pass", set_name, "; ".join(bad[:6]) if bad else f"{len(omm)} OMM renderings agree on {qty(len(ids), 'record')}")
         if tles and omm:
             tpath, (tstate, tfmt, tparsed, trefs) = next(iter(tles.items()))
             opath, (_, ofmt, oparsed, orefs) = next(iter(omm.items()))
@@ -956,10 +971,10 @@ class Runner:
                 below = {i for i in oby if i is not None and i < 100000}
                 if tstate == "empty-404":
                     ok = not below
-                    detail = f"TLE request returned 'No GP data found'; OMM set has {len(below)} id(s) below 100000 (expected 0)"
+                    detail = f"TLE request returned 'No GP data found'; OMM set has {qty(len(below), 'id')} below 100000 (expected 0)"
                 else:
                     ok = set(tby) == below
-                    detail = f"TLE has {len(tby)} record(s), OMM has {len(below)} id(s) below 100000 and {len(oby) - len(below)} at or above"
+                    detail = f"TLE has {qty(len(tby), 'record')}, OMM has {qty(len(below), 'id')} below 100000 and {len(oby) - len(below)} at or above"
                 for c in ("tle-format-omits-ids-above-99999", "tle-count-equals-omm-count-below-100000"):
                     if c in active:
                         res.add(c, "pass" if ok else "fail", set_name, detail)
@@ -998,13 +1013,13 @@ class Runner:
                         elif result == "tolerance":
                             quant.add("epoch", diff)
                 if "tle-values-match-omm-within-tle-precision" in active:
-                    detail = "; ".join(bad[:6]) if bad else f"{n} TLE/OMM pair(s) consistent under the precision rules"
+                    detail = "; ".join(bad[:6]) if bad else f"{qty(n, 'TLE/OMM pair')} consistent under the precision rules"
                     if quant and not bad:
                         detail += "; provider TLE epoch quantisation observed (data property, not a parser tolerance): " + quant.text().replace("within tolerance: ", "")
                     res.add("tle-values-match-omm-within-tle-precision", "fail" if bad else "pass", set_name, detail, tolerance=tol)
                 if "mmdot-is-tle-field-value" in active:
                     res.add("mmdot-is-tle-field-value", "fail" if bad_dot else "pass", set_name,
-                            "; ".join(bad_dot[:6]) if bad_dot else f"{n} pair(s): OMM MEAN_MOTION_DOT equals the TLE field as printed", tolerance=tol_dot)
+                            "; ".join(bad_dot[:6]) if bad_dot else f"{qty(n, 'pair')}: OMM MEAN_MOTION_DOT equals the TLE field as printed", tolerance=tol_dot)
 
     # ---- per-kind drivers
     def run_gp_like(self, case, exp, res):
@@ -1132,7 +1147,7 @@ class Runner:
             if src.get("format") == "satcat-legacy-fixed-width":
                 ids = [int(l[13:18]) for l in open(full, encoding="utf-8", errors="replace").read().splitlines() if l[13:18].strip().isdigit()]
                 above = sum(i >= 70000 for i in ids)
-                what = f"{len(ids)} ids, max {max(ids)}, {above} at or above 70000 (data check, {mode})"
+                what = f"{qty(len(ids), 'id')}, max {max(ids)}, {above} at or above 70000 (data check, {mode})"
                 if above:  # the corpus's premise about the legacy file no longer holds: loud, and about the data
                     res.add("satcat-legacy-below-70000", "fail", path, what + "; a data property of the legacy file, not a result of the parser under test")
                 else:  # no adapter reads SATCAT: the check involves no parser, so it must never count as a parser pass (D-129)
@@ -1202,7 +1217,7 @@ class Runner:
                         continue
                     if got != v["year"]:
                         bad.append(f"{v['yy']} -> {got}")
-                _vector_item(res, "two-digit-year-pivot", "vectors/two-digit-epoch-year.json", hooks["two_digit_year"], bad, f"{len(yy['vectors'])} pivot vectors correct")
+                _vector_item(res, "two-digit-year-pivot", "vectors/two-digit-epoch-year.json", hooks["two_digit_year"], bad, f"{qty(len(yy['vectors']), 'pivot vector')} correct")
             else:
                 res.add("two-digit-year-pivot", "skip", "vectors/two-digit-epoch-year.json", "parser exposes no two_digit_year hook")
         ep = next((v for k, v in vec.items() if k.endswith("ccsds-epoch-strings.json")), None)
@@ -1233,7 +1248,8 @@ class Runner:
                 except Exception:
                     pass
             _vector_item(res, "ccsds-epoch-strings", "vectors/ccsds-epoch-strings.json", hooks["parse_epoch"], bad,
-                         f"{len(ep['valid'])} valid epoch strings parsed to the instants they denote (within {EPOCH_TOLERANCE_US} us) and {len(ep['invalid'])} invalid strings rejected")
+                         f"{qty(len(ep['valid']), 'valid epoch string')} parsed to the {pick(len(ep['valid']), 'instant it denotes', 'instants they denote')} "
+                         f"(within {EPOCH_TOLERANCE_US} us) and {qty(len(ep['invalid']), 'invalid string')} rejected")
         elif ep:
             res.add("ccsds-epoch-strings", "skip", "vectors/ccsds-epoch-strings.json", "parser exposes no parse_epoch hook")
         cid = next((v for k, v in vec.items() if k.endswith("norad-cat-id-text.json")), None)
@@ -1256,7 +1272,7 @@ class Runner:
                     pass
             nine = sum(1 for v in cid["valid"] if v["value"] >= 100_000_000)
             _vector_item(res, "catalog-number-is-integer", "vectors/norad-cat-id-text.json", hooks["parse_catalog_id"], bad,
-                         f"{len(cid['valid'])} valid text forms parsed as int ({nine} nine-digit) and {len(cid['invalid_in_omm'])} invalid forms rejected")
+                         f"{qty(len(cid['valid']), 'valid text form')} parsed as int ({nine} nine-digit) and {qty(len(cid['invalid_in_omm']), 'invalid form')} rejected")
         elif cid:
             res.add("catalog-number-is-integer", "skip", "vectors/norad-cat-id-text.json", "parser exposes no parse_catalog_id hook")
 
@@ -1291,7 +1307,7 @@ class Runner:
                 (lines_bad if ok_id else emitted_bad).append(f"id {cat}: {e}")
                 continue
             if not ok_id:
-                emitted_bad.append(f"id {cat}: lines written instead of a refusal (line 1 columns 3-7 {l1[2:7]!r}, {len(l1)} characters)")
+                emitted_bad.append(f"id {cat}: lines written instead of a refusal (line 1 columns 3-7 {l1[2:7]!r}, {qty(len(l1), 'character')})")
                 continue
             written += 1
             problems = W.check_lines(l1, l2)
@@ -1326,27 +1342,27 @@ class Runner:
                     p[0] += bool(same)
                     p[1] += 1
 
-        def summary(fails, ok_text, n_ok, n_all, unit="record(s)"):
+        def summary(fails, ok_text, n_ok, n_all, unit="record"):
             # a failing detail opens with what passed, so a failure confined to a few inputs cannot read as a general one
             if not fails:
                 return ok_text
-            return f"{n_ok} of {n_all} {unit} correct; " + "; ".join(fails[:8]) + (" ..." if len(fails) > 8 else "")
+            return f"{n_ok} of {qty(n_all, unit)} correct; " + "; ".join(fails[:8]) + (" ..." if len(fails) > 8 else "")
 
         n_real = written + refused_real
         res.add("tle-checksums-valid", "fail" if lines_bad else "pass", None,
-                summary(lines_bad, f"{written} record(s) written as two 69-character lines with valid checksums", written - len(lines_bad), written))
+                summary(lines_bad, f"{qty(written, 'record')} written as two 69-character lines with valid checksums", written - len(lines_bad), written))
         res.add("tle-writer-catalog-field", "fail" if cat_bad else "pass", None,
-                summary(cat_bad, f"{written} catalog field(s) written correctly (five digits below 100000, Alpha-5 from 100000)",
-                        n_real - len(cat_bad), n_real, "catalog field(s)"))
+                summary(cat_bad, f"{qty(written, 'catalog field')} written correctly (five digits below 100000, Alpha-5 from 100000)",
+                        n_real - len(cat_bad), n_real, "catalog field"))
         res.add("tle-writer-column-layout", "fail" if layout_bad else "pass", None,
-                summary(layout_bad, f"{rt_checked} record(s) with every field in its fixed columns", rt_checked - len(layout_bad), rt_checked))
+                summary(layout_bad, f"{qty(rt_checked, 'record')} with every field in its fixed columns", rt_checked - len(layout_bad), rt_checked))
         conv_text = "; ".join(f"{f}: " + ", ".join(f"{k} {n}" for k, n in sorted(v.items())) for f, v in conv.items())
         res.add("tle-writer-round-trip", "fail" if rt_bad else "pass", None,
-                summary(rt_bad, f"{written} record(s) read back at the TLE field resolution (rendering observed per field: {conv_text})",
+                summary(rt_bad, f"{qty(written, 'record')} read back at the TLE field resolution (rendering observed per field: {conv_text})",
                         rt_checked - len(rt_bad), rt_checked))
         unrep = [it["norad_cat_id"] for it in exp["records"] if not it["representable_in_tle"]]
         if unrep:
-            head = f"{len(refused_ok)} of {len(unrep)} number(s) the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused"
+            head = f"{len(refused_ok)} of {qty(len(unrep), 'number')} the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused"
             if emitted_bad:
                 detail = head + (f" ({', '.join(map(str, refused_ok))})" if refused_ok else "") + "; written instead of refused: " + "; ".join(emitted_bad[:8])
             else:
@@ -1516,15 +1532,15 @@ class Runner:
                       "refused_matched": sum(1 for o, _ in outcome.values() if o in ("refused", "given up")),
                       "refused_without_reason": len(refusals) - len(with_reason), "refusals_reported": declared,
                       "top_refusal_reason": max(set(reasons), key=reasons.count) if reasons else None}
-            garbage_extra = f"; {len(extra)} record(s) the file does not hold, built from garbage" if extra else ""
+            garbage_extra = f"; {qty(len(extra), 'record')} the file does not hold, built from garbage" if extra else ""
             # the corrupt input itself
             if corrupt is None:  # the JSON array without its closing bracket: every record complete, the file cut
                 if whole:
-                    status, text = "pass", f"the parser refused the file as a whole ({whole}): fail-closed; {len(want)} complete record(s) given up with it"
+                    status, text = "pass", f"the parser refused the file as a whole ({whole}): fail-closed; {qty(len(want), 'complete record')} given up with it"
                 elif with_reason and not extra:
                     status, text = "pass", f"the cut reported with a reason: {with_reason[0]['reason'][:120]!r}"
                 else:
-                    status, text = "fail", (f"{counts['loaded']} of {len(want)} record(s) loaded and nothing said of the cut "
+                    status, text = "fail", (f"{counts['loaded']} of {qty(len(want), 'record')} loaded and nothing said of the cut "
                                             f"({spec.get('file_edit', 'the file is cut')}): silent partial loading" + garbage_extra)
             elif corrupt["norad_cat_id"] in unread:
                 status, text = "not-exercised", (f"the parser does not return {corrupt['norad_cat_id']} from the unedited file {uname} either, "
@@ -1550,7 +1566,8 @@ class Runner:
             # the valid records around it, graded where the parser returns them from the unedited file
             valid = [r for r in want if r["role"] == "valid"]
             graded = [r for r in valid if r["norad_cat_id"] not in unread]
-            where = "complete record(s)" if cut else "valid set(s) around the corrupt one"
+            def where(k):  # the count with its noun, agreeing in number (D-239)
+                return qty(k, "complete record") if cut else f"{qty(k, 'valid set')} around the corrupt one"
             left_out = [str(r["norad_cat_id"]) for r in valid if r["norad_cat_id"] in unread]
             note = f"; not graded: {', '.join(left_out)}, which the parser does not return from the unedited file either" if left_out else ""
             label = {"garbage": "changed by the corrupt input"}
@@ -1558,17 +1575,17 @@ class Runner:
                         + (f" ({outcome[r['norad_cat_id']][1][:160]})" if outcome[r['norad_cat_id']][1] else "")
                         for r in graded if outcome[r["norad_cat_id"]][0] != "loaded"]
             if not graded:
-                res.add("corrupt-input-neighbours-load", "not-exercised", path, f"the parser returns none of the {len(valid)} {where} from the unedited file "
-                        f"{uname} either, so nothing here shows what the edit changed")
+                res.add("corrupt-input-neighbours-load", "not-exercised", path, (f"the parser does not return the {where(1)}" if len(valid) == 1 else f"the parser returns none of the {where(len(valid))}")
+                        + f" from the unedited file {uname} either, so nothing here shows what the edit changed")
             elif whole and cut:
-                res.add("corrupt-input-neighbours-load", "info", path, f"{len(graded)} {where} given up with the file: a whole-file refusal of a file cut mid-record is fail-closed (owner decision 3, D-171)" + note)
+                res.add("corrupt-input-neighbours-load", "info", path, f"{where(len(graded))} given up with the file: a whole-file refusal of a file cut mid-record is fail-closed (owner decision 3, D-171)" + note)
             elif whole:
-                res.add("corrupt-input-neighbours-load", "fail", path, f"the parser refused the file as a whole ({whole}), so the {len(graded)} {where} were given up with it" + note)
+                res.add("corrupt-input-neighbours-load", "fail", path, f"the parser refused the file as a whole ({whole}), so the {where(len(graded))} {pick(len(graded), 'was', 'were')} given up with it" + note)
             elif problems:
-                res.add("corrupt-input-neighbours-load", "fail", path, f"{len(graded) - len(problems)} of {len(graded)} {where} loaded as the parser reads them from "
+                res.add("corrupt-input-neighbours-load", "fail", path, f"{len(graded) - len(problems)} of {where(len(graded))} loaded as the parser reads {pick(len(graded), 'it', 'them')} from "
                         f"the unedited file {uname}; " + "; ".join(problems) + note)
             else:
-                res.add("corrupt-input-neighbours-load", "pass", path, f"{len(graded)} {where} loaded, each exactly as the parser reads it from the unedited file {uname}" + note)
+                res.add("corrupt-input-neighbours-load", "pass", path, f"{where(len(graded))} loaded, {pick(len(graded), '', 'each ')}exactly as the parser reads it from the unedited file {uname}" + note)
 
     def run_case(self, case):
         exp = json.load(open(os.path.join(self.root, "fixtures", case["id"], "expected.json")))

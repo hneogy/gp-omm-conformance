@@ -5,6 +5,7 @@ info item hidden without --verbose. Now: a failing `stable-source-drift` item, a
 and a values item that says the frozen expected values were not applied and why."""
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -61,7 +62,7 @@ class StableDriftTests(unittest.TestCase):
         self.assertEqual([i for i in r.items if i.check == "stable-source-drift"], [])
         values = [i for i in r.items if i.check == "values"]
         self.assertEqual(len(values), 4)
-        self.assertTrue(all(i.status == "pass" and "match frozen expected values" in i.detail for i in values), [i.detail for i in values])
+        self.assertTrue(all(i.status == "pass" and re.search(r"\d+ records? match(es)? frozen expected values", i.detail) for i in values), [i.detail for i in values])
 
     def test_edited_stable_file_reports_drift_and_reference_comparison(self):
         r = self.run_case(mutate=True)
@@ -81,7 +82,7 @@ class StableDriftTests(unittest.TestCase):
         self.assertIn("stable source drifted", values[FILE].detail)
         for f, i in values.items():
             if f != FILE:
-                self.assertIn("match frozen expected values", i.detail, f)     # the other three files are untouched
+                self.assertRegex(i.detail, r"\d+ records? match(es)? frozen expected values", f)     # the other three files are untouched
         self.assertEqual([i for i in r.items if i.status == "fail"], drift)   # drift is the only failure
 
 

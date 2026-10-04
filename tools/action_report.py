@@ -36,6 +36,23 @@ def append(path, text):
             f.write(text)
 
 
+def pick(n, singular, plural):
+    """The word form that agrees with the count; as gpconf/words.py, kept here so that this script stands alone (D-239)."""
+    return singular if n == 1 else plural
+
+
+def counts_sentence(by, total):
+    """The summary's sentence of counts, each agreeing in number with what follows it (D-239)."""
+    p, tol, failed, need, never, skip = (by.get(s, 0) for s in ("pass", "pass-tolerance", "fail", "not-fetched", "not-available", "skip"))
+    exercised = p + tol + failed
+    return (f"**{exercised} of {total} {pick(total, 'case', 'cases')} exercised**, offline: {p} {pick(p, 'passes', 'pass')}, "
+            f"{tol} {pick(tol, 'passes', 'pass')} within tolerance, {failed} {pick(failed, 'fails', 'fail')}. "
+            f"{need} {pick(need, 'needs', 'need')} provider data, which this Action does not fetch; "
+            f"{never} {pick(never, 'needs', 'need')} launch-window data that no fetch brings; "
+            f"{skip} {pick(skip, 'skips', 'skip')}, where the parser has no reader for the format or no hook for the check; "
+            f"{by.get('not-exercised', 0)} not exercised. Failed cases do not fail this job.\n\n")
+
+
 def md(cell):
     return str(cell).replace("|", "\\|").replace("\n", " ")
 
@@ -62,7 +79,7 @@ def main():
     p = subprocess.run(argv, capture_output=True, text=True, env=env)
     sys.stdout.write(p.stdout)
     sys.stderr.write(p.stderr)
-    title = f"### GP/OMM conformance corpus: preset `{preset}`\n\n"
+    title = f"### gpconf: preset `{preset}`\n\n"
 
     if p.returncode == 2:  # a setup error (D-153): nothing ran, and nothing is said about the library
         message = (p.stderr.strip().splitlines() or ["the runner could not start"])[-1]
@@ -83,11 +100,7 @@ def main():
     exercised = sum(by.get(s, 0) for s in ("pass", "pass-tolerance", "fail"))
     lines = [title,
              f"Parser: {md(data['parser'])}. Corpus {data['corpus_version']}, runner gpconf {data['gpconf']}.\n\n",
-             f"**{exercised} of {len(results)} cases exercised**, offline: {by.get('pass', 0)} pass, {by.get('pass-tolerance', 0)} pass "
-             f"within tolerance, {by.get('fail', 0)} fail. {by.get('not-fetched', 0)} need provider data, which this Action does "
-             f"not fetch; {by.get('not-available', 0)} need launch-window data that no fetch brings; "
-             f"{by.get('skip', 0)} skip, where the parser has no reader for the format or no hook for the check; "
-             f"{by.get('not-exercised', 0)} not exercised. Failed cases do not fail this job.\n\n",
+             counts_sentence(by, len(results)),
              "| case | status | exact | tol | fail | skip | n/e | n/f | n/a |\n|---|---|---|---|---|---|---|---|---|\n"]
     for r in results:
         c = r["counts"]

@@ -107,7 +107,7 @@ class TheFetchNeverAsks(unittest.TestCase):
                     return "stub"
                 fetch.run(list(argv), root=self.root, corpus=ROOT, entries=FETCHLIST, fetch_one=stub, out=out, pause=0)
                 self.assertFalse([u for u in asked if "g15-27" in u or "799501621" in u], argv)
-                self.assertIn(f"launch-window capture(s) ({LABEL}).", out.getvalue())
+                self.assertIn(f"launch-window captures ({LABEL}).", out.getvalue())
                 self.assertIn("no fetch asks for them", out.getvalue())
 
     def test_stage_a_alone_holds_only_captures_and_asks_nothing(self):
@@ -115,8 +115,8 @@ class TheFetchNeverAsks(unittest.TestCase):
         code = fetch.run(["--stage", "A"], root=self.root, corpus=ROOT, entries=FETCHLIST,
                          fetch_one=lambda e, root=None: asked.append(e["url"]) or "stub", out=out, pause=0)
         self.assertEqual((code, asked), (0, []))
-        self.assertIn("not requested: 5 launch-window capture(s)", out.getvalue())
-        self.assertIn("done: 0 request(s) made", out.getvalue())
+        self.assertIn("not requested: 5 launch-window captures", out.getvalue())
+        self.assertIn("done: 0 requests made", out.getvalue())
 
 
 class TheRunnerSaysNotAvailable(unittest.TestCase):
@@ -166,12 +166,12 @@ class TheRunnerSaysNotAvailable(unittest.TestCase):
         self.assertEqual(code, 0)                                                       # absence is not a failure of the parser
         self.assertIn("exact  tol fail skip n/e n/f n/a", text)
         self.assertRegex(text, rf"{ALL_CAPTURES}\s+not-available\s+0\s+0\s+0\s+0\s+0\s+0\s+5\n")
-        self.assertIn("1 case(s): 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 1 not available, 0 not exercised", text)
-        self.assertIn(f"1 case(s) cannot run from a fetch and report not-available: {ALL_CAPTURES}.", text)
+        self.assertIn("1 case: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 1 not available, 0 not exercised", text)
+        self.assertIn(f"1 case cannot run from a fetch and reports not-available: {ALL_CAPTURES}.", text)
         self.assertIn("The counts the corpus publishes were measured with those files.", text)
         self.assertIn("so it can show fewer failing cases than a published count", text)
         self.assertNotIn("fetch it with", text)
-        self.assertNotIn("have none of their provider files on disk and report not-fetched", text)
+        self.assertNotRegex(text, r"ha(s|ve) none of (its|their) provider files on disk and reports? not-fetched")
         (r,) = rep["results"]
         self.assertEqual((r["status"], r["counts"]["not-available"], r["counts"]["not-fetched"]), ("not-available", 5, 0))
 
@@ -179,8 +179,8 @@ class TheRunnerSaysNotAvailable(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             corpus_copy(tmp, [ALL_CAPTURES, PARTLY])
             code, text = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", ALL_CAPTURES, "--case", PARTLY])
-        self.assertIn("2 case(s): 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 1 need fetched data, 1 not available, 0 not exercised", text)
-        self.assertIn(f"1 other case(s) name 5 launch-window file(s) (column n/a) and are judged on their other files: {PARTLY}.", text)
+        self.assertIn("2 cases: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 1 needs fetched data, 1 not available, 0 not exercised", text)
+        self.assertIn(f"1 other case names 5 launch-window files (column n/a) and is judged on its other files: {PARTLY}.", text)
         self.assertIn("fetch it with", text)                                            # for the one file a fetch does bring
 
     def test_a_copy_without_the_fetch_list_cannot_tell_and_says_not_fetched(self):

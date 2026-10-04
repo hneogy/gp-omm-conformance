@@ -5,12 +5,30 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gpconf"
 version = "0.5.1"
-description = "Runner for the GP/OMM conformance corpus (Alpha-5, 6- and 9-digit catalog numbers, OMM formats)"
+# The About line of docs/BRAND.md, word for word (D-242).
+description = "Free test kit: does your satellite software handle catalog numbers above 99,999? Built from real CelesTrak data."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 license-files = ["LICENSE", "NOTICE"]
 dependencies = []
+keywords = ["satellite", "TLE", "two-line element set", "Alpha-5", "OMM", "CCSDS", "SGP4", "CelesTrak", "catalog number", "conformance testing"]
+# No licence classifier: the licence is the expression above (PEP 639), and a build refuses both. The Python versions
+# named are the ones the suite runs on: 3.9 and 3.12 in CI, 3.14 at each release (D-242).
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Software Development :: Testing",
+]
 
 [project.optional-dependencies]
 # The library presets' libraries (D-151, D-153). The Node presets' libraries cannot be pip extras.

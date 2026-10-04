@@ -29,7 +29,7 @@ def found():
         "manifest.json (generated)": json.loads(read("manifest.json"))["corpus_version"],
         "MANIFEST.md (generated)": re.match(r"# Corpus manifest \(([^)]+)\)", read("MANIFEST.md")).group(1),
         "README.md status line": re.search(r"Status: version `([^`]+)`", readme).group(1),
-        "README.md citation": re.search(r"gp-omm-conformance, version ([0-9][^,]*), ", readme).group(1),
+        "README.md citation": re.search(r"catalog-number boundary, version ([0-9][^,]*),\s", readme).group(1),
     }
 
 
@@ -41,7 +41,7 @@ class VersionConstants(unittest.TestCase):
 
     def test_the_citation_date_is_the_same_in_both_places(self):
         cff = re.search(r'(?m)^date-released: "([^"]+)"', read("CITATION.cff")).group(1)
-        readme = re.search(r"gp-omm-conformance, version [^,]+, (\d{4}-\d{2}-\d{2}),", read("README.md")).group(1)
+        readme = re.search(r"catalog-number boundary, version [^,]+,\s+(\d{4}-\d{2}-\d{2}),", read("README.md")).group(1)
         self.assertEqual(cff, readme)
 
     def test_the_versioning_rule_reads_the_same_in_both_places(self):

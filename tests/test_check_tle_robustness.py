@@ -132,7 +132,7 @@ class StrayLines(_Files):
         rc, out, rep = self.cli(self.write("mixed.tle", text))
         self.assertEqual(rc, 1)
         self.assertEqual([r["status"] for r in rep["files"][0]["records"]], ["pass", "fail"])
-        self.assertIn("2 record(s): 1 pass, 1 fail", out)
+        self.assertIn("2 records: 1 passes, 1 fails", out)
 
 
 class DayOfYearSourceEpoch(_Files):

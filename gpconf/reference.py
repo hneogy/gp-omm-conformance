@@ -22,6 +22,7 @@ import xml.etree.ElementTree as ET
 from decimal import Decimal, ROUND_HALF_EVEN
 
 from .tle import from_alpha5, checksum
+from .words import qty
 
 OMM_HEADER = ["CCSDS_OMM_VERS", "COMMENT", "CLASSIFICATION", "CREATION_DATE", "ORIGINATOR", "MESSAGE_ID"]
 OMM_META = ["OBJECT_NAME", "OBJECT_ID", "CENTER_NAME", "REF_FRAME", "REF_FRAME_EPOCH", "TIME_SYSTEM", "MEAN_ELEMENT_THEORY"]
@@ -210,7 +211,7 @@ def read_csv_text(text):
         # with the missing values None and the cut value read as it stood, a wrong record (D-117, D-171).
         if None in r or None in r.values():
             n = sum(1 for k, v in r.items() if k is not None and v is not None) + len(r.get(None) or [])
-            raise ValueError(f"CSV data row {len(rows) + 1} has {n} fields and the header {len(reader.fieldnames)}: a file cut inside a row?")
+            raise ValueError(f"CSV data row {len(rows) + 1} has {qty(n, 'field')} and the header {len(reader.fieldnames)}: a file cut inside a row?")
         rows.append(r)
     cols = list(rows[0].keys()) if rows else []
     recs = []

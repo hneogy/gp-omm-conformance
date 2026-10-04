@@ -172,7 +172,7 @@ class Control(unittest.TestCase):
         self.assertIn("line length 69/68", item(self.r, "c2-line-2-short.tle", "corrupt-tle-line-short").detail)
         self.assertIn("epoch field '26189.7O990935' is not a number", item(self.r, "c3-letter-in-epoch.tle", "corrupt-tle-letter-in-number").detail)
         self.assertIn("no line 2", item(self.r, "c4-line-2-missing.tle", "corrupt-tle-missing-line-2").detail)
-        self.assertIn("2 complete record(s) given up", item(self.r, "c5-cut-last-row.csv", "corrupt-input-neighbours-load").detail)
+        self.assertIn("2 complete records given up", item(self.r, "c5-cut-last-row.csv", "corrupt-input-neighbours-load").detail)
 
     def test_the_counts_use_the_existing_vocabulary(self):
         c = item(self.r, "c2-line-2-short.tle", "corrupt-tle-line-short").counts
@@ -298,7 +298,7 @@ class Rules(unittest.TestCase):
                 return super().parse(raw, fmt)
         r = run(Strict())
         self.assertEqual(items(r, "c3-letter-in-epoch.tle"), {("corrupt-tle-letter-in-number", "pass"), ("corrupt-input-neighbours-load", "fail")})
-        self.assertIn("2 valid set(s) around the corrupt one were given up", item(r, "c3-letter-in-epoch.tle", "corrupt-input-neighbours-load").detail)
+        self.assertIn("2 valid sets around the corrupt one were given up", item(r, "c3-letter-in-epoch.tle", "corrupt-input-neighbours-load").detail)
 
 
 class Comparison(unittest.TestCase):
@@ -353,7 +353,7 @@ class Comparison(unittest.TestCase):
         r = run(Leaky())
         it = item(r, "c3-letter-in-epoch.tle", "corrupt-input-neighbours-load")
         self.assertEqual(it.status, "fail")
-        self.assertIn("1 of 2 valid set(s) around the corrupt one loaded as the parser reads them from the unedited file", it.detail)
+        self.assertIn("1 of 2 valid sets around the corrupt one loaded as the parser reads them from the unedited file", it.detail)
         self.assertIn("20453 changed by the corrupt input (inclination = Decimal('35.5935'), from the unedited file Decimal('35.5934'))", it.detail)
         self.assertEqual(item(r, "c1-checksum-digit.tle", "corrupt-input-neighbours-load").status, "pass")  # nothing refused there
         self.assertEqual(item(r, "c3-letter-in-epoch.tle", "corrupt-tle-letter-in-number").counts["misidentified"], 1)
@@ -381,7 +381,7 @@ class Comparison(unittest.TestCase):
         self.assertIn("does not return 69999 from the unedited file unedited-sets.tle either", it.detail)
         self.assertEqual(item(r, "c3-letter-in-epoch.tle", "corrupt-input-neighbours-load").status, "pass")
         it = item(r, "c5-cut-closing-bracket.json", "corrupt-input-neighbours-load")
-        self.assertIn("2 complete record(s) given up with the file", it.detail)
+        self.assertIn("2 complete records given up with the file", it.detail)
         self.assertIn("not graded: 69999, which the parser does not return from the unedited file either", it.detail)
 
     def test_a_record_the_parser_returns_from_the_unedited_file_too_is_not_blamed_on_the_edit(self):

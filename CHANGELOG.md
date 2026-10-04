@@ -5,6 +5,34 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
+## [Unreleased]
+
+Changed: the project calls itself gpconf, everywhere a person reads its name (D-241, D-242). `docs/BRAND.md` is the
+single source for the name, what it means and the lines the project describes itself with; the repository stays
+`gp-omm-conformance`, and "the GP/OMM conformance corpus" is the descriptive subtitle. The README opens with the
+headline, one sentence, the install block and a table of the fixes merged or acted on upstream; what it opened with,
+and the status paragraph, follow unchanged. The package's summary is the About line, and it declares keywords and
+classifiers; `gpconf --help` says what the kit is. The GitHub Action is named gpconf and its job summary is headed
+"gpconf: preset …"; `uses: hneogy/gp-omm-conformance@<tag>` does not change. `CITATION.cff`'s title is "gpconf: a
+conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary", and its abstract says
+that the audit of v0.1.0 was made by a separate AI session; the Zenodo records of earlier releases keep their titles.
+No case, check, expected value or printed result changes.
+
+Changed: every count the runner, the fetch and the Action print agrees in number with the words beside it (D-239). The
+Action's summary said "1 need launch-window data", and the count line could say "1 need fetched data" under a heading
+of "1 case(s)". One case now passes, fails, skips or needs fetched data where two pass, fail, skip or need it, and no
+line hedges a plural with a bracketed s: "18 cases", "50 requests made", "0 of 1 record", "1 record matches" beside
+"256 records match". Only wording changes: no status, count or check moves, and a line whose counts are all other than
+one differs from 0.5.1's by the bracketed s alone. `docs/FAILURES.md` is regenerated with the same rows.
+
+Added: the JSON report carries the case totals as numbers, in a `summary` object at its top level: `cases` and one
+count for each status, zeros included (D-240). A script should read the JSON report or the exit status, never the
+printed lines, whose wording can change from one version to the next, as it does in this one; the README and the
+adapter guide now say so. The change is additive: every field the report had is where it was.
+
+Changed: the table of `docs/FAILURES.md` gives a case's failing items as "(1 failing)" where it said "(1 fail)", a word
+that does not vary with the count (D-240). The numbers are the same.
+
 ## [0.5.1] - 2026-10-03
 
 A patch release under the versioning rule: tooling and documentation only. The fetch stops depending on data that

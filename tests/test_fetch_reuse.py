@@ -94,7 +94,7 @@ class Reuse(Layout):
         lines = [line for line in out.splitlines() if line.startswith(("REUSE", "FETCH"))]
         self.assertEqual([line.split()[0] for line in lines], ["REUSE", "FETCH", "FETCH", "FETCH"])
         self.assertIn("stable tier: the copy in corpus 0.2.0's cache holds the bytes this version's manifest records; copied, not requested", lines[0])
-        self.assertIn("dry run: no request made; a run would make 3 request(s), reuse 1 file(s) from an earlier corpus version's cache and leave 0 entries as they are", out)
+        self.assertIn("dry run: no request made; a run would make 3 requests, reuse 1 file from an earlier corpus version's cache and leave 0 entries as they are", out)
         self.assertFalse(os.path.exists(os.path.join(self.new, "fixtures")))
 
     def test_a_run_copies_and_marks_the_reused_file_and_requests_the_rest(self):
@@ -107,7 +107,7 @@ class Reuse(Layout):
         self.assertEqual(meta["retrieved_at"], "2026-09-21T00:43:39Z")  # the one request that was made, not the copy
         self.assertIn("reused_at", meta)
         self.assertIn("reused from 0.2.0  c/s.csv  (stable tier, the bytes this version records; no request)", out)
-        self.assertIn("done: 3 request(s) made, 1 file(s) reused from an earlier corpus version's cache, 0 entries skipped", out)
+        self.assertIn("done: 3 requests made, 1 file reused from an earlier corpus version's cache, 0 entries skipped", out)
         self.calls.clear()
         _, out = self.run_fetch(["--dry-run"])  # now on disk: cached, not reused again
         self.assertTrue(any(line.startswith("cached") and "s.csv" in line for line in out.splitlines()), out)
@@ -156,7 +156,7 @@ class RealCorpus(unittest.TestCase):
         self.assertNotIn("satcat.txt", "".join(l for l in out.getvalue().splitlines() if l.startswith(("REUSE", "FETCH"))))
         self.assertEqual(calls, [])
         self.assertNotRegex(out.getvalue(), r"(REUSE|FETCH) .*(g15-27|799501621)")
-        self.assertIn("not requested: 10 launch-window capture(s)", out.getvalue())
+        self.assertIn("not requested: 10 launch-window captures", out.getvalue())
         man = fetch.manifest_sources(ROOT)
         reused = [line.split()[1] for line in out.getvalue().splitlines() if line.startswith("REUSE")]
         urls = {e["url"]: f"fixtures/{e['case']}/raw/{e['file']}" for e in NORMAL}
@@ -171,7 +171,7 @@ class RealCorpus(unittest.TestCase):
             gpconf_main(["run", "--preset", "reference", "--data", self.new, "--case", "epoch-year-19xx"])
         stable = [e for e in NORMAL if e["case"] == "epoch-year-19xx"
                   and fetch.manifest_sources(ROOT)[f"fixtures/{e['case']}/raw/{e['file']}"]["tier"] == "stable"]
-        self.assertIn(f"{len(stable)} provider file(s) were reused from corpus 0.0.9's cache rather than fetched", out.getvalue())
+        self.assertIn(f"{len(stable)} provider files were reused from corpus 0.0.9's cache rather than fetched", out.getvalue())
 
 
 if __name__ == "__main__":

@@ -107,7 +107,7 @@ class SetupErrors(unittest.TestCase):
             p = subprocess.run([sys.executable, "-m", "gpconf", "run", "--preset", "tle.js", "--root", ROOT, "--case", "alpha5-tle-derived"],
                                cwd=tmp, capture_output=True, text=True, timeout=120, env=dict(os.environ, PYTHONPATH=ROOT))
             self.assertEqual(p.returncode, 2, p.stdout + p.stderr)
-            self.assertNotIn("case(s)", p.stdout)  # nothing ran
+            self.assertNotRegex(p.stdout, r"\d+ cases?: ")  # no count line: nothing ran
 
     @unittest.skipUnless(NODE, "Node.js not installed")
     def test_the_listing_says_where_the_library_is_missing(self):

@@ -30,6 +30,8 @@ docs/PLAN.md
 docs/RESEARCH.md
 # The letter-in-field reference (D-193), added when its four reports were filed, never before them.
 docs/LETTER-IN-FIELD.md
+# How the project names and describes itself (D-241): the single source the README, the package and the site copy from.
+docs/BRAND.md
 # docs/README-draft-ai-assistance.md is NOT exported: superseded by the README section (AUDIT.md M8).
 # docs/INVENTORY.md is NOT exported: it quotes SupGP field values (D-049); the manifest carries hashes and counts.
 docs/upstream/*.md

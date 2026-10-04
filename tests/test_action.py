@@ -174,7 +174,7 @@ class Behaviour(unittest.TestCase):
     def test_offline_whatever_the_job_sets(self):
         code, summary, out = run_step("reference", extra_env={"GPCONF_DATA": ROOT})
         self.assertEqual(code, 0, summary)
-        self.assertIn("11 need provider data, which this Action does not fetch; 1 need launch-window data that no fetch brings;", summary)
+        self.assertIn("11 need provider data, which this Action does not fetch; 1 needs launch-window data that no fetch brings;", summary)
         self.assertIn("1 not exercised.", summary)
         self.assertIn("| case | status | exact | tol | fail | skip | n/e | n/f | n/a |", summary)
         self.assertEqual(out.get("exercised"), "5")

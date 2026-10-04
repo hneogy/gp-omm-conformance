@@ -9,6 +9,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 from public_scrub import SUPGP_CASES, is_supgp_source  # noqa: E402
 from cases import CASES  # noqa: E402
+sys.path.insert(0, ROOT)
+from gpconf.words import qty  # noqa: E402
 OUT = os.path.join(ROOT, "docs", "FAILURES.md")
 KIND = {c["id"]: c["kind"] for c in CASES}
 
@@ -59,7 +61,7 @@ def render(reps, generated_at):
         row = [f"`{c}`"]
         for n in ("reference", "naive", "sgp4"):
             r = by.get(n, {}).get(c)
-            row.append(f"{r['status']} ({r['counts']['fail']} fail)" if r else "not run")
+            row.append(f"{r['status']} ({r['counts']['fail']} failing)" if r else "not run")  # failing items; the word does not vary with the count (D-240)
         md.append("| " + " | ".join(row) + " |")
     md += ["", "## Gate: this month's launches", "",
            "One headline per parser, read across existing cases from the record counts behind their values items (D-142): "
@@ -80,7 +82,7 @@ def render(reps, generated_at):
             for i in fails:
                 groups.setdefault((i["check"], i["detail"][:80]), []).append(i)
             collapsed = len(fails) - len(groups)
-            md += [f"### `{r['case']}`", "", f"{len(fails)} failing item(s)" + (f", shown as {len(groups)} bullet(s): {collapsed} carried a detail identical to one shown" if collapsed else "") + ".", ""]
+            md += [f"### `{r['case']}`", "", f"{qty(len(fails), 'failing item')}" + (f", shown as {qty(len(groups), 'bullet')}: {collapsed} carried a detail identical to one shown" if collapsed else "") + ".", ""]
             for (check, _), items in groups.items():
                 i = items[0]
                 detail = i["detail"][:600] + (" …" if len(i["detail"]) > 600 else "")

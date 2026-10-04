@@ -8,7 +8,8 @@ import sys
 
 from . import __version__
 from . import locate
-from .runner import Runner, CommandParser, CorpusIncomplete
+from .runner import Runner, CommandParser, CorpusIncomplete, status_totals
+from .words import pick, qty
 
 
 def load_adapter(spec):
@@ -19,6 +20,16 @@ def load_adapter(spec):
     return obj() if isinstance(obj, type) else obj
 
 
+def count_line(results):
+    """The line under the table: how many cases ended in each status. Every count agrees in number with what follows
+    it, so one case passes, fails, skips or needs fetched data where two pass, fail, skip or need it (D-239)."""
+    by = status_totals(results)  # the numbers the JSON report carries as `summary` (D-240)
+    p, tol, failed, skip, need = (by[s] for s in ("pass", "pass-tolerance", "fail", "skip", "not-fetched"))
+    return (f"{qty(by['cases'], 'case')}: {p} {pick(p, 'passes', 'pass')} (exact), {tol} {pick(tol, 'passes', 'pass')} within tolerance, "
+            f"{failed} {pick(failed, 'fails', 'fail')}, {skip} {pick(skip, 'skips', 'skip')}, {need} {pick(need, 'needs', 'need')} fetched data, "
+            f"{by['not-available']} not available, {by['not-exercised']} not exercised")
+
+
 def print_missing(results, unfetched, runner):
     """Below the count line: what was not fetched and what cannot be, so that neither a case with no data nor a case
     that ran on part of its data reads as a result it has not earned (D-148, D-228, D-229, D-231)."""
@@ -27,12 +38,14 @@ def print_missing(results, unfetched, runner):
     lacking = [r for r in results if r.status != "not-available" and r.unavailable()]
     if never or lacking:  # D-229: files no fetch requests are not "to be fetched", and the published counts used them
         if never:
-            print(f"{len(never)} case(s) cannot run from a fetch and report not-available: {', '.join(r.case_id for r in never)}. "
-                  "Every provider file they need is a launch-window capture: CelesTrak serves launch nominals for the days after "
+            k = len(never)
+            print(f"{qty(k, 'case')} cannot run from a fetch and {pick(k, 'reports', 'report')} not-available: {', '.join(r.case_id for r in never)}. "
+                  f"Every provider file {pick(k, 'it needs', 'they need')} is a launch-window capture: CelesTrak serves launch nominals for the days after "
                   "a launch, the corpus captured them then, and no fetch requests them.")
         if lacking:
-            print(f"{len(lacking)} other case(s) name {sum(len(r.unavailable()) for r in lacking)} launch-window file(s) (column n/a) "
-                  f"and are judged on their other files: {', '.join(r.case_id for r in lacking)}.")
+            k = len(lacking)
+            print(f"{qty(k, 'other case')} {pick(k, 'names', 'name')} {qty(sum(len(r.unavailable()) for r in lacking), 'launch-window file')} (column n/a) "
+                  f"and {pick(k, 'is judged on its', 'are judged on their')} other files: {', '.join(r.case_id for r in lacking)}.")
         print("  The counts the corpus publishes were measured with those files. A run without them cannot reproduce the "
               "failures that rest on them, so it can show fewer failing cases than a published count.")
     on_request = [r for r in results if r.on_request]
@@ -44,11 +57,13 @@ def print_missing(results, unfetched, runner):
     if not unfetched and not partial:
         return
     if unfetched:
-        print(f"{len(unfetched)} case(s) have none of their provider files on disk and report not-fetched; "
+        k = len(unfetched)
+        print(f"{qty(k, 'case')} {pick(k, 'has none of its', 'have none of their')} provider files on disk and {pick(k, 'reports', 'report')} not-fetched; "
               "skip is reserved for a parser with no reader for a format or no hook for a check.")
     if partial:
         files = [f for r in partial for f in r.missing()]
-        print(f"{len(partial)} case(s) ran without {len(files)} of their provider files, so each result covers only the files on disk "
+        k = len(partial)
+        print(f"{qty(k, 'case')} ran without {len(files)} of {pick(k, 'its', 'their')} provider files, so {pick(k, 'its', 'each')} result covers only the files on disk "
               f"(column n/f): {', '.join(r.case_id for r in partial)}.")
         if any("recapture" in os.path.basename(f) for f in files):
             # corrected by D-150: a normal fetch never requests a re-capture, so a later run does not bring it
@@ -57,8 +72,9 @@ def print_missing(results, unfetched, runner):
     unexpected = {p: v for r in results for p, v in r.unexpected.items()}
     if unexpected:  # D-228: the fetch asked and got something else; that response is kept out of the data and is not read
         whys = ", ".join(sorted({str(v["why"]) for v in unexpected.values()}))
-        print(f"{len(unexpected)} provider file(s) are missing because the fetch got a response it did not expect for them ({whys}); "
-              "each response is kept beside the data, not in its place, and is not read."
+        k = len(unexpected)
+        print(f"{qty(k, 'provider file')} {pick(k, 'is', 'are')} missing because the fetch got a response it did not expect for {pick(k, 'it', 'them')} ({whys}); "
+              f"{pick(k, 'the', 'each')} response is kept beside the data, not in its place, and is not read."
               + (" The fetch asks for such a file again only with --force, two hours or more after that answer." if runner.fetch_hints else ""))
     # the fetch command only where a plain fetch would bring something: not for a re-capture, which it never requests
     # (D-150), a file whose last answer was unexpected, which it does not ask for again (D-228), or one it brings only
@@ -75,13 +91,13 @@ def check_tle(args):
         print("check-tle needs at least one TLE file", file=sys.stderr)
         return 2
     against = W.load_against(args.against) if args.against else None
-    print(f"gpconf {__version__} | check-tle | {len(args.files)} file(s)" + (f" | round trip against {args.against}" if args.against else ""))
+    print(f"gpconf {__version__} | check-tle | {qty(len(args.files), 'file')}" + (f" | round trip against {args.against}" if args.against else ""))
     report, n_pass, n_fail = [], 0, 0
     for path in args.files:
         with open(path, "rb") as f:
             text = f.read().decode("utf-8", "replace")
         results = W.check_file(text, against)
-        print(f"\n{path}: {len(results)} record(s)" + ("" if results else " (no element line found)"))
+        print(f"\n{path}: {qty(len(results), 'record')}" + ("" if results else " (no element line found)"))
         for r in results:
             ident = repr(r["catalog_field"]) + (f" -> {r['norad_cat_id']}" if r["norad_cat_id"] is not None else "")
             head = "unpaired element line" if r.get("unpaired") else (r["name"] or "(no name line)")
@@ -97,7 +113,7 @@ def check_tle(args):
             n_pass += r["status"] == "pass"
             n_fail += r["status"] == "fail"
         report.append({"file": path, "records": results})
-    print(f"\n{n_pass + n_fail} record(s): {n_pass} pass, {n_fail} fail"
+    print(f"\n{qty(n_pass + n_fail, 'record')}: {n_pass} {pick(n_pass, 'passes', 'pass')}, {n_fail} {pick(n_fail, 'fails', 'fail')}"
           + ("" if n_pass + n_fail else "; nothing to check"))
     if args.json:
         import datetime as _dt
@@ -112,10 +128,11 @@ def main(argv=None):
     if argv[:1] == ["fetch"]:  # its own options (tools/fetch.py's), parsed by gpconf/fetch.py (D-150)
         from .fetch import run as fetch_run
         return fetch_run(argv[1:], prog="gpconf fetch")
-    ap = argparse.ArgumentParser(prog="gpconf", description="GP/OMM conformance corpus runner",
+    ap = argparse.ArgumentParser(prog="gpconf", description="gpconf, the GP/OMM conformance corpus. Free test kit: does your satellite software handle catalog numbers above 99,999? "
+                                                         "Built from real CelesTrak data.",
                                  epilog="gpconf fetch --help: the fetch subcommand's own options")
     ap.add_argument("command", choices=["run", "list", "presets", "check-tle", "fetch"])
-    ap.add_argument("files", nargs="*", help="check-tle: TLE file(s) written by the tool under test")
+    ap.add_argument("files", nargs="*", help="check-tle: one or more TLE files written by the tool under test")
     ap.add_argument("--against", help="check-tle: the source records the lines were written from (CSV/JSON/XML/KVN/TLE); enables the round-trip check")
     ap.add_argument("--preset", help="a shipped adapter by name: reference, naive, sgp4, pyephem, satellite.js, tle.js or tle.js-api (gpconf presets lists them)")
     ap.add_argument("--module", help="Node presets: the library's entry file, for a checkout the working directory cannot import by name")
@@ -210,17 +227,16 @@ def main(argv=None):
             json.dump({"gpconf": __version__, "corpus_version": manifest["corpus_version"], "parser": parser_name,
                        **({"preset": {k: preset.get(k) for k in ("name", "library", "found", "tested_with", "runtime") if k != "runtime" or preset.get(k)}} if preset else {}),
                        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                       "summary": status_totals(results),  # case totals as numbers: what a script reads (D-240)
                        "results": [r.as_dict() for r in results], "gates": gates}, f, indent=1, default=str)
     failed = sum(1 for r in results if r.status == "fail")
     tol = sum(1 for r in results if r.status == "pass-tolerance")
     unfetched = [r for r in results if r.status == "not-fetched"]
-    print(f"\n{len(results)} case(s): {sum(1 for r in results if r.status == 'pass')} pass (exact), {tol} pass within tolerance, {failed} fail, "
-          f"{sum(1 for r in results if r.status == 'skip')} skip, {len(unfetched)} need fetched data, "
-          f"{sum(1 for r in results if r.status == 'not-available')} not available, {sum(1 for r in results if r.status == 'not-exercised')} not exercised")
+    print("\n" + count_line(results))
     print_missing(results, unfetched, runner)
     reused = {p: v for r in results for p, v in r.reused.items()}
     if reused:  # D-157: the report says which provider files were copied from an earlier version's cache, not fetched
-        print(f"{len(reused)} provider file(s) were reused from corpus {', '.join(sorted(set(map(str, reused.values()))))}'s cache "
+        print(f"{qty(len(reused), 'provider file')} {pick(len(reused), 'was', 'were')} reused from corpus {', '.join(sorted(set(map(str, reused.values()))))}'s cache "
               "rather than fetched: stable tier, bytes matching this version's recorded SHA-256.")
     if tol:
         print("'pass within tolerance' items list per-field count, mean signed difference and maximum, so a systematic bias is visible (see README, Tolerances).")

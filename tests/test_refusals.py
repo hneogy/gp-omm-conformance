@@ -78,7 +78,7 @@ class ThroughARun(unittest.TestCase):
         self.assertEqual((c["refused"], c["refused_matched"], c["dropped"], c["loaded"]), (256, 256, 0, 0))
         self.assertTrue(c["refusals_reported"])
         self.assertEqual(it.check, "records-returned")
-        self.assertIn("parser returned 0 of 256 record(s): 256 refused with a reason (TleException: Invalid character)", it.detail)
+        self.assertIn("parser returned 0 of 256 records: 256 refused with a reason (TleException: Invalid character)", it.detail)
         info = [i for r in results for i in r.items if i.check == "refusals" and i.file == DERIVED]
         self.assertEqual(info[0].status, "info")
         self.assertIn("'TleException: Invalid character' x256", info[0].detail)

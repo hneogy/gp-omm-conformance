@@ -1,6 +1,6 @@
-name: GP/OMM conformance corpus
+name: gpconf
 description: >-
-  Runs a parser against the GP/OMM conformance corpus, offline, and reports the results in the job summary.
+  Runs a parser against gpconf, the GP/OMM conformance corpus, offline, and reports the results in the job summary.
   Failed cases never fail the job; a preset whose library will not import does, as a setup error.
 author: Honorius Neogy
 inputs:

@@ -59,6 +59,7 @@ import urllib.error
 import urllib.request
 
 from . import locate
+from .words import pick, qty
 
 FETCHLIST = os.path.join("tools", "fetchlist.json")   # relative to the corpus root
 PAUSE_SECONDS = 2.0
@@ -388,6 +389,42 @@ def drift_report(entries, root=None, corpus=None):
     return out
 
 
+def drift_line(match, stable, stable_drift, live_drift, missing, unlisted):
+    """The drift check's last line, each count agreeing in number with its noun and verb (D-239)."""
+    return (f"{qty(match, 'file')} {pick(match, 'matches', 'match')} the tested snapshot ({stable} stable, {match - stable} live); "
+            f"{qty(stable_drift, 'STABLE source')} drifted; "
+            f"{qty(live_drift, 'live source')} {pick(live_drift, 'differs', 'differ')} (expected: live data changes every 2 hours); "
+            f"{missing} missing; {unlisted} not in the manifest.")
+
+
+def captures_line(n, windows):
+    """What the fetch says of the launch-window captures it does not request (D-229), agreeing in number (D-239)."""
+    return (f"not requested: {qty(n, 'launch-window capture')} ({'; '.join(windows)}). "
+            f"CelesTrak serves launch nominals for the days after a launch; {pick(n, 'this entry records', 'these entries record')} "
+            f"the corpus's own capture and no fetch asks for {pick(n, 'it', 'them')}.")
+
+
+def refusal_line(status, age, left, url, kept):
+    """The stop inside the two quiet hours after a refusal (D-228); the minutes agree in number (D-239)."""
+    ago, remain = round(age / 60), round(left / 60)
+    return (f"STOP: CelesTrak refused this address with HTTP {status} {qty(ago, 'minute')} ago "
+            f"({url}). No request is made for two hours after a refusal, with or without --force: "
+            f"{qty(remain, 'minute')} {pick(remain, 'remains', 'remain')}. The refused response is kept as {kept}; read it, it says why.")
+
+
+def dry_run_line(n_fetch, n_reuse, left):
+    """What a dry run says a real run would do (D-150), agreeing in number (D-239)."""
+    also = f", reuse {qty(n_reuse, 'file')} from an earlier corpus version's cache" if n_reuse else ""
+    return (f"dry run: no request made; a run would make {qty(n_fetch, 'request')}{also} and leave "
+            f"{qty(left, 'entry', 'entries')} as {pick(left, 'it is', 'they are')}")
+
+
+def done_line(made, reused, skipped):
+    """The fetch's closing line, agreeing in number (D-239)."""
+    also = f", {qty(reused, 'file')} reused from an earlier corpus version's cache" if reused else ""
+    return f"done: {qty(made, 'request')} made{also}, {qty(skipped, 'entry', 'entries')} skipped"
+
+
 def print_drift(report, out=None):
     out = out or sys.stdout
     stable_drift = [r for r in report if r["tier"] == "stable" and r["status"] == "drift"]
@@ -400,10 +437,8 @@ def print_drift(report, out=None):
         print(f"  DRIFT  stable source {r['path']}: fetched sha256 {r['actual'][:16]}... != recorded {r['recorded'][:16]}... "
               f"-> the frozen expected values for this file will NOT apply; either the provider changed a 'first record' "
               f"(gp-first stability assumption violated) or the corpus snapshot is out of date.", file=out)
-    print(f"  {len(match)} file(s) match the tested snapshot ({sum(1 for r in match if r['tier'] == 'stable')} stable, "
-          f"{sum(1 for r in match if r['tier'] != 'stable')} live); {len(stable_drift)} STABLE source(s) drifted; "
-          f"{len(live_drift)} live source(s) differ (expected: live data changes every 2 hours); "
-          f"{len(missing)} missing; {len(unlisted)} not in the manifest.", file=out)
+    print("  " + drift_line(len(match), sum(1 for r in match if r["tier"] == "stable"), len(stable_drift), len(live_drift),
+                            len(missing), len(unlisted)), file=out)
     return len(stable_drift)
 
 
@@ -487,7 +522,7 @@ def fetch_one(entry, root=None):
     for stale in (u_path, u_meta_path):  # an earlier unexpected answer to this URL is superseded by this one
         if os.path.exists(stale):
             os.remove(stale)
-    return f"{meta['status_line']}, {len(body)} bytes"
+    return f"{meta['status_line']}, {qty(len(body), 'byte')}"
 
 
 def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, pause=PAUSE_SECONDS, corpus=None, prog=None,
@@ -556,18 +591,14 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
         print("not requested: the legacy SATCAT file (pub/satcat.txt, 9.4 MB). Only the data check satcat-70000-cutoff reads it, "
               "and no parser takes part in that check; pass --include-satcat to fetch it.", file=out)
     if captures:
-        print(f"not requested: {len(captures)} launch-window capture(s) ({'; '.join(sorted({e['launch_window'] for e in captures}))}). "
-              "CelesTrak serves launch nominals for the days after a launch; these entries record the corpus's own capture "
-              "and no fetch asks for them.", file=out)
+        print(captures_line(len(captures), sorted({e["launch_window"] for e in captures})), file=out)
     refused = recent_refusal(entries, now, root)
     if refused:
         # two quiet hours after a refusal, whatever is asked for (D-228); the dry run says the same and makes none either
         e, meta, age = refused
         left = MIN_REFETCH_AGE_SECONDS - age
         kept = os.path.relpath(unexpected_paths(e, root)[0], root)
-        print(f"STOP: CelesTrak refused this address with HTTP {meta.get('http_status')} {age / 60:.0f} minute(s) ago "
-              f"({e['url']}). No request is made for two hours after a refusal, with or without --force: "
-              f"{left / 60:.0f} minute(s) remain. The refused response is kept as {kept}; read it, it says why.", file=out)
+        print(refusal_line(meta.get("http_status"), age, left, e["url"], kept), file=out)
         return 2
     sources = reuse_sources if reuse_sources is not None else (version_folders(root) if data_why == "per-user cache" else [])
     reuse = reusable(selected, root, corpus, sources) if sources else {}
@@ -595,11 +626,8 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     if args.dry_run:  # the planned requests are not "skipped" (D-150): say what a real run would do
         n_fetch = sum(1 for p in planned if p["action"] == "fetch")
         n_reuse = sum(1 for p in planned if p["action"] == "reuse")
-        also = f", reuse {n_reuse} file(s) from an earlier corpus version's cache" if n_reuse else ""
-        print(f"dry run: no request made; a run would make {n_fetch} request(s){also} and leave "
-              f"{len(planned) - n_fetch - n_reuse} entries as they are", file=out)
+        print(dry_run_line(n_fetch, n_reuse, len(planned) - n_fetch - n_reuse), file=out)
         return 0
-    also = f", {reused} file(s) reused from an earlier corpus version's cache" if reused else ""
-    print(f"done: {made} request(s) made{also}, {len(planned) - made - reused} entries skipped", file=out)
+    print(done_line(made, reused, len(planned) - made - reused), file=out)
     n = print_drift(drift_report([e for e in [p["entry"] for p in planned] + captures if is_cached(e, root)], root, corpus), out)
     return 2 if n else 0

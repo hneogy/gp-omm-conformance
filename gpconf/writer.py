@@ -31,6 +31,7 @@ from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP
 
 from . import reference as ref
 from . import tle as T
+from .words import qty
 
 ALPHA5_CEILING = 339999
 ELEMENT_FIELDS = ["epoch", "mean_motion", "eccentricity", "inclination", "ra_of_asc_node", "arg_of_pericenter", "mean_anomaly", "bstar"]
@@ -68,7 +69,7 @@ def normalise_lines(out):
         return None, lines[0], lines[1]
     if len(lines) == 3:
         return lines[0], lines[1], lines[2]
-    raise ValueError(f"writer returned {len(lines)} line(s); expected 2 (line 1, line 2) or 3 (name, line 1, line 2)")
+    raise ValueError(f"writer returned {qty(len(lines), 'line')}; expected 2 (line 1, line 2) or 3 (name, line 1, line 2)")
 
 
 def check_lines(l1, l2):
@@ -76,7 +77,7 @@ def check_lines(l1, l2):
     problems = []
     for name, l in (("line 1", l1), ("line 2", l2)):
         if len(l) != 69:
-            problems.append(f"{name} is {len(l)} characters, not 69")
+            problems.append(f"{name} is {qty(len(l), 'character')}, not 69")
         elif l[68] != str(T.checksum(l)):
             problems.append(f"{name} checksum {l[68]!r}, computed {T.checksum(l)}")
     if l1[:2] != "1 " or l2[:2] != "2 ":
@@ -259,7 +260,7 @@ def scan_lines(text):
             for n, l in ((i + 1, lines[i]), (i + 2, lines[i + 1])):
                 ind = len(l) - len(l.lstrip())
                 if ind:
-                    pre.append(f"line {n} is indented by {ind} space(s) or tab(s); a TLE line starts at column 1")
+                    pre.append(f"line {n} is indented by {qty(ind, 'space or tab', 'spaces or tabs')}; a TLE line starts at column 1")
             prev = lines[i - 1] if i > 0 else ""
             l0 = prev if prev.strip() and _kind(prev) is None and not prev.startswith("#") else None
             records.append((l0, lines[i].lstrip(), lines[i + 1].lstrip(), i + 1, pre))

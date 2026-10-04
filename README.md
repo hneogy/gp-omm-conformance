@@ -1,4 +1,35 @@
-# gp-omm-conformance
+# The satellite catalog passed 99,999. Does your software know?
+
+On 11 July 2026 the catalog assigned number 100000, and every object catalogued since has a six-digit number. The
+usable five-digit range had already run out at 69,999 (CelesTrak).
+
+**gpconf** is a free test kit that tells you whether your satellite software handles catalog numbers above 99,999 — built from real CelesTrak data, with every expected answer traced to its source.
+
+```bash
+pip install gpconf
+gpconf fetch
+gpconf run --preset reference
+```
+
+The fetch runs once per corpus version: 50 requests to CelesTrak, about 3 MB, kept on disk. Then name your
+library's preset (`sgp4`, `pyephem`, `satellite.js`, `tle.js`) or point the runner at your own parser; Quick start,
+below, has both.
+
+Fixes merged or acted on upstream, as of 2026-10-04. A fix is listed when it followed a report made from the corpus's
+results and answered it:
+
+| library | what the corpus found | where the fix stands |
+|---|---|---|
+| python-sgp4 | an OMM whose `OBJECT_ID` is empty raised a `TypeError` | [PR #172](https://github.com/brandon-rhodes/python-sgp4/pull/172), merged 2026-09-24; no release carries it yet |
+| satellite.js | the OMM epoch lost its digits beyond the millisecond, and nothing decoded an Alpha-5 field | [PR #186](https://github.com/shashwatak/satellite-js/pull/186), merged 2026-09-26, and [PR #187](https://github.com/shashwatak/satellite-js/pull/187), merged 2026-09-28; no release carries them yet |
+| astroz | Alpha-5 fields decoded without skipping I and O, and the TLE epoch came out hundreds of days off | [#97](https://github.com/ATTron/astroz/issues/97) and [#98](https://github.com/ATTron/astroz/issues/98), fixed by the maintainer in [#99](https://github.com/ATTron/astroz/pull/99) and released in v0.13.0 on 2026-09-26 |
+| libsgp4 | every Alpha-5 field was refused, and the pull request open to decode them mapped X, Y and Z wrongly | the corpus's results on [PR #42](https://github.com/dnwrnr/sgp4/pull/42#issuecomment-5824123874), answered two days later by the maintainer's own [#46](https://github.com/dnwrnr/sgp4/pull/46), released in v3.0 on 2026-09-26 |
+
+Every report, the open ones included, is on the [library page](https://gpconf.neogy.dev/library/) of the site.
+
+## What gpconf is
+
+gpconf is the GP/OMM conformance corpus. This repository, `gp-omm-conformance`, holds the corpus and its runner.
 
 A conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary:
 Alpha-5 TLEs, six- and nine-digit `NORAD_CAT_ID`s, and the CCSDS Orbit Mean-Elements Message
@@ -142,6 +173,12 @@ the library's entry file instead, for a checkout that cannot import itself by na
 library is missing is refused before any case runs, with exit status 2 and a message saying that
 nothing ran and that this says nothing about the library (D-153, D-154). The adapters are in
 `gpconf/adapters/`; the older names `tests.adapters.reference:Parser` and the like still work (D-151).
+
+A script should read the JSON report or the exit status, never the printed lines, whose wording can change from one
+version to the next (D-240). `--json FILE` writes the report: its `summary`, in releases after 0.5.1, holds the number
+of cases in each status, and `results` holds each case with its status and its item counts; the exit status is 0 when no case failed, 1 when one
+did and 2 when nothing could run. In a GitHub Actions job the Action's outputs `failed`, `exercised` and `report` carry
+the same. The [adapter guide](docs/ADAPTERS.md) describes the report field by field.
 
 In a GitHub Actions job, from v0.3.0, three lines run a preset against your library:
 
@@ -525,7 +562,8 @@ makes this data freely available; please respect its usage policy. Standards: CC
 Alpha-5 definition: Space-Track, https://www.space-track.org/documentation.
 
 To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, H. (NEOGY LLC).
-gp-omm-conformance, version 0.5.1, 2026-10-03, https://github.com/hneogy/gp-omm-conformance.*
+gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary, version 0.5.1,
+2026-10-03, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
 general. The **version DOI** for this release, v0.5.1, is

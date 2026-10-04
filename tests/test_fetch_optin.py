@@ -104,7 +104,7 @@ class TheFetch(unittest.TestCase):
         for argv, n in ((["--dry-run"], 50), (["--dry-run", "--include-satcat"], 51)):
             code, asked, out = self.run_fetch(argv)
             self.assertEqual(asked, [])
-            self.assertIn(f"a run would make {n} request(s)", out)
+            self.assertIn(f"a run would make {n} requests", out)
 
     def test_force_does_not_refresh_a_copy_on_disk_unless_it_is_asked_for(self):
         """A clone that fetched under an earlier version holds the file: a forced refresh of everything else must not
@@ -174,7 +174,7 @@ class TheRunner(unittest.TestCase):
             code, text = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", CASE])
             quiet_code, quiet = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", CASE, "--no-fetch-hint"])
         self.assertEqual(code, 0)
-        self.assertIn("1 case(s): 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 0 not available, 1 not exercised", text)
+        self.assertIn("1 case: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 0 not available, 1 not exercised", text)
         self.assertIn(f"{CASE} is a data check on the legacy SATCAT file, 9.4 MB, which the fetch brings only on request. It was not made, "
                       "and no parser takes part in it: nothing about the parser under test depends on it.", text)
         self.assertRegex(text, r"--include-satcat runs it: python3 -m gpconf fetch --root \S+ --include-satcat\.")
@@ -190,8 +190,8 @@ class TheRunner(unittest.TestCase):
             code, text = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", CASE])
         self.assertEqual(r.status, "not-exercised")
         self.assertEqual((r.counts()["not-exercised"], r.counts()["not-fetched"]), (1, 6))
-        self.assertIn("1 case(s): 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 0 not available, 1 not exercised", text)
-        self.assertIn(f"1 case(s) ran without 6 of their provider files, so each result covers only the files on disk (column n/f): {CASE}.", text)
+        self.assertIn("1 case: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 0 not available, 1 not exercised", text)
+        self.assertIn(f"1 case ran without 6 of its provider files, so its result covers only the files on disk (column n/f): {CASE}.", text)
         self.assertIn("Provider data is not shipped with the corpus; fetch it with", text)
 
     def test_a_refusal_kept_for_the_file_is_reported_as_one(self):

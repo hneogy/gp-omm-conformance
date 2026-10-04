@@ -72,8 +72,8 @@ class NotFetchedStatus(unittest.TestCase):
             code, text = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", CASE, "--case", "epoch-year-19xx"])
         self.assertEqual(code, 0)
         self.assertIn("exact  tol fail skip n/e n/f n/a", text)
-        self.assertIn("2 case(s): 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 2 need fetched data, 0 not available, 0 not exercised", text)
-        self.assertIn("2 case(s) have none of their provider files on disk and report not-fetched", text)
+        self.assertIn("2 cases: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 2 need fetched data, 0 not available, 0 not exercised", text)
+        self.assertIn("2 cases have none of their provider files on disk and report not-fetched", text)
         self.assertIn("fetch it with python3 -m gpconf fetch --root", text)  # no tools/fetch.py under this root (D-150)
         self.assertNotIn("run tools/fetch.py", text)
 
@@ -111,7 +111,7 @@ class PartlyFetchedCase(unittest.TestCase):
         self.assertEqual(r.missing(), [RECAPTURE])
         self.assertEqual(code, 0)
         self.assertIn("0 need fetched data", text)
-        self.assertIn(f"1 case(s) ran without 1 of their provider files, so each result covers only the files on disk (column n/f): {CASE}.", text)
+        self.assertIn(f"1 case ran without 1 of its provider files, so its result covers only the files on disk (column n/f): {CASE}.", text)
         # D-150 corrects D-148: a normal fetch never requests a re-capture, so no later run brings it
         self.assertIn("the fetch requests it only with --include-recaptures", text)
         self.assertIn("so a normal fetch leaves these cases without it", text)

@@ -1,4 +1,4 @@
-"""gpconf -- runner for the GP/OMM conformance corpus (standard library only, Python 3.9+)."""
+"""gpconf, the GP/OMM conformance corpus: its runner (standard library only, Python 3.9+)."""
 
 __version__ = "0.5.1"
 

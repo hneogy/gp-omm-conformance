@@ -24,6 +24,7 @@ import json
 import os
 
 from .tle import to_alpha5
+from .words import qty
 
 GATES = [
     {
@@ -95,7 +96,7 @@ def _label(label, r):
     live = r.get("live")
     if not live:
         return label
-    count = f", {r['expected']} objects" if r.get("expected") is not None else ""
+    count = f", {qty(r['expected'], 'object')}" if r.get("expected") is not None else ""
     return f"{label}; live capture{(' fetched ' + live['retrieved_at'][:10]) if live.get('retrieved_at') else ''}{count}, not the snapshot"
 
 
@@ -145,7 +146,7 @@ def headline(formats, gate, snap):
     if known and measured:
         text += "; " + "; ".join(f"{labels[f]}: {st}" for f, st in known.items())
     letters = ", ".join(snap["alpha5_letters"]) or "none"
-    text += (f" [snapshot {snap['date']}, {n} objects, ids {snap['id_min']}-{snap['id_max']}, Alpha-5 fields beginning with {letters}: "
+    text += (f" [snapshot {snap['date']}, {qty(n, 'object')}, ids {snap['id_min']}-{snap['id_max']}, Alpha-5 fields beginning with {letters}: "
              f"a decoder wrong from J upward is not caught by this snapshot]")
     return text
 

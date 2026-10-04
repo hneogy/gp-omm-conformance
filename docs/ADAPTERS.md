@@ -493,7 +493,7 @@ a run of python-sgp4 2.27 on the nine-digit case, the refusals item and the file
 
 ```text
   [info] refusals (fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.csv): 1 refused with a reason: "ValueError: satellite number cannot exceed 339999, whose Alpha 5 encoding is 'Z9999'" x1
-  [fail] records-returned (fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.csv): parser returned 0 of 1 record(s): 1 refused with a reason (ValueError: satellite number cannot exceed 339999, whose Alpha 5 encoding is 'Z9999')
+  [fail] records-returned (fixtures/nine-digit-supgp-launch-nominals/raw/starlink-38381-799501621.csv): parser returned 0 of 1 record: 1 refused with a reason (ValueError: satellite number cannot exceed 339999, whose Alpha 5 encoding is 'Z9999')
 ```
 
 A command reports refusals the same way: the same objects, in its JSON array.
@@ -657,8 +657,13 @@ preset whose library is missing, or a corpus copy that is incomplete.
 
 ### Keep the report: `--json`
 
-`--json FILE` writes all of it. The top level holds `gpconf`, `corpus_version`, `parser` (and `preset` for a preset),
-`generated_at`, `results` and `gates`. Each result holds `case`, `title`, `status`, `counts`, `modes` (whether each
+`--json FILE` writes all of it. A script should read this report or the exit status, never the printed lines, whose
+wording can change from one version to the next (D-240). The top level holds `gpconf`, `corpus_version`, `parser` (and
+`preset` for a preset), `generated_at`, `summary`, `results` and `gates`. `summary`, in releases after 0.5.1, holds the
+case totals as numbers:
+`cases`, the number of cases run, and one count for each status a case can end in, `pass`, `pass-tolerance`, `fail`,
+`skip`, `not-fetched`, `not-available` and `not-exercised`, zeros included; they are the numbers of the count line and
+they add up to `cases`. Each result holds `case`, `title`, `status`, `counts`, `modes` (whether each
 file matched the tested snapshot or was compared live), `drift`, `items`, `reused` when provider files were copied
 from an earlier version's cache, and `unexpected` when the fetch kept a response it did not expect for one of the
 case's files (D-228). Each item holds `check`, `status`, `file` and `detail`; a values item adds `counts`,

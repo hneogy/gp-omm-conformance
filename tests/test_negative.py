@@ -270,5 +270,5 @@ class NonIntegerCatalogIdTests(unittest.TestCase):
         values = [i for i in r.items if i.check == "values" and i.file.endswith("alpha5-A-100000-saramago-first.tle")]
         self.assertEqual(len(values), 1)
         self.assertEqual(values[0].status, "fail")
-        self.assertIn("1 record(s) whose norad_cat_id is not an integer, e.g. 'A0000' (str)", values[0].detail)
+        self.assertIn("1 record whose norad_cat_id is not an integer, e.g. 'A0000' (str)", values[0].detail)
         self.assertNotIn("without norad_cat_id", values[0].detail)

@@ -140,7 +140,7 @@ class NaiveWriterTests(unittest.TestCase):
         self.assertEqual(by["tle-writer-refuses-unencodable"].status, "fail")
         self.assertIn("0 of 3", by["tle-writer-refuses-unencodable"].detail)
         self.assertIn("instead of a refusal", by["tle-writer-refuses-unencodable"].detail)
-        self.assertIn("4 of 607 catalog field(s) correct", by["tle-writer-catalog-field"].detail)  # the four five-digit ids incl. the D-125 vector
+        self.assertIn("4 of 607 catalog fields correct", by["tle-writer-catalog-field"].detail)  # the four five-digit ids incl. the D-125 vector
 
 
 class Sgp4WriterTests(unittest.TestCase):

@@ -226,7 +226,7 @@ class NotAskedAgain(_Fetch):
         self.assertEqual((code, calls), (0, []))
         self.assertIn("unexpected " + A["url"], out)
         self.assertIn("FETCH   " + T["url"], out)
-        self.assertIn("a run would make 2 request(s)", out)
+        self.assertIn("a run would make 2 requests", out)
 
     def test_a_cached_file_whose_refresh_was_refused_keeps_its_data(self):
         self.go(GOOD)
@@ -248,8 +248,8 @@ class TwoQuietHoursAfterARefusal(_Fetch):
             with self.subTest(argv=argv):
                 code, out, err, calls = self.go({}, argv=argv, minutes=30)   # an empty table: any request would raise
                 self.assertEqual((code, calls), (2, []))
-                self.assertIn("STOP: CelesTrak refused this address with HTTP 403 30 minute(s) ago", out)
-                self.assertIn("No request is made for two hours after a refusal, with or without --force: 90 minute(s) remain.", out)
+                self.assertIn("STOP: CelesTrak refused this address with HTTP 403 30 minutes ago", out)
+                self.assertIn("No request is made for two hours after a refusal, with or without --force: 90 minutes remain.", out)
                 self.assertIn(os.path.join("fixtures", "c", "raw", "a.csv.unexpected"), out)
 
     def test_after_two_hours_the_rest_is_fetched_and_the_refused_url_is_not(self):
@@ -346,7 +346,7 @@ class TheRunnerNeverReadsAnUnexpectedResponse(unittest.TestCase):
         self.assertNotIn("fetch it with", item.detail)
         self.assertEqual(r.as_dict()["unexpected"], {DATA_FILE: {"http_status": 403, "at": "2026-10-05T12:00:00Z", "why": "HTTP 403", "kept": "decaying.csv.unexpected"}})
         self.assertEqual(code, 0)
-        self.assertIn("1 provider file(s) are missing because the fetch got a response it did not expect for them (HTTP 403)", text)
+        self.assertIn("1 provider file is missing because the fetch got a response it did not expect for it (HTTP 403)", text)
         self.assertIn("fetch it with", text)                              # the case's other files are simply not fetched yet
 
     def test_a_response_an_earlier_fetch_saved_in_the_datas_place_is_not_read(self):
