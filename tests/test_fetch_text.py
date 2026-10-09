@@ -28,8 +28,8 @@ from gpconf import fetch  # noqa: E402
 # The timed fetch follows the upload, so the README carries the measurement of the release before the one it ships
 # in, and says which. Here: the fetch of 2026-10-04 at the 0.6.1 release, 46 requests in 2 min 11 s (D-256, D-258);
 # the 0.6.0 release's, which the README of 0.6.1 gives, was 3,200,451 bytes.
-MEASURED_BYTES = 3_201_056
-MEASURED_AT = "0.6.1"
+MEASURED_BYTES = 3_191_362
+MEASURED_AT = "0.6.2"
 
 
 def read(rel):

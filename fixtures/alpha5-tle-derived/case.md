@@ -34,7 +34,7 @@ Gaps (stated explicitly for this case):
 
 - letters B-H, J-N, P-S and U-Z appear in no real catalog number yet (the catalog is at ~100789 and the only other 6-digit block is 27xxxx); those letters are covered by vectors only
 - these lines are derived, not provider output: CelesTrak serves no Alpha-5 and Space-Track data is not used
-- renderer validation gap: the byte-for-byte validation (304 of 304 fetched TLE sets) used only sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding step has since been corroborated against Space-Track output by the project owner (D-070: 44 records, 0 defects, letters A and T), but the derived lines are CelesTrak-style renderings and differ from Space-Track's own TLE lines in two conventions (zero second-derivative sign at column 51; eccentricity rounding versus truncation at columns 32-33), so they are not byte-identical to Space-Track output. No Space-Track data enters this repository; the public claim describes that verification, not the data.
+- renderer validation gap: the byte-for-byte validation (304 of 304 fetched TLE sets) used only sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding step has since been corroborated against Space-Track output by the project owner (D-070: 44 records, 0 defects, letters A and T), but the derived lines are rendered with CelesTrak's eccentricity truncation and differ from Space-Track's own TLE lines in two conventions (zero second-derivative sign at column 51; eccentricity rounding versus truncation at columns 32-33), so they are not byte-identical to Space-Track output. No Space-Track data enters this repository; the public claim describes that verification, not the data.
 
 ## Library behaviour observed (docs/CROSSCHECK.md)
 

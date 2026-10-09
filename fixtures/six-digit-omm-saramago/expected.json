@@ -2,7 +2,7 @@
  "case": "six-digit-omm-saramago",
  "title": "Catalog number 100000 (SARAMAGO): first 6-digit object, OMM formats only, TLE unavailable",
  "schema_version": "1.0",
- "generated_at": "2026-09-23T21:49:02Z",
+ "generated_at": "2026-10-09T14:36:21Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {
@@ -634,7 +634,11 @@
   },
   {
    "id": "tle-format-omits-ids-above-99999",
-   "description": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'."
+   "description": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'. Where the TLE file is the corpus's own record of that answer, which a fetch writes without requesting it (D-247), and the fetched OMM set holds an id below 100000, the record no longer describes that day: the comparison is not made and the item reports not-exercised."
+  },
+  {
+   "id": "empty-answer-yields-no-records",
+   "description": "A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143). From v0.6.0 a fetch does not request the four GP answers of this kind: it writes them from the one provider response the corpus ships, recorded/celestrak-no-gp-data-found.txt (D-247)."
   },
   {
    "id": "csv-json-omit-constant-metadata",
@@ -661,7 +665,8 @@
    "SATCAT record verifying designator 2026-067CY and launch 2026-03-30"
   ],
   "gaps": [
-   "only one object; other 6-digit objects are in last-30-days and analyst cases"
+   "only one object; other 6-digit objects are in last-30-days and analyst cases",
+   "the TLE answer is the corpus's record of it, HTTP 404 with the 16-byte text 'No GP data found', captured 2026-09-21 and received again 2026-10-04: it ships in recorded/ and a fetch writes it without requesting it (D-247), so a user's run does not observe CelesTrak giving that answer; both TLE files of this case are that record"
   ]
  },
  "ambiguities": [

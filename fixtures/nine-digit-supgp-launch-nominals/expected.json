@@ -2,7 +2,7 @@
  "case": "nine-digit-supgp-launch-nominals",
  "title": "Nine-digit catalog numbers: launch nominals of the 18th Space Defense Squadron (18 SDS), 7995016xx, in CelesTrak SupGP data",
  "schema_version": "1.0",
- "generated_at": "2026-09-23T21:49:02Z",
+ "generated_at": "2026-10-09T14:36:21Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {
@@ -331,7 +331,11 @@
   },
   {
    "id": "tle-format-omits-ids-above-99999",
-   "description": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'."
+   "description": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'. Where the TLE file is the corpus's own record of that answer, which a fetch writes without requesting it (D-247), and the fetched OMM set holds an id below 100000, the record no longer describes that day: the comparison is not made and the item reports not-exercised."
+  },
+  {
+   "id": "empty-answer-yields-no-records",
+   "description": "A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143). From v0.6.0 a fetch does not request the four GP answers of this kind: it writes them from the one provider response the corpus ships, recorded/celestrak-no-gp-data-found.txt (D-247)."
   },
   {
    "id": "supgp-extra-keys-tolerated",
@@ -353,7 +357,9 @@
   ],
   "gaps": [
    "perishable: nominals exist only for roughly 5-8 days after a launch (CelesTrak); a user's fetch may contain none, in which case the check nine-digit-ids-parse reports not-exercised rather than failing",
-   "no 9-digit id exists in 18 SDS GP data; only SupGP"
+   "the five files for 799501621 are the corpus's own capture of that launch window and no fetch requests them (D-229): from a fetch they are not-available, a nine-digit id in JSON, XML and KVN is exercised only on the maintainer's copy, and the case is judged on the full Starlink SupGP file alone",
+   "no 9-digit id exists in 18 SDS GP data; only SupGP",
+   "identity over time is out of scope, stated here as an open question: a nine-digit id is a launch nominal that CelesTrak serves \"for the typical 5-8 days between launch and when 18 SDS starts releasing GP data\" (docs/RESEARCH.md, TLE Retriever help quotation), after which the same object is expected in GP data under a catalog number of 100000 or above [inferred from that statement and \"all newly cataloged objects will have 6-digit catalog numbers of 100000+\"; no source states how the two records are linked]. The corpus checks that both forms parse (this case; six-digit ids in six-digit-omm-saramago and tle-omits-six-digit-objects) and holds no object in both: the 27 nominals captured on 2026-09-21 belong to launch 2026-219 (epochs 2026-09-20), and the last-30-days group fetched the same day lists launches 2026-156 to 2026-220 but not 2026-219 [tested]. What a tracker should store as the stable key across the change, and how a nominal's history merges into the catalogued object's, the corpus cannot say: it has no ground truth for the correlation, and the one link it observed, OBJECT_ID, is not one-to-one at this stage, since the placeholders 72000 and 72001 carry 2026-219A and 2026-219B and so do two of the per-satellite nominals [tested]. That is a data-relationship question for the provider's documentation, not a parsing property a fixture can freeze, which is why it is out of scope rather than missing"
   ]
  },
  "ambiguities": [

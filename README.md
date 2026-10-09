@@ -11,7 +11,7 @@ gpconf fetch
 gpconf run --preset reference
 ```
 
-The fetch runs once per corpus version: 46 requests to CelesTrak, 3,201,056 bytes as measured (about 3 MB), kept on disk. Then name your
+The fetch runs once per corpus version: 46 requests to CelesTrak, 3,191,362 bytes as measured (about 3 MB), kept on disk. Then name your
 library's preset (`sgp4`, `pyephem`, `satellite.js`, `tle.js`) or point the runner at your own parser; Quick start,
 below, has both.
 
@@ -50,8 +50,8 @@ permissions, pins its actions by commit and adds a Windows job; and the `sgp4` e
 dropped Python 3.9 at 2.26, so on 3.9 the extra refuses to install instead of silently resolving to 2.25, an older
 library than every published python-sgp4 result names (D-268, D-269). The fetch's `User-Agent` names the kit, the
 version that asks and this repository, `gpconf/0.6.2 (+https://github.com/hneogy/gp-omm-conformance; fetch, each URL
-once)` (D-252). The README gives the size of a user's fetch as it was measured at the 0.6.1 release, 3,201,056
-bytes, where the corpus's own captures of the same files sum to 3.1 MB (D-252, D-258), and `docs/RESEARCH.md` quotes
+once)` (D-252). The README gives the size of a user's fetch as it was measured at the 0.6.2 release, 3,191,362
+bytes, where the corpus's own captures of the same files sum to 3.1 MB (D-252, D-258, D-277), and `docs/RESEARCH.md` quotes
 the paragraph of CelesTrak's usage policy on addresses that many users share (D-253, D-254). A user's fetch is 46 requests, the same 46 as in 0.6.0, and asks
 for nothing it knows will answer 404: CelesTrak's 16-byte answer `No GP data found` ships with the corpus as a
 recorded response, the one provider response it carries, and the fetch writes it where it used to request it (D-247).
@@ -161,7 +161,7 @@ into a per-user cache:
 ```bash
 pip install gpconf
 gpconf run --preset reference   # before any fetch: the 5 cases whose files ship in the package run; 11 need provider data, 1 needs data no fetch brings, 1 is a data check not made by default
-gpconf fetch                    # once per corpus version: 46 requests, 3.2 MB (3,201,056 bytes measured); kept on disk, not requested again
+gpconf fetch                    # once per corpus version: 46 requests, 3.2 MB (3,191,362 bytes measured); kept on disk, not requested again
 gpconf run --preset reference   # then sixteen run, as in a clone: one case needs launch-window data no fetch brings, and the SATCAT data check its own file (--include-satcat)
 ```
 
@@ -169,7 +169,7 @@ Or from a clone, as before:
 
 ```bash
 git clone https://github.com/hneogy/gp-omm-conformance.git && cd gp-omm-conformance
-python3 tools/fetch.py            # once per corpus version: 46 requests, 3.2 MB (3,201,056 bytes measured); kept on disk, not requested again
+python3 tools/fetch.py            # once per corpus version: 46 requests, 3.2 MB (3,191,362 bytes measured); kept on disk, not requested again
 python3 -m gpconf run --preset reference   # the control: 16 cases pass; one is not-available, its files being launch-window captures no fetch requests; the SATCAT case is a data check on a file the fetch brings only with --include-satcat, and reports not-exercised for every parser, with the file or without; the nine-digit check says not-exercised outside a launch window
 python3 -m gpconf run --preset naive       # the parser most projects have: a demonstration of failure, not a parser to use
 ```
@@ -254,8 +254,8 @@ CelesTrak asks four things of software that downloads from it, in its usage poli
   the run with exit status 2 and is kept beside the data as `<file>.unexpected`, never read as data (D-228). A
   403 is a refusal: read the kept response, which says why. The fetch then makes no request for two hours.
 - **Stay under 50 errors in two hours and 100 MB a day from one address.** One run is 46 requests and 3.2 MB, and
-  none of them is expected to answer with an error. The size is measured: the first-time fetch timed at the 0.6.1 release
-  downloaded 3,201,056 bytes, where the corpus's own captures of the same files sum to 3.1 MB; the live files change size.
+  none of them is expected to answer with an error. The size is measured: the first-time fetch timed at the 0.6.2 release
+  downloaded 3,191,362 bytes, where the corpus's own captures of the same files sum to 3.1 MB; the live files change size.
   Do not run it in a loop or in CI; the GitHub Action runs offline for that reason.
 - **Only download the data you need.** The legacy SATCAT file, 9.4 MB, would be three quarters of the download, and
   it serves `satcat-70000-cutoff`, a data check in which no parser takes part. The fetch leaves it out unless you
@@ -406,8 +406,9 @@ Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case
   the name line, line 1 and line 2 of each) only against sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding
   step is corroborated by python-sgp4's independent implementation, by the official vectors, and
   by the maintainer's run of `tools/verify_against_spacetrack.py` against their own Space-Track
-  account (44 records, zero defects, letters A and T; D-070). The derived lines remain
-  CelesTrak-style renderings: Space-Track's own TLE lines for the same records differ in the sign
+  account (44 records, zero defects, letters A and T; D-070). The derived lines are rendered
+  with CelesTrak's eccentricity truncation and its zero-second-derivative sign: Space-Track's
+  own TLE lines for the same records differ in the sign
   written for a zero second derivative and in the last eccentricity digits, so they are not
   byte-identical to Space-Track output. The rendering rule the corpus applies (eccentricity
   truncated, BSTAR and second-derivative mantissa rounded half up) is CelesTrak's, derived

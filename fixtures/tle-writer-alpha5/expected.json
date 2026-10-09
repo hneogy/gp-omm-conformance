@@ -2,7 +2,7 @@
  "case": "tle-writer-alpha5",
  "title": "Writing TLEs across the five-digit boundary: Alpha-5 catalog field, valid lines, refusal of numbers the format cannot carry, round trip",
  "schema_version": "1.0",
- "generated_at": "2026-09-24T01:17:20Z",
+ "generated_at": "2026-10-09T14:36:21Z",
  "generator": "tools/make_expected.py",
  "kind": "writer",
  "sources": {
@@ -27008,7 +27008,7 @@
   },
   {
    "id": "tle-writer-matches-provider-rendering",
-   "description": "Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's CelesTrak-style derived line). Information only: an equivalent rendering under the other provider's convention is not a defect."
+   "description": "Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's derived line, rendered with CelesTrak's eccentricity truncation). Information only: an equivalent rendering under the other provider's convention is not a defect."
   }
  ],
  "tests": [
@@ -27018,11 +27018,11 @@
  ],
  "coverage": {
   "provides": [
-   "606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived lines carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)",
+   "606 real records as writer inputs: 603 distinct Alpha-5 ids (257 with letter A, 346 with letter T; the 604 derived TLE sets carry 270449 twice, from its first record and from the analyst snapshot) and three five-digit ids (25544 at a 1998 epoch, 69999, 81011)",
    "a 1998 epoch, a negative first derivative, a non-zero second derivative, zero and negative BSTAR, a blank international designator, an empty OBJECT_ID",
    "three numbers the TLE catalog field cannot represent (340000, 799501621, -1), for which the correct output is a refusal",
    "one positive-exponent BSTAR (1.2345, TLE field ' 12345+1') on a synthetic-derived input with the five-digit vector id 99999, rendered by the corpus (D-125)",
-   "provider-rendered field substrings for the three five-digit records and the CelesTrak-style derived fields for the 604 Alpha-5 records, for an information-only byte comparison"
+   "provider-rendered field substrings for the three five-digit records and the corpus's derived fields (rendered with CelesTrak's eccentricity truncation) for the 604 Alpha-5 TLE sets, for an information-only byte comparison"
   ],
   "gaps": [
    "letters B-S and U-Z occur in no real catalog number; a writer's encoding of those letters is covered by the alpha5_encode vectors only",
@@ -27034,7 +27034,7 @@
  "ambiguities": [
   {
    "id": "ecc-truncation-vs-mantissa-rounding",
-   "text": "CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304/304 CelesTrak records reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0."
+   "text": "CelesTrak's TLE rendering truncates eccentricity to 7 digits but rounds (half up) BSTAR and the second derivative to a 5-digit mantissa (304 of 304 fetched TLE sets reproduced with these rules; 0 with the opposite rules). No document states either rule; treat as observed CelesTrak behaviour. It is not universal: in the owner's Space-Track verification run (D-070) Space-Track's TLE for the same epoch differed from the CelesTrak-rendered line in the last one or two eccentricity digits (columns 32-33), consistent with rounding, and wrote a zero second derivative as 00000-0 (column 51) where CelesTrak writes 00000+0."
   }
  ],
  "notes": [

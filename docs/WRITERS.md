@@ -115,7 +115,7 @@ isolation and linked to a small harness that calls the two functions directly (r
 - Real records: the SARAMAGO first record (100000) gives two 69-character lines with valid checksums
   whose field decodes to 100000 in the corpus reference reader; epoch, mean motion, inclination, RAAN,
   argument of perigee, mean anomaly and designator exact; the lines differ from the corpus's
-  CelesTrak-style rendering only at columns 40-42 (first derivative zeroed), 51 (`-0`) and 65-69
+  derived rendering only at columns 40-42 (first derivative zeroed), 51 (`-0`) and 65-69
   (element set, revolution, checksum). 270449 gives `T0449` with the eccentricity rounded (`0045560`,
   where CelesTrak truncates to `0045559`) and the BSTAR mantissa rounded (`10753-3`). 69999 keeps
   `-70517-5`.

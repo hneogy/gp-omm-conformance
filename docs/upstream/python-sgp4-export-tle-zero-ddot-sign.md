@@ -21,7 +21,7 @@ between the two providers' renderings, with python-sgp4 on Space-Track's side.
   second derivative export byte-exactly; line 2 is byte-exact in all 306.
 - Against Space-Track (the corpus owner's own account, `tools/verify_against_spacetrack.py`,
   2026-09-21, DECISIONS D-070): every same-epoch Space-Track line differed from the corresponding
-  CelesTrak-style derived line at column 51 (and 69), i.e. Space-Track uses `-0`, the convention
+  derived line at column 51 (and 69), i.e. Space-Track uses `-0`, the convention
   python-sgp4 implements. No Space-Track data is reproduced here or anywhere in the corpus.
 
 ## Consequence for users of either library or provider

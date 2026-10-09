@@ -27,7 +27,7 @@ The writer-side mirror of the corpus. Each input record is handed to the adapter
 - **tle-writer-round-trip** — The written lines, read back by the corpus reference reader, reproduce the record's epoch, mean motion, eccentricity, inclination, RA of ascending node, argument of pericenter, mean anomaly and BSTAR at each field's resolution, quantised by truncation or by rounding half up (CelesTrak truncates the eccentricity, Space-Track rounds it; either is accepted and the convention observed is reported).
 - **tle-writer-refuses-unencodable** — A TLE catalog field cannot represent a number above 339999 (Z9999) or below 0, so the correct output for such a record is a refusal: an error and no lines. Those numbers belong in the OMM formats. The check passes when the writer refuses and fails when it writes lines with a six-digit, blank or otherwise invalid field.
 - **tle-writer-secondary-fields** — Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information, never failed: orbit-fitting tools regenerate these fields by design.
-- **tle-writer-matches-provider-rendering** — Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's CelesTrak-style derived line). Information only: an equivalent rendering under the other provider's convention is not a defect.
+- **tle-writer-matches-provider-rendering** — Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's derived line, rendered with CelesTrak's eccentricity truncation). Information only: an equivalent rendering under the other provider's convention is not a defect.
 
 ## Coverage
 
@@ -37,7 +37,7 @@ Provides:
 - a 1998 epoch, a negative first derivative, a non-zero second derivative, zero and negative BSTAR, a blank international designator, an empty OBJECT_ID
 - three numbers the TLE catalog field cannot represent (340000, 799501621, -1), for which the correct output is a refusal
 - one positive-exponent BSTAR (1.2345, TLE field ' 12345+1') on a synthetic-derived input with the five-digit vector id 99999, rendered by the corpus (D-125)
-- provider-rendered field substrings for the three five-digit records and the CelesTrak-style derived fields for the 604 Alpha-5 TLE sets, for an information-only byte comparison
+- provider-rendered field substrings for the three five-digit records and the corpus's derived fields (rendered with CelesTrak's eccentricity truncation) for the 604 Alpha-5 TLE sets, for an information-only byte comparison
 
 Gaps (stated explicitly for this case):
 

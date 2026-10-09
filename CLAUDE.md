@@ -154,3 +154,10 @@ Writing to it:
 The verification standard is unchanged, and so is the rule that nothing is posted without the
 owner's word for that message. Working notes and the check to run before a draft goes out are
 in the private handoff, `docs/handoff/voice-guide.md`.
+
+## Grader changes (owner rule, 2026-10-09)
+
+Any change that adds or touches a way for the runner to not grade something — a skip, an `Unsupported`, a
+refusal, a tolerance, a deduplication, an optional field — must come with a wrong-on-purpose adapter in
+`tests/adversarial/` that tries to use it to hide a bug, plus a twin showing the same bug fails without it.
+No adversarial adapter, no merge.

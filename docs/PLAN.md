@@ -480,3 +480,24 @@ a CCSDS-OMM profile (TraCSS-Spec-004 v1.2, January 2026) and a catalog format (S
 under CC0, pilot users onboarded through 2026. A TraCSS case family would be a second provider beside
 CelesTrak and possibly redistributable fixtures. Noted from the audit of 2026-10-08 (D-268);
 https://www.space.commerce.gov/tracss/
+
+## v0.6.3: Grader escape hatches (SM-26, issue #1)
+
+SM-26 answered the audit ask (issue #1, 2026-10-09): seven wrong-on-purpose adapters pass the five no-data cases
+with zero fails on gpconf 0.6.1, each the reference parser with one bug, four with a twin that fails honestly.
+The plan, in order (owner, 2026-10-09):
+
+1. Reproduce SM-26's adapters against 0.6.1 and current main, and sweep the runner for every other way it can
+   avoid grading something; findings only, nothing changed until the owner approves.
+2. A fresh session outside this repository red-teams gpconf 0.6.2 from PyPI the same way.
+3. Fixes, after approval: `tests/adversarial/` holding SM-26's adapters (credited as SM-26, linking issue #1) and
+   the sweep's, every suspect failing its case; `tools/mutant_fuzz.py` in CI at 5,000 mutants with a fixed seed,
+   failing on any survivor not on a reviewed allowlist with a D-entry; the rule in `docs/ADAPTERS.md` plus a
+   D-entry that any outcome that is not a graded pass or fail (a skip, an `Unsupported`, a refusal, extra or
+   duplicate records) is either all-or-none for the whole case or graded and counted — no partial skips.
+4. Every adapter behind a published report, finding card or site result — GPKit's 17 of 18 included — is re-run
+   on the fixed runner before any published claim is edited.
+5. Reply to SM-26 on issue #1; the issue stays open until the fixes ship.
+
+`CLAUDE.md` carries the standing rule ("Grader changes"): no change to a non-grading path without an adversarial
+adapter and its twin.

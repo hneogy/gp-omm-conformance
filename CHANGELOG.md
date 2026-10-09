@@ -5,6 +5,17 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
+## [Unreleased]
+
+Changed: the exact fetch size the README gives is the 0.6.2 release's measurement, 3,191,362 bytes (the owner's timed
+first-time fetch on release day: 46 requests, each answered 200, in 2 min 2.4 s), where it gave the 0.6.1 release's
+3,201,056; the rounded 3.2 MB is the same (D-277). The phrase "CelesTrak-style rendering" is gone: the derived lines
+are described as rendered with CelesTrak's eccentricity truncation, in the README, the manifest, the writer check's
+description and `docs/WRITERS.md`, after Dr. Kelso's reply (D-274, D-277). The documentation inside each
+`expected.json` (the prose notes and the per-case check list) is regenerated to match `tools/cases.py`, catching up
+texts the generator gained at D-247 and D-248; no record, value, source hash or grading input changed, and the
+runner reads its checks from `manifest.json`, which already carried them (D-278).
+
 ## [0.6.2] - 2026-10-09
 
 Fixed: an unknown `--case` ended as a silent no-op, exit 0, so a typo in a pipeline could stay green forever; it is
