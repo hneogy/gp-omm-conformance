@@ -5,8 +5,9 @@ Companion document: `RESEARCH.md` (sources and verbatim quotes; everything below
 
 ## 0. Three findings that change the brief
 
-**A. CelesTrak does not emit Alpha-5.** Its TLE/3LE/2LE output silently omits every object
-with a catalog number >= 100000 (RESEARCH §2.2). Real Alpha-5 element sets exist only on
+**A. CelesTrak does not emit Alpha-5.** Its TLE/3LE/2LE output carries nothing above 69999
+except the analyst objects in 80000-89999 (RESEARCH §2.2; Dr. Kelso's reply, D-274), so every
+object with a catalog number >= 100000 is silently omitted. Real Alpha-5 element sets exist only on
 Space-Track, behind a login, via the GP class with `format/tle` (RESEARCH §4). So the
 "Alpha-5 across the range" coverage cannot come from CelesTrak, and the corpus has to
 distinguish three kinds of Alpha-5 artefact:

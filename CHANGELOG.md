@@ -44,6 +44,12 @@ Changed: the eight libraries' runs of September 2026 are called one-off runs in 
 where they were called "hand-run" and "by hand"; they were made in sessions with AI tools, as "How this corpus was
 built" says. The four adapters' comments in the package say it too with this release's build (D-262).
 
+The independent audit in `AUDIT.md` covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the
+packaging and protocol changes of v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1,
+those of v0.6.0, those of v0.6.1 nor those of this release have been separately audited; the audit of 2026-10-08
+(D-268) was the maintainer's own tooling, not a separate audit. Version DOI 10.5281/zenodo.23265462 (Zenodo record
+23265462); the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
+
 ## [0.6.1] - 2026-10-04
 
 A patch release under the versioning rule, tooling and documentation only: the fetch's `User-Agent` names the kit,

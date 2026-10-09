@@ -602,7 +602,7 @@ gpconf: a conformance corpus for orbital-data parsers crossing the five-digit ca
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
 general. The **version DOI** for this release, v0.6.2, is
-minted when the release is archived; v0.6.1 keeps its own, [10.5281/zenodo.23144821](https://doi.org/10.5281/zenodo.23144821), v0.6.0 its own, [10.5281/zenodo.23140585](https://doi.org/10.5281/zenodo.23140585),
+[10.5281/zenodo.23265462](https://doi.org/10.5281/zenodo.23265462); v0.6.1 keeps its own, [10.5281/zenodo.23144821](https://doi.org/10.5281/zenodo.23144821), v0.6.0 its own, [10.5281/zenodo.23140585](https://doi.org/10.5281/zenodo.23140585),
 v0.5.1 its own, [10.5281/zenodo.23130868](https://doi.org/10.5281/zenodo.23130868),
 v0.5.0 its own, [10.5281/zenodo.23093982](https://doi.org/10.5281/zenodo.23093982),
 v0.4.0 its own, [10.5281/zenodo.23002261](https://doi.org/10.5281/zenodo.23002261),

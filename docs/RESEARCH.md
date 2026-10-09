@@ -92,7 +92,8 @@ and, in the FAQ addendum:
 > JSON will include all of the data.
 
 So a TLE/3LE/2LE request for a group **silently drops** objects >= 100000 rather than
-encoding them in Alpha-5. The word "Alpha-5" does not appear anywhere on CelesTrak's GP
+encoding them in Alpha-5: in the TLE format CelesTrak serves nothing above 69999 except the
+analyst objects in 80000-89999 (the FAQ above; Dr. Kelso's reply, D-274). The word "Alpha-5" does not appear anywhere on CelesTrak's GP
 formats page. The FAQ explains the design position:
 
 > There have been numbering schemes suggested that would extend the range of catalog IDs
