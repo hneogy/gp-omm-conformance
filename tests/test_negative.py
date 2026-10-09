@@ -9,6 +9,7 @@ import io
 import json
 import os
 import shlex
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -18,6 +19,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from gpconf.runner import Runner, CommandParser, Unsupported, compare_value, TLE_EPOCH_TOLERANCE_US  # noqa: E402
 from tests.adapters.reference import Parser as Reference  # noqa: E402
+
+# D-270: these command lines go through the platform shell; quote for the shell the host has
+Q = (lambda s: subprocess.list2cmdline([s])) if os.name == "nt" else shlex.quote
 from tests.adapters.naive import Parser as Naive  # noqa: E402
 
 DERIVED = "alpha5-tle-derived"  # derived files are always present, so the values check runs in every checkout
@@ -123,7 +127,7 @@ class CommandParserParse(unittest.TestCase):
         self.tmp.cleanup()
 
     def cmd(self, mode):
-        return f"{shlex.quote(sys.executable)} {shlex.quote(self.script)} {mode} {{fmt}}"
+        return f"{Q(sys.executable)} {Q(self.script)} {mode} {{fmt}}"
 
     def test_records_come_back_with_fmt_substituted(self):
         recs = CommandParser(self.cmd("ok")).parse(b"1 25544U", "csv")

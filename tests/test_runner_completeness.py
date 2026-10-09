@@ -5,6 +5,7 @@ import io
 import json
 import os
 import shlex
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -18,6 +19,9 @@ from gpconf import tle as T  # noqa: E402
 from gpconf.__main__ import main as gpconf_main  # noqa: E402
 from tests.adapters.reference import Parser as Reference  # noqa: E402
 import make_failures  # noqa: E402
+
+# D-270: these command lines go through the platform shell; quote for the shell the host has
+Q = (lambda s: subprocess.list2cmdline([s])) if os.name == "nt" else shlex.quote
 
 THREE = {"leading-dot-decimals": ("epoch-year-19xx", "baseline-iss-five-formats"),
          "bstar-implied-decimal-exponent": ("bstar-and-derivative-forms",),
@@ -90,7 +94,7 @@ class Vectors(unittest.TestCase):
         p = os.path.join(d, "vec.py")
         with open(p, "w", encoding="utf-8") as f:
             f.write(code)
-        return f"{shlex.quote(sys.executable)} {shlex.quote(p)}"
+        return f"{Q(sys.executable)} {Q(p)}"
 
     def test_vectors_cmd_reaches_parse_catalog_id(self):
         cp = CommandParser(None, vectors_cmd=self.vectors_script())

@@ -1,0 +1,4 @@
+# The corpus is byte-exact: expected values and the manifest hash the files as they are, so no checkout may
+# rewrite line endings on any platform (D-270: the first Windows CI run found git's autocrlf converting the
+# derived fixtures and failing the stable-source-drift checks).
+* -text

@@ -17,10 +17,14 @@ default encoding cannot corrupt a read or a write; the `sgp4` extra pins `sgp4>=
 published python-sgp4 result names (D-269).
 
 Changed: CI declares `permissions: contents: read`, pins `actions/checkout` and `actions/setup-python` by commit
-id, and adds a Windows job (Python 3.12), whose first run comes with the next public push (D-269).
+id, and adds a Windows job (Python 3.12) (D-269).
 
-Changed: the four adapters' comments say "one-off run" where they said "hand run", completing D-262 with this
-release's build.
+Fixed: the Windows job's first run — the first time the suite ran on Windows — failed 42 of 445 tests, every one a
+portability assumption and none a wrong expected value. Three causes: git converted line endings at checkout, which
+a byte-exact corpus cannot allow (a `.gitattributes` now marks every file `-text`); command lines built for the
+platform shell were quoted with POSIX rules (`shlex.quote`), which `cmd.exe` rejects (the fetch hint and the tests
+now quote per platform); and the fetch hint named `python3`, a name Windows installs do not have (it now says
+`python` there). The cache-folder answer for a faked `win32` also uses Windows separators on every host (D-270).
 
 Changed: the exact size the README gives for a user's fetch is the latest measurement, 3,201,056 bytes, from the
 timed first-time fetch at the 0.6.1 release (2026-10-04: 46 requests, each answered 200, in 2 min 11 s), where it gave
@@ -38,8 +42,7 @@ has since been reworded (D-260).
 
 Changed: the eight libraries' runs of September 2026 are called one-off runs in the README and in `harnesses/README.md`,
 where they were called "hand-run" and "by hand"; they were made in sessions with AI tools, as "How this corpus was
-built" says. The four adapters' comments in the package say "hand run" still and change with the next release's build
-(D-262).
+built" says. The four adapters' comments in the package say it too with this release's build (D-262).
 
 ## [0.6.1] - 2026-10-04
 

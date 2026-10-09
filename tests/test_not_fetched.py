@@ -17,6 +17,12 @@ from gpconf.runner import Runner, CorpusIncomplete, fetch_hint, is_provider_data
 from gpconf.__main__ import main as gpconf_main  # noqa: E402
 from tests.adapters.reference import Parser as Reference  # noqa: E402
 
+# D-270: the hint names the interpreter and quotes as the running platform does
+import shlex
+import subprocess
+PY = "python" if os.name == "nt" else "python3"
+Q = (lambda s: subprocess.list2cmdline([s])) if os.name == "nt" else shlex.quote
+
 CASE = "bstar-and-derivative-forms"          # raw files only, one of them a re-capture
 RECAPTURE = "fixtures/bstar-and-derivative-forms/raw/decaying-recapture.tle"
 
@@ -52,7 +58,7 @@ class NotFetchedStatus(unittest.TestCase):
         for i in r.items:
             self.assertEqual(i.check, "source-present")
             self.assertIn("provider data is not shipped with the corpus", i.detail)
-            self.assertIn("python3 -m gpconf fetch --root", i.detail)  # a bare corpus copy: the subcommand, pointed at it (D-150)
+            self.assertIn(f"{PY} -m gpconf fetch --root", i.detail)  # a bare corpus copy: the subcommand, pointed at it (D-150)
 
     def test_the_json_report_carries_the_status_and_the_count(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -74,7 +80,7 @@ class NotFetchedStatus(unittest.TestCase):
         self.assertIn("exact  tol fail skip n/e n/f n/a", text)
         self.assertIn("2 cases: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 2 need fetched data, 0 not available, 0 not exercised", text)
         self.assertIn("2 cases have none of their provider files on disk and report not-fetched", text)
-        self.assertIn("fetch it with python3 -m gpconf fetch --root", text)  # no tools/fetch.py under this root (D-150)
+        self.assertIn(f"fetch it with {PY} -m gpconf fetch --root", text)  # no tools/fetch.py under this root (D-150)
         self.assertNotIn("run tools/fetch.py", text)
 
     def test_a_parser_without_a_reader_still_skips(self):
@@ -121,8 +127,8 @@ class PartlyFetchedCase(unittest.TestCase):
 
 class FetchHint(unittest.TestCase):
     def test_a_clone_is_given_its_own_script(self):
-        self.assertTrue(fetch_hint(ROOT).startswith("python3 "), fetch_hint(ROOT))
-        self.assertTrue(fetch_hint(ROOT).rstrip("'").endswith("tools/fetch.py"), fetch_hint(ROOT))
+        self.assertTrue(fetch_hint(ROOT).startswith(f"{PY} "), fetch_hint(ROOT))
+        self.assertTrue(fetch_hint(ROOT).rstrip("'\"").replace(os.sep, "/").endswith("tools/fetch.py"), fetch_hint(ROOT))
         self.assertTrue(fetch_hint(ROOT, "--check-drift").endswith(" --check-drift"))
 
     def test_a_path_with_spaces_is_quoted(self):
@@ -134,17 +140,17 @@ class FetchHint(unittest.TestCase):
             cwd = os.getcwd()
             try:
                 os.chdir(tmp)  # from outside the root, so the relative path does not start with ".."
-                self.assertEqual(fetch_hint(root), "python3 'a corpus/tools/fetch.py'")
+                self.assertEqual(fetch_hint(root), f"{PY} {Q(os.path.join('a corpus', 'tools', 'fetch.py'))}")
             finally:
                 os.chdir(cwd)
 
     def test_a_copy_without_the_script_is_given_the_subcommand(self):
         # D-150: the fetch is a subcommand of the package, so a copy without tools/fetch.py is given a command it has
         with tempfile.TemporaryDirectory() as tmp:
-            self.assertEqual(fetch_hint(tmp), "python3 -m gpconf fetch")
-            self.assertEqual(fetch_hint(tmp, data_why="--root"), f"python3 -m gpconf fetch --root {tmp}")
-            self.assertEqual(fetch_hint(tmp, "--check-drift", data="/d d", data_why="--data"), "python3 -m gpconf fetch --data '/d d' --check-drift")
-            self.assertEqual(fetch_hint(tmp, data="/d", data_why="GPCONF_DATA"), "python3 -m gpconf fetch")  # the variable reaches the fetch itself
+            self.assertEqual(fetch_hint(tmp), f"{PY} -m gpconf fetch")
+            self.assertEqual(fetch_hint(tmp, data_why="--root"), f"{PY} -m gpconf fetch --root {Q(tmp)}")
+            self.assertEqual(fetch_hint(tmp, "--check-drift", data="/d d", data_why="--data"), f"{PY} -m gpconf fetch --data {Q('/d d')} --check-drift")
+            self.assertEqual(fetch_hint(tmp, data="/d", data_why="GPCONF_DATA"), f"{PY} -m gpconf fetch")  # the variable reaches the fetch itself
 
 
 class IncompleteCopy(unittest.TestCase):

@@ -12,6 +12,7 @@ import contextlib
 import glob
 import io
 import json
+import ntpath
 import os
 import shutil
 import subprocess
@@ -106,10 +107,11 @@ class CacheFolder(unittest.TestCase):
                          "/Users/u/Library/Caches/gpconf/0.3.0")
 
     def test_windows(self):
+        # D-270: a faked win32 answers with Windows separators on every host
         got = locate.user_cache_dir("0.3.0", env={"LOCALAPPDATA": "C:/L"}, platform="win32", home="C:/U")
-        self.assertEqual(got, os.path.join("C:/L", "gpconf", "Cache", "0.3.0"))
+        self.assertEqual(got, ntpath.join("C:/L", "gpconf", "Cache", "0.3.0"))
         got = locate.user_cache_dir("0.3.0", env={}, platform="win32", home="C:/U")
-        self.assertEqual(got, os.path.join("C:/U", "AppData", "Local", "gpconf", "Cache", "0.3.0"))
+        self.assertEqual(got, ntpath.join("C:/U", "AppData", "Local", "gpconf", "Cache", "0.3.0"))
 
 
 class Precedence(unittest.TestCase):

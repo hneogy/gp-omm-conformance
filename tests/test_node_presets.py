@@ -12,12 +12,16 @@ import contextlib
 import io
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from unittest import mock
+
+# D-270: these command lines go through the platform shell; quote for the shell the host has
+Q = (lambda s: subprocess.list2cmdline([s])) if os.name == "nt" else shlex.quote
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -79,7 +83,7 @@ class CommandLists(unittest.TestCase):
 
     def test_a_shell_string_still_works(self):
         import shlex
-        p = CommandParser(f"{shlex.quote(sys.executable)} -c \"import json; print(json.dumps([{{'fmt': '{{fmt}}'}}]))\"")
+        p = CommandParser(f"{Q(sys.executable)} -c \"import json; print(json.dumps([{{'fmt': '{{fmt}}'}}]))\"")
         self.assertEqual(p.parse(b"", "csv"), [{"fmt": "csv"}])
 
 

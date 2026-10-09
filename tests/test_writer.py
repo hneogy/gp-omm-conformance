@@ -16,6 +16,9 @@ import sys
 import tempfile
 import unittest
 
+# D-270: these command lines go through the platform shell; quote for the shell the host has
+Q = (lambda s: subprocess.list2cmdline([s])) if os.name == "nt" else shlex.quote
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from gpconf import tle as T  # noqa: E402
@@ -225,7 +228,7 @@ class WriteCommandTests(unittest.TestCase):
             p = os.path.join(d, "w.py")
             with open(p, "w", encoding="utf-8") as f:
                 f.write(script)
-            cp = CommandParser(None, write_cmd=f"{shlex.quote(sys.executable)} {shlex.quote(p)}")  # paths may contain spaces
+            cp = CommandParser(None, write_cmd=f"{Q(sys.executable)} {Q(p)}")  # paths may contain spaces
             l0, l1, l2 = W.normalise_lines(cp.write_tle(rec))
             self.assertEqual(W.check_catalog_field(l1, l2, 100000), (True, "A0000"))
             with self.assertRaises(RuntimeError):  # the script raises for 340000 -> non-zero exit -> refusal

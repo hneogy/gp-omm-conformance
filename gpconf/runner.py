@@ -114,12 +114,15 @@ def fetch_hint(root, *args, data=None, data_why=None):
     GPCONF_DATA environment variable is not, since the variable reaches the fetch too; a bare corpus copy given as
     --root is passed on, since the fetch would otherwise look elsewhere."""
     import shlex
+    import subprocess
+    py = "python" if os.name == "nt" else "python3"                      # the interpreter name each platform has (D-270)
+    q = (lambda s: subprocess.list2cmdline([s])) if os.name == "nt" else shlex.quote
     script = os.path.join(root, "tools", "fetch.py")
     flags = ""
     if data_why == "--root" and not os.path.exists(script):
-        flags += f" --root {shlex.quote(root)}"
+        flags += f" --root {q(root)}"
     if data_why == "--data" and data:
-        flags += f" --data {shlex.quote(data)}"
+        flags += f" --data {q(data)}"
     tail = flags + "".join(" " + a for a in args)
     if os.path.exists(script):
         try:
@@ -127,8 +130,8 @@ def fetch_hint(root, *args, data=None, data_why=None):
         except ValueError:  # another drive on Windows
             rel = script
         path = script if rel.startswith("..") else rel
-        return f"python3 {shlex.quote(path)}{tail}"
-    return f"python3 -m gpconf fetch{tail}"
+        return f"{py} {q(path)}{tail}"
+    return f"{py} -m gpconf fetch{tail}"
 
 
 # --------------------------------------------------------------------------- normalisation

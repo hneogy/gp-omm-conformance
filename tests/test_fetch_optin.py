@@ -17,6 +17,8 @@ import sys
 import tempfile
 import unittest
 
+PY3 = r"python3?"   # D-270: the hint says python3 on POSIX and python on Windows
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "tools"))
@@ -179,7 +181,7 @@ class TheRunner(unittest.TestCase):
         self.assertIn("1 case: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 0 not available, 1 not exercised", text)
         self.assertIn(f"{CASE} is a data check on the legacy SATCAT file, 9.4 MB, which the fetch brings only on request. It was not made, "
                       "and no parser takes part in it: nothing about the parser under test depends on it.", text)
-        self.assertRegex(text, r"--include-satcat runs it: python3 -m gpconf fetch --root \S+ --include-satcat\.")
+        self.assertRegex(text, rf"--include-satcat runs it: {PY3} -m gpconf fetch --root \S+ --include-satcat\.")
         self.assertNotIn("report not-fetched", text)
         self.assertNotIn("Provider data is not shipped with the corpus; fetch it with", text)   # nothing is missing that a plain fetch brings
         self.assertIn("The fetch's --include-satcat runs it.", quiet)

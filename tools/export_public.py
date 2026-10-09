@@ -43,7 +43,7 @@ def main():
     for p in patterns:
         for m in glob.glob(os.path.join(ROOT, p), recursive=True):
             if os.path.isfile(m):
-                files.add(os.path.relpath(m, ROOT))
+                files.add(os.path.relpath(m, ROOT).replace(os.sep, "/"))   # matched as the allowlist writes paths (D-270)
     refused = []
     out = []
     for rel in sorted(files):

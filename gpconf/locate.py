@@ -24,7 +24,9 @@ Data root, first match wins:
 Standard library only.
 """
 import json
+import ntpath
 import os
+import posixpath
 import sys
 
 BUNDLED = "corpus"                 # gpconf/corpus/ in an installed copy
@@ -80,18 +82,20 @@ def corpus_version(root):
 
 
 def user_cache_dir(version, env=None, platform=None, home=None):
-    """The per-user cache folder for one corpus version, from the platform's usual place (standard library only)."""
+    """The per-user cache folder for one corpus version, from the platform's usual place (standard library only).
+    Joined with the named platform's separator, so an answer about win32 reads the same from any host (D-270)."""
     env = os.environ if env is None else env
     platform = sys.platform if platform is None else platform
     home = os.path.expanduser("~") if home is None else home
+    j = ntpath.join if platform.startswith("win") else posixpath.join
     if platform.startswith("win"):
-        base = env.get("LOCALAPPDATA") or os.path.join(home, "AppData", "Local")
-        return os.path.join(base, "gpconf", "Cache", version)
+        base = env.get("LOCALAPPDATA") or j(home, "AppData", "Local")
+        return j(base, "gpconf", "Cache", version)
     if platform == "darwin":
-        return os.path.join(home, "Library", "Caches", "gpconf", version)
+        return j(home, "Library", "Caches", "gpconf", version)
     xdg = env.get("XDG_CACHE_HOME")
-    base = xdg if xdg and os.path.isabs(xdg) else os.path.join(home, ".cache")  # the XDG spec ignores a relative value
-    return os.path.join(base, "gpconf", version)
+    base = xdg if xdg and posixpath.isabs(xdg) else j(home, ".cache")  # the XDG spec ignores a relative value
+    return j(base, "gpconf", version)
 
 
 def data_root(corpus, how, explicit=None, env=None):
