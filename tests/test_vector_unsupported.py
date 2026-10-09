@@ -83,7 +83,7 @@ class CommandAnswer(unittest.TestCase):
     def answer(self, stdout, code=0):
         d = tempfile.mkdtemp()
         p = os.path.join(d, "vec.py")
-        with open(p, "w") as f:
+        with open(p, "w", encoding="utf-8") as f:
             f.write("import sys\nsys.stdout.write(%r)\nsys.exit(%d)\n" % (stdout, code))
         return f"{shlex.quote(sys.executable)} {shlex.quote(p)}"
 
@@ -137,7 +137,7 @@ class CommandAnswer(unittest.TestCase):
                 "    print(json.dumps({'error': str(e)})); sys.exit(1)\n") % ROOT
         d = tempfile.mkdtemp()
         p = os.path.join(d, "vec.py")
-        with open(p, "w") as f:
+        with open(p, "w", encoding="utf-8") as f:
             f.write(code)
         cp = CommandParser(None, vectors_cmd=f"{shlex.quote(sys.executable)} {shlex.quote(p)}")
         r, c = run(cp)

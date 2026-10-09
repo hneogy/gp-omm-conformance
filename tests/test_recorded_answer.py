@@ -161,7 +161,7 @@ class TheFetch(unittest.TestCase):
             rel = f"fixtures/{e['case']}/raw/{e['file']}"
             with open(os.path.join(self.root, rel), "rb") as f:
                 self.assertEqual(f.read(), BODY)
-            with open(os.path.join(self.root, rel + ".meta.json")) as f:
+            with open(os.path.join(self.root, rel + ".meta.json"), encoding="utf-8") as f:
                 meta = json.load(f)
             self.assertEqual((meta["provenance"], meta["requested"], meta["http_status"], meta["bytes"], meta["sha256"], meta["url"]),
                              ("recorded", False, 404, 16, SHA, e["url"]))
@@ -186,14 +186,14 @@ class TheFetch(unittest.TestCase):
         os.makedirs(d)
         with open(os.path.join(d, e["file"]), "wb") as f:
             f.write(BODY)
-        with open(os.path.join(d, e["file"] + ".meta.json"), "w") as f:
+        with open(os.path.join(d, e["file"] + ".meta.json"), "w", encoding="utf-8") as f:
             json.dump({"retrieved_at": "2026-09-21T00:09:59Z", "http_status": 404, "provenance": "live"}, f)
         for opts in ({}, {"force": True}):
             plan = {p["entry"]["file"]: p for p in fetch.plan(FETCHLIST, root=self.root, now=NOW, **opts)}
             self.assertEqual(plan[e["file"]]["action"], "cached")
             self.assertIn("never requested", plan[e["file"]]["reason"])
         self.run_fetch(["--force"])
-        with open(os.path.join(d, e["file"] + ".meta.json")) as f:
+        with open(os.path.join(d, e["file"] + ".meta.json"), encoding="utf-8") as f:
             self.assertEqual(json.load(f)["provenance"], "live")
 
     def test_a_record_that_is_not_the_recorded_bytes_is_refused(self):
@@ -218,7 +218,7 @@ class TheFetch(unittest.TestCase):
             os.makedirs(d, exist_ok=True)
             with open(os.path.join(d, e["file"]), "wb") as f:
                 f.write(BODY)
-            with open(os.path.join(d, e["file"] + ".meta.json"), "w") as f:
+            with open(os.path.join(d, e["file"] + ".meta.json"), "w", encoding="utf-8") as f:
                 json.dump({"retrieved_at": "2026-10-04T03:26:08Z", "http_status": 404}, f)
         self.assertEqual(fetch.reusable(stable, new, ROOT, fetch.version_folders(new)), {})
 

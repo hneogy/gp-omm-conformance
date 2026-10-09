@@ -123,7 +123,7 @@ def read_meta(entry, root=None):
     _, _, meta_path = target_paths(entry, root)
     if not os.path.exists(meta_path):
         return None
-    with open(meta_path) as f:
+    with open(meta_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -147,7 +147,7 @@ def read_unexpected(entry, root=None):
     if not os.path.exists(body):
         return None
     try:
-        with open(meta_path) as f:
+        with open(meta_path, encoding="utf-8") as f:
             return json.load(f)
     except (OSError, ValueError):
         return {}
@@ -262,11 +262,11 @@ def reuse_one(entry, version, src, root=None):
     d, path, meta_path = target_paths(entry, root)
     os.makedirs(d, exist_ok=True)
     shutil.copyfile(src, path)
-    with open(src + ".meta.json") as f:
+    with open(src + ".meta.json", encoding="utf-8") as f:
         meta = json.load(f)
     meta["reused_from"] = {"corpus_version": version, "path": src}
     meta["reused_at"] = now_utc()
-    with open(meta_path, "w") as f:
+    with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2, sort_keys=True)
         f.write("\n")
     return f"reused from {version}"
@@ -280,7 +280,7 @@ def recorded_answer(entry, corpus):
     path = os.path.join(corpus, *rel.split("/"))
     with open(path, "rb") as f:
         body = f.read()
-    with open(os.path.splitext(path)[0] + ".provenance.json") as f:
+    with open(os.path.splitext(path)[0] + ".provenance.json", encoding="utf-8") as f:
         prov = json.load(f)
     actual = hashlib.sha256(body).hexdigest()
     want = (manifest_sources(corpus).get(f"fixtures/{entry['case']}/raw/{entry['file']}") or {}).get("sha256")
@@ -319,7 +319,7 @@ def record_one(entry, corpus, root=None):
     }
     with open(path, "wb") as f:
         f.write(body)
-    with open(meta_path, "w") as f:
+    with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2, sort_keys=True)
         f.write("\n")
     return f"written from the record, {qty(len(body), 'byte')}"
@@ -426,7 +426,7 @@ def manifest_sources(root=None):
     if not os.path.exists(p):
         return {}
     out = {}
-    with open(p) as f:
+    with open(p, encoding="utf-8") as f:
         m = json.load(f)
     for c in m.get("cases", []):
         for s in c.get("sources", []):
@@ -577,7 +577,7 @@ def fetch_one(entry, root=None):
             f"Unexpected response ({why}): kept beside the data, not in its place, and not requested again.")
         with open(u_path, "wb") as f:
             f.write(body)
-        with open(u_meta_path, "w") as f:
+        with open(u_meta_path, "w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2, sort_keys=True)
             f.write("\n")
         kept = os.path.relpath(u_path, root or default_roots()[1])
@@ -599,7 +599,7 @@ def fetch_one(entry, root=None):
     if status != 200:
         meta["note"] = (meta["note"] + " " if meta["note"] else "") + (
             f"The answer the fetch list expects here (expect_status {status}): the provider's no-data text, recorded as the response.")
-    with open(meta_path, "w") as f:
+    with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2, sort_keys=True)
         f.write("\n")
     for stale in (u_path, u_meta_path):  # an earlier unexpected answer to this URL is superseded by this one
@@ -647,7 +647,7 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
         print(f"provider data: {root} ({data_why})", file=out)
     corpus = corpus or root
     if entries is None:
-        with open(os.path.join(corpus, FETCHLIST)) as f:
+        with open(os.path.join(corpus, FETCHLIST), encoding="utf-8") as f:
             entries = json.load(f)
     # duplicate guard: case-insensitive on the URL; entries that document a deliberate re-capture
     # (a 'recapture_of' field) are the only permitted repeats.

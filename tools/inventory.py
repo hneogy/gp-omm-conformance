@@ -378,7 +378,7 @@ def main():
         for f in files:
             p = os.path.join(rawdir, f)
             meta_p = p + ".meta.json"
-            meta = json.load(open(meta_p)) if os.path.exists(meta_p) else {}
+            meta = json.load(open(meta_p, encoding="utf-8")) if os.path.exists(meta_p) else {}
             raw = open(p, "rb").read()
             total_bytes += len(raw)
             total_files += 1
@@ -424,7 +424,7 @@ def main():
     md += ["## Totals", "", f"- files: {total_files}; bytes: {total_bytes:,}",
            f"- real catalog ids inside the Alpha-5 range (100000-339999) seen in TLE/CSV maps, by Alpha-5 first letter: {dict(sorted(alpha5_letters_real.items())) or 'none'}", ""]
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w") as f:
+    with open(OUT, "w", encoding="utf-8") as f:
         f.write("\n".join(md))
     print(f"wrote {OUT}: {total_files} files, {total_bytes:,} bytes")
 

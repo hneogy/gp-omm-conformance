@@ -35,7 +35,9 @@ ignores the variable and records the staging time, the builder's user and group 
 build time and a file name in the gzip header; the wheel's writer honours it for the entries' times but takes their
 modes from the tree the frontend unpacks under the builder's umask. Two builds of the same export with the same epoch,
 seconds apart and under different umasks, give byte-identical files; anyone with the pinned toolchain, the export of
-the tag and the epoch can rebuild and match.
+the tag and the epoch can rebuild and match. On another machine too, as far as it has been tried (D-259): for v0.6.1 a
+build on Linux x86_64 (CPython built with GCC 13.3, zlib 1.3) matched the files built on macOS arm64 (Clang, zlib
+1.2.12). Another Python version and another implementation of deflate, zlib-ng for one, are untested.
 
 Auditing (--audit, or after --build) opens a wheel or an sdist and checks every file under gpconf/ against the export
 manifest: a corpus file under gpconf/corpus/X must hash to the manifest's entry for X, a package file to its own

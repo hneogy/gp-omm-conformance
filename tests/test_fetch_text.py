@@ -22,10 +22,14 @@ sys.path.insert(0, ROOT)
 from gpconf import fetch  # noqa: E402
 
 
-# The size of a user's fetch is measured, not computed (D-252): the owner's timed first-time fetch at the 0.6.0 release
+# The size of a user's fetch is measured, not computed (D-252): the owner's timed first-time fetch at the latest release
 # (D-250). The live files change size, so the sum of the corpus's own captures, which this test held the README to
 # until then, read 3.1 MB while both timed fetches, at the 0.5.1 and the 0.6.0 release, downloaded 3.2 MB.
-MEASURED_BYTES = 3_200_451
+# The timed fetch follows the upload, so the README carries the measurement of the release before the one it ships
+# in, and says which. Here: the fetch of 2026-10-04 at the 0.6.1 release, 46 requests in 2 min 11 s (D-256, D-258);
+# the 0.6.0 release's, which the README of 0.6.1 gives, was 3,200,451 bytes.
+MEASURED_BYTES = 3_201_056
+MEASURED_AT = "0.6.1"
 
 
 def read(rel):
@@ -87,7 +91,7 @@ class FetchingResponsibly(unittest.TestCase):
         # the measurement stands for this fetch list only: one that moved the captures' sum a twentieth away needs a new one
         self.assertLess(abs(MEASURED_BYTES - size) / size, 0.05)
         self.assertIn(f"One run is {len(entries)} requests and {mb}, and none of them is expected to answer with an error.", self.section)
-        self.assertIn(f"The size is measured: the first-time fetch timed at the 0.6.0 release downloaded {MEASURED_BYTES:,} bytes, where the "
+        self.assertIn(f"The size is measured: the first-time fetch timed at the {MEASURED_AT} release downloaded {MEASURED_BYTES:,} bytes, where the "
                       f"corpus's own captures of the same files sum to {snapshot}; the live files change size.", self.section)
         self.assertIn("The fetch stops at the first one, with no exception (D-247).", self.section)
         self.assertIn("four TLE requests for objects numbered above 99999, which answer 404 with `No GP data found`. It no longer makes them", self.section)

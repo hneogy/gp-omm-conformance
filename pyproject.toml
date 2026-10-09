@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gpconf"
-version = "0.6.1"
+version = "0.6.2"
 # The About line of docs/BRAND.md, word for word (D-242).
 description = "Free test kit: does your satellite software handle catalog numbers above 99,999? Built from real CelesTrak data."
 readme = "README.md"
@@ -32,7 +32,7 @@ classifiers = [
 
 [project.optional-dependencies]
 # The library presets' libraries (D-151, D-153). The Node presets' libraries cannot be pip extras.
-sgp4 = ["sgp4"]
+sgp4 = ["sgp4>=2.27"]   # python-sgp4 dropped 3.9 at 2.26: on 3.9 this extra refuses to install rather than resolving to 2.25 (D-269)
 pyephem = ["ephem"]
 
 [project.scripts]

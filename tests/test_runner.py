@@ -135,7 +135,7 @@ class SourcelessCases(unittest.TestCase):
                 for r in Runner(parser, root=tmp).run(case_ids=self.CASES):
                     self.assertEqual(r.status, "not-fetched", (r.case_id, [(i.check, i.status) for i in r.items if i.status != "not-fetched"]))
                     self.assertTrue(all(i.check == "source-present" and i.status == "not-fetched" for i in r.items), r.case_id)
-        with open(os.path.join(ROOT, "fixtures", "nine-digit-supgp-launch-nominals", "expected.json")) as f:
+        with open(os.path.join(ROOT, "fixtures", "nine-digit-supgp-launch-nominals", "expected.json"), encoding="utf-8") as f:
             self.assertIn("nine-digit-ids-parse", [k["id"] for k in json.load(f)["checks"]])  # the case that had the fallback since v0.1.0
 
 

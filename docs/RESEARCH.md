@@ -27,6 +27,7 @@ Current GP Element Sets page):
 
 Source: https://celestrak.org/NORAD/documentation/gp-data-formats.php (page dated
 "2020 May 27, Updated 2026 Jun 23").
+[Read again 2026-10-05: the notice has since been reworded; see "Read again on 2026-10-05" at the end.]
 
 Why 69999 and not 99999 (same page, FAQ addendum):
 
@@ -812,3 +813,37 @@ Generated evidence lives in `docs/INVENTORY.md` (raw files), `docs/CROSSCHECK.md
 - **Names:** one object in the fetched data (100465, 27 characters) has a name longer than
   the TLE's 24-character line 0; no CelesTrak TLE exists for it, so the cut rule is taken
   from the format documentation.
+
+---
+
+# Read again on 2026-10-05 (one request)
+
+At the project owner's instruction, to check that the two statements this record takes from CelesTrak's GP formats
+page still stand: https://celestrak.org/NORAD/documentation/gp-data-formats.php, requested once at
+2026-10-05T19:10:29Z. HTTP 200, no redirect, 40,338 bytes, SHA-256 12bb06ed…3b95. The documentation page only; no
+data query was made. The page prints the server's current time, so that hash is this response's and will not repeat.
+
+- **The date lines are unchanged** from the reads of 2026-09-20 and 2026-09-24: "2020 May 27", "Updated 2026 Jun 23";
+  the FAQ addendum's "Added 2024 Aug 30", "Updated 2026 Mar 26"; the footer's "Last updated: 2026 Jun 23 22:20:47
+  UTC".
+- **The CSV default (section 2.1) stands.** The sentence quoted there, on the optional FORMAT and its default "as of
+  2026 May 09", is on the page word for word [tested: the string is in the page's text].
+- **TLE formats and 99999 (section 2.2) stands.** The sentence quoted there is on the page word for word, and so is
+  the FAQ's first sentence on analyst objects with six-digit numbers [tested the same way].
+- **The site-wide notice quoted in section 1 has been reworded.** It no longer names Saramago or the earlier
+  estimate, and on this page it no longer carries the sentence on the legacy SATCAT file; it gives the official
+  SATCAT as now at 100953 (100789 on 2026-09-20); it still says that newly cataloged objects have six-digit numbers
+  from 100000 and that GP data for them is not available in the TLE format. Section 1's quotation is the notice as it
+  read on 2026-09-20. The FAQ's sentence on 69999 stands as quoted.
+- **Section 3's limits stand as quoted** [tested: the sentences on a 2-hour check, 50 HTTP errors in two hours,
+  100 MB a day and one download per update are in the page's text].
+- **What the page does not say.** Nothing on how a TLE's eccentricity is cut to seven digits; the one mention of
+  eccentricity is a display flag. The word "Alpha-5" is still not on the page. The truncation is this corpus's own
+  observation (section 13).
+- No copy of the page was kept from the earlier reads, so "unchanged" rests on the page's own date lines and on the
+  quoted sentences being found, not on a comparison of the whole text [inferred for everything not quoted here]. The
+  first fetch log gives the page as 41 kB.
+
+| Resource | URL | Result |
+|---|---|---|
+| CelesTrak GP formats doc, 2026-10-05 | https://celestrak.org/NORAD/documentation/gp-data-formats.php | 200, 40,338 bytes, one request |

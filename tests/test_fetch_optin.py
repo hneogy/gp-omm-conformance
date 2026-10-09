@@ -31,9 +31,9 @@ FILE = f"fixtures/{CASE}/raw/satcat.txt"
 URL = "https://celestrak.org/pub/satcat.txt"
 NOW = dt.datetime(2026, 10, 5, 12, 0, 0, tzinfo=dt.timezone.utc)
 
-with open(os.path.join(ROOT, "tools", "fetchlist.json")) as _f:
+with open(os.path.join(ROOT, "tools", "fetchlist.json"), encoding="utf-8") as _f:
     FETCHLIST = json.load(_f)
-with open(os.path.join(ROOT, "manifest.json")) as _f:
+with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as _f:
     RECORDED = {s["path"]: s for c in json.load(_f)["cases"] for s in c.get("sources", [])}
 
 
@@ -59,7 +59,7 @@ class TheList(unittest.TestCase):
         self.assertGreater(size(on_request) / size(user), 0.74)                        # three quarters
 
     def test_only_the_data_check_reads_it(self):
-        with open(os.path.join(ROOT, "manifest.json")) as f:
+        with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
             readers = [c["id"] for c in json.load(f)["cases"] if any(s["path"] == FILE for s in c.get("sources", []))]
         self.assertEqual(readers, [CASE])
 
@@ -86,7 +86,7 @@ class TheFetch(unittest.TestCase):
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(self.root, FILE), "wb") as f:
             f.write(b"an earlier fetch left this here\n")
-        with open(os.path.join(self.root, FILE + ".meta.json"), "w") as f:
+        with open(os.path.join(self.root, FILE + ".meta.json"), "w", encoding="utf-8") as f:
             json.dump({"retrieved_at": (NOW - dt.timedelta(hours=hours_old)).strftime("%Y-%m-%dT%H:%M:%SZ")}, f)
 
     def test_a_plain_fetch_leaves_it_out_and_says_how_to_ask(self):
@@ -142,7 +142,7 @@ class TheRunner(unittest.TestCase):
     def records_only(self, tmp):
         """The case's six small SATCAT records on disk, as stand-ins, and no legacy file: a user's folder after a fetch."""
         corpus_copy(tmp, [CASE])
-        with open(os.path.join(ROOT, "fixtures", CASE, "expected.json")) as f:
+        with open(os.path.join(ROOT, "fixtures", CASE, "expected.json"), encoding="utf-8") as f:
             sources = json.load(f)["sources"]
         for rel in sources:
             if rel != FILE:
@@ -202,7 +202,7 @@ class TheRunner(unittest.TestCase):
             self.records_only(tmp)
             with open(os.path.join(tmp, FILE + ".unexpected"), "wb") as f:
                 f.write(b"<html>403 Forbidden</html>")
-            with open(os.path.join(tmp, FILE + ".unexpected.meta.json"), "w") as f:
+            with open(os.path.join(tmp, FILE + ".unexpected.meta.json"), "w", encoding="utf-8") as f:
                 json.dump({"http_status": 403, "retrieved_at": "2026-10-05T12:00:00Z", "unexpected": "HTTP 403"}, f)
             r = Runner(Reference(), root=tmp).run(case_ids=[CASE])[0]
         self.assertEqual(r.status, "not-fetched")

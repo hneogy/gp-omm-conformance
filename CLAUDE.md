@@ -123,3 +123,34 @@ and the reply to the complaint on #1221, 39 words
 the convention and each carries a [tested] bracket; they are cited for their length, not for
 their brackets. A draft written before 2026-09-27 is checked against this section before it
 goes out.
+
+## Voice, for anything posted under the owner's name (owner convention, 2026-10-06)
+
+The section above says what goes in a message. This one says how it sounds, and it covers
+everything posted publicly under the owner's name: issues, pull requests, comments, forum posts.
+The owner's words:
+
+> Rules: short and casual, contractions, first person, one finding per message, no bracketed
+> tags like [tested], no exhaustive edge-case lists — mention extras in one line or leave them
+> for a follow-up. Plain words, no "for whenever". Every draft is something I'd say out loud.
+>
+> Disclosure stays honest: if anyone asks whether AI was involved, the answer is yes, plainly,
+> in the same casual voice. Never claim I did something by hand that the tools did.
+
+Writing to it:
+
+- Start with the finding, said the way you would say it to the maintainer in person. A second
+  finding is a second message.
+- No headers, tables or bullet lists in the posted text. A code block for the reproduction is
+  fine.
+- Extras get one line or wait for a follow-up.
+- "I" is for what the owner did, thinks or offers. For work a session did, name what ran
+  ("this came up running gpconf against 2.0") or leave it out. A draft that says "I ran these"
+  is true only once the owner has run them.
+- Asked whether AI was involved, the owner's answer is: "Yeah, I use AI tools a lot for this
+  project and check what comes out. The README has the details."
+- Read the project's own contribution rules before anything is posted there.
+
+The verification standard is unchanged, and so is the rule that nothing is posted without the
+owner's word for that message. Working notes and the check to run before a draft goes out are
+in the private handoff, `docs/handoff/voice-guide.md`.

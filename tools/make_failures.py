@@ -40,7 +40,7 @@ adapter fails 14 cases where 15 are listed here and python-sgp4 fails 6 where 8 
 
 def load(name):
     p = os.path.join(ROOT, "tools", "_out", f"report-{name}.json")
-    return json.load(open(p)) if os.path.exists(p) else None
+    return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else None
 
 
 VALUE_CHECKS = {"values", "omm-formats-agree", "tle-values-match-omm-within-tle-precision", "mmdot-is-tle-field-value",
@@ -110,7 +110,7 @@ def render(reps, generated_at):
 def main():
     import datetime as dt
     reps = {n: load(n) for n in ("reference", "naive", "sgp4")}
-    open(OUT, "w").write(render(reps, dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")))
+    open(OUT, "w", encoding="utf-8").write(render(reps, dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")))
     print(f"wrote {OUT}")
 
 

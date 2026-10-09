@@ -1,7 +1,7 @@
 {
  "corpus": "gp-omm-conformance",
- "corpus_version": "0.6.1",
- "generated_at": "2026-10-04T19:46:28Z",
+ "corpus_version": "0.6.2",
+ "generated_at": "2026-10-09T03:15:52Z",
  "generator": "tools/make_manifest.py",
  "design": {
   "provider_data_shipped": false,

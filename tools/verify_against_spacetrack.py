@@ -249,7 +249,7 @@ def main():
         except Exception:
             print("logout request failed (session will expire on its own)")
         run["finished_utc"] = dt.datetime.now(dt.timezone.utc).isoformat()
-        with open(os.path.join(OUT_DIR, "run.json"), "w") as f:
+        with open(os.path.join(OUT_DIR, "run.json"), "w", encoding="utf-8") as f:
             json.dump(run, f, indent=1)
     s = summarize(results_all)
     print("\nsummary: " + ", ".join(f"{k} {v}" for k, v in s.items()))

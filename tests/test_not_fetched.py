@@ -59,7 +59,7 @@ class NotFetchedStatus(unittest.TestCase):
             sourceless_root(tmp, [CASE])
             out = os.path.join(tmp, "report.json")
             code, _ = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", CASE, "--json", out])
-            with open(out) as f:
+            with open(out, encoding="utf-8") as f:
                 rep = json.load(f)
         self.assertEqual(code, 0)  # absence is not a failure of the parser
         (r,) = rep["results"]
@@ -89,12 +89,12 @@ class PartlyFetchedCase(unittest.TestCase):
     originals), and three cases used to report pass with no word about the missing file."""
 
     def setUp(self):
-        if not all(os.path.exists(os.path.join(ROOT, p)) for p in json.load(open(os.path.join(ROOT, "fixtures", CASE, "expected.json")))["sources"]):
+        if not all(os.path.exists(os.path.join(ROOT, p)) for p in json.load(open(os.path.join(ROOT, "fixtures", CASE, "expected.json"), encoding="utf-8"))["sources"]):
             self.skipTest(f"raw sources for {CASE} absent (public clone): run tools/fetch.py to exercise the partly fetched case")
 
     def partial_root(self, tmp):
         sourceless_root(tmp, [CASE])
-        exp = json.load(open(os.path.join(ROOT, "fixtures", CASE, "expected.json")))
+        exp = json.load(open(os.path.join(ROOT, "fixtures", CASE, "expected.json"), encoding="utf-8"))
         for p in exp["sources"]:
             if p != RECAPTURE:
                 os.makedirs(os.path.dirname(os.path.join(tmp, p)), exist_ok=True)
@@ -130,7 +130,7 @@ class FetchHint(unittest.TestCase):
             tmp = os.path.realpath(tmp)  # macOS: /var is a link to /private/var, and getcwd() returns the latter
             root = os.path.join(tmp, "a corpus")
             os.makedirs(os.path.join(root, "tools"))
-            open(os.path.join(root, "tools", "fetch.py"), "w").close()
+            open(os.path.join(root, "tools", "fetch.py"), "w", encoding="utf-8").close()
             cwd = os.getcwd()
             try:
                 os.chdir(tmp)  # from outside the root, so the relative path does not start with ".."

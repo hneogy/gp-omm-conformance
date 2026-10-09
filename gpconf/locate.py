@@ -75,7 +75,7 @@ def corpus_root(explicit=None):
 
 
 def corpus_version(root):
-    with open(os.path.join(root, "manifest.json")) as f:
+    with open(os.path.join(root, "manifest.json"), encoding="utf-8") as f:
         return json.load(f)["corpus_version"]
 
 

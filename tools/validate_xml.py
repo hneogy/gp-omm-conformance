@@ -43,7 +43,7 @@ def main():
             results[rel][label] = {"valid": not errs, "errors": errs}
             print(f"{rel} | {label} | {'VALID' if not errs else 'INVALID'}" + (f" | {errs[0]}" if errs else ""))
     os.makedirs(os.path.join(ROOT, "tools", "_out"), exist_ok=True)
-    json.dump(results, open(os.path.join(ROOT, "tools", "_out", "xml-validation.json"), "w"), indent=2)
+    json.dump(results, open(os.path.join(ROOT, "tools", "_out", "xml-validation.json"), "w", encoding="utf-8"), indent=2)
 
 
 if __name__ == "__main__":

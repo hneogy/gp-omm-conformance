@@ -471,3 +471,11 @@ with a single scrub definition, export-time scrubbing, catalogue redaction and a
 (D-049); export_tle report reproducer replaced by an ordinary five-digit line (D-050);
 empty-OBJECT_ID report offers a PR and the verified patch sits in `docs/upstream/patches/`
 (D-051). Reference adapter: 16 of 16 exact. Next: independent audit in a fresh session.
+
+## Addendum (2026-10-09)
+
+TraCSS, research only, later (owner, 2026-10-08; nothing scheduled): the US Office of Space Commerce publishes
+a CCSDS-OMM profile (TraCSS-Spec-004 v1.2, January 2026) and a catalog format (Spec-003), most catalog data
+under CC0, pilot users onboarded through 2026. A TraCSS case family would be a second provider beside
+CelesTrak and possibly redistributable fixtures. Noted from the audit of 2026-10-08 (D-268);
+https://www.space.commerce.gov/tracss/

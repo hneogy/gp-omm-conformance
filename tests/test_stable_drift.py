@@ -24,9 +24,9 @@ FILE = "derived/alpha5-tle/alpha5-A-100000-saramago-first.tle"
 
 def scratch_root():
     d = tempfile.mkdtemp()
-    m = json.load(open(os.path.join(ROOT, "manifest.json")))
+    m = json.load(open(os.path.join(ROOT, "manifest.json"), encoding="utf-8"))
     m["cases"] = [c for c in m["cases"] if c["id"] == CASE]
-    json.dump(m, open(os.path.join(d, "manifest.json"), "w"))
+    json.dump(m, open(os.path.join(d, "manifest.json"), "w", encoding="utf-8"))
     os.makedirs(os.path.join(d, "fixtures", CASE))
     shutil.copy(os.path.join(ROOT, "fixtures", CASE, "expected.json"), os.path.join(d, "fixtures", CASE))
     shutil.copytree(os.path.join(ROOT, "derived", "alpha5-tle"), os.path.join(d, "derived", "alpha5-tle"))
@@ -35,13 +35,13 @@ def scratch_root():
 
 def edit_one_digit(path):
     """Change the last mean-motion digit on line 2 and recompute the checksum: a valid line with one value changed."""
-    lines = open(path).read().splitlines()
+    lines = open(path, encoding="utf-8").read().splitlines()
     i = next(n for n, l in enumerate(lines) if l.startswith("2 "))
     l2 = lines[i]
     digit = "1" if l2[62] != "1" else "2"
     body = l2[:62] + digit + l2[63:68]
     lines[i] = body + str(T.checksum(body))
-    open(path, "w").write("\n".join(lines) + "\n")
+    open(path, "w", encoding="utf-8").write("\n".join(lines) + "\n")
 
 
 class StableDriftTests(unittest.TestCase):

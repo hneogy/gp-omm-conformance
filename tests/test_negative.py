@@ -116,7 +116,7 @@ class CommandParserParse(unittest.TestCase):
                   "elif mode == 'wfail': sys.stderr.write('refused: 340000\\n\\n'); sys.exit(1)\n"
                   "elif mode == 'unsup': sys.exit(3)\n")
         self.script = os.path.join(self.tmp.name, "p.py")
-        with open(self.script, "w") as f:
+        with open(self.script, "w", encoding="utf-8") as f:
             f.write(script)
 
     def tearDown(self):
@@ -167,7 +167,7 @@ class EpochVectorValues(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with open(os.path.join(ROOT, "vectors", "ccsds-epoch-strings.json")) as f:
+        with open(os.path.join(ROOT, "vectors", "ccsds-epoch-strings.json"), encoding="utf-8") as f:
             cls.vec = json.load(f)
 
     def run_hook(self, parse_epoch):

@@ -41,7 +41,7 @@ class Stub:
         os.makedirs(d, exist_ok=True)
         with open(path, "wb") as f:
             f.write(b"STUB")
-        with open(meta, "w") as f:
+        with open(meta, "w", encoding="utf-8") as f:
             json.dump({"url": entry["url"], "retrieved_at": fetch.now_utc(), "sha256": hashlib.sha256(b"STUB").hexdigest()}, f)
         return "HTTP/1.1 200 OK, 4 bytes (stub)"
 
@@ -65,14 +65,14 @@ class _Root(unittest.TestCase):
             m = {"url": "", "sha256": hashlib.sha256(data).hexdigest()}
             if retrieved_at is not None:
                 m["retrieved_at"] = retrieved_at.strftime("%Y-%m-%dT%H:%M:%SZ")
-            with open(p + ".meta.json", "w") as f:
+            with open(p + ".meta.json", "w", encoding="utf-8") as f:
                 json.dump(m, f)
         if mtime is not None:
             os.utime(p, (mtime.timestamp(), mtime.timestamp()))
         return p
 
     def manifest(self, stable_sha):
-        with open(os.path.join(self.root, "manifest.json"), "w") as f:
+        with open(os.path.join(self.root, "manifest.json"), "w", encoding="utf-8") as f:
             json.dump({"cases": [{"id": "c", "sources": [{"path": "fixtures/c/raw/a.tle", "tier": "stable", "sha256": stable_sha}]}]}, f)
 
     def plan(self, entries=ENTRIES, **opts):

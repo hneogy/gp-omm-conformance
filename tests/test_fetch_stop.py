@@ -70,7 +70,7 @@ class Opener:
     def __init__(self, table):
         self.table, self.calls = table, []
 
-    def open(self, req, timeout=None):
+    def open(self, req, timeout=None, encoding="utf-8"):
         url = req.full_url
         self.calls.append(url)
         answer = self.table[url]
@@ -111,7 +111,7 @@ class _Fetch(unittest.TestCase):
         return os.path.join(self.root, "fixtures", "c", "raw", name)
 
     def meta(self, name):
-        with open(self.raw(name) + ".meta.json") as f:
+        with open(self.raw(name) + ".meta.json", encoding="utf-8") as f:
             return json.load(f)
 
 
@@ -279,9 +279,9 @@ class TheShippedList(unittest.TestCase):
     """The list names an expected status on exactly the entries the manifest records as answering 404."""
 
     def test_expect_status_agrees_with_the_manifest(self):
-        with open(os.path.join(ROOT, "tools", "fetchlist.json")) as f:
+        with open(os.path.join(ROOT, "tools", "fetchlist.json"), encoding="utf-8") as f:
             entries = json.load(f)
-        with open(os.path.join(ROOT, "manifest.json")) as f:
+        with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
             man = json.load(f)
         recorded = {}
         for c in man["cases"]:
@@ -318,7 +318,7 @@ def put(tmp, rel, body, status, at="2026-10-05T12:00:00Z", why=None):
     meta = {"http_status": status, "retrieved_at": at, "url": "https://celestrak.org/x"}
     if why:
         meta["unexpected"] = why
-    with open(os.path.join(tmp, rel + ".meta.json"), "w") as f:
+    with open(os.path.join(tmp, rel + ".meta.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f)
 
 

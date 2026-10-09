@@ -29,7 +29,7 @@ PARTLY = "nine-digit-supgp-launch-nominals"            # five captures and the f
 GATE_CASE = "tle-omits-six-digit-objects"              # the command line reads the gate's facts from this case
 LABEL = "Starlink G15-27, launched 2026-09-20"
 
-with open(os.path.join(ROOT, "tools", "fetchlist.json")) as _f:
+with open(os.path.join(ROOT, "tools", "fetchlist.json"), encoding="utf-8") as _f:
     FETCHLIST = json.load(_f)
 CAPTURES = [e for e in FETCHLIST if e.get("launch_window")]
 
@@ -72,7 +72,7 @@ class TheList(unittest.TestCase):
         self.assertEqual(sorted(e["file"] for e in user if e.get("recorded")), known)
 
     def test_every_capture_is_a_source_of_some_case(self):
-        with open(os.path.join(ROOT, "manifest.json")) as f:
+        with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
             man = json.load(f)
         used = {s["path"] for c in man["cases"] for s in c.get("sources", [])}
         files = launch_window_files(ROOT)
@@ -164,7 +164,7 @@ class TheRunnerSaysNotAvailable(unittest.TestCase):
             corpus_copy(tmp, [ALL_CAPTURES])
             report = os.path.join(tmp, "report.json")
             code, text = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", ALL_CAPTURES, "--json", report])
-            with open(report) as f:
+            with open(report, encoding="utf-8") as f:
                 rep = json.load(f)
         self.assertEqual(code, 0)                                                       # absence is not a failure of the parser
         self.assertIn("exact  tol fail skip n/e n/f n/a", text)
@@ -202,7 +202,7 @@ class TheRunnerSaysNotAvailable(unittest.TestCase):
             os.makedirs(os.path.join(tmp, os.path.dirname(rel)))
             with open(os.path.join(tmp, rel), "wb") as f:
                 f.write(b"No SupGP data found")
-            with open(os.path.join(tmp, rel + ".meta.json"), "w") as f:
+            with open(os.path.join(tmp, rel + ".meta.json"), "w", encoding="utf-8") as f:
                 json.dump({"http_status": 404, "retrieved_at": "2026-09-27T10:00:00Z"}, f)
             r = Runner(Reference(), root=tmp).run(case_ids=[ALL_CAPTURES])[0]
         self.assertEqual(r.status, "not-available")

@@ -1,5 +1,8 @@
 name: ci
 on: [push, pull_request]
+permissions:
+  contents: read   # the workflow only reads the tree (D-269)
+
 jobs:
   offline:
     # No network: only the shipped cases (vectors, derived files) and the runner self-tests.
@@ -11,10 +14,22 @@ jobs:
       matrix:
         python-version: ["3.9", "3.12"]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5, pinned by commit (D-269)
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6, pinned by commit (D-269)
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m unittest discover -s tests -t . -v
       - run: python -m gpconf run --preset reference --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 --case corrupt-input
       - run: python -m gpconf run --preset naive --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 --case corrupt-input || test $? -eq 1
+
+  offline-windows:
+    # The same offline run on Windows (D-269, after the audit of 2026-10-08: the kit names Windows in its
+    # documentation and its text files are read as UTF-8 everywhere; this job holds it to that). Python 3.12.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5, pinned by commit (D-269)
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6, pinned by commit (D-269)
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -t . -v
+      - run: python -m gpconf run --preset reference --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 --case corrupt-input

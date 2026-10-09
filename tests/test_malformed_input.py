@@ -61,7 +61,7 @@ class Files(unittest.TestCase):
         self.assertRejected(self.write("dup.kvn", dup.encode()), "duplicate", "NORAD_CAT_ID")
 
     def test_tle_day_of_year_outside_the_year_is_rejected(self):
-        tle = open(GOOD_TLE).read().splitlines()
+        tle = open(GOOD_TLE, encoding="utf-8").read().splitlines()
         l1 = next(l for l in tle if l.startswith("1 "))
         for doy in ("000", "367"):
             with self.subTest(doy):

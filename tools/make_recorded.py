@@ -49,7 +49,7 @@ RECEIVED_AGAIN = [
 
 
 def main():
-    with open(os.path.join(ROOT, "tools", "fetchlist.json")) as f:
+    with open(os.path.join(ROOT, "tools", "fetchlist.json"), encoding="utf-8") as f:
         fetchlist = json.load(f)
     written_for = sorted(f"fixtures/{e['case']}/raw/{e['file']}" for e in fetchlist if e.get("recorded") == OUT.replace(os.sep, "/"))
     captures = []
@@ -59,7 +59,7 @@ def main():
             print(f"make_recorded: {path} is not on disk; this tool runs on the maintainer's copy, where the captures are", file=sys.stderr)
             return 1
         raw = open(path, "rb").read()
-        meta = json.load(open(path + ".meta.json"))
+        meta = json.load(open(path + ".meta.json", encoding="utf-8"))
         if raw != BODY or hashlib.sha256(raw).hexdigest() != SHA256 or meta.get("http_status") != 404:
             print(f"make_recorded: {path} is not the 16-byte answer with HTTP 404; nothing written", file=sys.stderr)
             return 1
@@ -91,7 +91,7 @@ def main():
         "generator": "tools/make_recorded.py",
         "generated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
-    with open(os.path.join(ROOT, os.path.splitext(OUT)[0] + ".provenance.json"), "w") as f:
+    with open(os.path.join(ROOT, os.path.splitext(OUT)[0] + ".provenance.json"), "w", encoding="utf-8") as f:
         json.dump(provenance, f, indent=1)
         f.write("\n")
     print(f"recorded: {OUT} ({len(BODY)} bytes, sha256 {SHA256[:16]}...), {len(captures)} captures, "

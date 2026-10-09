@@ -58,7 +58,7 @@ AFTER = {"case": "bstar-and-derivative-forms", "set": "decaying", "norad_cat_id"
 def frozen(spec):
     """The record as frozen in its case's expected.json, with where its values came from."""
     path = f"fixtures/{spec['case']}/expected.json"
-    with open(os.path.join(ROOT, path)) as f:
+    with open(os.path.join(ROOT, path), encoding="utf-8") as f:
         e = json.load(f)
     r = next(r for r in e["records"] if r.get("set") == spec["set"] and r["norad_cat_id"] == spec["norad_cat_id"])
     src = next(p for p in e["sources"] if os.path.basename(p) == r["canonical_source"])
@@ -124,7 +124,7 @@ def write(name, text, meta, edited=True):
             "label": EDITED if edited else UNEDITED, **meta,
             **({"owner_approval": APPROVAL} if edited else {"basis": UNEDITED_BASIS}), "generator": "tools/derive_corrupt_inputs.py",
             "generated_at": NOW, "line_endings": "CRLF", "bytes": len(data), "output_sha256": hashlib.sha256(data).hexdigest()}
-    with open(os.path.join(OUT, stem + ".provenance.json"), "w") as f:
+    with open(os.path.join(OUT, stem + ".provenance.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
         f.write("\n")
     print(f"{meta['file']}: {len(data)} bytes, sha256 {meta['output_sha256'][:16]}...")

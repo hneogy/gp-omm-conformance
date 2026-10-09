@@ -94,8 +94,12 @@ def check_tle(args):
     print(f"gpconf {__version__} | check-tle | {qty(len(args.files), 'file')}" + (f" | round trip against {args.against}" if args.against else ""))
     report, n_pass, n_fail = [], 0, 0
     for path in args.files:
-        with open(path, "rb") as f:
-            text = f.read().decode("utf-8", "replace")
+        try:
+            with open(path, "rb") as f:
+                text = f.read().decode("utf-8", "replace")
+        except OSError as e:
+            print(f"gpconf check-tle: {path}: {e.strerror or e}", file=sys.stderr)
+            return 2
         results = W.check_file(text, against)
         print(f"\n{path}: {qty(len(results), 'record')}" + ("" if results else " (no element line found)"))
         for r in results:
@@ -117,7 +121,7 @@ def check_tle(args):
           + ("" if n_pass + n_fail else "; nothing to check"))
     if args.json:
         import datetime as _dt
-        with open(args.json, "w") as f:
+        with open(args.json, "w", encoding="utf-8") as f:
             json.dump({"gpconf": __version__, "command": "check-tle", "against": args.against,
                        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "files": report}, f, indent=1, default=str)
     return 1 if n_fail or not (n_pass + n_fail) else 0
@@ -162,7 +166,7 @@ def main(argv=None):
         print(f"gpconf: {e}", file=sys.stderr)
         return 2
     root = loc["corpus"]
-    manifest = json.load(open(os.path.join(root, "manifest.json")))
+    manifest = json.load(open(os.path.join(root, "manifest.json"), encoding="utf-8"))
     if args.command == "list":
         for c in manifest["cases"]:
             print(f"{c['id']:40s} {c['kind']:12s} {', '.join(c['tests'])}")
@@ -188,6 +192,12 @@ def main(argv=None):
         parser = load_adapter(args.adapter)
     parser_name = preset["label"] if preset else (args.cmd or args.write_cmd or args.adapter)
     runner = Runner(parser, root=root, verbose=args.verbose, data=loc["data"], data_why=loc["data_why"], fetch_hints=not args.no_fetch_hint)
+    if args.case:   # a name that matches nothing is an error, not a silent no-op (D-269: a typo in CI went green forever)
+        ids = [c["id"] for c in manifest["cases"]]
+        unknown = [x for x in args.case if x not in ids]
+        if unknown:
+            print(f"gpconf: no case {', '.join(repr(x) for x in unknown)}; the cases are: {', '.join(ids)}", file=sys.stderr)
+            return 2
     try:
         results = runner.run(case_ids=args.case, tags=args.tag)
     except CorpusIncomplete as e:
@@ -223,7 +233,7 @@ def main(argv=None):
         print("\nnote: some sources hash differently from the tested snapshot; for those, values were compared against the corpus's own reference reader, not the human-verified snapshot.")
     if args.json:
         import datetime as _dt
-        with open(args.json, "w") as f:
+        with open(args.json, "w", encoding="utf-8") as f:
             json.dump({"gpconf": __version__, "corpus_version": manifest["corpus_version"], "parser": parser_name,
                        **({"preset": {k: preset.get(k) for k in ("name", "library", "found", "tested_with", "runtime") if k != "runtime" or preset.get(k)}} if preset else {}),
                        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

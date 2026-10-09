@@ -60,7 +60,7 @@ def supgp_value_strings(root=ROOT):
         p = os.path.join(root, "fixtures", case, "expected.json")
         if not os.path.exists(p):
             continue
-        exp = json.load(open(p))
+        exp = json.load(open(p, encoding="utf-8"))
         for r in exp.get("records", []):
             for f in DISTINCTIVE_FIELDS:
                 v = r.get("canonical", {}).get(f)
@@ -75,7 +75,7 @@ def supgp_value_strings(root=ROOT):
                 if k in DISTINCTIVE_FIELDS:
                     out.add(str(v))
     for p in glob.glob(os.path.join(root, "fixtures", "*", "expected.json")):
-        exp = json.load(open(p))
+        exp = json.load(open(p, encoding="utf-8"))
         if exp.get("kind") != "pairs":
             continue
         for it in exp.get("case_specific", {}).get("pairs", []):

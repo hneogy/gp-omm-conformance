@@ -5,6 +5,42 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
+## [0.6.2] - 2026-10-09
+
+Fixed: an unknown `--case` ended as a silent no-op, exit 0, so a typo in a pipeline could stay green forever; it is
+now an error, exit 2, naming the corpus's cases. `gpconf check-tle` on a missing file printed a traceback; it prints
+a one-line error and exits 2. Both were findings of the audit of 2026-10-08 (D-268, D-269).
+
+Changed: every text `open()` in the package, the tools and the tests passes `encoding="utf-8"`, so Windows's legacy
+default encoding cannot corrupt a read or a write; the `sgp4` extra pins `sgp4>=2.27` — python-sgp4 dropped Python
+3.9 at 2.26, and on 3.9 the extra now refuses to install instead of resolving to 2.25, an older library than every
+published python-sgp4 result names (D-269).
+
+Changed: CI declares `permissions: contents: read`, pins `actions/checkout` and `actions/setup-python` by commit
+id, and adds a Windows job (Python 3.12), whose first run comes with the next public push (D-269).
+
+Changed: the four adapters' comments say "one-off run" where they said "hand run", completing D-262 with this
+release's build.
+
+Changed: the exact size the README gives for a user's fetch is the latest measurement, 3,201,056 bytes, from the
+timed first-time fetch at the 0.6.1 release (2026-10-04: 46 requests, each answered 200, in 2 min 11 s), where it gave
+the 0.6.0 release's 3,200,451. The rounded figure, 3.2 MB, is the same (D-258).
+
+Checked: package builds are identical across machines as far as tried. D-203 left it untested whether a build on
+another machine matches the release files. For v0.6.1 a build on Linux x86_64 (CPython 3.14.6 built with GCC 13.3, zlib
+1.3), from the tag with the recorded epoch and the pinned toolchain, gave the wheel and the sdist that PyPI serves,
+byte for byte; they were built on macOS arm64 (Clang, zlib 1.2.12). The README says so and says what remains
+untested: another Python version, another implementation of deflate, and the files of 0.5.0 to 0.6.0 (D-259).
+
+Added to `docs/RESEARCH.md`: a last section, CelesTrak's GP formats page as read again on 2026-10-05. The CSV default
+and the sentence on TLE formats and catalog numbers above 99999 stand as quoted; the site-wide notice quoted in section 1
+has since been reworded (D-260).
+
+Changed: the eight libraries' runs of September 2026 are called one-off runs in the README and in `harnesses/README.md`,
+where they were called "hand-run" and "by hand"; they were made in sessions with AI tools, as "How this corpus was
+built" says. The four adapters' comments in the package say "hand run" still and change with the next release's build
+(D-262).
+
 ## [0.6.1] - 2026-10-04
 
 A patch release under the versioning rule, tooling and documentation only: the fetch's `User-Agent` names the kit,

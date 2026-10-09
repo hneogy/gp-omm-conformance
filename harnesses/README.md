@@ -1,6 +1,6 @@
 # Recipes for the libraries that cannot be presets
 
-In September 2026 the corpus ran eight libraries by hand (decisions D-128 and D-132 to D-141). Three of them,
+In September 2026 the corpus ran eight libraries in one-off runs (decisions D-128 and D-132 to D-141). Three of them,
 PyEphem, satellite.js and tle.js, now run as presets of the runner: `gpconf run --preset pyephem`, for example. The
 other five cannot. Each compiles against another project's source, or runs inside an application, so it needs that
 project's checkout and a toolchain. They are here as recipes.
@@ -31,7 +31,7 @@ The sixth recipe is of another kind. `vallado/` is not one of the eight librarie
 from, Vallado's reference implementation as CelesTrak publishes it, read directly and not through a library that
 wraps it (decision D-216, 2026-10-03). It has no row on the site.
 
-The counts each run produced are in the hand-run table on the site's library page
+The counts each run produced are in the one-off runs table on the site's library page
 (https://gpconf.neogy.dev/library/), recorded with the runner of 2026-09-24 (gpconf 0.2.1). Later runners add checks,
 such as the provider's empty answers (D-143), so a run today can differ in its pass and skip counts. These five were
 not run again when they moved here. The `vallado` recipe was built and run in this folder's form, against corpus

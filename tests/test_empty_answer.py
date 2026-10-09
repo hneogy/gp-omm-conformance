@@ -38,7 +38,7 @@ class TleUnsupported:
 
 class Declared(unittest.TestCase):
     def test_the_four_cases_declare_the_check(self):
-        manifest = json.load(open(os.path.join(ROOT, "manifest.json")))
+        manifest = json.load(open(os.path.join(ROOT, "manifest.json"), encoding="utf-8"))
         declared = {c["id"] for c in manifest["cases"] if CHECK in c["checks"]}
         self.assertEqual(declared, set(CASES))
 

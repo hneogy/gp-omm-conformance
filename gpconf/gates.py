@@ -50,7 +50,7 @@ def snapshot_facts(root, gate):
     belongs to the same records as the count. It used to come from the local fetch's metadata, falling back to the
     date expected.json was generated: a run with nothing fetched printed the build date, and a fresh fetch would
     print the user's fetch date beside the frozen count (D-148)."""
-    exp = json.load(open(os.path.join(root, "fixtures", gate["snapshot_from"]["case"], "expected.json")))
+    exp = json.load(open(os.path.join(root, "fixtures", gate["snapshot_from"]["case"], "expected.json"), encoding="utf-8"))
     ids = sorted(int(r["norad_cat_id"]) for r in exp["records"])
     date = ((exp.get("sources") or {}).get(gate["snapshot_from"]["source"]) or {}).get("retrieved_at") or "date not recorded"
     date = date[:10]
@@ -165,7 +165,7 @@ def compute_gates(results, root, data=None):
             formats[fmt] = {"label": spec["label"], **({"state": "not run"} if res is None else format_result(items))}
             if res is not None and formats[fmt]["state"] == "measured" and res.modes.get(spec["file"]) == "live":
                 meta = os.path.join(data or root, spec["file"] + ".meta.json")
-                got = json.load(open(meta)).get("retrieved_at") if os.path.exists(meta) else None
+                got = json.load(open(meta, encoding="utf-8")).get("retrieved_at") if os.path.exists(meta) else None
                 formats[fmt]["live"] = {"retrieved_at": got}
         out.append({"id": gate["id"], "name": gate["name"], "question": gate["question"], "snapshot": snap,
                     "formats": formats, "headline": headline({f: r for f, r in formats.items()}, gate, snap)})

@@ -17,7 +17,7 @@ from cases import CASES, CHECKS, AMBIGUITIES  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NOW = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-CORPUS_VERSION = "0.6.1"
+CORPUS_VERSION = "0.6.2"
 
 INTERPRETATION = {
     "epoch-year-19xx": "A parser must turn epoch field 98324.28472222 into 1998-11-20T06:49:59.999808 (not 2098) and must read a negative first derivative, a non-zero second derivative and a zero BSTAR written 00000+0. All seven renderings must yield the same record. A failure on this case alone usually means a two-digit-year pivot bug or an implied-decimal sign bug.",
@@ -56,13 +56,13 @@ LIBRARY_FINDINGS = {
 
 
 RECORDED = "recorded/celestrak-no-gp-data-found.txt"   # the one provider response the corpus ships (D-247)
-with open(os.path.join(ROOT, "tools", "fetchlist.json")) as _f:
+with open(os.path.join(ROOT, "tools", "fetchlist.json"), encoding="utf-8") as _f:
     RECORDED_FOR = {f"fixtures/{e['case']}/raw/{e['file']}": e["recorded"] for e in json.load(_f) if e.get("recorded")}
 
 
 def recorded_response():
     """The manifest's entry for the shipped response, from its provenance file (tools/make_recorded.py writes both)."""
-    with open(os.path.join(ROOT, os.path.splitext(RECORDED)[0] + ".provenance.json")) as f:
+    with open(os.path.join(ROOT, os.path.splitext(RECORDED)[0] + ".provenance.json"), encoding="utf-8") as f:
         prov = json.load(f)
     return {"path": RECORDED, "provenance_file": os.path.splitext(RECORDED)[0] + ".provenance.json", "text": prov["text"], "bytes": prov["bytes"],
             "sha256": prov["sha256"], "http_status": prov["http_status"], "holds_orbital_data": False, "decision": "D-247",
@@ -71,7 +71,7 @@ def recorded_response():
 
 def load_expected(case_id):
     p = os.path.join(ROOT, "fixtures", case_id, "expected.json")
-    return json.load(open(p)) if os.path.exists(p) else None
+    return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else None
 
 
 def source_status(path, s):
@@ -81,7 +81,7 @@ def source_status(path, s):
     if status is None:
         side = os.path.join(ROOT, os.path.splitext(path)[0] + ".provenance.json")
         if os.path.exists(side):
-            gen = json.load(open(side)).get("generated_at")
+            gen = json.load(open(side, encoding="utf-8")).get("generated_at")
             return "none: derived file shipped with the repository", f"generated {gen}" if gen else "n/a"
         return "none: specification vectors shipped with the repository", "n/a (never fetched)"
     if status == 404:
@@ -160,12 +160,12 @@ def main():
         if urls:
             doc += ["", "URLs (each requested once when the fixtures were built):", ""] + [f"- <{u}>" for u in urls]
         doc += ["", f"Expected values: `fixtures/{c['id']}/expected.json` (schema_version 1.0)."]
-        open(os.path.join(ROOT, "fixtures", c["id"], "case.md"), "w").write("\n".join(doc) + "\n")
+        open(os.path.join(ROOT, "fixtures", c["id"], "case.md"), "w", encoding="utf-8").write("\n".join(doc) + "\n")
         details += [f"## {i}. `{c['id']}`", "", c["title"], "", f"Tests: {', '.join(c['tests'])}", "", "Coverage gaps:", ""] + ([f"- {x}" for x in c["coverage"]["gaps"]] or ["- none identified"]) + [""]
     md += ["", "The records column sums the record counts of a case's source files: `analyst-objects` counts the 565 group records plus the two single-object first fetches (567)."]
     md += [""] + details + ["## Checks", ""] + [f"- **{k}** — {v}" for k, v in CHECKS.items()] + ["", "## Ambiguities", ""] + [f"- **{k}** — {v}" for k, v in AMBIGUITIES.items()]
-    json.dump(manifest, open(os.path.join(ROOT, "manifest.json"), "w"), indent=1)
-    open(os.path.join(ROOT, "MANIFEST.md"), "w").write("\n".join(md) + "\n")
+    json.dump(manifest, open(os.path.join(ROOT, "manifest.json"), "w", encoding="utf-8"), indent=1)
+    open(os.path.join(ROOT, "MANIFEST.md"), "w", encoding="utf-8").write("\n".join(md) + "\n")
     print(f"manifest: {len(manifest['cases'])} cases, {sum(len(c['sources']) for c in manifest['cases'])} source entries; case.md written for each")
 
 

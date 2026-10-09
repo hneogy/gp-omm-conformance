@@ -38,7 +38,7 @@ def main():
     a = ap.parse_args()
     if os.path.exists(a.dest) and os.listdir(a.dest):
         sys.exit("destination must be empty or absent")
-    patterns = [l.strip() for l in open(os.path.join(ROOT, "PUBLIC_ALLOWLIST.txt")) if l.strip() and not l.startswith("#")]
+    patterns = [l.strip() for l in open(os.path.join(ROOT, "PUBLIC_ALLOWLIST.txt"), encoding="utf-8") if l.strip() and not l.startswith("#")]
     files = set()
     for p in patterns:
         for m in glob.glob(os.path.join(ROOT, p), recursive=True):
@@ -88,7 +88,7 @@ def main():
             else:
                 shutil.copy2(src, dst)
     if not a.dry_run:
-        with open(os.path.join(a.dest, "EXPORT-MANIFEST.txt"), "w") as f:
+        with open(os.path.join(a.dest, "EXPORT-MANIFEST.txt"), "w", encoding="utf-8") as f:
             f.write("# path\tbytes\tsha256\n" + "\n".join(lines) + "\n")
     print(f"{'would copy' if a.dry_run else 'copied'} {len(out)} file(s); refused {len(refused)}; scrubbed {len(scrubbed)}: {scrubbed}")
     for rel, why in refused:

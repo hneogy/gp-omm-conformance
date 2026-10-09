@@ -99,7 +99,7 @@ class ExportGuardTests(unittest.TestCase):
         for case in SUPGP_CASES:
             p = os.path.join(self.dest, "fixtures", case, "expected.json")
             self.assertTrue(os.path.exists(p), case)
-            with open(p) as fh:
+            with open(p, encoding="utf-8") as fh:
                 exp = json.load(fh)
             self.assertEqual(exp["records"], [], case)
             self.assertIn("records_withheld", exp, case)

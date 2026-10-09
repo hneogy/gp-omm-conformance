@@ -103,7 +103,7 @@ class StagePackage(unittest.TestCase):
             sp.check_export(self.tmp)
         d = self.copy_export("with-raw")
         os.makedirs(os.path.join(d, "fixtures", "analyst-objects", "raw"))
-        open(os.path.join(d, "fixtures", "analyst-objects", "raw", "analyst.tle"), "w").write("x")
+        open(os.path.join(d, "fixtures", "analyst-objects", "raw", "analyst.tle"), "w", encoding="utf-8").write("x")
         with self.assertRaisesRegex(sp.Refused, "provider file"):
             sp.check_export(d)
         d = self.copy_export("with-handoff")
@@ -111,7 +111,7 @@ class StagePackage(unittest.TestCase):
         with self.assertRaisesRegex(sp.Refused, "private repository"):
             sp.check_export(d)
         d = self.copy_export("changed")
-        with open(os.path.join(d, "README.md"), "a") as f:
+        with open(os.path.join(d, "README.md"), "a", encoding="utf-8") as f:
             f.write("\nchanged after the export\n")
         with self.assertRaisesRegex(sp.Refused, "changed after it was made"):
             sp.stage(d, os.path.join(self.tmp, "stage-changed"))
@@ -228,7 +228,7 @@ class Metadata(unittest.TestCase):
         extras = re.search(r"\[project\.optional-dependencies\]\n(.*?)\n\[", self.text, re.S).group(1)
         names = re.findall(r'(?m)^(\w[\w-]*)\s*=', extras)
         self.assertEqual(names, ["sgp4", "pyephem"])
-        self.assertIn('sgp4 = ["sgp4"]', extras)
+        self.assertIn('sgp4 = ["sgp4>=2.27"]', extras)   # D-269: 2.26 dropped Python 3.9; the pin keeps 3.9 loud instead of silently older
         self.assertIn('pyephem = ["ephem"]', extras)
         self.assertNotIn("crosscheck", self.text)
         readme = open(os.path.join(ROOT, "README.md"), encoding="utf-8").read()

@@ -28,7 +28,7 @@ from gpconf import fetch as gfetch  # noqa: E402
 from gpconf.__main__ import main as gpconf_main  # noqa: E402
 
 VERSION = locate.corpus_version(ROOT)
-FETCHLIST = json.load(open(os.path.join(ROOT, "tools", "fetchlist.json")))
+FETCHLIST = json.load(open(os.path.join(ROOT, "tools", "fetchlist.json"), encoding="utf-8"))
 # What a fetch requests: no re-capture (D-150), no launch-window capture (D-229) and, unless asked, not the legacy
 # SATCAT file (D-231)
 NORMAL_ENTRIES = [e for e in FETCHLIST if not e.get("recapture_of") and not e.get("launch_window") and not e.get("opt_in")]

@@ -38,7 +38,7 @@ def items(result):
 
 
 def load_expected():
-    with open(os.path.join(ROOT, "fixtures", CASE, "expected.json")) as f:
+    with open(os.path.join(ROOT, "fixtures", CASE, "expected.json"), encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -78,7 +78,7 @@ class ExpectedInputsTests(unittest.TestCase):
             cid = os.path.basename(os.path.dirname(f))
             if cid == "tle-writer-alpha5":
                 continue
-            with open(f) as fh:
+            with open(f, encoding="utf-8") as fh:
                 for path, src in json.load(fh).get("sources", {}).items():
                     if src.get("tier") != "mixed":          # "mixed" is a case-level label, not the file's own
                         others.setdefault(path, set()).add(src["tier"])
@@ -223,7 +223,7 @@ class WriteCommandTests(unittest.TestCase):
         rec = next(r for r in load_expected()["records"] if r["norad_cat_id"] == 100000)["canonical"]
         with tempfile.TemporaryDirectory() as d:
             p = os.path.join(d, "w.py")
-            with open(p, "w") as f:
+            with open(p, "w", encoding="utf-8") as f:
                 f.write(script)
             cp = CommandParser(None, write_cmd=f"{shlex.quote(sys.executable)} {shlex.quote(p)}")  # paths may contain spaces
             l0, l1, l2 = W.normalise_lines(cp.write_tle(rec))
@@ -253,7 +253,7 @@ class CheckTleTests(unittest.TestCase):
 
     def write(self, name, text):
         p = os.path.join(self.tmp.name, name)
-        with open(p, "w") as f:
+        with open(p, "w", encoding="utf-8") as f:
             f.write(text)
         return p
 
@@ -293,7 +293,7 @@ class CheckTleTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             rc = gpconf_main(["check-tle", tle, "--against", csv, "--json", out])
         self.assertEqual(rc, 1)
-        with open(out) as fh:
+        with open(out, encoding="utf-8") as fh:
             recs = json.load(fh)["files"][0]["records"]
         by = {r["norad_cat_id"]: r for r in recs}
         self.assertEqual(sorted(by), [0, 99999, 100000, 123456])
@@ -339,7 +339,7 @@ class CheckTleTests(unittest.TestCase):
         self.assertEqual(rc, 0, out.getvalue())
         self.assertIn("[pass] line 2: SARAMAGO | catalog field 'A0000' -> 100000", out.getvalue())
         self.assertIn("round trip against the source record", out.getvalue())
-        with open(os.path.join(self.tmp.name, "r.json")) as f:
+        with open(os.path.join(self.tmp.name, "r.json"), encoding="utf-8") as f:
             self.assertEqual(json.load(f)["files"][0]["records"][0]["status"], "pass")
         for path, expect in ((bad, 1), (empty, 1)):
             out = io.StringIO()

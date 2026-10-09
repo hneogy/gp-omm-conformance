@@ -48,7 +48,7 @@ def main():
     for src, stem, keep, desc in SOURCES:
         path = os.path.join(ROOT, src)
         raw = open(path, "rb").read()
-        meta = json.load(open(path + ".meta.json"))
+        meta = json.load(open(path + ".meta.json", encoding="utf-8"))
         rows = list(csv.DictReader(io.StringIO(raw.decode("utf-8"))))
         lines = []
         ids = []
@@ -63,7 +63,7 @@ def main():
             letters[l1[2]] = letters.get(l1[2], 0) + 1
         body = "\r\n".join(lines) + "\r\n"  # CelesTrak convention: CRLF
         out = os.path.join(OUT, stem + ".tle")
-        with open(out, "w", newline="") as f:
+        with open(out, "w", newline="", encoding="utf-8") as f:
             f.write(body)
         prov = {
             "file": os.path.relpath(out, ROOT),
@@ -84,7 +84,7 @@ def main():
                 "the checksum is computed over the Alpha-5 line (letters count 0, minus signs count 1)",
             ],
         }
-        json.dump(prov, open(out[:-4] + ".provenance.json", "w"), indent=2)
+        json.dump(prov, open(out[:-4] + ".provenance.json", "w", encoding="utf-8"), indent=2)
         summary.append((stem, len(ids), letters))
         print(f"{stem}.tle: {len(ids)} records, letters {letters}")
     return summary

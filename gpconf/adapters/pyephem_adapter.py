@@ -2,11 +2,11 @@
 every other format is Unsupported.
 
 Exposes the library as-is: `ephem.readtle()` per element set. An element set `readtle()` refuses is reported through
-the runner's refusal channel (D-144) with the library's exception as its reason (D-174); the corpus's hand run of
+the runner's refusal channel (D-144) with the library's exception as its reason (D-174); the corpus's one-off run of
 2026-09-24 (corpus D-128; reported upstream as pyephem#296) dropped such sets, and over its seventeen cases
 `readtle()` refused none. PyEphem reads one element set at a time and has no reader for a file of them, so this
 adapter hands it each line 1 with whatever line follows, and PyEphem, not the adapter, answers for a line 1 with no
-line 2 after it (D-183). Moved into the package from the hand run's harness (D-151).
+line 2 after it (D-183). Moved into the package from the one-off run's harness (D-151).
 """
 import math
 

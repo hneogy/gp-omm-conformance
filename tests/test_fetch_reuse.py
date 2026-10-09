@@ -36,7 +36,7 @@ def put(folder, name, data, meta=True, retrieved="2026-09-21T00:43:39Z"):
     with open(os.path.join(d, name), "wb") as f:
         f.write(data)
     if meta:
-        with open(os.path.join(d, name + ".meta.json"), "w") as f:
+        with open(os.path.join(d, name + ".meta.json"), "w", encoding="utf-8") as f:
             json.dump({"retrieved_at": retrieved, "sha256": sha(data), "url": f"https://example.invalid/{name}"}, f)
 
 
@@ -60,7 +60,7 @@ class Layout(unittest.TestCase):
                    {"path": "fixtures/c/raw/l.csv", "tier": "live", "sha256": sha(LIVE)},
                    {"path": "fixtures/c/raw/d.csv", "tier": "stable", "sha256": sha(STABLE)},
                    {"path": "fixtures/c/raw/n.csv", "tier": "stable", "sha256": sha(STABLE)}]
-        with open(os.path.join(self.corpus, "manifest.json"), "w") as f:
+        with open(os.path.join(self.corpus, "manifest.json"), "w", encoding="utf-8") as f:
             json.dump({"corpus_version": "0.2.1", "cases": [{"id": "c", "sources": sources}]}, f)
         self.calls = []
 
@@ -102,7 +102,7 @@ class Reuse(Layout):
         self.assertEqual(sorted(self.calls), ["d.csv", "l.csv", "n.csv"])  # the live file is requested, never reused
         target = os.path.join(self.new, "fixtures", "c", "raw", "s.csv")
         self.assertEqual(open(target, "rb").read(), STABLE)
-        meta = json.load(open(target + ".meta.json"))
+        meta = json.load(open(target + ".meta.json", encoding="utf-8"))
         self.assertEqual(meta["reused_from"]["corpus_version"], "0.2.0")
         self.assertEqual(meta["retrieved_at"], "2026-09-21T00:43:39Z")  # the one request that was made, not the copy
         self.assertIn("reused_at", meta)
@@ -121,7 +121,7 @@ class Reuse(Layout):
 
 
 RAW = os.path.join(ROOT, "fixtures")
-FETCHLIST = json.load(open(os.path.join(ROOT, "tools", "fetchlist.json")))
+FETCHLIST = json.load(open(os.path.join(ROOT, "tools", "fetchlist.json"), encoding="utf-8"))
 NORMAL = [e for e in FETCHLIST if not e.get("recapture_of")]
 HAVE_RAW = all(os.path.exists(os.path.join(RAW, e["case"], "raw", e["file"])) for e in NORMAL)
 

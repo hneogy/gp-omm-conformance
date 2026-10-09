@@ -34,10 +34,10 @@ PROBLEMS = []
 def meta_for(path):
     mp = os.path.join(ROOT, path + ".meta.json")
     if os.path.exists(mp):
-        return json.load(open(mp))
+        return json.load(open(mp, encoding="utf-8"))
     pp = os.path.join(ROOT, path.rsplit(".", 1)[0] + ".provenance.json")
     if os.path.exists(pp):
-        p = json.load(open(pp))
+        p = json.load(open(pp, encoding="utf-8"))
         return {"url": None, "retrieved_at": p.get("generated_at"), "http_status": None, "sha256": p.get("output_sha256"),
                 "provenance": p.get("provenance", "derived"), "provenance_file": os.path.relpath(pp, ROOT)}
     return {}
@@ -311,7 +311,7 @@ def build_mmdot(pairs):
 def build_derived_tle(case, out_sources, out_records):
     spec = case["sets"]["derived"]
     for path in spec["files"]:
-        prov = json.load(open(os.path.join(ROOT, path.rsplit(".", 1)[0] + ".provenance.json")))
+        prov = json.load(open(os.path.join(ROOT, path.rsplit(".", 1)[0] + ".provenance.json"), encoding="utf-8"))
         _, trecs, facts = gpref.read_file(os.path.join(ROOT, path))
         texts = omm_texts(prov["source_file"])
         src_recs = {r["norad_cat_id"]: r for r in gpref.read_file(os.path.join(ROOT, prov["source_file"]))[1]}
@@ -334,7 +334,7 @@ def build_derived_kvn(case, out_sources, out_records):
     base = gpref.read_file(os.path.join(ROOT, case["base"]))[1][0]
     canon = strip_record(base)
     for path in case["sets"]["variants"]["files"]:
-        prov = json.load(open(os.path.join(ROOT, path.rsplit(".", 1)[0] + ".provenance.json")))
+        prov = json.load(open(os.path.join(ROOT, path.rsplit(".", 1)[0] + ".provenance.json"), encoding="utf-8"))
         _, recs, facts = gpref.read_file(os.path.join(ROOT, path))
         out_sources[path] = source_entry(path, "stable", fmt="kvn", facts=facts, record_count=len(recs))
         r = recs[0]
@@ -380,7 +380,7 @@ def originating_tier(path, from_case):
             continue
         f = os.path.join(ROOT, "fixtures", cid, "expected.json")
         if os.path.exists(f):
-            tier = json.load(open(f)).get("sources", {}).get(path, {}).get("tier")
+            tier = json.load(open(f, encoding="utf-8")).get("sources", {}).get(path, {}).get("tier")
             if tier:
                 return tier
     PROBLEMS.append(f"{path}: no originating case records a tier for it; labelled live")
@@ -392,7 +392,7 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
     cases (no fetch, no raw bytes), plus the owner-approved synthetic-derived refusal inputs (D-096)."""
     seen, letters, five_digit, files = set(), {}, [], {}
     for spec in case["inputs_from"]:
-        e = json.load(open(os.path.join(ROOT, "fixtures", spec["case"], "expected.json")))
+        e = json.load(open(os.path.join(ROOT, "fixtures", spec["case"], "expected.json"), encoding="utf-8"))
         for r in e["records"]:
             if spec.get("set") and r.get("set") != spec["set"]:
                 continue
@@ -426,11 +426,11 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
                 five_digit.append(cat)
     n_frozen = len(out_records)
     u = case["unrepresentable"]
-    e = json.load(open(os.path.join(ROOT, "fixtures", u["from_case"], "expected.json")))
+    e = json.load(open(os.path.join(ROOT, "fixtures", u["from_case"], "expected.json"), encoding="utf-8"))
     base = next(r for r in e["records"] if r.get("set") == u["set"])
     base_file = next(p for p in e["sources"] if os.path.basename(p) == base["canonical_source"])
     files.setdefault(base_file, u["from_case"])
-    vec = json.load(open(os.path.join(ROOT, u["vectors"])))
+    vec = json.load(open(os.path.join(ROOT, u["vectors"]), encoding="utf-8"))
     for v in vec["encode_unrepresentable"]:
         n = v["norad_cat_id"]
         rec = dict(base["canonical"])
@@ -445,7 +445,7 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
                                     "Real elements with a vector id: no catalogued object carries this number. Owner approval 2026-09-22 (DECISIONS D-096)."})
     n_vectors = 0
     for sv in case.get("synthetic_field_vectors", []):  # field forms no fetched record supplies, rendered by the corpus (D-125)
-        e2 = json.load(open(os.path.join(ROOT, "fixtures", sv["from_case"], "expected.json")))
+        e2 = json.load(open(os.path.join(ROOT, "fixtures", sv["from_case"], "expected.json"), encoding="utf-8"))
         b2 = next(r for r in e2["records"] if r.get("set") == sv["set"])
         b2_file = next(p for p in e2["sources"] if os.path.basename(p) == b2["canonical_source"])
         files.setdefault(b2_file, sv["from_case"])
@@ -495,7 +495,7 @@ def build_corrupt_input(case, out_sources, out_records, out_notes, case_specific
     unedited, for_input = {}, {}
     for path in case["sets"]["unedited"]["files"]:
         prov_path = path.rsplit(".", 1)[0] + ".provenance.json"
-        prov = json.load(open(os.path.join(ROOT, prov_path)))
+        prov = json.load(open(os.path.join(ROOT, prov_path), encoding="utf-8"))
         fmt = path.rsplit(".", 1)[-1]
         if prov.get("provenance") != "derived":
             PROBLEMS.append(f"{path}: an unedited file must be derived (no edit), its provenance record says {prov.get('provenance')!r}")
@@ -506,7 +506,7 @@ def build_corrupt_input(case, out_sources, out_records, out_notes, case_specific
     files = {}
     for path in case["sets"]["inputs"]["files"]:
         prov_path = path.rsplit(".", 1)[0] + ".provenance.json"
-        prov = json.load(open(os.path.join(ROOT, prov_path)))
+        prov = json.load(open(os.path.join(ROOT, prov_path), encoding="utf-8"))
         fmt = path.rsplit(".", 1)[-1]
         out_sources[path] = source_entry(path, "stable", fmt=fmt, record_count=len(prov["records"]))  # checks the bytes against the provenance record's SHA-256
         refuse, as_is, as_is_text = CORRUPT_EXPECTED[prov["check"]]
@@ -521,7 +521,7 @@ def build_corrupt_input(case, out_sources, out_records, out_notes, case_specific
         for rp in prov["records"]:
             if (rp["values_from"].split("/")[1], rp["set"]) not in allowed:
                 PROBLEMS.append(f"{path}: record {rp['norad_cat_id']} comes from {rp['values_from']} set {rp['set']}, not named in the case's records_from")
-            e = json.load(open(os.path.join(ROOT, rp["values_from"])))
+            e = json.load(open(os.path.join(ROOT, rp["values_from"]), encoding="utf-8"))
             r = next(x for x in e["records"] if x.get("set") == rp["set"] and x["norad_cat_id"] == rp["norad_cat_id"])
             if fmt == "tle":
                 lines = R.render(R.omm_fields_from_record(r["canonical"]), mantissa_mode="round", ecc_mode="truncate")
@@ -557,7 +557,7 @@ def main():
     xmlval = {}
     xp = os.path.join(ROOT, "tools", "_out", "xml-validation.json")
     if os.path.exists(xp):
-        xmlval = json.load(open(xp))
+        xmlval = json.load(open(xp, encoding="utf-8"))
     mm_pairs = next(c for c in CASES if c["id"] == "mean-motion-derivative-convention")["pairs"]
     for case in CASES:
         if wanted and case["id"] not in wanted:
@@ -606,7 +606,7 @@ def main():
             for path in case["files"]:
                 sha, n = sha_bytes(path)
                 out["sources"][path] = {"tier": "stable", "format": "vectors-json", "bytes": n, "sha256": sha, "provenance": "specification"}
-                out["case_specific"][path] = json.load(open(os.path.join(ROOT, path)))
+                out["case_specific"][path] = json.load(open(os.path.join(ROOT, path), encoding="utf-8"))
         elif kind == "derived-tle":
             build_derived_tle(case, out["sources"], out["records"])
         elif kind == "derived-kvn":
@@ -617,7 +617,7 @@ def main():
             build_corrupt_input(case, out["sources"], out["records"], out["notes"], out["case_specific"])
         d = os.path.join(ROOT, "fixtures", case["id"])
         os.makedirs(d, exist_ok=True)
-        with open(os.path.join(d, "expected.json"), "w") as f:
+        with open(os.path.join(d, "expected.json"), "w", encoding="utf-8") as f:
             json.dump(out, f, indent=1, default=str)
             f.write("\n")
         print(f"{case['id']}: {len(out['sources'])} sources, {len(out['records'])} records, "

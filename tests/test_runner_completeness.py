@@ -25,7 +25,7 @@ THREE = {"leading-dot-decimals": ("epoch-year-19xx", "baseline-iss-five-formats"
 
 
 def raw_present(case):
-    exp = json.load(open(os.path.join(ROOT, "fixtures", case, "expected.json")))
+    exp = json.load(open(os.path.join(ROOT, "fixtures", case, "expected.json"), encoding="utf-8"))
     return all(os.path.exists(os.path.join(ROOT, p)) for p in exp["sources"])
 
 
@@ -48,7 +48,7 @@ class ListedChecksAreEvaluated(unittest.TestCase):
                 self.assertTrue(any(i.status == "pass" for i in items), (case, check))
 
     def test_every_check_a_case_lists_appears_in_its_items(self):
-        manifest = json.load(open(os.path.join(ROOT, "manifest.json")))
+        manifest = json.load(open(os.path.join(ROOT, "manifest.json"), encoding="utf-8"))
         for c in manifest["cases"]:
             if c["id"] not in self.results:
                 continue
@@ -88,7 +88,7 @@ class Vectors(unittest.TestCase):
                 "    print(json.dumps({'error': str(e)})); sys.exit(1)\n") % ROOT
         d = tempfile.mkdtemp()
         p = os.path.join(d, "vec.py")
-        with open(p, "w") as f:
+        with open(p, "w", encoding="utf-8") as f:
             f.write(code)
         return f"{shlex.quote(sys.executable)} {shlex.quote(p)}"
 
@@ -126,7 +126,7 @@ class ReportAndCatalogue(unittest.TestCase):
         out = os.path.join(d, "r.json")
         with contextlib.redirect_stdout(io.StringIO()):
             gpconf_main(["run", "--write-cmd", "exit 3", "--case", "tle-writer-alpha5", "--json", out])
-        self.assertEqual(json.load(open(out))["parser"], "exit 3")
+        self.assertEqual(json.load(open(out, encoding="utf-8"))["parser"], "exit 3")
 
     def test_catalogue_withholds_supgp_values_for_every_value_carrying_check(self):
         supgp = "fixtures/nine-digit-supgp-launch-nominals/raw/starlink-g15-27.csv"

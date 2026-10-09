@@ -182,7 +182,7 @@ class Report(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out = os.path.join(tmp, "r.json")
             code, text = run_cli(["run", "--preset", "reference", "--case", "alpha5-encoding-vectors", "--json", out])
-            with open(out) as f:
+            with open(out, encoding="utf-8") as f:
                 rep = json.load(f)
         self.assertEqual(code, 0, text)
         self.assertEqual(rep["parser"], "preset reference")

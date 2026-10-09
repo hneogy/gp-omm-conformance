@@ -1,10 +1,10 @@
-"""D-155, v0.3.0 stage 4: harnesses/, the recipes for the five hand-run libraries that cannot be presets; and, since
+"""D-155, v0.3.0 stage 4: harnesses/, the recipes for the five libraries of the one-off runs that cannot be presets; and, since
 D-216, a sixth recipe of another kind, Vallado's SGP4 C++ as CelesTrak publishes it.
 
 Each recipe folder holds exactly its harness files and a README that names the pinned commits in full, the project's
 licence, and says it is best-effort, not installable by pip, and tied to what may break silently. SatDump follows
 D-152: its harnesses and the list of symbol names, never a stand-in file, and no recipe source defines any of those
-symbols. Two checks run only in the private repository, where the hand runs' originals are: the copies match them,
+symbols. Two checks run only in the private repository, where the one-off runs' originals are: the copies match them,
 and the SatDump list names exactly the symbols the corpus's own stand-ins defined."""
 import os
 import re
@@ -120,7 +120,7 @@ class SatDump(unittest.TestCase):
                                    or re.search(rf"[\w>&*]\s+(\w+::)*{re.escape(t)}\s*(=[^;]*)?;", src))
                     self.assertEqual(found, [], os.path.relpath(os.path.join(base, f), ROOT))
 
-    @unittest.skipUnless(os.path.isdir(ORIGINALS), "the hand runs' originals are private")
+    @unittest.skipUnless(os.path.isdir(ORIGINALS), "the one-off runs' originals are private")
     def test_the_list_names_exactly_what_the_corpus_stand_ins_defined(self):
         def defined(path):
             text = open(path, encoding="utf-8").read()
@@ -134,9 +134,9 @@ class SatDump(unittest.TestCase):
                 self.assertEqual({n.split("::")[-1] for n in names[key]}, defined(os.path.join(ORIGINALS, "satdump", stubs)))
 
 
-@unittest.skipUnless(os.path.isdir(ORIGINALS), "the hand runs' originals are private")
-class CopiesOfTheHandRuns(unittest.TestCase):
-    """The recipes' harness files are the hand runs' files, byte for byte, except the first comment line of astroz's
+@unittest.skipUnless(os.path.isdir(ORIGINALS), "the one-off runs' originals are private")
+class CopiesOfTheOneOffRuns(unittest.TestCase):
+    """The recipes' harness files are the one-off runs' files, byte for byte, except the first comment line of astroz's
     common.zig, which says whose code it is and the library's licence, reworded for the public copy. astroz's
     harness.zig is round two's, which reports refusals (D-185) and also builds at d558933; Gpredict's harness.c is
     round two's too (D-178), and so is libsgp4's harness.cpp (D-182)."""

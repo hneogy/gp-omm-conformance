@@ -118,11 +118,11 @@ def variants(r):
 def main():
     os.makedirs(OUT, exist_ok=True)
     src = os.path.join(ROOT, SRC)
-    meta = json.load(open(src + ".meta.json"))
+    meta = json.load(open(src + ".meta.json", encoding="utf-8"))
     r = list(csv.DictReader(io.StringIO(open(src, encoding="utf-8").read())))[0]
     for stem, text, desc, clauses in variants(r):
         out = os.path.join(OUT, stem + ".kvn")
-        with open(out, "w", newline="") as f:
+        with open(out, "w", newline="", encoding="utf-8") as f:
             f.write(text)
         prov = {"file": os.path.relpath(out, ROOT), "provenance": "derived",
                 "label": "DERIVED: CCSDS-legal KVN re-serialisation of a CelesTrak record; not served by CelesTrak",
@@ -134,7 +134,7 @@ def main():
                 "orbital_values_identical_to_source": True,
                 "header_values_note": "Any CREATION_DATE/ORIGINATOR/MESSAGE_ID/CLASSIFICATION values describe this derived message, not the provider.",
                 "output_sha256": hashlib.sha256(text.encode()).hexdigest()}
-        json.dump(prov, open(out[:-4] + ".provenance.json", "w"), indent=2)
+        json.dump(prov, open(out[:-4] + ".provenance.json", "w", encoding="utf-8"), indent=2)
         print(f"{stem}.kvn ({len(text)} bytes)")
 
 

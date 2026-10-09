@@ -83,17 +83,18 @@ class TheReadme(unittest.TestCase):
         for url in ("https://github.com/brandon-rhodes/python-sgp4/pull/172", "https://github.com/shashwatak/satellite-js/pull/186",
                     "https://github.com/shashwatak/satellite-js/pull/187", "https://github.com/ATTron/astroz/issues/97",
                     "https://github.com/ATTron/astroz/issues/98", "https://github.com/ATTron/astroz/pull/99",
-                    "https://github.com/dnwrnr/sgp4/pull/42#issuecomment-5824123874", "https://github.com/dnwrnr/sgp4/pull/46"):
+                    "https://github.com/dnwrnr/sgp4/pull/42#issuecomment-5824123874", "https://github.com/dnwrnr/sgp4/pull/46",
+                    "https://github.com/csete/gpredict/pull/428"):
             self.assertIn(url, table)
         rows = [line for line in table.splitlines() if line.startswith("| ") and not line.startswith("| library") and not line.startswith("|---")]
-        self.assertEqual([r.split(" | ")[0] for r in rows], ["| python-sgp4", "| satellite.js", "| astroz", "| libsgp4"])
+        self.assertEqual([r.split(" | ")[0] for r in rows], ["| python-sgp4", "| satellite.js", "| astroz", "| libsgp4", "| Gpredict"])   # Gpredict joined with PR #428, merged 2026-10-08 (D-267, D-269)
         # one rule (owner): a fix is listed when it followed a corpus report and answered it. astroz #102 came from probes,
         # not from a corpus case (site S-051), and SatDump #1221 and CelesTrak #172 have no fix yet.
         self.assertIn("A fix is listed when it followed a report made from the corpus's results and answered it", flat(table))
         for absent in ("astroz/issues/102", "astroz/pull/104", "SatDump", "CelesTrak/fundamentals"):
             self.assertNotIn(absent, table)
         # the cells that expire with a release (the site's HANDOFF.md, "Expiring claims", names them and the check)
-        self.assertEqual(table.count("no release carries it yet") + table.count("no release carries them yet"), 2)
+        self.assertEqual(table.count("no release carries it yet") + table.count("no release carries them yet"), 3)   # python-sgp4, satellite.js, Gpredict (D-269)
 
     def test_the_table_s_date_moves_with_each_release(self):
         """"No release carries it yet" is true until python-sgp4 or satellite.js publishes one, and no offline test can

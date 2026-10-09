@@ -59,7 +59,7 @@ class Opener:
     def __init__(self):
         self.sent = []
 
-    def open(self, req, timeout=None):
+    def open(self, req, timeout=None, encoding="utf-8"):
         self.sent.append(req.get_header("User-agent"))
         return _Resp(b"OBJECT_NAME,NORAD_CAT_ID\r\nX,81011\r\n")
 
@@ -106,7 +106,7 @@ class TheHeader(unittest.TestCase):
             code = fetch.run([], root=self.tmp.name, entries=[A], now=T0, out=out, pause=0)
         self.assertEqual(code, 0, out.getvalue())
         self.assertEqual(opener.sent, [fetch.user_agent()])
-        with open(os.path.join(self.tmp.name, "fixtures", "c", "raw", "a.csv.meta.json")) as f:
+        with open(os.path.join(self.tmp.name, "fixtures", "c", "raw", "a.csv.meta.json"), encoding="utf-8") as f:
             meta = json.load(f)
         self.assertEqual(meta["request_headers"]["User-Agent"], fetch.user_agent())
         self.assertEqual(meta["user_agent"], fetch.user_agent())

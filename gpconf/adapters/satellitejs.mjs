@@ -1,7 +1,7 @@
 // Preset `satellite.js` (tested with 7.1.0): satellite.js as-is through the runner's command protocol. Raw bytes on
 // stdin, a JSON array of records on stdout, exit 3 for a format the library has no reader for. twoline2satrec for
 // tle and 2le, json2satrec for json; csv, xml and kvn are unsupported. Moved into the package from the corpus's
-// hand run (D-132); each line 1 goes to the library with whatever line follows it (D-183).
+// one-off run (D-132); each line 1 goes to the library with whatever line follows it (D-183).
 // gpconf runs this file as `node --input-type=module --eval <this source> -- <arguments>` from the working directory,
 // so the library resolves as it would for a script in the user's project; a file outside the project could not import
 // it (D-154). GPCONF_NODE_MODULE, set by `--module PATH`, names the library's entry file instead.

@@ -24,7 +24,7 @@ CASE = "tle-writer-alpha5"
 
 
 def record(catnr=100000):
-    with open(os.path.join(ROOT, "fixtures", CASE, "expected.json")) as f:
+    with open(os.path.join(ROOT, "fixtures", CASE, "expected.json"), encoding="utf-8") as f:
         return next(r for r in json.load(f)["records"] if r["norad_cat_id"] == catnr)["canonical"]
 
 
@@ -63,7 +63,7 @@ class _Files(unittest.TestCase):
         report = os.path.join(self.tmp.name, "report.json")
         with contextlib.redirect_stdout(out):
             rc = gpconf_main(["check-tle", *args, "--json", report])
-        with open(report) as f:
+        with open(report, encoding="utf-8") as f:
             return rc, out.getvalue(), json.load(f)
 
 

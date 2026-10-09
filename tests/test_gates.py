@@ -126,7 +126,7 @@ class SnapshotFacts(unittest.TestCase):
         import shutil
         import tempfile
         case = GATE["snapshot_from"]["case"]
-        with open(os.path.join(ROOT, "fixtures", case, "expected.json")) as f:
+        with open(os.path.join(ROOT, "fixtures", case, "expected.json"), encoding="utf-8") as f:
             exp = json.load(f)
         recorded = exp["sources"][GATE["snapshot_from"]["source"]]["retrieved_at"][:10]
         self.assertEqual(gates.snapshot_facts(ROOT, GATE)["date"], recorded)

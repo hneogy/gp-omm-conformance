@@ -85,7 +85,7 @@ def launch_window_files(root):
     not-fetched, which would send the user to a fetch that does not bring it. The list is read from the fetch list,
     which ships with the corpus; a bare copy without it has none."""
     try:
-        with open(os.path.join(root, "tools", "fetchlist.json")) as f:
+        with open(os.path.join(root, "tools", "fetchlist.json"), encoding="utf-8") as f:
             entries = json.load(f)
     except (OSError, ValueError):
         return {}
@@ -97,7 +97,7 @@ def opt_in_files(root):
     file, most of the bytes of the whole fetch list, which one data check reads and no parser. Read from the fetch
     list; a bare copy without it has none."""
     try:
-        with open(os.path.join(root, "tools", "fetchlist.json")) as f:
+        with open(os.path.join(root, "tools", "fetchlist.json"), encoding="utf-8") as f:
             entries = json.load(f)
     except (OSError, ValueError):
         return {}
@@ -496,7 +496,7 @@ class Runner:
         # the job, so a command that fetches into it would be wrong advice (D-158)
         self.fetch_hints = fetch_hints
         self.verbose = verbose
-        self.manifest = json.load(open(os.path.join(self.root, "manifest.json")))
+        self.manifest = json.load(open(os.path.join(self.root, "manifest.json"), encoding="utf-8"))
         self.launch_window = launch_window_files(self.root)
         self.opt_in = opt_in_files(self.root)
 
@@ -533,7 +533,7 @@ class Runner:
         if not os.path.exists(full + ".unexpected"):
             return None
         try:
-            with open(full + ".unexpected.meta.json") as f:
+            with open(full + ".unexpected.meta.json", encoding="utf-8") as f:
                 meta = json.load(f)
         except (OSError, ValueError):
             meta = {}
@@ -578,7 +578,7 @@ class Runner:
             return "missing", fmt, None, None, None, None
         if is_provider_data(path) and os.path.exists(full + ".meta.json"):
             try:
-                with open(full + ".meta.json") as f:
+                with open(full + ".meta.json", encoding="utf-8") as f:
                     meta = json.load(f)
             except ValueError:
                 meta = {}
@@ -1614,7 +1614,7 @@ class Runner:
                 res.add("corrupt-input-neighbours-load", "pass", path, f"{where(len(graded))} loaded, {pick(len(graded), '', 'each ')}exactly as the parser reads it from the unedited file {uname}" + note)
 
     def run_case(self, case):
-        exp = json.load(open(os.path.join(self.root, "fixtures", case["id"], "expected.json")))
+        exp = json.load(open(os.path.join(self.root, "fixtures", case["id"], "expected.json"), encoding="utf-8"))
         res = CaseResult(case["id"], case["title"])
         kind = exp["kind"]
         try:

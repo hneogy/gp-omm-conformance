@@ -4,7 +4,7 @@
 // bytes on stdin, JSON records on stdout, exit 3 for formats the library has no reader for. Second argument: 'fields'
 // (preset tle.js; the epoch rebuilt from getEpochYear() and getEpochDay(), the raw field values) or 'api' (preset
 // tle.js-api; the epoch from getEpochTimestamp(), the library's millisecond Unix time). Moved into the package from the
-// corpus's hand run (D-139; D-153, D-154).
+// corpus's one-off run (D-139; D-153, D-154).
 // gpconf runs this file as `node --input-type=module --eval <this source> -- <arguments>` from the working directory,
 // so the library resolves as it would for a script in the user's project; a file outside the project could not import
 // it (D-154). GPCONF_NODE_MODULE, set by `--module PATH`, names the library's entry file instead.

@@ -140,7 +140,7 @@ def main():
             if res:
                 out["omm"][r] = res
     os.makedirs(os.path.join(ROOT, "tools", "_out"), exist_ok=True)
-    json.dump(out, open(os.path.join(ROOT, "tools", "_out", "crosscheck.json"), "w"), indent=1, default=str)
+    json.dump(out, open(os.path.join(ROOT, "tools", "_out", "crosscheck.json"), "w", encoding="utf-8"), indent=1, default=str)
     md = ["# Cross-check of the reference readers against python-sgp4 and Skyfield", "",
           f"Generated {out['generated_at']} with python-sgp4 {sgp4.__version__} and Skyfield {skyfield.__version__} (tools/crosscheck.py).", "",
           "## TLE files (python-sgp4 twoline2rv vs tools/gpref.py; export_tle round trip)", "",
@@ -166,7 +166,7 @@ def main():
            "- **sgp4.omm.initialize drops CLASSIFICATION_TYPE:** it assigns `sat.classification` and then calls `sgp4init`, which resets it to `U` on both the accelerated and the pure-Python `Satrec`; a SupGP record with classification `C` comes back as `U`. `twoline2rv` preserves the letter.",
            "- **sgp4.alpha5 is lenient:** `from_alpha5` accepts `I0000` (as 180000), `O1234`, lowercase and four-character input; `to_alpha5(-1)` returns `'-0001'`. The corpus vectors treat these as invalid (Space-Track: I and O are never used).",
            "- Everything else agrees. No disagreement between the reference readers and either library was found where the library could load the record."]
-    open(os.path.join(ROOT, "docs", "CROSSCHECK.md"), "w").write("\n".join(md) + "\n")
+    open(os.path.join(ROOT, "docs", "CROSSCHECK.md"), "w", encoding="utf-8").write("\n".join(md) + "\n")
     print("\n".join(md))
 
 

@@ -17,13 +17,13 @@ def make_root(tmp, stable_bytes, live_bytes):
     for name, data in (("s.csv", stable_bytes), ("l.csv", live_bytes)):
         with open(os.path.join(d, name), "wb") as f:
             f.write(data)
-        with open(os.path.join(d, name + ".meta.json"), "w") as f:
+        with open(os.path.join(d, name + ".meta.json"), "w", encoding="utf-8") as f:
             json.dump({"sha256": hashlib.sha256(data).hexdigest()}, f)
     manifest = {"cases": [{"id": "c", "sources": [
         {"path": "fixtures/c/raw/s.csv", "tier": "stable", "sha256": hashlib.sha256(b"STABLE").hexdigest()},
         {"path": "fixtures/c/raw/l.csv", "tier": "live", "sha256": hashlib.sha256(b"LIVE").hexdigest()},
     ]}, {"id": "other", "sources": [{"path": "fixtures/c/raw/s.csv", "tier": "mixed", "sha256": hashlib.sha256(b"STABLE").hexdigest()}]}]}
-    with open(os.path.join(tmp, "manifest.json"), "w") as f:
+    with open(os.path.join(tmp, "manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f)
     return [{"case": "c", "file": "s.csv"}, {"case": "c", "file": "l.csv"}, {"case": "c", "file": "absent.csv"}]
 
@@ -49,7 +49,7 @@ class DriftTests(unittest.TestCase):
             self.assertEqual(fetch.print_drift(rep), 1)
 
     def test_real_manifest_and_snapshot_agree_where_present(self):
-        entries = json.load(open(os.path.join(ROOT, "tools", "fetchlist.json")))
+        entries = json.load(open(os.path.join(ROOT, "tools", "fetchlist.json"), encoding="utf-8"))
         present = [e for e in entries if os.path.exists(os.path.join(ROOT, "fixtures", e["case"], "raw", e["file"]))]
         if not present:
             self.skipTest("no raw files in this checkout")

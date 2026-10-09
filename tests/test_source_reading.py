@@ -92,9 +92,9 @@ class CaseLevelTests(unittest.TestCase):
 
     def scratch_root(self):
         d = tempfile.mkdtemp()
-        m = json.load(open(os.path.join(ROOT, "manifest.json")))
+        m = json.load(open(os.path.join(ROOT, "manifest.json"), encoding="utf-8"))
         m["cases"] = [c for c in m["cases"] if c["id"] == "kvn-syntax-variants"]
-        json.dump(m, open(os.path.join(d, "manifest.json"), "w"))
+        json.dump(m, open(os.path.join(d, "manifest.json"), "w", encoding="utf-8"))
         os.makedirs(os.path.join(d, "fixtures", "kvn-syntax-variants"))
         shutil.copy(os.path.join(ROOT, "fixtures", "kvn-syntax-variants", "expected.json"), os.path.join(d, "fixtures", "kvn-syntax-variants"))
         shutil.copytree(os.path.join(ROOT, "derived", "kvn-variants"), os.path.join(d, "derived", "kvn-variants"))
