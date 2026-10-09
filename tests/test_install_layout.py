@@ -129,7 +129,9 @@ class Precedence(unittest.TestCase):
         self.assertEqual(locate.data_root(ROOT, "--root", None, {}), (ROOT, "--root"))
         path, why = locate.data_root(ROOT, "installed", None, {})
         self.assertEqual(why, "per-user cache")
-        self.assertTrue(path.endswith(os.path.join("gpconf", VERSION)), path)
+        # the real platform's own layout: Windows puts Cache between (D-272)
+        tail = ("gpconf", "Cache", VERSION) if os.name == "nt" else ("gpconf", VERSION)
+        self.assertTrue(path.endswith(os.path.join(*tail)), path)
 
     def test_this_checkout_is_a_clone(self):
         self.assertEqual(locate.corpus_root(), (ROOT, "clone"))
