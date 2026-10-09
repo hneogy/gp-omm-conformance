@@ -294,14 +294,22 @@ class Reproducible(unittest.TestCase):
             sp.stage(self.export, out, self.EPOCH)
         finally:
             os.umask(old)
+        # On Windows the tree cannot carry POSIX modes, and the archives never read them: repack_wheel and
+        # repack_sdist set 0644 and 0755 themselves, which test_repacked_archives_depend_on_their_contents_alone
+        # holds on every platform; the epoch stamp is checked everywhere (D-270).
         for base, dirs, files in os.walk(out):
             for d in dirs:
                 st = os.stat(os.path.join(base, d))
-                self.assertEqual((stat.S_IMODE(st.st_mode), int(st.st_mtime)), (0o755, self.EPOCH), d)
+                self.assertEqual(int(st.st_mtime), self.EPOCH, d)
+                if os.name != "nt":
+                    self.assertEqual(stat.S_IMODE(st.st_mode), 0o755, d)
             for f in files:
                 st = os.stat(os.path.join(base, f))
-                self.assertEqual((stat.S_IMODE(st.st_mode), int(st.st_mtime)), (0o644, self.EPOCH), f)
-        self.assertEqual(stat.S_IMODE(os.stat(out).st_mode), 0o755)
+                self.assertEqual(int(st.st_mtime), self.EPOCH, f)
+                if os.name != "nt":
+                    self.assertEqual(stat.S_IMODE(st.st_mode), 0o644, f)
+        if os.name != "nt":
+            self.assertEqual(stat.S_IMODE(os.stat(out).st_mode), 0o755)
 
     def test_repacked_archives_depend_on_their_contents_alone(self):
         stage_dir = os.path.join(self.tmp, "stage-repack")

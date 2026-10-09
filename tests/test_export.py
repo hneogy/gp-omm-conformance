@@ -89,7 +89,7 @@ class ExportGuardTests(unittest.TestCase):
         self.assertIn('refused.append((rel, "not the one provider response the corpus ships (D-247)"))', src)
 
     def test_no_raw_and_no_spacetrack_paths(self):
-        rels = [os.path.relpath(f, self.dest) for f in self.files]
+        rels = [os.path.relpath(f, self.dest).replace(os.sep, "/") for f in self.files]
         self.assertFalse([r for r in rels if re.search(r"(^|/)fixtures/[^/]+/raw(/|$)", r)])
         # the verification TOOL is the single named exception to the Space-Track name guard (D-069)
         self.assertEqual([r for r in rels if re.search(r"space[-_ .]?track", r, re.I)], ["tools/verify_against_spacetrack.py"])

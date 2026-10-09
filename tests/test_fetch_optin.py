@@ -165,7 +165,7 @@ class TheRunner(unittest.TestCase):
         (item,) = [i for i in r.items if i.file == FILE]
         self.assertEqual((item.check, item.status), ("satcat-legacy-below-70000", "not-exercised"))
         self.assertIn("the data check was not made: the fetch brings the legacy SATCAT file only on request, and the parser under test is not involved", item.detail)
-        self.assertRegex(item.detail, r"to run it, fetch the file with python3 (tools/fetch\.py|-m gpconf fetch).* --include-satcat$")
+        self.assertRegex(item.detail, rf"to run it, fetch the file with {PY3} (tools[/\\\\]fetch\.py|-m gpconf fetch).* --include-satcat$")
         self.assertEqual(r.on_request, {FILE: "--include-satcat"})
         self.assertEqual(r.as_dict()["on_request"], {FILE: "--include-satcat"})
         (item,) = [i for i in quiet.items if i.file == FILE]                             # the Action's run names no command

@@ -23,6 +23,20 @@ def read(path):
 
 ACTION = read(os.path.join(ROOT, "action.yml"))
 SENTENCE = "A count is a result against that version on that date, not a verdict on the project."
+PY = "python" if os.name == "nt" else "python3"   # the interpreter name each platform has (D-270)
+
+
+def bash_path():
+    """The bash that `shell: bash` means: on Windows the one Git carries, never System32's WSL doorway,
+    which exits 1 without a distribution and runs nothing (D-270)."""
+    if os.name != "nt":
+        return "bash"
+    git = shutil.which("git")
+    if git:
+        p = os.path.join(os.path.dirname(os.path.dirname(git)), "bin", "bash.exe")
+        if os.path.exists(p):
+            return p
+    return "bash"
 
 
 def run_step(preset, python=sys.executable, cwd=None, extra_env=None, full=False):
@@ -35,9 +49,10 @@ def run_step(preset, python=sys.executable, cwd=None, extra_env=None, full=False
                GITHUB_STEP_SUMMARY=summary, GITHUB_OUTPUT=outputs, RUNNER_TEMP=tmp)
     env.pop("GPCONF_DATA", None)
     env.update(extra_env or {})
-    p = subprocess.run(["bash", "-c", command], cwd=cwd or tmp, env=env, capture_output=True, text=True, timeout=300)
+    p = subprocess.run([bash_path(), "-c", command], cwd=cwd or tmp, env=env, capture_output=True, text=True, timeout=300)
     out = {k: v for k, v in (line.split("=", 1) for line in read(outputs).splitlines() if "=" in line)}
-    result = (p.returncode, read(summary), out)
+    # a crash writes no summary; hand the step's own output to the assertion message instead of silence (D-270)
+    result = (p.returncode, read(summary) or f"[no summary was written; the step printed: {(p.stdout + p.stderr).strip()}]", out)
     if full:
         result += (p.stdout + p.stderr, json.loads(read(out["report"])) if out.get("report") else None)
     shutil.rmtree(tmp, ignore_errors=True)
@@ -142,7 +157,7 @@ class Behaviour(unittest.TestCase):
             quiet = subprocess.run(base + ["--no-fetch-hint"], cwd=ROOT, capture_output=True, text=True)
         finally:
             shutil.rmtree(empty, ignore_errors=True)
-        self.assertIn("Provider data is not shipped with the corpus; fetch it with python3 ", plain.stdout)
+        self.assertIn(f"Provider data is not shipped with the corpus; fetch it with {PY} ", plain.stdout)
         self.assertNotIn("fetch it with", quiet.stdout)
         table = lambda s: [line for line in s.splitlines() if line.startswith("epoch-year-19xx")]
         self.assertEqual(table(plain.stdout), table(quiet.stdout))

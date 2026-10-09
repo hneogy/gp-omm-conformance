@@ -46,7 +46,7 @@ def files_under(d):
         dirs[:] = [x for x in dirs if x != "__pycache__"]
         for f in fs:
             if f != ".DS_Store":
-                out.add(os.path.relpath(os.path.join(base, f), d))
+                out.add(os.path.relpath(os.path.join(base, f), d).replace(os.sep, "/"))
     return out
 
 

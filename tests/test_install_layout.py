@@ -14,12 +14,17 @@ import io
 import json
 import ntpath
 import os
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from unittest import mock
+
+# D-270: the hint names the interpreter and quotes as the running platform does
+PY = "python" if os.name == "nt" else "python3"
+Q = (lambda s: subprocess.list2cmdline([s])) if os.name == "nt" else shlex.quote
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -117,8 +122,9 @@ class CacheFolder(unittest.TestCase):
 class Precedence(unittest.TestCase):
     def test_data_root_order(self):
         env = {locate.DATA_ENV: "/from-env"}
-        self.assertEqual(locate.data_root(ROOT, "clone", "/flag", env), ("/flag", "--data"))
-        self.assertEqual(locate.data_root(ROOT, "clone", None, env), ("/from-env", locate.DATA_ENV))
+        # the answers go through abspath, which anchors a rootless path to the drive on Windows (D-270)
+        self.assertEqual(locate.data_root(ROOT, "clone", "/flag", env), (os.path.abspath("/flag"), "--data"))
+        self.assertEqual(locate.data_root(ROOT, "clone", None, env), (os.path.abspath("/from-env"), locate.DATA_ENV))
         self.assertEqual(locate.data_root(ROOT, "clone", None, {}), (ROOT, "clone"))
         self.assertEqual(locate.data_root(ROOT, "--root", None, {}), (ROOT, "--root"))
         path, why = locate.data_root(ROOT, "installed", None, {})
@@ -164,8 +170,8 @@ class InstalledCopy(unittest.TestCase):
         self.assertIn(f"provider data: {self.cache} (per-user cache)", out)
         self.assertIn("18 cases: 5 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
         self.assertIn("1 case cannot run from a fetch and reports not-available: supgp-celestrak-classification-c.", out)  # D-229
-        self.assertIn("--include-satcat runs it: python3 -m gpconf fetch --include-satcat.", out)                           # D-232
-        self.assertIn("fetch it with python3 -m gpconf fetch.", out)
+        self.assertIn(f"--include-satcat runs it: {PY} -m gpconf fetch --include-satcat.", out)                           # D-232
+        self.assertIn(f"fetch it with {PY} -m gpconf fetch.", out)
         self.assertNotIn("tools/fetch.py", out)
         self.assertIn("in every format measured here (CSV not measured: not fetched)", out)
         self.assertFalse(os.path.exists(self.cache), "a run must not create the cache folder")
@@ -202,7 +208,7 @@ class InstalledCopy(unittest.TestCase):
         self.assertIn(f"provider data: {data} ({locate.DATA_ENV})", out)
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "run", "--adapter", "my_adapter:Parser", "--data", data)
         self.assertEqual(code, 0, out)
-        self.assertIn(f"fetch it with python3 -m gpconf fetch --data '{data}'.", out)
+        self.assertIn(f"fetch it with {PY} -m gpconf fetch --data {Q(data)}.", out)
 
     def test_with_fetched_data_the_copy_runs_every_case(self):
         if not raw_present():
@@ -217,7 +223,7 @@ class InstalledCopy(unittest.TestCase):
         # and the SATCAT data check, whose file the fetch brings only on request (D-231), is not made and says so (D-232)
         self.assertIn("18 cases: 16 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 1 not available, 1 not exercised", out)
         self.assertIn("satcat-70000-cutoff is a data check on the legacy SATCAT file, 9.4 MB, which the fetch brings only on request.", out)
-        self.assertIn("nothing about the parser under test depends on it. --include-satcat runs it: python3 -m gpconf fetch --include-satcat.", out)
+        self.assertIn(f"nothing about the parser under test depends on it. --include-satcat runs it: {PY} -m gpconf fetch --include-satcat.", out)
         self.assertNotRegex(out, r"ha(s|ve) none of (its|their) provider files on disk")
         self.assertIn("1 case cannot run from a fetch and reports not-available: supgp-celestrak-classification-c.", out)
         # five cases and 13 files in the maintainer's copy, the only one this test runs in; the public copy withholds the
