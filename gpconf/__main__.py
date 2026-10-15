@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """python -m gpconf: run a parser against the corpus and print a report; fetch: fetch the provider data the corpus
 does not ship; list: the cases; check-tle: check a TLE file a tool wrote."""
 import argparse
@@ -8,7 +10,7 @@ import sys
 
 from . import __version__
 from . import locate
-from .runner import Runner, CommandParser, CorpusIncomplete, status_totals
+from .runner import Runner, CommandParser, CorpusIncomplete, annotation_totals, status_totals
 from .words import pick, qty
 
 
@@ -28,6 +30,32 @@ def count_line(results):
     return (f"{qty(by['cases'], 'case')}: {p} {pick(p, 'passes', 'pass')} (exact), {tol} {pick(tol, 'passes', 'pass')} within tolerance, "
             f"{failed} {pick(failed, 'fails', 'fail')}, {skip} {pick(skip, 'skips', 'skip')}, {need} {pick(need, 'needs', 'need')} fetched data, "
             f"{by['not-available']} not available, {by['not-exercised']} not exercised")
+
+
+def graded_line(results):
+    """Under the count line when cases were not graded for lack of data (D-312): how many were, said plainly, so that
+    a green run on five cases is not read as a conformance result. None when every case had its data."""
+    by, n = status_totals(results), annotation_totals(results)["cases_graded"]
+    if not by["not-fetched"]:
+        return None
+    # offline: no provider file was read at all. They live under fixtures/<case>/raw/ and none ships; a case records
+    # every source it loaded in `modes`, whatever its items went on to say (a data check's are info), so a folder
+    # holding only the SATCAT files is not "offline"
+    ran_on_data = any("/raw/" in str(p).replace("\\", "/") for r in results for p in r.modes)
+    if not ran_on_data:
+        return f"{n} of {qty(by['cases'], 'case')} graded offline; not a full conformance result."
+    return f"{n} of {qty(by['cases'], 'case')} graded; {by['not-fetched']} {pick(by['not-fetched'], 'needs', 'need')} fetched data: not a full conformance result."
+
+
+def inside_line(results):
+    """Under the count line (D-312): what the statuses above do not say. None when there is nothing to say."""
+    a = annotation_totals(results)
+    parts = []
+    if a["items_skipped"]:
+        parts.append(f"{qty(a['items_skipped'], 'item')} skipped because the parser answered unsupported or has no hook for the check")
+    if a["field_gaps"]:
+        parts.append(f"{qty(a['field_gaps'], 'field gap')} (a file in which a field with expected values was never returned)")
+    return ("Inside cases that did not skip: " + "; ".join(parts) + ". These are not failures, and they were not graded.") if parts else None
 
 
 def print_missing(results, unfetched, runner):
@@ -189,7 +217,11 @@ def main(argv=None):
     elif args.cmd or args.write_cmd:
         parser = CommandParser(args.cmd, args.vectors_cmd, write_cmd=args.write_cmd)
     else:
-        parser = load_adapter(args.adapter)
+        try:
+            parser = load_adapter(args.adapter)
+        except SystemExit as e:   # an adapter that exits while it is imported or built ran nothing (D-293)
+            print(f"gpconf: setup: the adapter {args.adapter} exited while loading (SystemExit({e.code!r})); nothing was run", file=sys.stderr)
+            return 2
     parser_name = preset["label"] if preset else (args.cmd or args.write_cmd or args.adapter)
     runner = Runner(parser, root=root, verbose=args.verbose, data=loc["data"], data_why=loc["data_why"], fetch_hints=not args.no_fetch_hint)
     if args.case:   # a name that matches nothing is an error, not a silent no-op (D-269: a typo in CI went green forever)
@@ -207,10 +239,11 @@ def main(argv=None):
     if runner.data != root:  # a clone's output is unchanged; elsewhere the reader is told where the provider files were looked for
         print(f"provider data: {runner.data} ({runner.data_why})")
     print()
-    print(f"{'case':40s} {'status':15s} exact  tol fail skip n/e n/f n/a")
+    w = max([15] + [len(r.status_text()) for r in results])   # the status, with what it leaves out (D-312)
+    print(f"{'case':40s} {'status':{w}s} exact  tol fail skip n/e n/f n/a")
     for r in results:
         c = r.counts()
-        print(f"{r.case_id:40s} {r.status:15s} {c['pass']:5d} {c['pass-tolerance']:4d} {c['fail']:4d} {c['skip']:4d} {c['not-exercised']:3d} {c['not-fetched']:3d} {c['not-available']:3d}")
+        print(f"{r.case_id:40s} {r.status_text():{w}s} {c['pass']:5d} {c['pass-tolerance']:4d} {c['fail']:4d} {c['skip']:4d} {c['not-exercised']:3d} {c['not-fetched']:3d} {c['not-available']:3d}")
     print()
     from .gates import compute_gates
     gates = compute_gates(results, root, runner.data)
@@ -238,11 +271,15 @@ def main(argv=None):
                        **({"preset": {k: preset.get(k) for k in ("name", "library", "found", "tested_with", "runtime") if k != "runtime" or preset.get(k)}} if preset else {}),
                        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                        "summary": status_totals(results),  # case totals as numbers: what a script reads (D-240)
+                       "inside_cases": annotation_totals(results),  # item skips, field gaps, cases graded (D-312)
                        "results": [r.as_dict() for r in results], "gates": gates}, f, indent=1, default=str)
     failed = sum(1 for r in results if r.status == "fail")
     tol = sum(1 for r in results if r.status == "pass-tolerance")
     unfetched = [r for r in results if r.status == "not-fetched"]
     print("\n" + count_line(results))
+    for line in (graded_line(results), inside_line(results)):
+        if line:
+            print(line)
     print_missing(results, unfetched, runner)
     reused = {p: v for r in results for p, v in r.reused.items()}
     if reused:  # D-157: the report says which provider files were copied from an earlier version's cache, not fetched

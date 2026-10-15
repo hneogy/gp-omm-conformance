@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/stage_package.py -- assemble the gpconf package from a public export, build it, and audit what was built.
 
@@ -64,8 +66,10 @@ import zipfile
 MANIFEST = "EXPORT-MANIFEST.txt"
 TOP = ["pyproject.toml", "README.md", "LICENSE", "NOTICE"]
 # recorded/ holds the one provider response the corpus ships, named file by file (D-247); the fetch reads it from here.
+# docs/ADAPTERS.md is the adapter guide the README, the runner and a case document all name (D-302): it ships with
+# the package, byte for byte as the export holds it, so that the hash check below covers it like every other file.
 CORPUS = ["manifest.json", "tools/fetchlist.json", "fixtures/*/expected.json", "fixtures/*/case.md", "derived/**/*", "vectors/**/*",
-          "recorded/celestrak-no-gp-data-found.txt", "recorded/celestrak-no-gp-data-found.provenance.json"]
+          "recorded/celestrak-no-gp-data-found.txt", "recorded/celestrak-no-gp-data-found.provenance.json", "docs/ADAPTERS.md"]
 BUNDLED = "gpconf/corpus"
 RAW = re.compile(r"(^|/)fixtures/[^/]+/raw(/|$)")
 SDIST_OTHER = re.compile(r"^(PKG-INFO|setup\.cfg|pyproject\.toml|README\.md|LICENSE|NOTICE|gpconf\.egg-info/.+)$")

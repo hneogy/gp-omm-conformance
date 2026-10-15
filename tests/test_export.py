@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Export guard: the public release must contain no raw provider files, no Space-Track-named
 paths and no SupGP-derived snapshot values (DECISIONS D-049)."""
 import os
@@ -160,17 +162,17 @@ class ExportGuardTests(unittest.TestCase):
 
 
 class LicenceFiles(unittest.TestCase):
-    """D-219: LICENSE is the MIT text and nothing else, so that a licence detector names it; what the licence covers and
+    """D-219: LICENSE is the licence text and nothing else, so that a licence detector names it; what the licence covers and
     what it does not is in NOTICE, which is exported and packaged beside it."""
 
-    def test_license_is_the_mit_text_alone_and_the_scope_note_is_in_notice(self):
+    def test_license_is_the_licence_text_alone_and_the_scope_note_is_in_notice(self):
         licence = open(os.path.join(ROOT, "LICENSE"), encoding="utf-8").read()
-        self.assertTrue(licence.startswith("MIT License\n\nCopyright (c) 2026 NEOGY LLC\n"))
-        self.assertTrue(licence.rstrip("\n").endswith("SOFTWARE."))
-        self.assertEqual(len(licence.splitlines()), 21)
+        import hashlib   # apache.org's LICENSE-2.0.txt, unaltered (D-310; the MIT text up to 0.6.2)
+        self.assertEqual(hashlib.sha256(licence.encode("utf-8")).hexdigest(), "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30")
         self.assertNotIn("Scope note", licence)
         notice = open(os.path.join(ROOT, "NOTICE"), encoding="utf-8").read()
-        for phrase in ("Scope note.", "raw data served by", "CelesTrak", "schemas/SOURCE.md", "LICENSE"):
+        for phrase in ("Scope note.", "raw data served by", "CelesTrak", "schemas/SOURCE.md", "LICENSE", "Copyright 2026 NEOGY LLC",
+                       "https://doi.org/10.5281/zenodo.22867654", "gpconf is a name of NEOGY LLC. Forks are welcome under a different name."):
             self.assertIn(phrase, notice)
         allow = open(os.path.join(ROOT, "PUBLIC_ALLOWLIST.txt"), encoding="utf-8").read().splitlines()
         self.assertIn("NOTICE", allow)

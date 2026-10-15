@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Harness for gp-omm-conformance over Vallado's SGP4 C++ as CelesTrak publishes it (fundamentals-of-astrodynamics,
 // software/cpp/SGP4/SGP4/SGP4.cpp and SGP4.h), unmodified: tle/2le through SGP4Funcs::twoline2rv(), the only reader the
 // code has. Output: JSON records on stdout in the runner's --cmd protocol; exit 3 = format unsupported. The record is

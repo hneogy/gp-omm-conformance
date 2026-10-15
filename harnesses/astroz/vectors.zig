@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Vector hooks for gp-omm-conformance over astroz: {op, input} JSON on stdin -> {result} | {error} | {unsupported} on stdout.
 // alpha5_decode and two_digit_year go through Tle.parseLines on the ISS baseline pair with the field substituted
 // (astroz validates no checksum); parse_epoch and parse_catalog_id through Tle.parseOmm on a JSON record with the

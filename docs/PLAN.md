@@ -481,20 +481,36 @@ under CC0, pilot users onboarded through 2026. A TraCSS case family would be a s
 CelesTrak and possibly redistributable fixtures. Noted from the audit of 2026-10-08 (D-268);
 https://www.space.commerce.gov/tracss/
 
-## v0.6.3: Grader escape hatches (SM-26, issue #1)
+## After v0.7.0: publishing with provenance (owner, 2026-10-11)
+
+Not in v0.7.0; planned for the release after it. Today the owner uploads the wheel and the sdist by hand with twine,
+and PyPI holds no attestation for any gpconf release. The plan: a release workflow in the public repository builds
+from the tag with the pinned build tools and publishes through PyPI's Trusted Publishing, which attaches attestations;
+a protected environment the owner approves stands where the typed token stood; and the reproducible-build check
+gains a step, the owner's local build and the runner's build agreeing by hash before the approval. One change of this
+kind per release. The licence is Apache-2.0 from v0.7.0, one licence for code and data (D-310).
+
+## v0.7.0: Grader escape hatches (SM-26, issue #1)
 
 SM-26 answered the audit ask (issue #1, 2026-10-09): seven wrong-on-purpose adapters pass the five no-data cases
 with zero fails on gpconf 0.6.1, each the reference parser with one bug, four with a twin that fails honestly.
 The plan, in order (owner, 2026-10-09):
 
 1. Reproduce SM-26's adapters against 0.6.1 and current main, and sweep the runner for every other way it can
-   avoid grading something; findings only, nothing changed until the owner approves.
+   avoid grading something; findings only, nothing changed until the owner approves. DONE 2026-10-09; the owner
+   approved the fixes the same day, as v0.7.0 — the changes touch protocol behaviour and the counts vocabulary,
+   a minor release under the versioning rule (D-240's precedent).
 2. A fresh session outside this repository red-teams gpconf 0.6.2 from PyPI the same way.
 3. Fixes, after approval: `tests/adversarial/` holding SM-26's adapters (credited as SM-26, linking issue #1) and
    the sweep's, every suspect failing its case; `tools/mutant_fuzz.py` in CI at 5,000 mutants with a fixed seed,
    failing on any survivor not on a reviewed allowlist with a D-entry; the rule in `docs/ADAPTERS.md` plus a
    D-entry that any outcome that is not a graded pass or fail (a skip, an `Unsupported`, a refusal, extra or
    duplicate records) is either all-or-none for the whole case or graded and counted — no partial skips.
+   BUILT 2026-10-09 (D-280 to D-287), with the owner's design calls: reordered records stay correct by design
+   (D-288), exact duplicates count in `extra` and fail nothing (D-281), a refusal crediting no record with every
+   record returned stays an info item (D-290), decimal strings and floats stay the protocol (D-131, D-289), a
+   never-returned field is a visible gap and a sometimes-returned one fails (D-284), and the synthetic letters
+   close the parse path's U-Z gap under D-096/D-125 with D-016 standing (D-286).
 4. Every adapter behind a published report, finding card or site result — GPKit's 17 of 18 included — is re-run
    on the fixed runner before any published claim is edited.
 5. Reply to SM-26 on issue #1; the issue stays open until the fixes ship.

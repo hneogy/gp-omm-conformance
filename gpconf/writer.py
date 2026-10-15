@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 gpconf/writer.py -- checks for code that WRITES TLE lines.
 

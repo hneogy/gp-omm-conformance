@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 gpconf/reference.py -- reference readers for GP data in TLE, CSV, JSON, XML and KVN.
 

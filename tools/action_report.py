@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/action_report.py -- what the GitHub Action (action.yml) runs (D-153, D-158). Standard library only.
 
@@ -104,7 +106,11 @@ def main():
              "| case | status | exact | tol | fail | skip | n/e | n/f | n/a |\n|---|---|---|---|---|---|---|---|---|\n"]
     for r in results:
         c = r["counts"]
-        lines.append(f"| `{r['case']}` | {r['status']} | {c.get('pass', 0)} | {c.get('pass-tolerance', 0)} | {c.get('fail', 0)} | "
+        a = r.get("annotations") or {}   # item skips and field gaps inside a case that did not skip (D-312)
+        notes = ([f"{a['items_skipped']} {pick(a['items_skipped'], 'item', 'items')} skipped"] if a.get("items_skipped") else []) + \
+                ([f"{a['field_gaps']} {pick(a['field_gaps'], 'field gap', 'field gaps')}"] if a.get("field_gaps") else [])
+        status = r["status"] + (f" ({', '.join(notes)})" if notes else "")
+        lines.append(f"| `{r['case']}` | {status} | {c.get('pass', 0)} | {c.get('pass-tolerance', 0)} | {c.get('fail', 0)} | "
                      f"{c.get('skip', 0)} | {c.get('not-exercised', 0)} | {c.get('not-fetched', 0)} | {c.get('not-available', 0)} |\n")
     for g in data.get("gates", []):
         lines.append(f"\n**Gate, {md(g['name'])}:** {md(g['headline'])}\n")

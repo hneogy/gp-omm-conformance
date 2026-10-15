@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-205, v0.5.0 item 2: a vector hook may declare its operation unsupported, by a command answering
 {"unsupported": "<reason>"} or a Python hook raising gpconf.runner.Unsupported, and the item then skips with the
 reason, as it does for an adapter without the hook. An operation is unsupported for all of its vectors or none: a mix

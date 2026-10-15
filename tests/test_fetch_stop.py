@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-228: the fetch stops at the first response the list does not expect, and that response never becomes data.
 
 CelesTrak asks software to stop querying on any response that is not an HTTP 200 and to have a person look, and says a

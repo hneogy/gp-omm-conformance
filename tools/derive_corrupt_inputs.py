@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/derive_corrupt_inputs.py -- the inputs of the corrupt-input case (D-171; v0.4.0 plan, section 5, inputs 1 to 5).
 

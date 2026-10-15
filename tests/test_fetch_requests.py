@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """tools/fetch.py request logic, exercised without any request (D-119, audit item 10.14).
 
 A raw file on disk without its .meta.json is not re-requested; a re-capture entry is requested only when its

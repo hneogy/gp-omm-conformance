@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Harness: drives gods-eye-view's satellites layer ingestion (src/layers/satellites/ingestion.js on main) with a
 // corpus file as the one CelesTrak group that answers, using the layer's own parseTLE and its real twoline2satrec /
 // Number(satrec.satnum) / dedupe path; Cesium is a stand-in and propagation is stubbed so that a decayed or old epoch

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/inventory.py -- describe every raw fixture file and write docs/INVENTORY.md.
 

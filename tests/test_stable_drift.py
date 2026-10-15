@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """A stable-tier source whose bytes differ from the tested snapshot is reported as drift, explicitly (D-115).
 
 Before: the file silently became "live", the reference reader became the oracle, and the only trace was an
@@ -61,7 +63,7 @@ class StableDriftTests(unittest.TestCase):
         self.assertEqual(r.as_dict()["drift"], {})
         self.assertEqual([i for i in r.items if i.check == "stable-source-drift"], [])
         values = [i for i in r.items if i.check == "values"]
-        self.assertEqual(len(values), 4)
+        self.assertEqual(len(values), 6)   # the four real-derived files and the two synthetic files (D-286, D-300)
         self.assertTrue(all(i.status == "pass" and re.search(r"\d+ records? match(es)? frozen expected values", i.detail) for i in values), [i.detail for i in values])
 
     def test_edited_stable_file_reports_drift_and_reference_comparison(self):

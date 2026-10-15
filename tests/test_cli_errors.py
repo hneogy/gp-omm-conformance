@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-269: the command line answers misuse with a message and exit status 2, never a silent no-op or a traceback.
 
 An unknown --case had been silently ignored: `gpconf run --preset reference --case nosuch` printed a table with no

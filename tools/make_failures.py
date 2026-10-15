@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """tools/make_failures.py -- render docs/FAILURES.md (the parser-breakage catalogue) from runner
 JSON reports: tools/_out/report-naive.json, report-sgp4.json and report-reference.json."""
 import json
@@ -30,6 +32,8 @@ parsers were run:
 A failure here is a statement about the parser, not about the corpus: the reference parser
 passes every case that exercises a parser; `satcat-70000-cutoff` is a data check the runner makes itself and
 reports as not exercised for every parser, on a file the fetch brings only on request (D-231). Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
+The Alpha-5 letters I and O that python-sgp4's compiled `Satrec` writes, in the writer case below, are reported as
+[brandon-rhodes/python-sgp4#173](https://github.com/brandon-rhodes/python-sgp4/issues/173) (filed 2026-10-10, D-307).
 
 The counts below were measured on the maintainer's copy, with ten launch-window captures that a new user's fetch
 cannot obtain (D-229). A run from a fresh fetch reproduces fewer: `supgp-celestrak-classification-c` cannot run at

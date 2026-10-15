@@ -27,3 +27,4 @@ tools/_out/
 spacetrack-verify/
 # The verification TOOL is source code, not data: the only exception to the guard above.
 !tools/verify_against_spacetrack.py
+.hypothesis/

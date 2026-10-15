@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """The corrupt-input case (D-171): its inputs, the rules that grade what a parser does with them, and the control.
 
 Each input is a frozen real record with one stated edit between valid records. A corrupt record must come back
@@ -158,10 +160,10 @@ class Control(unittest.TestCase):
 
     def test_each_file(self):
         want = {
-            "c1-checksum-digit.tle": {("corrupt-tle-checksum-digit", "info"), ("corrupt-input-neighbours-load", "pass")},
-            "c2-line-2-short.tle": {("corrupt-tle-line-short", "pass"), ("corrupt-input-neighbours-load", "pass")},
-            "c3-letter-in-epoch.tle": {("corrupt-tle-letter-in-number", "pass"), ("corrupt-input-neighbours-load", "pass")},
-            "c4-line-2-missing.tle": {("corrupt-tle-missing-line-2", "pass"), ("corrupt-input-neighbours-load", "pass")},
+            "c1-checksum-digit.tle": {("catalog-number-is-integer", "pass"), ("corrupt-tle-checksum-digit", "info"), ("corrupt-input-neighbours-load", "pass")},
+            "c2-line-2-short.tle": {("catalog-number-is-integer", "pass"), ("corrupt-tle-line-short", "pass"), ("corrupt-input-neighbours-load", "pass")},
+            "c3-letter-in-epoch.tle": {("catalog-number-is-integer", "pass"), ("corrupt-tle-letter-in-number", "pass"), ("corrupt-input-neighbours-load", "pass")},
+            "c4-line-2-missing.tle": {("catalog-number-is-integer", "pass"), ("corrupt-tle-missing-line-2", "pass"), ("corrupt-input-neighbours-load", "pass")},
             "c5-cut-last-row.csv": {("corrupt-file-cut", "pass"), ("corrupt-input-neighbours-load", "info")},
             "c5-cut-closing-bracket.json": {("corrupt-file-cut", "pass"), ("corrupt-input-neighbours-load", "info")},
         }
@@ -202,11 +204,11 @@ class Demonstration(unittest.TestCase):
     def test_it_fails_where_it_should(self):
         r = run(Naive())
         self.assertEqual(r.status, "fail")
-        self.assertEqual(items(r, "c1-checksum-digit.tle"), {("corrupt-tle-checksum-digit", "info"), ("corrupt-input-neighbours-load", "pass")})
-        self.assertEqual(items(r, "c2-line-2-short.tle"), {("corrupt-tle-line-short", "fail"), ("corrupt-input-neighbours-load", "pass")})
+        self.assertEqual(items(r, "c1-checksum-digit.tle"), {("catalog-number-is-integer", "pass"), ("corrupt-tle-checksum-digit", "info"), ("corrupt-input-neighbours-load", "pass")})
+        self.assertEqual(items(r, "c2-line-2-short.tle"), {("catalog-number-is-integer", "pass"), ("corrupt-tle-line-short", "fail"), ("corrupt-input-neighbours-load", "pass")})
         self.assertIn("built a record from the corrupt input", item(r, "c2-line-2-short.tle", "corrupt-tle-line-short").detail)
         self.assertEqual(items(r, "c3-letter-in-epoch.tle"), {("corrupt-tle-letter-in-number", "pass"), ("corrupt-input-neighbours-load", "fail")})
-        self.assertEqual(items(r, "c4-line-2-missing.tle"), {("corrupt-tle-missing-line-2", "fail"), ("corrupt-input-neighbours-load", "pass")})
+        self.assertEqual(items(r, "c4-line-2-missing.tle"), {("catalog-number-is-integer", "pass"), ("corrupt-tle-missing-line-2", "fail"), ("corrupt-input-neighbours-load", "pass")})
         self.assertIn("refusals not reported by this adapter", item(r, "c4-line-2-missing.tle", "corrupt-tle-missing-line-2").detail)
         self.assertIn("given up", item(r, "c3-letter-in-epoch.tle", "corrupt-input-neighbours-load").detail)
 
@@ -259,14 +261,26 @@ class Rules(unittest.TestCase):
         self.assertEqual(it.status, "fail")
         self.assertIn("silent partial loading", it.detail)
 
-    def test_a_cut_reported_with_a_reason_passes(self):
+    def test_a_cut_reported_with_a_reason_that_quotes_the_cut_passes(self):
         class Reports(self.Lenient):
             def parse(self, raw, fmt):
                 out = super().parse(raw, fmt)
-                return out + [{"_refused": "JSON array not closed"}] if fmt == "json" else out
+                # the refusal quotes the cut site, as a real parser's error does: that is its evidence (D-282)
+                return out + [{"_refused": "JSON array not closed", "_input": raw.decode()[-60:]}] if fmt == "json" else out
         it = item(run(Reports()), "c5-cut-closing-bracket.json", "corrupt-file-cut")
         self.assertEqual(it.status, "pass")
         self.assertIn("JSON array not closed", it.detail)
+        self.assertIn("quotes the cut site", it.detail)
+
+    def test_a_cut_refusal_that_quotes_nothing_fails(self):
+        # the decoy the SM-26 audit used (issue #1): a stray refusal naming no text of the file credits nothing (D-282)
+        class Decoy(self.Lenient):
+            def parse(self, raw, fmt):
+                out = super().parse(raw, fmt)
+                return out + [{"_refused": "skipped a comment line", "_field": "#####"}] if fmt == "json" else out
+        it = item(run(Decoy()), "c5-cut-closing-bracket.json", "corrupt-file-cut")
+        self.assertEqual(it.status, "fail")
+        self.assertIn("silent partial loading", it.detail)
 
     def test_a_silent_drop_and_a_reasonless_refusal_fail(self):
         class Drops(Reference):
@@ -282,13 +296,24 @@ class Rules(unittest.TestCase):
         self.assertEqual(it.status, "fail")
         self.assertIn("without a reason", it.detail)
 
-    def test_a_refusal_that_names_no_record_stands_for_the_corrupt_one(self):
-        class Unnamed(Reference):
+    def test_a_refusal_credits_a_record_only_with_evidence(self):
+        # D-282 (the SM-26 audit, issue #1): the earlier rule credited any refusal that named no record to the
+        # corrupt one, so a silent drop could hide behind a decoy. Evidence is a _field that decodes to the record,
+        # or an _input quoting text the edit introduced.
+        class Quoting(Reference):   # no _field, but the library's message quotes the offending line: credited
+            def parse(self, raw, fmt):
+                return [{"_refused": r["_refused"], "_input": r.get("_input")} if "_refused" in r else r for r in super().parse(raw, fmt)]
+        it = item(run(Quoting()), "c3-letter-in-epoch.tle", "corrupt-tle-letter-in-number")
+        self.assertEqual(it.status, "pass")
+        self.assertEqual((it.counts["refused"], it.counts["refused_matched"]), (1, 1))
+
+        class Unnamed(Reference):   # no _field and no _input: nothing ties the refusal to the record; a drop
             def parse(self, raw, fmt):
                 return [{"_refused": r["_refused"]} if "_refused" in r else r for r in super().parse(raw, fmt)]
         it = item(run(Unnamed()), "c3-letter-in-epoch.tle", "corrupt-tle-letter-in-number")
-        self.assertEqual(it.status, "pass")
-        self.assertEqual((it.counts["refused"], it.counts["refused_matched"]), (1, 1))
+        self.assertEqual(it.status, "fail")
+        self.assertIn("credited to none", it.detail)
+        self.assertEqual((it.counts["refused"], it.counts["refused_matched"], it.counts["dropped"]), (1, 0, 1))
 
     def test_a_whole_tle_file_refused_gives_up_the_neighbours(self):
         class Strict(Reference):
@@ -308,12 +333,16 @@ class Comparison(unittest.TestCase):
     D-174: seven fields in single precision, no second derivative)."""
 
     class Imprecise(Reference):
-        """The reference readers with PyEphem's precision: seven fields rounded to single precision, no second
-        derivative. The values check fails it on every TLE record; the corrupt input changes nothing it reads."""
+        """The reference TLE reader with PyEphem's precision: seven fields rounded to single precision, no second
+        derivative, and, like PyEphem, no reader for anything but TLE. The values check fails it on every TLE
+        record; the corrupt input changes nothing it reads."""
         SINGLE = ("inclination", "ra_of_asc_node", "eccentricity", "arg_of_pericenter", "mean_anomaly", "bstar", "mean_motion_dot")
+        tle_only = True
 
         def parse(self, raw, fmt):
             import struct
+            if self.tle_only and fmt not in ("tle", "2le"):
+                raise Unsupported(fmt)
             out = []
             for r in super().parse(raw, fmt):
                 if "_refused" not in r:
@@ -331,10 +360,25 @@ class Comparison(unittest.TestCase):
         self.assertNotIn("mean_motion_ddot", iss)
         r, control = run(parser), run(Reference())
         self.assertEqual(r.status, "pass")
-        self.assertEqual([(i.check, i.status, i.file) for i in r.items], [(i.check, i.status, i.file) for i in control.items])
+        tle = lambda res: [(i.check, i.status, i.file) for i in res.items if i.file and i.file.endswith(".tle")]
+        self.assertEqual(tle(r), tle(control))
         for name in FILES[:4]:
             with self.subTest(name):
                 self.assertIn("exactly as the parser reads it from the unedited file", item(r, name, "corrupt-input-neighbours-load").detail)
+
+    def test_an_imprecise_omm_reader_fails_the_unedited_files_values(self):
+        """D-299 (the red team's E15): the unedited CSV and JSON files are also held to the frozen values, the one
+        place an OMM value is graded without fetched data. That is a values item of its own on the unedited file;
+        the corrupt items still compare the parser with itself (D-175), and a reader of TLE alone is untouched."""
+        class ImpreciseEverywhere(self.Imprecise):
+            tle_only = False
+        r = run(ImpreciseEverywhere())
+        self.assertEqual(r.status, "fail")
+        failing = sorted({(i.check, os.path.basename(i.file)) for i in r.items if i.status == "fail"})
+        self.assertEqual(failing, [("values", "unedited-array.json"), ("values", "unedited-rows.csv"), ("values", "v07-xml-ndm-reserialised.xml")])
+        graded = [i for i in run(Reference()).items if i.check == "values"]
+        self.assertEqual(sorted((os.path.basename(i.file), i.status) for i in graded),
+                         [("unedited-array.json", "pass"), ("unedited-rows.csv", "pass"), ("v07-xml-ndm-reserialised.xml", "pass")])
 
     def test_a_neighbour_the_corrupt_input_changes_fails(self):
         from decimal import Decimal

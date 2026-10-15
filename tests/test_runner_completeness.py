@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Runner completeness (D-118): every listed check is evaluated, every hook is reachable, a raising hook fails
 its vector and nothing else, legal epoch forms are accepted, and the report and catalogue say what ran."""
 import contextlib

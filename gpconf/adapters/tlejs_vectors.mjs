@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Vector hooks for the tle.js presets (tested with 5.0.3): each op goes through the library's public getters on a
 // valid line pair (the ISS baseline set of the corpus) with the one field substituted, checksums recomputed with the
 // library's own computeChecksum(). Protocol: {op, input} on stdin -> {result} | {error} | {unsupported} (D-205). Moved

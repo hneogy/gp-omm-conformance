@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """tools/fetch.py drift check: stable-tier sources whose bytes differ from the manifest are reported."""
 import hashlib
 import json

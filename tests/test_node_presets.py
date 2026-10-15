@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-154, v0.3.0 stage 3: the Node presets satellite.js, tle.js and tle.js-api.
 
 A shipped harness runs as `node --input-type=module --eval <source>` from the working directory, so the library

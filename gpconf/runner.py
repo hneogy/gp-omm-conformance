@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 gpconf/runner.py -- run a parser under test against the corpus.
 
@@ -53,6 +55,10 @@ DEC_FIELDS = {"mean_motion", "eccentricity", "inclination", "ra_of_asc_node", "a
 TLE_EPOCH_TOLERANCE_US = 432  # half of the TLE's 1e-8 day resolution
 EPOCH_TOLERANCE_US = 2        # allowed for the parser under test: python-sgp4's Julian-date epoch was within 1 us in the cross-check; the oracle itself is exact
 FLOAT_RELATIVE_TOLERANCE = 1e-12  # for values the parser returns as binary floats: |got - want| / max(|got|, |want|); zero requires zero
+# Metadata the TLE formats carry no value for: a parser may answer None or the OMM constant default, and
+# nothing else -- an invented value is a wrong value, not a default (D-285; the SM-26 audit, issue #1).
+OMM_CONSTANT_DEFAULTS = {"center_name": ("EARTH",), "ref_frame": ("TEME",), "time_system": ("UTC",),
+                         "mean_element_theory": ("SGP4", "SGP/SGP4")}
 KEYWORD_TO_FIELD = {"EPHEMERIS_TYPE": "ephemeris_type", "CLASSIFICATION_TYPE": "classification_type", "NORAD_CAT_ID": "norad_cat_id",
                     "ELEMENT_SET_NO": "element_set_no", "REV_AT_EPOCH": "rev_at_epoch"}
 
@@ -60,6 +66,48 @@ KEYWORD_TO_FIELD = {"EPHEMERIS_TYPE": "ephemeris_type", "CLASSIFICATION_TYPE": "
 class Unsupported(Exception):
     """Raise from parse() for a format the parser does not implement, from write_tle() when it has no writer, or from
     a vector hook for an operation the library does not have (D-205)."""
+
+
+class ParserExit(Exception):
+    """The parser under test tried to end the process (sys.exit, or another BaseException that is not an
+    Exception). The runner turns it into this ordinary exception, so the input fails like any other raise, the
+    report is written and the exit status says a case failed (D-293; the red team's E9: on 0.6.2 a sys.exit()
+    inside parse() ended the run with status 0 and no report)."""
+
+
+class _Guarded:
+    """The parser under test, with every call guarded: a SystemExit or other non-Exception BaseException raised
+    inside it becomes ParserExit, and is counted, so no caller can mistake it for a rejection. KeyboardInterrupt is
+    the user's, and passes. A process-level exit (os._exit) cannot be contained in-process; a parser that must be
+    isolated runs behind --cmd, where the runner already owns the exit status."""
+
+    def __init__(self, parser, events):
+        object.__setattr__(self, "_parser", parser)
+        object.__setattr__(self, "_events", events)
+
+    def _guard(self, fn, name):
+        events = self._events
+
+        def call(*a, **k):
+            try:
+                return fn(*a, **k)
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                raise
+            except BaseException as e:  # SystemExit, GeneratorExit and anything else outside Exception
+                code = getattr(e, "code", None)
+                what = f"{type(e).__name__}" + (f"({code!r})" if isinstance(e, SystemExit) else "")
+                events.append((name, what))
+                raise ParserExit(f"the parser raised {what} inside {name}: a parser must not end the run") from None
+        return call
+
+    def __getattr__(self, name):
+        v = getattr(self._parser, name)   # AttributeError passes through, so getattr(..., None) still answers None
+        return self._guard(v, name) if callable(v) else v
+
+    def __call__(self, *a, **k):
+        return self._guard(self._parser, "parse")(*a, **k)
 
 
 class CorpusIncomplete(Exception):
@@ -135,6 +183,23 @@ def fetch_hint(root, *args, data=None, data_why=None):
 
 
 # --------------------------------------------------------------------------- normalisation
+# An epoch as calendar-form text: what a parser that parsed the epoch can write without help. Anything else a
+# parser returns as text -- day-of-year form, a trailing Z, an offset, second 60 -- the runner still normalises,
+# since the corpus's own harnesses return TLE epochs as year and day-of-year text by design (D-306).
+CALENDAR_EPOCH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$")
+
+
+def unparsed_epoch(value, raw_text):
+    """True when an epoch came back as the input's own text, unparsed: text that is not calendar-form and is found
+    verbatim in the file it was read from (D-306; the red team's E6). A parser that gives up on a day-of-year epoch
+    and hands the text back used to pass, because the runner parsed the text for it. Text a harness built itself,
+    such as a TLE epoch written out as year and day of year, is in no input and is normalised as before."""
+    if not isinstance(value, str):
+        return False
+    s = value.strip()
+    return bool(s) and not CALENDAR_EPOCH.match(s) and s in raw_text
+
+
 def norm_epoch(v):
     if v is None:
         return None
@@ -143,6 +208,15 @@ def norm_epoch(v):
             v = v.astimezone(dt.timezone.utc).replace(tzinfo=None)
         return v.strftime("%Y-%m-%dT%H:%M:%S.%f")
     return tlemod.iso_epoch(v)  # calendar or day-of-year form, fraction, Z, offset, leap second (D-118, D-119)
+
+
+def is_integral(v):
+    """True for an integer TYPE: int, an int subclass, or a type registered as numbers.Integral (numpy's integer
+    types are). Never a bool, a float, a string or a Decimal, whatever their value (D-283, D-295). The check used
+    to compare the type's name with "int", which failed a correct parser returning its library's own integer type
+    (the red team's finding, section 6)."""
+    import numbers
+    return isinstance(v, numbers.Integral) and not isinstance(v, bool)
 
 
 def as_integer(v):
@@ -159,17 +233,32 @@ def as_integer(v):
     return i, None
 
 
+# What an element value may look like when a parser returns it as text (D-319): an optional sign, ASCII digits with an
+# optional point, an optional exponent; nothing before or after. Decimal() itself is far more generous: it reads the
+# digits of other scripts, underscores between digits and surrounding whitespace, so text of those kinds was graded
+# as the number it spells. Text outside the grammar is what "N/A" has always been here: a value the runner cannot
+# read, which raises, and the whole file fails as `parse` (ADAPTERS.md, "What happens when the output is unexpected").
+# It raises rather than travel on as an empty value because an empty value on both sides of a later comparison is
+# equal: the first form of this change did that, and two wrong parsers passed the cases that pair TLE with OMM.
+PLAIN_DECIMAL = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
+
+
+class UnreadableValue(ValueError):
+    """A value a parser returned that the runner cannot read as what the field holds (D-319)."""
+
+
 def norm_record(rec):
     """Parser output -> {field: comparable value}; also returns type notes. A field that should be an integer but is
     not stays None and is named in the record's _bad map, so the values item reports the value and its type
-    instead of the runner raising (D-131)."""
+    instead of the runner raising (D-131). An element value whose text is not a plain decimal number raises
+    UnreadableValue, and an epoch the reader cannot read raises ValueError: the caller fails the file as `parse` (D-319)."""
     out, notes, bad = {}, {}, {}
     for k, v in rec.items():
         if k in INT_FIELDS:
             if v is None or v == "":
                 out[k] = None
             else:
-                notes[k] = type(v).__name__
+                notes[k] = "int" if is_integral(v) else type(v).__name__   # any integer type reads as "int" (D-295)
                 out[k], problem = as_integer(v)
                 if problem:
                     bad[k] = problem
@@ -178,8 +267,16 @@ def norm_record(rec):
                 out[k] = None
             elif isinstance(v, float):
                 notes[k] = "float"
-                out[k] = Decimal(repr(v))
+                # repr of the plain float, not of the object (D-321): numpy.float64 is a float whose own repr under
+                # numpy 2 is "np.float64(1.5)", which is no number, so a correct parser returning it failed every file
+                out[k] = Decimal(repr(float(v)))
+            elif isinstance(v, (int, Decimal)) and not isinstance(v, bool):
+                out[k] = Decimal(v)
             else:
+                # text, or anything else that is not a number: its text form is held to the grammar (D-319)
+                if not PLAIN_DECIMAL.fullmatch(str(v)):
+                    raise UnreadableValue(f"{k} = {v!r} is not a plain decimal number: ASCII digits with an optional sign, point and exponent, "
+                                          "and nothing around them (D-319)")
                 out[k] = Decimal(str(v))
         elif k == "epoch":
             out[k] = norm_epoch(v)
@@ -308,7 +405,9 @@ def split_refusals(recs):
     none were reported, not that none happened."""
     records, refusals, declared = [], [], None
     for r in recs:
-        if isinstance(r, dict) and ADAPTER_KEY in r:
+        if isinstance(r, dict) and ADAPTER_KEY in r and not any(k for k in r if k != ADAPTER_KEY and not str(k).startswith("_")):
+            # the declaration is an entry of its own; a record that carries an _adapter key beside its fields is a
+            # record, and used to be dropped here without a word (D-295; the red team's finding, section 6)
             decl = r.get(ADAPTER_KEY)
             declared = bool(decl.get("refusals")) if isinstance(decl, dict) else None
             continue
@@ -325,12 +424,18 @@ def split_refusals(recs):
 
 # --------------------------------------------------------------------------- report objects
 class Item:
-    def __init__(self, check, status, file=None, detail="", tolerance=None, counts=None):
+    def __init__(self, check, status, file=None, detail="", tolerance=None, counts=None, cause=None):
         self.check, self.status, self.file, self.detail, self.tolerance = check, status, file, detail, tolerance
         self.counts = counts  # structured record counts behind a values item (D-142), so headlines never parse the sentence
+        # why a not-exercised item was not exercised (D-294): "parser" when the parser's own behaviour voided the
+        # comparison (it does not return the record from the unedited file either, D-175; it never returns the
+        # field, D-284), "data" when the data on disk lacks the feature or no parser takes part in the check
+        self.cause = cause
 
     def as_dict(self):
         d = {"check": self.check, "status": self.status, "file": self.file, "detail": self.detail}
+        if self.cause:
+            d["cause"] = self.cause
         if self.tolerance:
             d["tolerance_stats"] = self.tolerance.as_dict()
         if self.counts is not None:
@@ -340,6 +445,24 @@ class Item:
 
 # The statuses a case can end in, in the order the count line names them (D-240).
 CASE_STATUSES = ("pass", "pass-tolerance", "fail", "skip", "not-fetched", "not-available", "not-exercised")
+
+
+def _held(ids):
+    """{id: how many records of that id an input holds} (D-311)."""
+    out = {}
+    for i in ids:
+        out[i] = out.get(i, 0) + 1
+    return out
+
+
+def annotation_totals(results):
+    """Across the cases of a run: `items_skipped` and `field_gaps` (CaseResult.annotations), and `cases_graded`, the
+    cases that ended pass, pass within tolerance or fail (D-312). The JSON report's `inside_cases`."""
+    out = {"items_skipped": 0, "field_gaps": 0, "cases_graded": sum(1 for r in results if r.status in ("pass", "pass-tolerance", "fail"))}
+    for r in results:
+        for k, v in r.annotations().items():
+            out[k] += v
+    return out
 
 
 def status_totals(results):
@@ -353,8 +476,9 @@ def status_totals(results):
 
 
 class CaseResult:
-    def __init__(self, case_id, title):
+    def __init__(self, case_id, title, purpose=()):
         self.case_id, self.title, self.items, self.modes = case_id, title, [], {}
+        self.purpose = tuple(purpose)  # the checks the case lists in the manifest: what the case is for (D-294)
         self.drift = {}  # path -> {recorded_sha256, actual_sha256}: stable-tier sources whose bytes changed (D-115)
         self.refusals, self.declared = {}, {}  # path -> the adapter's refusal entries; path -> its capability declaration (D-144)
         self.reused = {}  # path -> the corpus version whose cache the file was copied from, not fetched (D-157)
@@ -362,12 +486,23 @@ class CaseResult:
         self.on_request = {}  # path -> the fetch's flag for a file it brings only on request, when a data check waits on it (D-232)
         self.recorded = {}  # path -> the corpus's record the fetch wrote this file from, where it requested nothing (D-247)
         self.empty_answers = {}  # path -> the provider's no-data text the file holds
+        self.fmt_read = {}        # fmt -> paths this parser read (or graded) in this case (D-280)
+        self.fmt_dodged = []      # (fmt, item index, path) for each per-input Unsupported answer (D-280)
 
-    def add(self, check, status, file=None, detail="", tolerance=None, counts=None):
+    def add(self, check, status, file=None, detail="", tolerance=None, counts=None, cause=None):
         if tolerance and status == "pass":
             status = "pass-tolerance"
             detail = (detail + "; " if detail else "") + tolerance.text()
-        self.items.append(Item(check, status, file, detail, tolerance, counts))
+        self.items.append(Item(check, status, file, detail, tolerance, counts, cause))
+
+    def voided_by_parser(self):
+        """The checks this case lists whose every item is not-exercised by the parser's own doing (D-294)."""
+        out = []
+        for chk in self.purpose:
+            items = [i for i in self.items if i.check == chk]
+            if items and all(i.status == "not-exercised" and i.cause == "parser" for i in items):
+                out.append(chk)
+        return out
 
     @property
     def status(self):
@@ -378,10 +513,36 @@ class CaseResult:
         # what the user can act on; a case all of whose provider files are launch-window captures can never run
         # from a fetch and says not-available.
         st = {i.status for i in self.items}
-        for s in ("fail", "pass-tolerance", "pass", "not-exercised", "not-fetched", "not-available"):
+        if "fail" in st:
+            return "fail"
+        # D-294 (the red team's E8): a case cannot read "pass" when a check it exists for was voided by the parser
+        # itself -- a record it drops from the unedited file as well is not graded (D-175), and a case all of whose
+        # corrupt checks went that way used to print "pass". Such a case reads not-exercised: nothing failed, and
+        # what the case is for was not measured. Data-caused not-exercised items (no nine-digit id in a fresh
+        # fetch) leave the ranking as it was.
+        if self.voided_by_parser():
+            return "not-exercised"
+        for s in ("pass-tolerance", "pass", "not-exercised", "not-fetched", "not-available"):
             if s in st:
                 return s
         return "skip"
+
+    def annotations(self):
+        """What a case's status does not say by itself (D-312, the second red team's F2 and F3): `items_skipped`, the
+        items that skipped because the parser answered unsupported or has no hook, inside a case that did not skip
+        as a whole; and `field_gaps`, the files in which a field with expected values was never returned
+        (`fields-not-returned`). Zeros for a case that skipped, was not fetched or is not available."""
+        if self.status not in ("pass", "pass-tolerance", "fail", "not-exercised"):
+            return {"items_skipped": 0, "field_gaps": 0}
+        return {"items_skipped": sum(1 for i in self.items if i.status == "skip"),
+                "field_gaps": sum(1 for i in self.items if i.check == "fields-not-returned")}
+
+    def status_text(self):
+        """The status as the table prints it: the status, then what it leaves out, as `pass (1 item skipped, 2 field
+        gaps)`. The status itself, the counts and the exit code are untouched (D-312)."""
+        a = self.annotations()
+        notes = ([f"{qty(a['items_skipped'], 'item')} skipped"] if a["items_skipped"] else []) + ([qty(a["field_gaps"], "field gap")] if a["field_gaps"] else [])
+        return self.status + (f" ({', '.join(notes)})" if notes else "")
 
     def missing(self):
         """Provider files this case names that were not on disk and that a fetch can bring (D-148)."""
@@ -400,6 +561,10 @@ class CaseResult:
     def as_dict(self):
         d = {"case": self.case_id, "title": self.title, "status": self.status, "counts": self.counts(),
              "modes": self.modes, "drift": self.drift, "items": [i.as_dict() for i in self.items]}
+        if self.voided_by_parser():
+            d["voided_by_parser"] = self.voided_by_parser()
+        if any(self.annotations().values()):
+            d["annotations"] = self.annotations()   # D-312: item skips and field gaps inside a case that did not skip
         if self.reused:
             d["reused"] = self.reused
         if self.unexpected:
@@ -483,7 +648,8 @@ def _vector_item(res, check, file, calls, bad, ok_detail):
 
 class Runner:
     def __init__(self, parser, root=None, verbose=False, data=None, data_why=None, fetch_hints=True):
-        self.parser = parser
+        self.parser_exits = []   # (where, what) for every attempt of the parser to end the run (D-293)
+        self.parser = parser if isinstance(parser, _Guarded) else _Guarded(parser, self.parser_exits)
         # Two roots (D-150): the corpus root holds what ships (manifest, expected values, derived/, vectors/), the
         # data root the provider files this machine fetched. With no root given, both are resolved as the command
         # line resolves them (a clone, or the installed corpus and a per-user cache); with a root and no data, the
@@ -515,10 +681,13 @@ class Runner:
         raw = open(path, "rb").read()
         fn = getattr(self.parser, "parse", None) or self.parser
         recs, self._refusals, self._declared = split_refusals(fn(raw, fmt))
+        raw_text = raw.decode("utf-8", "replace")
         out = []
         for r in recs:
             n, notes, bad = norm_record(r)
             n["_notes"] = notes
+            if unparsed_epoch(r.get("epoch"), raw_text):   # D-306: graded as a wrong epoch, not parsed for the parser
+                bad["epoch"] = f"{r.get('epoch')!r} is the input's own epoch text, passed back unparsed"
             if bad:
                 n["_bad"] = bad
             out.append(n)
@@ -652,10 +821,12 @@ class Runner:
             parsed = self.parse(full, fmt)
         except Unsupported:
             res.add("format-supported", "skip", path, f"parser reports {fmt} unsupported")
+            res.fmt_dodged.append((fmt, len(res.items) - 1, path))
             return "unsupported", fmt, mode, None, refrecs, reffacts
         except Exception as e:
             res.add("parse", "fail", path, f"parser raised {type(e).__name__}: {str(e)[:200]}")
             return "parse-error", fmt, mode, None, refrecs, reffacts
+        res.fmt_read.setdefault(fmt, []).append(path)
         res.refusals[path], res.declared[path] = self._refusals, self._declared
         self.report_refusals(res, path, self._refusals)
         if refrecs and not parsed:
@@ -694,9 +865,12 @@ class Runner:
         res.add("refusals", "fail" if no_reason else "info", path, text)
 
     # ---- value comparison
-    def compare_values(self, res, path, fmt, mode, parsed, oracle, check="values", exempt=None, partial=False, oracle_label=None):
-        """oracle: {id: {field: value}}; parsed: list of normalised dicts. partial: oracle lists a subset of the file."""
+    def compare_values(self, res, path, fmt, mode, parsed, oracle, check="values", exempt=None, partial=False, oracle_label=None, held=None, held_in_file=None):
+        """oracle: {id: {field: value}}; parsed: list of normalised dicts. partial: oracle lists a subset of the file.
+        held: {id: how many records of that id the input holds}; an id it does not name is held once (D-311).
+        held_in_file: the same for every id of the file, by the reference reader, where the oracle is partial."""
         exempt = exempt or set()
+        held = held or {}
         tol = TolStats()
         by_id = {}
         for p in parsed:
@@ -727,34 +901,70 @@ class Runner:
         extra = [i for i in by_id if i is not None and i not in oracle]
         if extra and not partial:
             fails.append(f"{qty(len(extra), 'unexpected record id')}, e.g. {extra[:3]}")
-        compared = 0
+        if partial and held_in_file:
+            # D-311 where the frozen values cover a subset of the file: the ids outside the subset are not compared,
+            # but one returned more often than the file holds it is a surplus copy all the same
+            over = [i for i in extra if i in held_in_file and len(by_id[i]) > held_in_file[i]]
+            if over:
+                fails.append(f"{qty(len(over), 'id')} outside the compared subset returned more often than the input holds {pick(len(over), 'it', 'them')}, "
+                             f"e.g. {over[:3]} (D-311)")
+        # the fields this parser ever returns in this file (D-284): one with expected values that never comes
+        # back is a visible gap below, not a silent pass; one returned for some records and omitted for others fails
+        returned_fields = set()
+        for pr in parsed:
+            returned_fields.update(k for k in pr if not k.startswith("_"))
+        compared, dup_surplus = 0, 0
         for cat, want in oracle.items():
             got_list = by_id.get(cat) if "norad_cat_id" not in exempt else (by_id.get(cat) or by_id.get(None))
             if not got_list:
                 continue
-            got = got_list[0]
             compared += 1
-            for field in CORE_FIELDS + OPTIONAL_FIELDS:
-                if field in exempt:
-                    if got.get(field) is not None:
-                        fails.append(f"id {cat}: {field} should be absent/None (keyword omitted in source), got {got.get(field)!r}")
-                    continue
-                if field not in got:
-                    if field in CORE_FIELDS:
-                        fails.append(f"id {cat}: core field {field} missing from parser output")
-                    continue
-                if field in got.get("_bad", {}):
-                    fails.append(f"id {cat}: {field} is not an integer: {got['_bad'][field]}")
-                    continue
-                if field in OPTIONAL_FIELDS and want.get(field) is None and got.get(field) is None:
-                    continue
-                if field in ("center_name", "ref_frame", "time_system", "mean_element_theory") and want.get(field) is None:
-                    continue  # format carries no value; parser defaults are allowed
-                result, diff = compare_value(field, got.get(field), want.get(field), got.get("_notes", {}).get(field))
-                if result == "mismatch":
-                    fails.append(f"id {cat}: {field} = {got.get(field)!r}, expected {want.get(field)!r}")
-                elif result == "tolerance":
-                    tol.add(field, diff)
+            # every copy is graded against the same oracle and the record keeps ONE outcome (D-194, D-281). D-311
+            # (the second red team's F1), reversing D-281's second half: a record fails when the parser returns more
+            # copies of its id than the input holds, exact copies included -- a parser that emitted every record
+            # twice passed. The surplus is still counted in `extra` and `duplicate_copies`. Where the id is exempt
+            # (a KVN file whose keyword is absent) the record is matched through the records that carry no id, and
+            # they are counted the same way: the file holds one record, and two came back.
+            surplus = max(0, len(got_list) - held.get(cat, 1))
+            dup_surplus += surplus
+            if surplus:
+                h = held.get(cat, 1)
+                fails.append(f"id {cat}: returned {qty(len(got_list), 'time')} where the input holds it {'once' if h == 1 else qty(h, 'time')} (D-311)")
+            for ci, got in enumerate(got_list):
+                tag = "" if len(got_list) == 1 else f" (copy {ci + 1} of {len(got_list)})"
+                for field in CORE_FIELDS + OPTIONAL_FIELDS:
+                    if field in exempt:
+                        if got.get(field) is not None:
+                            fails.append(f"id {cat}: {field} should be absent/None (keyword omitted in source), got {got.get(field)!r}{tag}")
+                        continue
+                    if field not in got:
+                        if field in CORE_FIELDS:
+                            fails.append(f"id {cat}: core field {field} missing from parser output{tag}")
+                        elif want.get(field) is not None and field in returned_fields:
+                            fails.append(f"id {cat}: {field} omitted here but returned elsewhere in this file (D-284){tag}")
+                        continue
+                    if field in got.get("_bad", {}):
+                        fails.append((f"id {cat}: epoch {got['_bad'][field]} (D-306){tag}" if field == "epoch" else
+                                      f"id {cat}: {field} is not an integer: {got['_bad'][field]}{tag}"))
+                        continue
+                    if field in INT_FIELDS and got.get(field) is not None and got.get("_notes", {}).get(field) not in (None, "int"):
+                        # D-283: the protocol says integers for the catalog number and the counters; a float or a
+                        # string that converts cleanly is still the wrong type, reported with D-131's value-and-type
+                        fails.append(f"id {cat}: {field} returned as {got['_notes'][field]} ({got.get(field)!r}), not int{tag}")
+                        continue
+                    if field in OPTIONAL_FIELDS and want.get(field) is None and got.get(field) is None:
+                        continue
+                    if field in OMM_CONSTANT_DEFAULTS and want.get(field) is None:
+                        if got.get(field) in (None,) + OMM_CONSTANT_DEFAULTS[field]:
+                            continue  # the format carries no value; None or the OMM constant default (D-285)
+                        fails.append(f"id {cat}: {field} = {got.get(field)!r} invented where the format carries no value "
+                                     f"(None or {' / '.join(OMM_CONSTANT_DEFAULTS[field])} expected; D-285){tag}")
+                        continue
+                    result, diff = compare_value(field, got.get(field), want.get(field), got.get("_notes", {}).get(field))
+                    if result == "mismatch":
+                        fails.append(f"id {cat}: {field} = {got.get(field)!r}, expected {want.get(field)!r}{tag}")
+                    elif result == "tolerance":
+                        tol.add(field, diff)
         label = oracle_label or ("frozen expected values" if mode == "snapshot" else "reference-reader values (live bytes; not the human-verified snapshot)")
         # Record counts by identity (D-142), one outcome per expected record (D-194, D-207): loaded = returned with the
         # expected integer id; misidentified = returned with an id that is absent, not an integer, or not one the oracle
@@ -767,16 +977,27 @@ class Runner:
         misidentified = sum(len(v) for k, v in by_id.items() if k is None or k not in oracle)
         unaccounted = max(0, len(oracle) - compared - len(refused_ids))
         counts = {"expected": len(oracle), "returned": len(parsed), "loaded": compared, "misidentified": misidentified,
-                  "dropped": max(0, unaccounted - misidentified), "extra": max(0, misidentified - unaccounted),
+                  "dropped": max(0, unaccounted - misidentified), "extra": max(0, misidentified - unaccounted) + dup_surplus,
+                  "duplicate_copies": dup_surplus,
                   "ids_not_returned": unaccounted,
                   "non_integer_id": len([p for p in by_id.get(None, []) if p.get("_bad", {}).get("norad_cat_id")]),
                   "refused": len(with_reason), "refused_matched": len(refused_ids),
                   "refused_without_reason": len(refusals) - len(with_reason),
                   "refusals_reported": res.declared.get(path), "top_refusal_reason": top[0][1] if top else None}
+        dup_note = f"; {qty(dup_surplus, 'duplicate copy', 'duplicate copies')} of expected records returned, counted in extra (D-281, D-311)" if dup_surplus else ""
         if fails:
-            res.add(check, "fail", path, f"{compared} compared vs {label}; " + "; ".join(fails[:12]) + (" ..." if len(fails) > 12 else ""), counts=counts)
+            res.add(check, "fail", path, f"{compared} compared vs {label}; " + "; ".join(fails[:12]) + (" ..." if len(fails) > 12 else "") + dup_note, counts=counts)
         else:
-            res.add(check, "pass", path, f"{qty(compared, 'record')} {pick(compared, 'matches', 'match')} {label}", tolerance=tol, counts=counts)
+            res.add(check, "pass", path, f"{qty(compared, 'record')} {pick(compared, 'matches', 'match')} {label}" + dup_note, tolerance=tol, counts=counts)
+        # D-284: a field with expected values that this parser never returned in this file was not compared above;
+        # that is a visible gap in the case result, never a clean pass
+        if parsed and oracle:
+            valued = {f for want in oracle.values() for f in want if want.get(f) is not None}
+            never = sorted(f for f in valued if f in OPTIONAL_FIELDS and f not in set(exempt) and f not in returned_fields)
+            if never:
+                res.add("fields-not-returned", "not-exercised", path,
+                        f"{qty(len(never), 'field')} with expected values never returned by this parser in this file, "
+                        "and not compared: " + ", ".join(never) + " (D-284)", cause="parser")
         return not fails
 
     def oracle_for(self, case_exp, path, fmt, mode, refrecs):
@@ -785,7 +1006,7 @@ class Runner:
         if mode == "snapshot":
             recs = [r for r in case_exp["records"] if base in r.get("present_in", {}) or r.get("derived_file") == base]
             if recs:
-                return {r["norad_cat_id"]: oracle_from_expected(r, fmt) for r in recs}, "frozen expected values"
+                return {r["norad_cat_id"]: oracle_from_expected(r, fmt) for r in recs}, "frozen expected values", _held(r["norad_cat_id"] for r in recs)
         label = ("reference-reader values (snapshot values withheld from the public release; not the human-verified snapshot)"
                  if mode == "snapshot" and case_exp.get("records_withheld") else
                  "reference-reader values (live bytes; not the human-verified snapshot)")
@@ -796,7 +1017,7 @@ class Runner:
                 if vals.get(k) is not None:
                     vals[k] = Decimal(str(vals[k]))
             out[r["norad_cat_id"]] = vals
-        return out, label
+        return out, label, _held(r["norad_cat_id"] for r in refrecs or [])
 
     # ---- the three field-form checks the case documents list (D-118): targeted comparisons against the same oracle as `values`
     def check_field_forms(self, res, path, fmt, parsed, oracle, active):
@@ -858,14 +1079,25 @@ class Runner:
     def check_tle_lines(self, res, path, parsed, refrecs, active):
         if "tle-checksums-valid" in active:
             bad = [r["norad_cat_id"] for r in refrecs if not r["tle"]["checksums_valid"] or r["tle"]["line_lengths"][1:] != [69, 69]]
-            res.add("tle-checksums-valid", "fail" if bad else "pass", path, f"invalid lines for ids {bad[:5]}" if bad else f"{qty(len(refrecs), 'record')}, all checksums valid (data check)")
+            # a check on the file's own lines, read by the corpus's reader: no parser takes part, so it is never a
+            # parser pass (D-129's rule for the SATCAT check, applied here by D-297; the red team's finding)
+            res.add("tle-checksums-valid", "fail" if bad else "info", path, f"invalid lines for ids {bad[:5]}; a property of the file, not a result of the parser under test" if bad
+                    else f"{qty(len(refrecs), 'record')}, all checksums valid (data check; the parser under test is not involved)")
         if "tle-catalog-field-decodes" in active or "alpha5-decode" in active:
             want = {r["norad_cat_id"] for r in refrecs}
             got = {p.get("norad_cat_id") for p in parsed}
-            miss = sorted(want - got)
-            res.add("tle-catalog-field-decodes", "fail" if miss else "pass", path,
-                    f"{qty(len(miss), 'catalog field')} not decoded to the right integer, e.g. {miss[:3]}" if miss else f"{qty(len(want), 'catalog field')} decoded correctly" +
-                    (" (Alpha-5)" if any(r["tle"]["catalog_field_is_alpha5"] for r in refrecs) else ""))
+            # a record the parser refused with a reason was not decoded wrongly: the values item fails it as not
+            # returned, and this item says so instead of calling it a wrong decode (D-298)
+            refused = {r["id"] for r in res.refusals.get(path, []) if r["ok"] and r["id"] in want} - got
+            miss = sorted(want - got - refused)
+            a5 = " (Alpha-5)" if any(r["tle"]["catalog_field_is_alpha5"] for r in refrecs) else ""
+            note = f"; {qty(len(refused), 'record')} refused with a reason, not graded here (the values item counts {pick(len(refused), 'it', 'them')})" if refused else ""
+            if miss:
+                res.add("tle-catalog-field-decodes", "fail", path, f"{qty(len(miss), 'catalog field')} not decoded to the right integer, e.g. {miss[:3]}" + note)
+            elif refused and len(refused) == len(want):
+                res.add("tle-catalog-field-decodes", "not-exercised", path, f"every record refused with a reason: no catalog field was decoded" + a5, cause="parser")
+            else:
+                res.add("tle-catalog-field-decodes", "pass", path, f"{qty(len(want) - len(refused), 'catalog field')} decoded correctly" + a5 + note)
         if "two-digit-year-pivot" in active:
             got = {p.get("norad_cat_id"): p.get("epoch") for p in parsed}
             bad, tol = [], TolStats()
@@ -911,11 +1143,13 @@ class Runner:
             got = self.parser.parse(raw, fmt)
         except Unsupported:
             res.add("empty-answer-yields-no-records", "skip", path, f"parser reports {fmt} unsupported")
+            res.fmt_dodged.append((fmt, len(res.items) - 1, path))
             return
         except Exception as e:
             res.add("empty-answer-yields-no-records", "fail", path,
                     f"parser raised {type(e).__name__}: {str(e)[:160]} on {what}; an empty but valid answer must yield no records, not an error")
             return
+        res.fmt_read.setdefault(fmt, []).append(path)
         records, refusals, _ = split_refusals(got) if isinstance(got, list) else (got, [], None)
         if refusals:
             reason = next((r["reason"] for r in refusals if r["ok"]), "no reason given")
@@ -999,12 +1233,25 @@ class Runner:
                         detail = (f"the corpus's record of the TLE answer is {body!r} (captured {rec['captured_at']}), from when this set held no id "
                                   f"below 100000; the OMM set fetched now holds {len(below)}, so CelesTrak's TLE answer today is not the recorded one, "
                                   f"and this fetch did not request it: not compared")
+                elif tstate == "missing":
+                    # D-318: the TLE file of this set is not on disk (not fetched, or a capture no fetch brings). The
+                    # comparison used to run on nothing and FAIL -- "TLE has 0 records" -- for any parser at all, the
+                    # reference adapter included: a data folder a fetch left half done blamed a correct library. The
+                    # file's own item already says it is missing; the comparison is not made.
+                    ok, status = None, "not-exercised"
+                    detail = (f"the TLE file of this set ({os.path.basename(tpath)}) is not on disk, so its records are not compared with the OMM set's "
+                              f"{qty(len(below), 'id')} below 100000")
+                elif tstate == "unsupported":
+                    # D-318, the same fault from the other side: a parser with no TLE reader has nothing to count, and
+                    # the file's own item already skips. All-or-none holds as for any format (D-280).
+                    ok, status = None, "skip"
+                    detail = "parser reports TLE unsupported, so its records are not compared with the OMM set's"
                 else:
                     ok = set(tby) == below
                     detail = f"TLE has {qty(len(tby), 'record')}, OMM has {qty(len(below), 'id')} below 100000 and {len(oby) - len(below)} at or above"
                 for c in ("tle-format-omits-ids-above-99999", "tle-count-equals-omm-count-below-100000"):
                     if c in active:
-                        res.add(c, status or ("pass" if ok else "fail"), set_name, detail)
+                        res.add(c, status or ("pass" if ok else "fail"), set_name, detail, cause="data" if status == "not-exercised" else None)
             if tstate == "ok" and ("tle-values-match-omm-within-tle-precision" in active or "mmdot-is-tle-field-value" in active):
                 bad, bad_dot, n = [], [], 0
                 tol, tol_dot, quant = TolStats(), TolStats(), TolStats()  # quant: the provider's own TLE epoch quantisation, not a parser tolerance
@@ -1087,19 +1334,20 @@ class Runner:
                     rec = next((r for r in exp["records"] if r.get("derived_file") == b), None)
                     if rec:
                         exempt = {KEYWORD_TO_FIELD[k] for k in rec.get("keywords_absent", [])}
-                oracle, label = self.oracle_for(exp, path, fmt, mode, refrecs)
+                oracle, label, held = self.oracle_for(exp, path, fmt, mode, refrecs)
                 if path in res.drift:
                     label = "reference-reader values (frozen expected values not applied: the stable source drifted from the tested snapshot; not the human-verified snapshot)"
                 partial = bool(exp.get("sets", {}).get(set_name, {}).get("record_filter")) and mode == "snapshot" and not exp.get("records_withheld")
                 if oracle:
-                    self.compare_values(res, path, fmt, mode, parsed, oracle, exempt=exempt, partial=partial, oracle_label=label)
+                    self.compare_values(res, path, fmt, mode, parsed, oracle, exempt=exempt, partial=partial, oracle_label=label, held=held,
+                                        held_in_file=_held(r["norad_cat_id"] for r in refrecs or []) if partial else None)
                 self.check_ints(res, path, parsed, active if not exempt else active - {"catalog-number-is-integer"})
                 if fmt in ("tle", "2le"):
                     self.check_tle_lines(res, path, parsed, refrecs, active)
                 self.check_presence(res, path, parsed, refrecs, active)
                 self.check_format_facts(res, path, fmt, parsed, reffacts, active)
                 self.check_field_forms(res, path, fmt, parsed, oracle, active)
-                if exp["kind"] == "derived-kvn":
+                if exp["kind"] == "derived-kvn" and fmt == "kvn":   # the case's one XML file is not a KVN variant (D-299)
                     for c in ("kvn-syntax-tolerance", "optional-tle-parameters-may-be-absent", "omm-version-3-accepted"):
                         if c in active:
                             res.add(c, "pass", path, "variant parsed" + (f"; omitted keywords {sorted(exempt)}" if exempt and c == "optional-tle-parameters-may-be-absent" else ""))
@@ -1108,12 +1356,12 @@ class Runner:
         if not read_any:
             return  # nothing was parsed: "not exercised" would claim the data lacked the feature, when there was no data
         if "nine-digit-ids-parse" in active and not any(i.check == "nine-digit-ids-parse" for i in res.items):
-            res.add("nine-digit-ids-parse", "not-exercised", None, "no nine-digit ids in the fetched data (launch nominals exist only ~5-8 days after a launch)")
+            res.add("nine-digit-ids-parse", "not-exercised", None, "no nine-digit ids in the fetched data (launch nominals exist only ~5-8 days after a launch)", cause="data")
         for c, what in (("leading-dot-decimals", "no value written without a leading zero in the fetched OMM files"),
                         ("bstar-implied-decimal-exponent", "no TLE file with an oracle in this run"),
                         ("negative-bstar-and-ndot", "no negative BSTAR or first derivative in the fetched data")):
             if c in active and not any(i.check == c for i in res.items):
-                res.add(c, "not-exercised", None, what)
+                res.add(c, "not-exercised", None, what, cause="data")
 
     def run_pairs(self, case, exp, res):
         active = set(case["checks"])
@@ -1141,6 +1389,7 @@ class Runner:
         for path, src in exp["sources"].items():
             state, fmt, mode, parsed, refrecs, reffacts = self.load_source(res, case, path, src)
             if state == "ok":
+                self.check_ints(res, path, parsed, active)   # listed since D-283, evaluated since D-301
                 self.check_format_facts(res, path, fmt, parsed, reffacts, active)
 
     def run_xml(self, case, exp, res):
@@ -1148,6 +1397,7 @@ class Runner:
         for path, src in exp["sources"].items():
             state, fmt, mode, parsed, refrecs, reffacts = self.load_source(res, case, path, src)
             if state == "ok":
+                self.check_ints(res, path, parsed, active)   # listed since D-283, evaluated since D-301
                 self.check_format_facts(res, path, fmt, parsed, reffacts, active | {"xml-ndm-wrapper-omm-2.0"})
                 v = exp["case_specific"].get(path, {}).get("validation")
                 if isinstance(v, dict):
@@ -1167,7 +1417,7 @@ class Runner:
                             "the data check was not made: the fetch brings the legacy SATCAT file only on request, and the parser "
                             "under test is not involved in the check"
                             + (f"; to run it, fetch the file with {self.hint(self.opt_in[path])}" if self.fetch_hints
-                               else f"; the fetch brings the file with {self.opt_in[path]}"))
+                               else f"; the fetch brings the file with {self.opt_in[path]}"), cause="data")
                     continue
                 self.report_missing(res, path)
                 continue
@@ -1180,7 +1430,7 @@ class Runner:
                 if above:  # the corpus's premise about the legacy file no longer holds: loud, and about the data
                     res.add("satcat-legacy-below-70000", "fail", path, what + "; a data property of the legacy file, not a result of the parser under test")
                 else:  # no adapter reads SATCAT: the check involves no parser, so it must never count as a parser pass (D-129)
-                    res.add("satcat-legacy-below-70000", "not-exercised", path, what + "; the parser under test was not involved: no adapter reads SATCAT, so this is not a parser result")
+                    res.add("satcat-legacy-below-70000", "not-exercised", path, what + "; the parser under test was not involved: no adapter reads SATCAT, so this is not a parser result", cause="data")
             else:
                 res.add("satcat-record", "info", path, f"{mode}; SATCAT records are not parsed by the GP parser under test")
 
@@ -1202,6 +1452,8 @@ class Runner:
                             got = f"raised {type(e).__name__}"
                         if got != v["norad_cat_id"]:
                             bad.append(f"{v['field']} -> {got} (expected {v['norad_cat_id']})")
+                        elif not is_integral(got):   # 100000.0 == 100000, and is not a catalog number (D-296)
+                            bad.append(f"{v['field']} -> {got!r} ({type(got).__name__}; expected int {v['norad_cat_id']})")
                 for v in a5["decode_invalid"]:
                     try:
                         got = hooks["alpha5_decode"](v["field"])
@@ -1246,6 +1498,8 @@ class Runner:
                         continue
                     if got != v["year"]:
                         bad.append(f"{v['yy']} -> {got}")
+                    elif not is_integral(got):
+                        bad.append(f"{v['yy']} -> {got!r} ({type(got).__name__}; expected int {v['year']})")
                 _vector_item(res, "two-digit-year-pivot", "vectors/two-digit-epoch-year.json", hooks["two_digit_year"], bad, f"{qty(len(yy['vectors']), 'pivot vector')} correct")
             else:
                 res.add("two-digit-year-pivot", "skip", "vectors/two-digit-epoch-year.json", "parser exposes no two_digit_year hook")
@@ -1259,6 +1513,11 @@ class Runner:
                     continue
                 except Exception as e:
                     bad.append(f"valid {v['text']!r} rejected ({type(e).__name__})")
+                    continue
+                if not isinstance(got, dt.datetime):
+                    # D-306 (the red team's E6): the hook's contract is text -> datetime. Text handed back was parsed
+                    # by the runner's own reader, so a hook that returned its input unparsed passed every vector.
+                    bad.append(f"valid {v['text']!r} -> {got!r} ({type(got).__name__}): parse_epoch must return a datetime")
                     continue
                 accepted = ([v["iso"]] + list(v.get("iso_alternatives", []))) if v.get("iso") else []
                 if not accepted:
@@ -1291,7 +1550,7 @@ class Runner:
                     continue
                 except Exception as e:
                     got = f"raised {type(e).__name__}"
-                if got != v["value"] or type(got) is not int:
+                if got != v["value"] or not is_integral(got):
                     bad.append(f"{v['text']!r} -> {got!r} (expected int {v['value']})")
             for v in cid["invalid_in_omm"]:
                 try:
@@ -1316,13 +1575,19 @@ class Runner:
         lines_bad, cat_bad, rt_bad, emitted_bad, refused_ok, layout_bad = [], [], [], [], [], []
         conv, sec, signs, prov = {}, {}, {}, {}
         written, refused_real, rt_checked = 0, 0, 0
+        unsupported, unsupported_reasons = 0, []
         for it in exp["records"]:
             cat, rec, ok_id = it["norad_cat_id"], it["canonical"], it["representable_in_tle"]
             try:
                 out = hook(dict(rec))
-            except Unsupported:
-                res.add("tle-writer-catalog-field", "skip", None, "parser reports TLE writing unsupported")
-                return
+            except Unsupported as e:
+                # collected, never an early return: a writer is unsupported for all of its records or none
+                # (D-205's rule, extended by D-280), and what it wrote before raising stays graded
+                unsupported += 1
+                reason = str(e).strip() or "no reason given"
+                if reason not in unsupported_reasons:
+                    unsupported_reasons.append(reason)
+                continue
             except Exception as e:
                 if ok_id:
                     refused_real += 1
@@ -1370,6 +1635,16 @@ class Runner:
                     p = prov.setdefault(f, [0, 0])
                     p[0] += bool(same)
                     p[1] += 1
+
+        if unsupported == len(exp["records"]):
+            res.add("tle-writer-catalog-field", "skip", None,
+                    f"parser reports TLE writing unsupported: {'; '.join(unsupported_reasons)}")
+            return
+        if unsupported:
+            res.add("tle-writer-catalog-field", "fail", None,
+                    f"write_tle answered unsupported for {unsupported} of {qty(len(exp['records']), 'record')} "
+                    f"({'; '.join(unsupported_reasons[:3])}) and wrote or refused the rest: an operation is "
+                    "unsupported for all of its records or none (D-205, D-280); what was written is graded below")
 
         def summary(fails, ok_text, n_ok, n_all, unit="record"):
             # a failing detail opens with what passed, so a failure confined to a few inputs cannot read as a general one
@@ -1443,20 +1718,39 @@ class Runner:
             raw = f.read()
         try:
             out = (getattr(self.parser, "parse", None) or self.parser)(raw, fmt)
-        except Exception as e:  # Unsupported too: the input of the same format was read, so this is a refusal of the file
-            readings[path] = (None, None, f"the parser refused it as a whole ({type(e).__name__}: {str(e)[:160]})")
+        except Unsupported as e:
+            # an unedited file is an input of its format like any other (D-280): declaring it unsupported counts
+            # in the all-or-none bookkeeping, where before it went unregistered and a per-input dodge could hide
+            readings[path] = (None, None, f"the parser declared it unsupported ({str(e)[:160]})")
+            res.add("format-supported", "skip", path, f"parser reports {fmt} unsupported (the unedited comparison file)")
+            res.fmt_dodged.append((fmt, len(res.items) - 1, path))
             return readings[path]
+        except Exception as e:
+            readings[path] = (None, None, f"the parser refused it as a whole ({type(e).__name__}: {str(e)[:160]})")
+            res.fmt_read.setdefault(fmt, []).append(path)   # it read the format far enough to refuse the file
+            return readings[path]
+        res.fmt_read.setdefault(fmt, []).append(path)
         if not isinstance(out, list):
             readings[path] = (None, None, f"the parser returned {type(out).__name__} for it, not a list of records")
             return readings[path]
-        base, count = {}, {}
-        for r in split_refusals(out)[0]:
-            n, _, bad = norm_record(r)
-            if bad:
-                n["_bad"] = bad
-            base.setdefault(n.get("norad_cat_id"), n)
-            count[n.get("norad_cat_id")] = count.get(n.get("norad_cat_id"), 0) + 1
+        base, count, parsed = {}, {}, []
+        try:
+            for r in split_refusals(out)[0]:
+                n, notes, bad = norm_record(r)
+                n["_notes"] = notes
+                if bad:
+                    n["_bad"] = bad
+                parsed.append(n)
+                base.setdefault(n.get("norad_cat_id"), n)
+                count[n.get("norad_cat_id")] = count.get(n.get("norad_cat_id"), 0) + 1
+        except (ValueError, ArithmeticError) as e:
+            # a value the runner cannot read as a decimal or an epoch: the whole file fails as `parse`, as it does in
+            # every other case (D-319; before, this one raised inside the runner and the case was lost to an internal error)
+            res.add("parse", "fail", path, f"parser returned a value the runner cannot read: {type(e).__name__}: {str(e)[:200]}")
+            readings[path] = (None, None, f"the parser returned a value in it that the runner cannot read ({str(e)[:120]})")
+            return readings[path]
         readings[path] = (base, count, None)
+        readings[("parsed", path)] = parsed
         return readings[path]
 
     def run_corrupt_input(self, case, exp, res):
@@ -1476,8 +1770,8 @@ class Runner:
         unedited = exp["case_specific"].get("unedited", {})
         readings = {}  # unedited file -> the parser's reading of it, made once
         for path, src in exp["sources"].items():
-            if path in unedited:
-                continue  # read when an input it is the comparison for is graded
+            if path in unedited or path in exp["case_specific"].get("graded", {}):
+                continue  # read when an input it is the comparison for is graded; a graded file after the inputs
             base_name = os.path.basename(path)
             spec = exp["case_specific"]["files"][base_name]
             check, fmt, cut = spec["check"], spec["format"], spec["check"] == "corrupt-file-cut"
@@ -1500,29 +1794,61 @@ class Runner:
                 out = (getattr(self.parser, "parse", None) or self.parser)(raw, fmt)
             except Unsupported:
                 res.add(check, "skip", path, f"parser reports {fmt} unsupported")
+                res.fmt_dodged.append((fmt, len(res.items) - 1, path))
                 continue
             except Exception as e:  # the parser refused the file as a whole, with the exception as its reason
                 whole, out = f"{type(e).__name__}: {str(e)[:160]}", []
+            if whole is None:
+                res.fmt_read.setdefault(fmt, []).append(path)
             if not isinstance(out, list):
                 res.add(check, "fail", path, f"parser returned {type(out).__name__}, not a list of records")
                 continue
             upath = spec["unedited"]
             uname = os.path.basename(upath)
             base, base_count, why = self.read_unedited(res, upath, exp["sources"][upath], fmt, readings)
+            if ("surplus", upath) not in readings:
+                # D-311: the unedited file holds each of its records once too, and it is the reading everything here
+                # is compared with; a record the parser returns twice from it fails there, once per file
+                readings[("surplus", upath)] = True
+                over = sorted(k for k, n in (base_count or {}).items() if k is not None and n > 1)
+                if over:
+                    res.add("values", "fail", upath, "; ".join(f"id {k}: returned {qty(base_count[k], 'time')} where the input holds it once (D-311)" for k in over[:6])
+                            + (" ..." if len(over) > 6 else ""))
             if why:
                 for c in (check, "corrupt-input-neighbours-load"):
-                    res.add(c, "not-exercised", path, f"no comparison: the unedited file {uname} cannot serve as one ({why}), so nothing here isolates what the edit changes")
+                    res.add(c, "not-exercised", path, f"no comparison: the unedited file {uname} cannot serve as one ({why}), so nothing here isolates what the edit changes",
+                            cause="data" if "bytes are not the recorded ones" in why else "parser")
                 continue
+            if fmt in ("csv", "json") and ("graded", upath) not in readings:
+                # D-299 (the red team's E15): before this, no case that runs without fetched data compared an OMM
+                # value with an expected one -- these files were read only to be compared with the parser's own
+                # reading of them (D-175). They hold real records with negative drag terms; their frozen values
+                # are the ones the inputs' records already carry, the values of the record with no edit.
+                readings[("graded", upath)] = True
+                oracle = {}
+                for r in want:
+                    vals = dict(r["expected"])
+                    for k in list(vals):
+                        if k in DEC_FIELDS and vals[k] is not None:
+                            vals[k] = Decimal(str(vals[k]))
+                    oracle[r["norad_cat_id"]] = vals
+                self.compare_values(res, upath, fmt, "snapshot", readings[("parsed", upath)], oracle, oracle_label="frozen expected values")
             got, refusals, declared = split_refusals(out)
             res.refusals[path], res.declared[path] = refusals, declared
             self.report_refusals(res, path, refusals)
             parsed = []
-            for r in got:
-                n, notes, bad = norm_record(r)
-                n["_notes"] = notes
-                if bad:
-                    n["_bad"] = bad
-                parsed.append(n)
+            try:
+                for r in got:
+                    n, notes, bad = norm_record(r)
+                    n["_notes"] = notes
+                    if bad:
+                        n["_bad"] = bad
+                    parsed.append(n)
+            except (ValueError, ArithmeticError) as e:   # as in read_unedited: the file fails as `parse` (D-319)
+                res.add("parse", "fail", path, f"parser returned a value the runner cannot read: {type(e).__name__}: {str(e)[:200]}")
+                continue
+            if parsed:
+                self.check_ints(res, path, parsed, set(case["checks"]))   # D-283: active here like any record case
             by_id = {}
             for p in parsed:
                 by_id.setdefault(p.get("norad_cat_id"), []).append(p)
@@ -1534,7 +1860,10 @@ class Runner:
                 if whole:
                     outcome[cat] = ("refused" if r["role"] == "corrupt" else "given up", whole)
                 elif by_id.get(cat):
-                    diffs = self.unedited_diffs(by_id[cat][0], base[cat]) if cat in base else ["a record the parser does not return from the unedited file"]
+                    if cat in base:   # every copy is compared (D-281)
+                        diffs = [d for copy in by_id[cat] for d in self.unedited_diffs(copy, base[cat])]
+                    else:
+                        diffs = ["a record the parser does not return from the unedited file"]
                     outcome[cat] = ("garbage", "; ".join(diffs[:3])) if diffs else ("loaded", None)
                 elif any(x["id"] == cat for x in with_reason):
                     outcome[cat] = ("refused", next(x["reason"] for x in with_reason if x["id"] == cat))
@@ -1543,10 +1872,24 @@ class Runner:
                 else:
                     outcome[cat] = ("dropped", None)
             corrupt = next((r for r in want if r["role"] == "corrupt"), None)
+            # D-311: these files hold each id once. A second copy is a failure of its own, said in its own words: it
+            # is not the edit's doing, so it changes no outcome above and no count below, and it does not depend on
+            # how often the parser returned the record from the unedited file.
+            surplus = {cat: len(by_id[cat]) for cat in ids if len(by_id.get(cat, [])) > 1}
+            def twice(cat):
+                return f"{cat} returned {qty(surplus[cat], 'time')} where the input holds it once (D-311)"
             unmatched = [x for x in with_reason if x["id"] not in ids]
-            if corrupt and outcome[corrupt["norad_cat_id"]][0] == "dropped" and unmatched:
-                # a refusal that names no record of the file stands for the corrupt record, which did not come back
-                outcome[corrupt["norad_cat_id"]] = ("refused", unmatched[0]["reason"])
+            # D-282: a refusal whose _field decodes to no record credits a record only on evidence -- an _input
+            # that quotes this file's text and not the unedited file's, i.e. something the edit introduced.
+            # ADAPTERS.md has said so all along ("a field of any other form credits the refusal to no record");
+            # the earlier behaviour credited any unmatched refusal, which let a silent drop hide behind a decoy.
+            edited_text = raw.decode("utf-8", "replace")
+            unedited_text = open(self.path(upath), "rb").read().decode("utf-8", "replace")
+            evidenced = [x for x in unmatched if x["input"] and x["input"] in edited_text and x["input"] not in unedited_text]
+            # a cut introduces no new text, so its evidence is the cut site: a refusal quoting the edited file's tail
+            evidenced_cut = [x for x in with_reason if x["input"] and x["input"].strip() and x["input"] in edited_text[-200:]]
+            if corrupt and outcome[corrupt["norad_cat_id"]][0] == "dropped" and evidenced:
+                outcome[corrupt["norad_cat_id"]] = ("refused", evidenced[0]["reason"])
             # records the parser does not return from the unedited file either: what it does with them here is not the edit's doing
             unread = {cat for cat in ids if cat not in base and outcome[cat][0] != "garbage"}
             # records beyond the expected ones (an id the file does not hold, a second copy), unless the unedited reading has them too
@@ -1566,8 +1909,8 @@ class Runner:
             if corrupt is None:  # the JSON array without its closing bracket: every record complete, the file cut
                 if whole:
                     status, text = "pass", f"the parser refused the file as a whole ({whole}): fail-closed; {qty(len(want), 'complete record')} given up with it"
-                elif with_reason and not extra:
-                    status, text = "pass", f"the cut reported with a reason: {with_reason[0]['reason'][:120]!r}"
+                elif evidenced_cut and not extra:
+                    status, text = "pass", f"the cut reported with a reason that quotes the cut site ({evidenced_cut[0]['reason'][:120]!r})"
                 else:
                     status, text = "fail", (f"{counts['loaded']} of {qty(len(want), 'record')} loaded and nothing said of the cut "
                                             f"({spec.get('file_edit', 'the file is cut')}): silent partial loading" + garbage_extra)
@@ -1589,9 +1932,14 @@ class Runner:
                 else:
                     status, text = "fail", ("the cut row dropped with nothing said: silent partial loading" if cut else "the corrupt record dropped " +
                                             ("silently" if declared else "(refusals not reported by this adapter)"))
+                    if unmatched:
+                        text += (f"; {qty(len(unmatched), 'refusal')} naming no record of this file credited to none: "
+                                 f"nothing it quotes was introduced by the edit (D-282)")
                 if extra:
                     status, text = "fail", text + garbage_extra
-            res.add(check, status, path, text, counts=counts)
+                if corrupt["norad_cat_id"] in surplus:
+                    status, text = "fail", text + "; " + twice(corrupt["norad_cat_id"])
+            res.add(check, status, path, text, counts=counts, cause="parser" if status == "not-exercised" else None)
             # the valid records around it, graded where the parser returns them from the unedited file
             valid = [r for r in want if r["role"] == "valid"]
             graded = [r for r in valid if r["norad_cat_id"] not in unread]
@@ -1603,23 +1951,62 @@ class Runner:
             problems = [f"{r['norad_cat_id']} {label.get(outcome[r['norad_cat_id']][0], outcome[r['norad_cat_id']][0])}"
                         + (f" ({outcome[r['norad_cat_id']][1][:160]})" if outcome[r['norad_cat_id']][1] else "")
                         for r in graded if outcome[r["norad_cat_id"]][0] != "loaded"]
+            loaded_n = len(graded) - len(problems)
+            problems += [twice(r["norad_cat_id"]) for r in graded if r["norad_cat_id"] in surplus]
             if not graded:
                 res.add("corrupt-input-neighbours-load", "not-exercised", path, (f"the parser does not return the {where(1)}" if len(valid) == 1 else f"the parser returns none of the {where(len(valid))}")
-                        + f" from the unedited file {uname} either, so nothing here shows what the edit changed")
+                        + f" from the unedited file {uname} either, so nothing here shows what the edit changed", cause="parser")
             elif whole and cut:
                 res.add("corrupt-input-neighbours-load", "info", path, f"{where(len(graded))} given up with the file: a whole-file refusal of a file cut mid-record is fail-closed (owner decision 3, D-171)" + note)
             elif whole:
                 res.add("corrupt-input-neighbours-load", "fail", path, f"the parser refused the file as a whole ({whole}), so the {where(len(graded))} {pick(len(graded), 'was', 'were')} given up with it" + note)
             elif problems:
-                res.add("corrupt-input-neighbours-load", "fail", path, f"{len(graded) - len(problems)} of {where(len(graded))} loaded as the parser reads {pick(len(graded), 'it', 'them')} from "
+                res.add("corrupt-input-neighbours-load", "fail", path, f"{loaded_n} of {where(len(graded))} loaded as the parser reads {pick(len(graded), 'it', 'them')} from "
                         f"the unedited file {uname}; " + "; ".join(problems) + note)
             else:
                 res.add("corrupt-input-neighbours-load", "pass", path, f"{where(len(graded))} loaded, {pick(len(graded), '', 'each ')}exactly as the parser reads it from the unedited file {uname}" + note)
+        self.grade_values_only(case, exp, res, by_file)
+
+    def grade_values_only(self, case, exp, res, by_file):
+        """The files of the corrupt-input case that are graded for their values and nothing else (D-299): the one
+        derived XML file, held to the frozen values the CSV input's records carry for the same record."""
+        for path, g in exp["case_specific"].get("graded", {}).items():
+            full, fmt = self.path(path), g["format"]
+            if not os.path.exists(full):
+                self.report_missing(res, path)
+                continue
+            src = exp["sources"][path]
+            actual = sha256(full)
+            res.modes[path] = "snapshot" if actual == src.get("sha256") else "live"
+            if actual != src.get("sha256"):
+                res.drift[path] = {"recorded_sha256": src.get("sha256"), "actual_sha256": actual}
+                res.add("stable-source-drift", "fail", path, "the file's bytes differ from the ones the case was built on: its expectations describe other bytes and were not applied")
+                continue
+            try:
+                parsed = self.parse(full, fmt)
+            except Unsupported:
+                res.add("format-supported", "skip", path, f"parser reports {fmt} unsupported")
+                res.fmt_dodged.append((fmt, len(res.items) - 1, path))
+                continue
+            except Exception as e:
+                res.add("parse", "fail", path, f"parser raised {type(e).__name__}: {str(e)[:200]}")
+                continue
+            res.fmt_read.setdefault(fmt, []).append(path)
+            oracle = {}
+            for r in by_file.get(g["values_like"], []):
+                if r["norad_cat_id"] in g["norad_cat_ids"]:
+                    vals = dict(r["expected"])
+                    for k in list(vals):
+                        if k in DEC_FIELDS and vals[k] is not None:
+                            vals[k] = Decimal(str(vals[k]))
+                    oracle[r["norad_cat_id"]] = vals
+            self.compare_values(res, path, fmt, "snapshot", parsed, oracle, oracle_label="frozen expected values")
 
     def run_case(self, case):
         exp = json.load(open(os.path.join(self.root, "fixtures", case["id"], "expected.json"), encoding="utf-8"))
-        res = CaseResult(case["id"], case["title"])
+        res = CaseResult(case["id"], case["title"], purpose=case.get("checks", ()))
         kind = exp["kind"]
+        exits_before = len(self.parser_exits)
         try:
             if kind in ("gp", "derived-tle", "derived-kvn"):
                 self.run_gp_like(case, exp, res)
@@ -1641,6 +2028,24 @@ class Runner:
             raise  # a broken copy of the corpus is not a result about the parser (D-148)
         except Exception as e:
             res.add("runner", "fail", None, f"internal error in runner: {type(e).__name__}: {e}")
+        # D-293 (the red team's E9): every attempt of the parser to end the run during this case is a failure of the
+        # case, whatever the code that called it made of the exception
+        exits = self.parser_exits[exits_before:]
+        if exits:
+            kinds = sorted({f"{what} in {where}" for where, what in exits})
+            res.add("parser-exit", "fail", None, f"the parser tried to end the run {qty(len(exits), 'time')} ({'; '.join(kinds[:4])}): "
+                    "a parser must not exit the process; the run continued and this case fails (D-293)")
+        # D-280 (the SM-26 audit, issue #1): an Unsupported format is unsupported for all of a case's inputs or
+        # none, as D-205 holds for the vector hooks. A skip earned while other files of the same format were read
+        # is a dodge, and becomes the failure it hid.
+        for fmt, idx, path in res.fmt_dodged:
+            read = res.fmt_read.get(fmt, [])
+            if read:
+                it = res.items[idx]
+                it.status = "fail"
+                it.detail += (f" — but this parser read {qty(len(read), 'other ' + str(fmt) + ' input')} of this case"
+                              f" (e.g. {os.path.basename(read[0])}): a format is unsupported for all of a case's"
+                              " inputs or none (D-280)")
         return res
 
     def run(self, case_ids=None, tags=None):
@@ -1651,6 +2056,21 @@ class Runner:
             if tags and not (set(tags) & set(case["tests"])):
                 continue
             results.append(self.run_case(case))
+        # D-280, across the whole run: a parser that read a format anywhere in this run cannot declare an input
+        # of that format unsupported in another case; the per-case pass in run_case caught same-case mixes already.
+        read_anywhere = {}
+        for res in results:
+            for fmt, paths in res.fmt_read.items():
+                read_anywhere.setdefault(fmt, []).extend(paths)
+        for res in results:
+            for fmt, idx, path in res.fmt_dodged:
+                it = res.items[idx]
+                if it.status == "skip" and read_anywhere.get(fmt):
+                    others = [q for q in read_anywhere[fmt] if q != path]
+                    if others:
+                        it.status = "fail"
+                        it.detail += (f" — but this parser read {qty(len(others), 'other ' + str(fmt) + ' input')} in this run"
+                                      f" (e.g. {os.path.basename(others[0])}): a format is unsupported for all inputs or none (D-280)")
         return results
 
 
@@ -1738,6 +2158,12 @@ class CommandParser:
         if name in ("alpha5_decode", "alpha5_encode", "two_digit_year", "parse_epoch", "parse_catalog_id") and self.vectors_cmd:
             def hook(value):
                 r = self._vec(name, value if not isinstance(value, dt.datetime) else value.isoformat())
-                return dt.datetime.fromisoformat(r) if name == "parse_epoch" else r
+                if name != "parse_epoch":
+                    return r
+                # a command answers in text, which is converted here; the input's own text handed back unparsed is
+                # no answer, whatever this Python's fromisoformat would make of it (D-306)
+                if isinstance(r, str) and isinstance(value, str) and r.strip() == value.strip() and not CALENDAR_EPOCH.match(r.strip()):
+                    raise ValueError("the command returned the input's own epoch text, unparsed")
+                return dt.datetime.strptime(tlemod.iso_epoch(r), "%Y-%m-%dT%H:%M:%S.%f")
             return hook
         raise AttributeError(name)

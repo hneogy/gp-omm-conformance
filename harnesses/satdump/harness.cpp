@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Harness for gp-omm-conformance over SatDump's own code (master f3d82ad; the release's registry parser is identical):
 //   tle: satdump::parseTLEStream() (src-core/common/tracking/tle.cpp) builds the registry exactly as the application does,
 //        then each registry entry's lines go through the bundled predict fork's predict_parse_tle(), as every tracking

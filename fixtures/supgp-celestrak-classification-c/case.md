@@ -13,6 +13,7 @@ CelesTrak supplemental records differ from the GP records of the 18th Space Defe
 
 ## Checks
 
+- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 - **supgp-extra-keys-tolerated** — SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail.
 - **classification-c** — CLASSIFICATION_TYPE may be 'C' (CelesTrak supplemental) rather than 'U'.
 - **element-set-zero-and-rev-one** — ELEMENT_SET_NO may be 0 and REV_AT_EPOCH may be 1 or 0.

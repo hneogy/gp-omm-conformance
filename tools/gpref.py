@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Shim: the reference readers live in gpconf/reference.py."""
 import os
 import sys

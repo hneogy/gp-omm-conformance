@@ -5,16 +5,124 @@ the rule in the README (patch: documentation and tooling only; minor: refreshed 
 cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
-## [Unreleased]
+## [0.7.0] - 2026-10-15
+
+Changed: the licence. From 0.7.0 gpconf is published under Apache-2.0, with a `NOTICE` file that travels with copies
+and asks for credit when the corpus or its verdicts are used. Releases up to 0.6.2 were published under the MIT licence
+and stay under it; nothing already released changes. Source files carry an SPDX line and the copyright line, the README
+gains a "Cite as" section, and gpconf is named as a name of NEOGY LLC (D-310).
+
+A minor release under the versioning rule: the grading behaviour that `docs/ADAPTERS.md` documents changes, and the
+counts vocabulary gains `duplicate_copies` while `extra` widens (D-291). The grader was audited by trying to get
+wrong parsers past it. SM-26 answered the audit ask of issue #1 with seven wrong-on-purpose adapters, each the
+reference parser with one bug, that passed 0.6.1 with no failing case; the corpus's own sweep found four more
+routes; a fresh-session red team, run blind against 0.6.2 from PyPI, wrote fourteen escapes, seven by routes
+already closed, five new, two it judged to be by design; and a mutation fuzzer, 20,000 one-bug parsers at a fixed
+seed, found one more. Everything that got through is closed. The
+eighteen cases are those of 0.6.2. **No published case verdict changes**: the three built-in adapters and the
+thirteen library runs behind the site's rows, re-run under this runner, keep every case status and every gate
+line (the reference passes 17 exact with the SATCAT data check not exercised, naive fails 15, python-sgp4 fails 8;
+from a fresh fetch 16, 14 and 6, as before). What changes below case level, and why: failing items rise inside
+cases that already failed, because the integer check now runs on every record-bearing case and the derived case
+reads 146 more sets (python-sgp4's item total moves from 24 to 26, naive's from 79 to 81); a parser's fields that
+it never returns show as not-exercised gaps where they showed nothing; and a file's own checksum check counts as
+information, not as a parser pass, so the exact-pass counts of the TLE cases fall by the number of TLE files. The
+independent audit in `AUDIT.md` covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the
+packaging and protocol changes of v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0, those of
+v0.5.1, those of v0.6.0, those of v0.6.1, those of v0.6.2 nor those of this release have been separately audited:
+the two readings of this release audited the grader, not the answer key. The version DOI is added once Zenodo has
+archived the release; the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
+
+Changed, the grader's rule (D-280): an outcome that is not a graded pass or fail (a skip, an `Unsupported`, a
+refusal, extra or duplicate records) is all-or-none for its scope or graded and counted; there are no partial
+skips. A format is unsupported for all of a run's inputs or none, the corrupt-input case's comparison files and
+the recorded empty answer included; `write_tle` is unsupported for all of its records or none, and what it wrote
+stays graded.
+
+Changed: every copy of a returned record is compared, and a surplus copy counts in `extra` and in the new
+`duplicate_copies`; a copy that disagrees fails its record, which keeps one outcome (D-281, inside D-194), and so does
+a record returned more often than the input holds it, as said above (D-311). In the corrupt-input case a refusal credits the corrupt record only on evidence, a `_field` that decodes to
+it or an `_input` quoting what the edit introduced, as `docs/ADAPTERS.md` always said (D-282).
+
+Changed: the catalog number and the counters must be integers in every record-bearing case, and the decode and
+pivot hooks are type-checked like `parse_catalog_id`; an integer is any integer type, an `int` subclass or a
+library's own (numpy's among them), never a bool, a float or a string, where the check used to compare the type's
+name and failed a correct parser (D-283, D-295, D-296).
+
+Changed: a field with expected values that a parser never returns shows in the case result as a visible gap
+(`fields-not-returned`, not-exercised); returned for some records and omitted for others, it fails (D-284). Where a
+format carries no value for the constant metadata, `None` or the OMM defaults pass and anything else fails (D-285).
+
+Fixed: a parser that called `sys.exit()` ended the run with exit status 0 and no report; the run now continues,
+the case fails with a `parser-exit` item, the report is written and the status is 1; an adapter that exits while
+loading is a setup error, status 2 (D-293). A case whose own checks were all voided by the parser, which does not
+return the record from the unedited file either, read `pass`; it reads `not-exercised`, and every not-exercised
+item says whether the parser or the data caused it (`cause`; D-294).
+
+Fixed, false failures of correct parsers: a record carrying an `_adapter` key beside its fields was dropped without
+a word, and is kept (D-295). Fixed, reporting: the catalog-field item no longer calls a refused record a wrong
+decode, and the gate's headline says when more records came back than the file holds (D-298). A TLE file's own
+checksum check is information, since no parser takes part in it (D-297, applying D-129).
+
+Fixed, from a hardening review before the release (mutation testing of the grading code, property-based tests, type
+and coverage checks): a TLE-and-OMM set with its TLE file not on disk failed its count checks for every parser, the
+reference adapter included, "TLE has 0 records"; released versions do the same on a data folder a fetch left half
+done. The comparison is now not made, and says which file is missing; and a parser with no TLE reader skips it
+where it failed (D-318). Changed: an element value returned as text must be a plain decimal number in ASCII digits
+with nothing around it, and an epoch string is held to ASCII digits; padding, an underscore between digits and the
+digits of another script were read as the number they spell, and three wrong parsers passed on that. Such text is
+now a value the runner cannot read, and the file fails as `parse`; no published run returns any (D-319). Added:
+`tests/test_properties.py`, eighteen properties run with Hypothesis, a test-only dependency (the `test` extra), which
+CI requires: where the tests are meant to run, a missing Hypothesis fails the job, it does not skip (D-322); `tests/test_item_statuses.py`,
+which pins every item status of the naive adapter and python-sgp4 2.27 on the full data, 254 and 389 items, as a
+release-time test; and in CI, mypy at its default settings, the properties and a 500-mutant fuzzer smoke on every
+push, with the 5,000-mutant run, coverage against a floor and the stricter type check in a nightly workflow that also
+runs on every tag (D-320).
+
+Fixed: a correct parser returning its elements as `numpy.float64` failed every file. `numpy.float64` is a float, and
+under numpy 2 its `repr` is `np.float64(1.5)`, which the runner handed to `Decimal()`; released versions do the same.
+The value is read now, not what it prints as (D-321).
+
+Changed, after a second blind audit, of this release's candidate (a fresh session given its wheel and sdist alone,
+2026-10-10), which found seven wrong parsers that end with no failing case and no compared value that escapes: each
+avoided comparison through a documented outcome. One is closed: a record fails when the parser returns more copies of
+its id than the input holds, exact copies included (D-311, reversing the second half of D-281; `extra` and
+`duplicate_copies` count as before; no published run returned a surplus copy). The other six stand by design (D-313),
+and the run now says what they leave out (D-312): a case's status cell reads `pass (1 item skipped)` or
+`pass (5 field gaps)` where an item skipped or a field with expected values was never returned; a sentence under the
+count line totals them; a run without provider data says `5 of 18 cases graded offline; not a full conformance
+result.`; and the JSON report gains `inside_cases`, and `annotations` on a result. No status, count or exit code
+changes. The adapter guide's three sentences on `Unsupported` say what the runner checks, all-or-none within a run,
+and no longer that a skip proves a reader absent. The audit's nineteen adapters are in `tests/adversarial/redteam2/`,
+credited.
+
+Changed: an epoch is the parser's to parse. `parse_epoch` returns a `datetime`, and a string fails the item; a
+record whose epoch is the input's own text handed back unparsed, where that text is not already the calendar form,
+fails its values. Text a parser built itself is read as before. The reference adapter parses the day-of-year
+epoch of a KVN file itself, where it used to pass the file's text on (D-306).
+
+Added: 146 synthetic-derived TLE sets in the derived case, real elements with the catalog number or the epoch's
+year replaced: the lowest and highest id of each of the 24 Alpha-5 letters, less the two ids real records hold,
+and one set for every two-digit epoch year; each id is a specification vector, not a catalogued object, and D-016
+stands (D-286, D-300). The writer case, which takes its inputs from the derived case, writes them too. Added: OMM
+values graded with no fetch: the corrupt-input case's unedited CSV and JSON files are held to the frozen values,
+and one derived XML file, the ISS first record re-serialised, is graded there for its values (D-299).
+
+Changed: four checks that a case listed and the runner never evaluated are no longer listed there, and the integer
+check is evaluated wherever it is listed; a test holds every case to that (D-301). `docs/ADAPTERS.md` ships in the
+sdist and the wheel, at `gpconf/corpus/docs/ADAPTERS.md` (D-302).
+
+Added: `tests/adversarial/`, the wrong-on-purpose adapters with their authors credited (SM-26, issue #1; the
+fresh-session red team of 2026-10-09; the corpus's own sweep), every one behaving as designed; and
+`tools/mutant_fuzz.py`, which builds one-bug parsers from the reference by seeded mutation and fails CI on any that
+survives outside a reviewed allowlist: 500 mutants on every push, 5,000 every night and on every tag (D-287, D-320).
 
 Changed: the exact fetch size the README gives is the 0.6.2 release's measurement, 3,191,362 bytes (the owner's timed
 first-time fetch on release day: 46 requests, each answered 200, in 2 min 2.4 s), where it gave the 0.6.1 release's
 3,201,056; the rounded 3.2 MB is the same (D-277). The phrase "CelesTrak-style rendering" is gone: the derived lines
-are described as rendered with CelesTrak's eccentricity truncation, in the README, the manifest, the writer check's
-description and `docs/WRITERS.md`, after Dr. Kelso's reply (D-274, D-277). The documentation inside each
-`expected.json` (the prose notes and the per-case check list) is regenerated to match `tools/cases.py`, catching up
-texts the generator gained at D-247 and D-248; no record, value, source hash or grading input changed, and the
-runner reads its checks from `manifest.json`, which already carried them (D-278).
+are described as rendered with CelesTrak's eccentricity truncation, after Dr. Kelso's reply (D-274, D-277). The
+documentation inside each `expected.json` is regenerated to match `tools/cases.py`; no record, value or source hash
+of a real record changed (D-278).
 
 ## [0.6.2] - 2026-10-09
 

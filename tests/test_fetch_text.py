@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-230: what the corpus says about its own fetch is what the fetch does, and nothing is credited to CelesTrak that
 CelesTrak did not ask for.
 

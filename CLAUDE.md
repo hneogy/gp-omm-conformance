@@ -161,3 +161,28 @@ Any change that adds or touches a way for the runner to not grade something — 
 refusal, a tolerance, a deduplication, an optional field — must come with a wrong-on-purpose adapter in
 `tests/adversarial/` that tries to use it to hide a bug, plus a twin showing the same bug fails without it.
 No adversarial adapter, no merge.
+
+Every grader change is read before it is committed by a separate reviewer agent that did not write it (owner rule,
+2026-10-11). The reviewer gets the diff and the decision entries the change rests on or reverses, and is asked to
+break it: a wrong parser that still passes, a correct one that now fails, counts that stop adding up, an entry that
+says more than the code does. Its findings are reported to the owner before the commit, each with what was done about
+it. The first such review, of D-311, found four escapes the author had left.
+
+## The blind red team: a release gate (owner rule, 2026-10-11)
+
+No tag before a blind red team has read the release candidate. The rule, in full from the release after v0.7.0:
+
+- **A fresh session**, started by the owner, never from a session that has worked on the corpus.
+- **A different model** from the one that built the release.
+- **The built package only**: the candidate's wheel and sdist, a fresh environment, an empty data folder and the
+  brief. No repository, no decision log, no handoff, no earlier report, no list of known escapes.
+- **Before any tag.** The candidate is built locally and uploaded nowhere.
+- The brief is the template kept in the private handoff, `docs/handoff/redteam-prompt-template.md`, with one
+  paragraph naming the areas that changed since the last release, and never the fixes or how they work.
+- Its report is copied whole into the handoff, every adapter is run again on the tree, and the triage goes to the
+  owner before anything is built from it. What it finds joins `tests/adversarial/`, credited.
+- If the tree changes after the audit, the owner decides whether the changes are read by another blind pass or by
+  the reviewer of the section above.
+
+For v0.7.0 the gate is met by the blind pass of 2026-10-10 on the candidate together with the separate review of the
+change that followed it (D-311); the owner's ruling, D-314.

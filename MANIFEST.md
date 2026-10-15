@@ -1,6 +1,6 @@
-# Corpus manifest (0.6.2)
+# Corpus manifest (0.7.0)
 
-Generated 2026-10-09T14:36:22Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-10-15T00:13:26Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No provider data is shipped, and one provider response is: CelesTrak's 16-byte answer `No GP data found`, in `recorded/` with its provenance, which holds no orbital data (D-247, a named exception to D-023). Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped), and writes the recorded answer where it used to request it.
 
@@ -20,10 +20,10 @@ No provider data is shipped, and one provider response is: CelesTrak's 16-byte a
 | 12 | `tle-vs-omm-precision-loss` | pairs | 0 | 0/0 | 2 |
 | 13 | `omm-xml-schema` | xml | 0 | 0/0 | 1 |
 | 14 | `alpha5-encoding-vectors` | vectors | 0 | 4/0 | 1 |
-| 15 | `alpha5-tle-derived` | derived-tle | 604 | 4/0 | 3 |
+| 15 | `alpha5-tle-derived` | derived-tle | 750 | 6/0 | 3 |
 | 16 | `kvn-syntax-variants` | derived-kvn | 6 | 6/0 | 2 |
-| 17 | `tle-writer-alpha5` | writer | 610 | 9/2 | 4 |
-| 18 | `corrupt-input` | corrupt-input | 18 | 9/0 | 5 |
+| 17 | `tle-writer-alpha5` | writer | 756 | 11/2 | 4 |
+| 18 | `corrupt-input` | corrupt-input | 18 | 10/0 | 5 |
 
 The records column sums the record counts of a case's source files: `analyst-objects` counts the 565 group records plus the two single-object first fetches (567).
 
@@ -180,13 +180,13 @@ Coverage gaps:
 
 ## 15. `alpha5-tle-derived`
 
-Derived Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T)
+Derived Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T), plus synthetic-derived sets for every letter and every two-digit epoch year
 
 Tests: alpha5-tle-parsing, alpha5-letter-skip-rules
 
 Coverage gaps:
 
-- letters B-H, J-N, P-S and U-Z appear in no real catalog number yet (the catalog is at ~100789 and the only other 6-digit block is 27xxxx); those letters are covered by vectors only
+- letters B-H, J-N, P-S and U-Z appear in no real catalog number yet (the catalog is at ~100789 and the only other 6-digit block is 27xxxx); the parse path reads them through the synthetic-derived file and the hooks through the vectors, and no fabricated data poses as catalog data: D-016 stands, with every synthetic input naming its source record (D-286)
 - these lines are derived, not provider output: CelesTrak serves no Alpha-5 and Space-Track data is not used
 - renderer validation gap: the byte-for-byte validation (304 of 304 fetched TLE sets) used only sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding step has since been corroborated against Space-Track output by the project owner (D-070: 44 records, 0 defects, letters A and T), but the derived lines are rendered with CelesTrak's eccentricity truncation and differ from Space-Track's own TLE lines in two conventions (zero second-derivative sign at column 51; eccentricity rounding versus truncation at columns 32-33), so they are not byte-identical to Space-Track output. No Space-Track data enters this repository; the public claim describes that verification, not the data.
 
@@ -199,7 +199,7 @@ Tests: kvn-syntax
 Coverage gaps:
 
 - lowercase normative text values (7.5.3) and the 254-character line limit are not exercised
-- no XML variants in this version
+- no XML variants here: the corpus's one derived XML file, this record re-serialised (v07 in this folder), is graded for its values in the corrupt-input case, so that this case stays a case about KVN (D-299)
 
 ## 17. `tle-writer-alpha5`
 
@@ -209,7 +209,7 @@ Tests: alpha5-tle-writing, alpha5-range, tle-checksum
 
 Coverage gaps:
 
-- letters B-S and U-Z occur in no real catalog number; a writer's encoding of those letters is covered by the alpha5_encode vectors only
+- letters B-H, J-N, P-S and U-Z occur in no real catalog number; a writer's encoding of them is covered by the alpha5_encode vectors and, from v0.7.0, by the 46 synthetic-derived letter inputs the derived case contributes, the lowest and highest id of each letter (D-286, D-300)
 - no fetched record has a BSTAR or second derivative with a positive exponent; the writer side covers BSTAR's positive-exponent form with one synthetic-derived vector (D-125), the reader side and the second derivative stay uncovered
 - no rounding tie at the last kept digit occurs in the inputs, so half-up versus half-even rounding is not distinguished for writers either
 - no output of an external tool is shipped; strf's rffit was exercised only at function level outside this repository (DECISIONS D-097) and has no adapter because it is an interactive X11 program

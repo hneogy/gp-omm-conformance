@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Shim: the renderer lives in gpconf/tle.py; tools import it from here for backward compatibility."""
 import os
 import sys

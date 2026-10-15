@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 gpconf/tle.py -- TLE column layout, checksum, Alpha-5 codec and an OMM -> TLE renderer.
 
@@ -72,7 +74,9 @@ def exp_field(text, mantissa_mode="truncate"):
     return f"{sign}{m5}{e:+d}"
 
 
-EPOCH_RE = re.compile(r"(\d{4})-(?:(\d{2})-(\d{2})|(\d{3}))T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})?")
+# ASCII digits only (D-319): \d without re.ASCII also matches the digits of other scripts, and int() reads them, so an
+# epoch written in Arabic-Indic digits was read as the instant it spells
+EPOCH_RE = re.compile(r"(\d{4})-(?:(\d{2})-(\d{2})|(\d{3}))T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})?", re.ASCII)
 
 
 def iso_epoch(text):

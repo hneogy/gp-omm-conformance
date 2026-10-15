@@ -15,16 +15,25 @@ The fetch runs once per corpus version: 46 requests to CelesTrak, 3,191,362 byte
 library's preset (`sgp4`, `pyephem`, `satellite.js`, `tle.js`) or point the runner at your own parser; Quick start,
 below, has both.
 
-Fixes merged or acted on upstream, as of 2026-10-09. A fix is listed when it followed a report made from the corpus's
+## Cite as
+
+Neogy, H. (NEOGY LLC). *gpconf: a conformance corpus for orbital-data parsers crossing the five-digit
+catalog-number boundary.* https://doi.org/10.5281/zenodo.22867654
+
+That DOI is for the corpus as a whole and resolves to the latest release. To cite the exact release you ran, use its
+version DOI: `CITATION.cff` lists them, and GitHub's "Cite this repository" reads that file. If you publish a verdict
+from the runner, say which gpconf version produced it.
+
+Fixes merged or acted on upstream, as of 2026-10-15. A fix is listed when it followed a report made from the corpus's
 results and answered it:
 
 | library | what the corpus found | where the fix stands |
 |---|---|---|
 | python-sgp4 | an OMM whose `OBJECT_ID` is empty raised a `TypeError` | [PR #172](https://github.com/brandon-rhodes/python-sgp4/pull/172), merged 2026-09-24; no release carries it yet |
-| satellite.js | the OMM epoch lost its digits beyond the millisecond, and nothing decoded an Alpha-5 field | [PR #186](https://github.com/shashwatak/satellite-js/pull/186), merged 2026-09-26, and [PR #187](https://github.com/shashwatak/satellite-js/pull/187), merged 2026-09-28; no release carries them yet |
+| satellite.js | the OMM epoch lost its digits beyond the millisecond, and nothing decoded an Alpha-5 field; and a TLE field was read up to a stray letter, with no error | [PR #186](https://github.com/shashwatak/satellite-js/pull/186), merged 2026-09-26, [PR #187](https://github.com/shashwatak/satellite-js/pull/187), merged 2026-09-28, and [PR #197](https://github.com/shashwatak/satellite-js/pull/197), for the corpus's report [#190](https://github.com/shashwatak/satellite-js/issues/190), merged 2026-10-14; no release carries them yet |
 | astroz | Alpha-5 fields decoded without skipping I and O, and the TLE epoch came out hundreds of days off | [#97](https://github.com/ATTron/astroz/issues/97) and [#98](https://github.com/ATTron/astroz/issues/98), fixed by the maintainer in [#99](https://github.com/ATTron/astroz/pull/99) and released in v0.13.0 on 2026-09-26 |
 | libsgp4 | every Alpha-5 field was refused, and the pull request open to decode them mapped X, Y and Z wrongly | the corpus's results on [PR #42](https://github.com/dnwrnr/sgp4/pull/42#issuecomment-5824123874), answered two days later by the maintainer's own [#46](https://github.com/dnwrnr/sgp4/pull/46), released in v3.0 on 2026-09-26 |
-| Gpredict | the mean motion lost its eighth decimal on every record, the field read one character short | [PR #428](https://github.com/csete/gpredict/pull/428), merged 2026-10-08; no release carries it yet |
+| Gpredict | the mean motion lost its eighth decimal on every record, the field read one character short; and a letter in a TLE's epoch field was accepted, the epoch read up to it | [PR #428](https://github.com/csete/gpredict/pull/428), merged 2026-10-08, and [PR #430](https://github.com/csete/gpredict/pull/430), a contributor's fix for the corpus's report [#427](https://github.com/csete/gpredict/issues/427), merged 2026-10-10; no release carries them yet |
 
 Every report, the open ones included, is on the [library page](https://gpconf.neogy.dev/library/) of the site.
 
@@ -42,26 +51,44 @@ traceable to a provider response whose URL, retrieval time and SHA-256 are recor
 (`tle-writer-alpha5`) asks the same of code that *writes* TLEs: Alpha-5 in the catalog field,
 valid lines, and a refusal for the numbers the format cannot carry.
 
-Status: version `0.6.2`, a patch release, tooling and documentation only. An unknown `--case` now ends the run
-with an error that names the corpus's cases, where it was silently ignored and a typo could leave a pipeline green
-forever; `check-tle` answers a missing file with a one-line error, not a traceback; every text file the kit opens is
-read and written as UTF-8, so Windows's legacy default encoding cannot corrupt a run; CI declares read-only
-permissions, pins its actions by commit and adds a Windows job; and the `sgp4` extra pins `sgp4>=2.27`: python-sgp4
-dropped Python 3.9 at 2.26, so on 3.9 the extra refuses to install instead of silently resolving to 2.25, an older
-library than every published python-sgp4 result names (D-268, D-269). The fetch's `User-Agent` names the kit, the
-version that asks and this repository, `gpconf/0.6.2 (+https://github.com/hneogy/gp-omm-conformance; fetch, each URL
+Status: version `0.7.0`, a minor release: the grader was audited by trying to get wrong parsers past it, and
+what got through is closed. Two outside readings did it. SM-26 answered the audit ask of
+[issue #1](https://github.com/hneogy/gp-omm-conformance/issues/1) with seven wrong-on-purpose adapters that passed
+0.6.1 with no failure, and a fresh-session red team, run blind against 0.6.2 from PyPI, wrote fourteen escapes of
+its own: seven by routes SM-26's had already closed, five new, two it judged to be by design.
+From this release an outcome that is not a graded pass or fail is all-or-none for its scope or graded and counted:
+a format is unsupported for all of a run's inputs or none; every copy of a returned record is compared, and a
+surplus copy is counted; a refusal credits a corrupt record only on evidence; the catalog number and the counters
+must be integers; a field with expected values that a parser never returns shows as a visible gap; a parser that
+calls `sys.exit()` fails the run with a report, where the run used to end with status 0 and none; and a case whose
+own checks were all voided by the parser reads `not-exercised`, never `pass` (D-280 to D-306). A second blind audit, of
+this release's candidate, found no compared value that escapes; after it a record returned more often than the input
+holds it fails, and a run says what its statuses leave out: an item that skipped or a field never returned shows in
+the case's status, and a run on the five cases that ship says it graded five of eighteen (D-311 to D-313). A
+hardening review before the release, mutation testing of the grader, property tests and static checks, found two more
+grading faults, both fixed: a set with one of its two files missing failed every parser, the reference included, and
+now fails none; and number text a parser returns is read strictly, where padding, an underscore or the digits of
+another script were read as the number they spell (D-318, D-319). The corpus gains 146
+synthetic-derived TLE sets, both ends of every Alpha-5 letter and every two-digit epoch year, so a reader is graded
+on data where it was graded on two letters and two years; three OMM files are graded for their values with no
+fetch; and the adapter guide ships in the package. The wrong-on-purpose adapters are in `tests/adversarial/`, with
+their authors credited, and `tools/mutant_fuzz.py` holds the grader to them in CI: 500 one-bug parsers on every
+push and 5,000 every night and on every tag, failing on any that survives outside a reviewed list. **No published case verdict changes**: every library
+row, re-run under this runner, keeps every case status and gate line; what grows is the number of failing items
+inside cases that already failed, and python-sgp4's item total moves from 24 to 26. The fetch's `User-Agent` names the kit, the
+version that asks and this repository, `gpconf/0.7.0 (+https://github.com/hneogy/gp-omm-conformance; fetch, each URL
 once)` (D-252). The README gives the size of a user's fetch as it was measured at the 0.6.2 release, 3,191,362
 bytes, where the corpus's own captures of the same files sum to 3.1 MB (D-252, D-258, D-277), and `docs/RESEARCH.md` quotes
 the paragraph of CelesTrak's usage policy on addresses that many users share (D-253, D-254). A user's fetch is 46 requests, the same 46 as in 0.6.0, and asks
 for nothing it knows will answer 404: CelesTrak's 16-byte answer `No GP data found` ships with the corpus as a
 recorded response, the one provider response it carries, and the fetch writes it where it used to request it (D-247).
 The corpus says "TLE set" for an object's lines and "line" for one line: 604 derived Alpha-5 TLE sets, 304 fetched
-TLE sets (D-248). No case, check or frozen expected value changed, and the adapter protocol is as in 0.5.1. The naive
+TLE sets (D-248). No frozen expected value of a real record changed; the adapter protocol's grading rules changed as `docs/ADAPTERS.md` says. The naive
 and python-sgp4 adapters fail 15 and 8 of the eighteen cases, as before; those counts were measured with
 launch-window files that a new user's fetch cannot obtain, and a fresh fetch reproduces 14 and 6 (D-229). The
 independent audit (`AUDIT.md`) covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the
 packaging and protocol changes of v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1,
-those of v0.6.0 those of v0.6.1 nor those of v0.6.2 have been separately audited. Maintainer: Honorius Neogy (NEOGY LLC).
+those of v0.6.0, those of v0.6.1, those of v0.6.2 nor those of v0.7.0 have been separately audited; the two readings above audited the grader, not the answer key. Maintainer: Honorius Neogy (NEOGY LLC).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22867654.svg)](https://doi.org/10.5281/zenodo.22867654) See `DECISIONS.md` for the full decision log and `MANIFEST.md` for every case,
 source and known gap.
@@ -128,7 +155,7 @@ catalog number as Alpha-5 above 99999 and refuse numbers above 339999 (or below 
 |---|---|
 | `fixtures/<case>/expected.json`: frozen expected values and structural checks for 18 cases, all numbers as decimal strings | raw CelesTrak responses (`fixtures/<case>/raw/`): rebuilt on your machine by `tools/fetch.py` or `gpconf fetch` under CelesTrak's own usage policy, except ten launch-window captures that no fetch requests (D-229) |
 | `fixtures/<case>/case.md`: what the case tests, how to read a failure, coverage gaps stated per case | Space-Track data, in any form (a `.gitignore` guard refuses such paths) |
-| `derived/`: Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T only), six CCSDS-legal KVN variants, each with a provenance sidecar | invented element sets: none, anywhere |
+| `derived/`: Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T only); 146 synthetic-derived TLE sets, the same real elements with the catalog number or the epoch's year replaced, for both ends of every letter and every two-digit year, each id a specification vector and no catalogued object (D-286, D-300); six CCSDS-legal KVN variants and one XML re-serialisation; each with a provenance sidecar | invented element sets: none, anywhere |
 | `vectors/`: specification vectors (Alpha-5 table, catalog-id text forms, two-digit-year pivot, CCSDS epoch strings) | |
 | `manifest.json` / `MANIFEST.md`: every source with URL, retrieval time, SHA-256, tier; every check and ambiguity by id | SupGP-derived snapshot values: the element values of CelesTrak supplemental records are withheld from the public release; the nine-digit case keeps its structural checks and runs against your own fetch, and `supgp-celestrak-classification-c`, whose files are all launch-window captures, cannot run from a fetch (D-229) |
 | `schemas/`: SANA NDM/XML schema sets 2.0.0 and 4.0.0, unmodified | |
@@ -151,7 +178,7 @@ from CelesTrak, `recorded/celestrak-no-gp-data-found.txt`. It is the 16 bytes `N
 returns with HTTP 404 to a TLE request for an object numbered above 99999. It holds no orbital data: no element, no
 catalog number, nothing that stands in for a fetch. It ships so that a fetch does not have to request four answers
 it already knows to be errors; the file beside it gives the URL, time and SHA-256 of each capture, and the fetch
-writes the body where it used to ask for it. It is CelesTrak's text, and the MIT licence does not cover it.
+writes the body where it used to ask for it. It is CelesTrak's text, and the corpus's licence does not cover it.
 
 ## Quick start
 
@@ -160,7 +187,7 @@ into a per-user cache:
 
 ```bash
 pip install gpconf
-gpconf run --preset reference   # before any fetch: the 5 cases whose files ship in the package run; 11 need provider data, 1 needs data no fetch brings, 1 is a data check not made by default
+gpconf run --preset reference   # before any fetch: the 5 cases whose files ship in the package run; 11 need provider data, 1 needs data no fetch brings, 1 is a data check not made by default. The run says so: "5 of 18 cases graded offline; not a full conformance result."
 gpconf fetch                    # once per corpus version: 46 requests, 3.2 MB (3,191,362 bytes measured); kept on disk, not requested again
 gpconf run --preset reference   # then sixteen run, as in a clone: one case needs launch-window data no fetch brings, and the SATCAT data check its own file (--include-satcat)
 ```
@@ -202,7 +229,7 @@ the same. The [adapter guide](docs/ADAPTERS.md) describes the report field by fi
 In a GitHub Actions job, from v0.3.0, three lines run a preset against your library:
 
 ```yaml
-- uses: hneogy/gp-omm-conformance@v0.6.2
+- uses: hneogy/gp-omm-conformance@v0.7.0
   with:
     preset: sgp4
 ```
@@ -309,7 +336,7 @@ Each source in the manifest is `stable` or `live`.
 An adapter hands the corpus's files to your parser and returns what it read, in the corpus's field names: a Python
 class with a `parse(raw, fmt)` method, or a command that reads a file on standard input and prints a JSON array.
 Optional hooks answer the vector case and the writer case, and a refusal channel reports a record the library
-rejected, with the library's reason. [`docs/ADAPTERS.md`](docs/ADAPTERS.md) is the guide: both protocols, the refusal
+rejected, with the library's reason. [`docs/ADAPTERS.md`](docs/ADAPTERS.md), which also ships in the package (`gpconf/corpus/docs/ADAPTERS.md` in an installed copy), is the guide: both protocols, the refusal
 channel, how returned records are counted, the hooks, running and reading a report, and what an adapter must not do,
 with worked examples copied from the shipped adapters. The sections below describe how any parser's results are
 judged and reported.
@@ -391,9 +418,9 @@ Below the case table the runner prints one gate, a headline read across existing
 | `tle-vs-omm-precision-loss` | eccentricity truncated, mantissa rounded half up, SupGP epochs quantised; TLE→OMM→TLE round trip tested (the 24-character name limit is a format rule, not observed in provider data) |
 | `omm-xml-schema` | valid NDM/XML 2.0, invalid against 3.0 on the version attribute alone |
 | `alpha5-encoding-vectors` | the Space-Track table, official examples, boundaries, invalid inputs |
-| `alpha5-tle-derived` | 604 derived Alpha-5 TLE sets, 1,208 element lines (letters A and T), from real CelesTrak records |
+| `alpha5-tle-derived` | 604 derived Alpha-5 TLE sets, 1,208 element lines (letters A and T), from real CelesTrak records; 146 synthetic-derived sets for every letter and every two-digit epoch year |
 | `kvn-syntax-variants` | six CCSDS-legal KVN renderings CelesTrak never emits |
-| `tle-writer-alpha5` | writer side: 610 inputs written through `write_tle`: 606 frozen records (603 Alpha-5 ids and three five-digit), plus four synthetic-derived: the five-digit vector 99999 with the positive-exponent BSTAR ` 12345+1` no fetched record carries (D-125), and three numbers the TLE field cannot carry (340000, 799501621, -1), for which a refusal is the correct output |
+| `tle-writer-alpha5` | writer side: 756 inputs written through `write_tle`: 606 frozen records (603 Alpha-5 ids and three five-digit), plus 150 synthetic-derived: the 146 sets the derived case contributes (both ends of every Alpha-5 letter and every two-digit epoch year; D-286, D-300), the five-digit vector 99999 with the positive-exponent BSTAR ` 12345+1` no fetched record carries (D-125), and three numbers the TLE field cannot carry (340000, 799501621, -1), for which a refusal is the correct output |
 | `corrupt-input` | corrupt input between valid records: a wrong checksum digit, line 2 one character short, a letter in the epoch field, a set with no line 2, a CSV cut in its last row, a JSON array left open; each a frozen record with one stated edit (synthetic-derived, D-171); the right answer is a refusal with a reason, and the records around it load as they do without it (D-175) |
 
 Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case>/case.md`.
@@ -401,7 +428,9 @@ Full detail, sources and per-case gaps: `MANIFEST.md`; per case: `fixtures/<case
 ## Known gaps (summary; each is also stated in the case that has it)
 
 - Real catalog numbers exist only for Alpha-5 letters **A** (100000-100789) and **T**
-  (270000-270449, Space Fence analyst objects). Other letters are covered by vectors only.
+  (270000-270449, Space Fence analyst objects). The other letters, and the two-digit epoch years the real sets do
+  not carry, are covered by the vectors and, from 0.7.0, by synthetic-derived TLE sets a parser reads like any
+  other: real elements, the catalog number or the epoch's year replaced (D-286, D-300).
 - The renderer behind the derived Alpha-5 TLE sets was validated (304 of 304 fetched TLE sets byte for byte:
   the name line, line 1 and line 2 of each) only against sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding
   step is corroborated by python-sgp4's independent implementation, by the official vectors, and
@@ -491,12 +520,27 @@ Status of the findings above with python-sgp4, as of 2026-09-24:
   pure-Python build: it adds two tests and no library code change, the nine-digit reproducer still
   raises, and the runner results are identical to the 2.27 baseline (0 fixed, 0 regressions). The
   test report is in `docs/upstream/pr170-test-comment.md` (DECISIONS D-088).
+- **Alpha-5 letters I and O written by the compiled `Satrec`**: `sgp4init` writes satellite numbers 180000 to
+  189999 with the letter I and 230000 to 239999 with O, where the pure-Python class writes J and P. Filed
+  2026-10-10 as [#173](https://github.com/brandon-rhodes/python-sgp4/issues/173) (D-307). No catalogued
+  object is in either range today.
 - **`export_tle` zero second derivative** (` 00000-0`): not a library defect, not filed (D-072).
 - **`omm.initialize` classification reset to `U`**: draft note only, not filed.
 
 For strf, `docs/upstream/strf-number-to-alpha5-range-check.md` holds a hardening suggestion, not a
 bug report, drafted 2026-09-22 (D-101) and filed as [cbassa/strf#88](https://github.com/cbassa/strf/issues/88)
 on 2026-09-23 (D-108).
+
+For Gpredict, the mean-motion report, [csete/gpredict#426](https://github.com/csete/gpredict/issues/426), was closed on
+2026-10-08 by the corpus's own [PR #428](https://github.com/csete/gpredict/pull/428), merged by the maintainer as
+`dd2edc0`: the field is read at its full eleven characters. Checked with the recipe's harness against that commit: the
+project's own test set, whose mean motion is printed 16.05824518, reads 16.0582451 at v2.6 and 16.05824518 at the
+merge, and a set whose eighth decimal is 0 reads the same at both (D-316). The letter-in-epoch report of 2026-09-28,
+[csete/gpredict#427](https://github.com/csete/gpredict/issues/427), was closed on 2026-10-10 by
+[PR #430](https://github.com/csete/gpredict/pull/430), a contributor's fix merged by the maintainer as `f05abf3`:
+`Good_Elements()` now refuses a set whose epoch field is not a well-formed number. Checked with the recipe's harness
+against that commit: the altered line is refused and the unaltered line reads in full (D-309). No release carries it
+yet, the latest being 2.6, so the Gpredict results here stand as run.
 
 ## Verifying the derived Alpha-5 lines against Space-Track yourself
 
@@ -579,7 +623,7 @@ and correction to be recorded.
   appendix table (a sample entry from the SupGP case, per D-033/D-049) and says so in a notice; the
   auditor's text is otherwise unchanged and the private original is intact. It covered v0.1.0; neither
   the writer-side case of v0.2.0, the fixes of v0.2.1, the packaging and protocol changes of v0.3.0 nor the
-  corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1, those of v0.6.0 those of v0.6.1 nor those of v0.6.2 have been
+  corrupt-input case of v0.4.0, the changes of v0.5.0, those of v0.5.1, those of v0.6.0, those of v0.6.1, those of v0.6.2 nor those of v0.7.0 have been
   separately audited.
 
 If you find an error, the most useful report names the case id, the source file's SHA-256 and
@@ -587,7 +631,9 @@ the field, so that the discrepancy can be traced to a specific fetched byte sequ
 
 ## Licence and attribution
 
-MIT, copyright NEOGY LLC (see `LICENSE`, and `NOTICE` for what the licence covers), for the corpus's code,
+Apache-2.0 from v0.7.0, copyright NEOGY LLC (see `LICENSE`, and `NOTICE` for the credit asked for and for what the licence
+covers); releases up to 0.6.2 were published under the MIT licence and stay under it. gpconf is a name of NEOGY LLC.
+Forks are welcome under a different name. The licence is for the corpus's code,
 documentation, vectors, derived files and expected values. Provider data is not included; `tools/fetch.py` retrieves it under CelesTrak's own
 terms. The one provider response that is included, CelesTrak's 16-byte answer in `recorded/`, is CelesTrak's text and is not under this licence (D-247).
 The schemas under `schemas/` are CCSDS/SANA publications redistributed unmodified.
@@ -598,12 +644,12 @@ makes this data freely available; please respect its usage policy. Standards: CC
 Alpha-5 definition: Space-Track, https://www.space-track.org/documentation.
 
 To cite, use `CITATION.cff` (GitHub's "Cite this repository" reads it): *Neogy, H. (NEOGY LLC).
-gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary, version 0.6.2,
-2026-10-09, https://github.com/hneogy/gp-omm-conformance.*
+gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary, version 0.7.0,
+2026-10-15, https://github.com/hneogy/gp-omm-conformance.*
 Two Zenodo DOIs exist: the **concept DOI** [10.5281/zenodo.22867654](https://doi.org/10.5281/zenodo.22867654) refers to the
 corpus as a whole and always resolves to the latest release; use it when you mean the corpus in
-general. The **version DOI** for this release, v0.6.2, is
-[10.5281/zenodo.23265462](https://doi.org/10.5281/zenodo.23265462); v0.6.1 keeps its own, [10.5281/zenodo.23144821](https://doi.org/10.5281/zenodo.23144821), v0.6.0 its own, [10.5281/zenodo.23140585](https://doi.org/10.5281/zenodo.23140585),
+general. The **version DOI** for this release, v0.7.0, is
+minted when the release is archived; v0.6.2 keeps its own, [10.5281/zenodo.23265462](https://doi.org/10.5281/zenodo.23265462), v0.6.1 its own, [10.5281/zenodo.23144821](https://doi.org/10.5281/zenodo.23144821), v0.6.0 its own, [10.5281/zenodo.23140585](https://doi.org/10.5281/zenodo.23140585),
 v0.5.1 its own, [10.5281/zenodo.23130868](https://doi.org/10.5281/zenodo.23130868),
 v0.5.0 its own, [10.5281/zenodo.23093982](https://doi.org/10.5281/zenodo.23093982),
 v0.4.0 its own, [10.5281/zenodo.23002261](https://doi.org/10.5281/zenodo.23002261),

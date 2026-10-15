@@ -13,7 +13,6 @@ The legacy fixed-width SATCAT stops at id 69999 by design; the CSV/JSON SATCAT c
 ## Checks
 
 - **satcat-legacy-below-70000** — The legacy fixed-width SATCAT contains only NORAD ids below 70000; the CSV/JSON SATCAT contains ids on both sides.
-- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 
 ## Coverage
 

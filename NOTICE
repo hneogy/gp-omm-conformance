@@ -1,7 +1,16 @@
-gp-omm-conformance
-Copyright (c) 2026 NEOGY LLC
+gpconf
+Copyright 2026 NEOGY LLC
 
-Scope note. The MIT licence in the LICENSE file covers the corpus's code,
+gpconf, the GP/OMM conformance corpus and its runner, is developed by NEOGY LLC.
+https://gpconf.neogy.dev
+https://doi.org/10.5281/zenodo.22867654
+
+If you use the corpus, its expected values or the verdicts of its runner, please
+credit gpconf and cite the DOI above (see CITATION.cff).
+
+gpconf is a name of NEOGY LLC. Forks are welcome under a different name.
+
+Scope note. The Apache-2.0 licence in the LICENSE file covers the corpus's code,
 documentation, specification vectors, derived files and expected values. It
 does not cover, and the repository does not contain, raw data served by
 CelesTrak or any other provider; tools/fetch.py, which is `gpconf fetch` in the

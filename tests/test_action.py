@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-158, v0.3.0 stage 7: the GitHub Action, action.yml and tools/action_report.py.
 
 The Action runs the corpus from its own checkout at the tag a workflow names, offline and report-only: failed cases

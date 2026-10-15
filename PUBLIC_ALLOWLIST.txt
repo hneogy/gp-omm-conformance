@@ -3,7 +3,7 @@
 # (raw provider bytes) is never exported; tools/export_public.py refuses it even if listed, and
 # scrubs SupGP-derived snapshot values out of expected.json on the way out (tools/public_scrub.py).
 LICENSE
-# What the licence covers and what it does not: moved out of LICENSE so that the file is the MIT text alone (D-219).
+# What the licence covers and what it does not: moved out of LICENSE so that the file is the licence text alone (D-219; Apache-2.0 from v0.7.0, D-310).
 NOTICE
 README.md
 CHANGELOG.md
@@ -23,6 +23,8 @@ pyproject.toml
 # The corpus is byte-exact, so no checkout may rewrite line endings (D-270).
 .gitattributes
 .github/workflows/ci.yml
+# The slow gates (D-320): nightly, on every tag, and by hand.
+.github/workflows/nightly.yml
 # The adapter guide (D-161); docs/ files are named one by one, so each new one needs its own line.
 docs/ADAPTERS.md
 docs/CROSSCHECK.md
@@ -53,7 +55,13 @@ gpconf/*.py
 gpconf/adapters/*.py
 gpconf/adapters/*.mjs
 tests/*.py
+# The adversarial adapters and their tests (D-287): wrong-on-purpose parsers that hold the grader honest.
+tests/adversarial/*.py
+tests/adversarial/redteam/*.py
+tests/adversarial/redteam2/*.py
 tests/adapters/*.py
+# The recorded item statuses of two wrong parsers on the full data (D-320): check ids, file names, statuses; no value.
+tests/golden/*.json
 tools/*.py
 tools/fetchlist.json
 # The recipes for the five harnesses that cannot be presets (D-155). ** recurses here, unlike the single-level patterns

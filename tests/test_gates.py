@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """The gate over this month's launches (D-142): wording names the behaviour, never grades; counts come from the
 structured values counts; the snapshot facts travel with every headline."""
 import os
@@ -221,7 +223,7 @@ class SplitCounts(unittest.TestCase):
         c, f, h = self.counts_and_headline(Surplus())
         self.assertEqual((c["loaded"], c["misidentified"], c["dropped"], c["extra"], c["ids_not_returned"]), (256, 10, 0, 10, 0))
         self.assertEqual(c["loaded"] + c["misidentified"] + c["refused_matched"] + c["dropped"], c["expected"] + c["extra"])
-        self.assertEqual(h, "256 loaded, 10 misidentified, 10 of them beyond the file's records")
+        self.assertEqual(h, "256 loaded, 10 misidentified, 10 returned beyond the file's records")
 
     def test_the_reference_sums_to_the_expected_count_with_nothing_extra(self):
         c, f, h = self.counts_and_headline(Reference())

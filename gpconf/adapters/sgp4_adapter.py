@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Preset `sgp4`: python-sgp4 (an optional dependency, tested with 2.27). TLE via twoline2rv; CSV/XML/JSON via
 sgp4.omm; KVN unsupported; TLE writing via omm.initialize + exporter.export_tle.
 Exposes the library's behaviour as-is, including the failures documented in docs/upstream/."""

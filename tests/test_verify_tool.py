@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Comparison logic of tools/verify_against_spacetrack.py, exercised only with the repository's own
 derived lines (as both sides). No Space-Track output is fabricated and no network is touched."""
 import glob

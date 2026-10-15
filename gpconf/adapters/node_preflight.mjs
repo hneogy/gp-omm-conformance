@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Preflight for a Node preset (D-153, D-154): can the working directory import the library? Run by gpconf as
 // `node --input-type=module --eval <this source> -- <package>` before any case, so that a missing Node library is a
 // setup error, never a parse failure charged to the library. Prints one JSON object: ok, node, entry, version, error.

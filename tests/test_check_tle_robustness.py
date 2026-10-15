@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Batch D3 (D-119): check-tle reports stray lines instead of dropping them (10.6), a day-of-year source epoch
 in --against is handled (10.7), and the writer checks catch misaligned columns (10.4).
 

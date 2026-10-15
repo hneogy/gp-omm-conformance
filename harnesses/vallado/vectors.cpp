@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Vector hooks for the corpus, each through the reference reader itself (nothing decoded by this program):
 //   alpha5_decode(field): a valid line pair with the field in columns 3-7 of both lines -> the reader's satnum
 //   two_digit_year(yy):   the same pair with the epoch year set -> the year of the epoch the reader stored

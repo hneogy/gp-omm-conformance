@@ -2,7 +2,7 @@
  "case": "mean-motion-derivative-convention",
  "title": "MEAN_MOTION_DOT / MEAN_MOTION_DDOT in the OMM equal the TLE fields as printed",
  "schema_version": "1.0",
- "generated_at": "2026-10-09T14:36:21Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "pairs",
  "sources": {

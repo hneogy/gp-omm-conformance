@@ -60,6 +60,11 @@ with it or `atoi()` ([`#L136-L228`](https://github.com/csete/gpredict/blob/v2.6/
 documents `g_ascii_strtod()` as behaving like `strtod()` in the C locale, so the application should do what the
 harness did; that part was not run.
 
+Fixed on Gpredict's master since: [PR #430](https://github.com/csete/gpredict/pull/430), merged 2026-10-10 as `f05abf3`,
+closes the report. `Good_Elements()` now checks that the epoch field is a well-formed number, and with `sgp_in.c` at
+that commit in the same harness `Get_Next_Tle_Set()` returns -2 for the line, a refusal, and reads the unedited set as
+before (D-309). No release carries the fix yet; the paragraph above is 2.6, the latest.
+
 **tle.js 5.0.3.** Run: `getEpochDay()` returned 189.7, every other getter as for the unedited set, and `isValidTLE()`
 returned true for the set. Read: the epoch day is a float field of line 1
 ([`src/line-1-definitions.js#L105-L109`](https://github.com/davidcalhoun/tle.js/blob/v5.0.3/src/line-1-definitions.js#L105-L109)),

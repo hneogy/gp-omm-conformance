@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Harness for gp-omm-conformance over libsgp4 (dnwrnr/sgp4), unmodified: tle/2le through the Tle(name, line1, line2)
 // constructor; csv through Tle::FromCsv() per data line after the header, as LoadCsvTleFile() does (master only).
 // Output: JSON records on stdout in the runner's --cmd protocol; exit 3 = format unsupported. A set or row the library

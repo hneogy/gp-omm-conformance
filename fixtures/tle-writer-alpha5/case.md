@@ -41,7 +41,7 @@ Provides:
 
 Gaps (stated explicitly for this case):
 
-- letters B-S and U-Z occur in no real catalog number; a writer's encoding of those letters is covered by the alpha5_encode vectors only
+- letters B-H, J-N, P-S and U-Z occur in no real catalog number; a writer's encoding of them is covered by the alpha5_encode vectors and, from v0.7.0, by the 46 synthetic-derived letter inputs the derived case contributes, the lowest and highest id of each letter (D-286, D-300)
 - no fetched record has a BSTAR or second derivative with a positive exponent; the writer side covers BSTAR's positive-exponent form with one synthetic-derived vector (D-125), the reader side and the second derivative stay uncovered
 - no rounding tie at the last kept digit occurs in the inputs, so half-up versus half-even rounding is not distinguished for writers either
 - no output of an external tool is shipped; strf's rffit was exercised only at function level outside this repository (DECISIONS D-097) and has no adapter because it is an interactive X11 program
@@ -65,6 +65,8 @@ The `raw/` files below are not in the repository: `tools/fetch.py` creates them 
 | `derived/alpha5-tle/alpha5-A-last-30-days-snapshot.tle` | stable | none: derived file shipped with the repository | 43008 | generated 2026-09-21T01:01:34Z | `72e2845cdb484932…` |
 | `derived/alpha5-tle/alpha5-T-270449-analyst-first.tle` | stable | none: derived file shipped with the repository | 168 | generated 2026-09-21T01:01:34Z | `74a8c9e508c0b062…` |
 | `derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle` | stable | none: derived file shipped with the repository | 58128 | generated 2026-09-21T01:01:34Z | `f4868060a6ab61d3…` |
+| `derived/alpha5-tle/alpha5-synthetic-epoch-years.tle` | stable | none: derived file shipped with the repository | 16800 | generated 2026-10-10T02:16:22Z | `de427c200042f372…` |
+| `derived/alpha5-tle/alpha5-synthetic-letters.tle` | stable | none: derived file shipped with the repository | 7728 | generated 2026-10-10T02:16:22Z | `cfca1468f2d79981…` |
 | `fixtures/analyst-objects/raw/analyst-270449-first.csv` | stable | 200 | 363 | 2026-09-21T00:44:08Z | `f9caeec84ba49dc0…` |
 | `fixtures/analyst-objects/raw/analyst-81011-first.csv` | stable | 200 | 357 | 2026-09-21T00:44:23Z | `339ed35b58d6300d…` |
 | `fixtures/analyst-objects/raw/analyst.csv` | live | 200 | 76633 | 2026-09-21T00:11:30Z | `e1d437ebf2a53ed9…` |

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """The refusal channel (D-144): an entry carrying `_refused` with a non-empty reason is a refusal, credited to its
 expected id through `_field`; a refusal without a reason is no better than a drop and is marked so; the capability
 declaration decides whether "dropped" means silently or merely unreported."""

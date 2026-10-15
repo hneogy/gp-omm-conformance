@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/fetch.py -- download corpus source files from CelesTrak exactly once each, in a clone.
 

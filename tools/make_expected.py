@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/make_expected.py -- build fixtures/<case>/expected.json for every case in tools/cases.py.
 
@@ -315,19 +317,32 @@ def build_derived_tle(case, out_sources, out_records):
         _, trecs, facts = gpref.read_file(os.path.join(ROOT, path))
         texts = omm_texts(prov["source_file"])
         src_recs = {r["norad_cat_id"]: r for r in gpref.read_file(os.path.join(ROOT, prov["source_file"]))[1]}
+        synth_src = prov.get("synthetic_source_norad_cat_id")  # synthetic-derived (D-096, D-286): one source record, ids replaced
         out_sources[path] = source_entry(path, "stable", fmt="tle", facts=facts, record_count=len(trecs))
         for t in trecs:
-            s = src_recs[t["norad_cat_id"]]
+            s = src_recs[synth_src if synth_src is not None else t["norad_cat_id"]]
             canon = strip_record(s)
+            if synth_src is not None:
+                canon = dict(canon)
+                canon["norad_cat_id"] = t["norad_cat_id"]
+                years = prov.get("two_digit_year_to_year")  # the epoch-years file: the year replaced too (D-300)
+                if years:
+                    yy = f"{t['norad_cat_id'] - 330100:02d}"
+                    canon["epoch"] = f"{years[yy]:04d}" + canon["epoch"][4:]
             d = tle_diff(canon, t)
             unexpected = {k: v for k, v in d.items() if k not in ("eccentricity", "bstar", "mean_motion_ddot", "object_name_truncated_to_24")}
             if unexpected:
                 PROBLEMS.append(f"derived {path} id {t['norad_cat_id']}: unexpected difference from source {unexpected}")
-            out_records.append({"norad_cat_id": t["norad_cat_id"], "set": "derived", "tier": "stable", "derived_file": os.path.basename(path),
-                                "source_file": prov["source_file"], "canonical": canon, "canonical_source": os.path.basename(prov["source_file"]),
-                                "by_format": {"tle": {"differs_from_omm": d, "fields": {k: v for k, v in t["tle"].items() if k not in ("line0", "line1", "line2")}}},
-                                "alpha5": {"field": t["tle"]["catalog_field"], "letter": t["tle"]["catalog_field"][0], "decodes_to": t["norad_cat_id"],
-                                           "expected_field": R.to_alpha5(t["norad_cat_id"])}})
+            rec = {"norad_cat_id": t["norad_cat_id"], "set": "derived", "tier": "stable", "derived_file": os.path.basename(path),
+                   "source_file": prov["source_file"], "canonical": canon, "canonical_source": os.path.basename(prov["source_file"]),
+                   "by_format": {"tle": {"differs_from_omm": d, "fields": {k: v for k, v in t["tle"].items() if k not in ("line0", "line1", "line2")}}},
+                   "alpha5": {"field": t["tle"]["catalog_field"], "letter": t["tle"]["catalog_field"][0], "decodes_to": t["norad_cat_id"],
+                              "expected_field": R.to_alpha5(t["norad_cat_id"])}}
+            if synth_src is not None:
+                rec["provenance"] = "synthetic-derived"
+                rec["synthetic_statement"] = prov.get("statement")
+                rec["synthetic_source_norad_cat_id"] = synth_src
+            out_records.append(rec)
 
 
 def build_derived_kvn(case, out_sources, out_records):
@@ -336,7 +351,7 @@ def build_derived_kvn(case, out_sources, out_records):
     for path in case["sets"]["variants"]["files"]:
         prov = json.load(open(os.path.join(ROOT, path.rsplit(".", 1)[0] + ".provenance.json"), encoding="utf-8"))
         _, recs, facts = gpref.read_file(os.path.join(ROOT, path))
-        out_sources[path] = source_entry(path, "stable", fmt="kvn", facts=facts, record_count=len(recs))
+        out_sources[path] = source_entry(path, "stable", fmt=path.rsplit(".", 1)[-1], facts=facts, record_count=len(recs))
         r = recs[0]
         diffs = {}
         for k in CANON_KEYS:
@@ -411,7 +426,7 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
                 src_file, rendering = from_file, "celestrak-tle"
             files.setdefault(from_file, spec["case"])
             files.setdefault(src_file, spec["case"])
-            entry = {"norad_cat_id": cat, "role": "input", "provenance": "derived", "tier": "stable",
+            entry = {"norad_cat_id": cat, "role": "input", "provenance": r.get("provenance", "derived"), "tier": "stable",
                      "derived_from": f"fixtures/{spec['case']}/expected.json: frozen canonical values of a stable-tier source (v0.1.0)",
                      "from_case": spec["case"], "from_file": from_file, "source_file": src_file,
                      "source_sha256": meta_for(src_file).get("sha256"), "canonical": r["canonical"],
@@ -419,6 +434,9 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
             fields = (r.get("by_format") or {}).get("tle", {}).get("fields")
             if fields:
                 entry["reference_tle_fields"] = {k: v for k, v in fields.items() if k in REFERENCE_TLE_FIELD_KEYS}
+            if r.get("provenance") == "synthetic-derived":
+                entry["synthetic_statement"] = r.get("synthetic_statement")
+                entry["synthetic_source_norad_cat_id"] = r.get("synthetic_source_norad_cat_id")
             out_records.append(entry)
             if cat >= 100000:
                 letters[entry["expected_catalog_field"][0]] = letters.get(entry["expected_catalog_field"][0], 0) + 1
@@ -541,9 +559,29 @@ def build_corrupt_input(case, out_sources, out_records, out_notes, case_specific
         files[os.path.basename(path)] = spec
     for path, u in unedited.items():
         out_sources[path] = source_entry(path, "stable", fmt=u["format"], record_count=u.pop("record_count"))
+    graded = {}
+    spec_g = case["sets"].get("graded", {})
+    for path in spec_g.get("files", []):   # files graded for their values only (D-299): no input depends on them
+        _, grecs, _ = gpref.read_file(os.path.join(ROOT, path))
+        fmt = path.rsplit(".", 1)[-1]
+        out_sources[path] = source_entry(path, "stable", fmt=fmt, record_count=len(grecs))
+        like = spec_g["values_like"]
+        ids = [r["norad_cat_id"] for r in grecs]
+        have = {r["norad_cat_id"]: r["expected"] for r in out_records if r["file"] == like}
+        for r in grecs:
+            want = have.get(r["norad_cat_id"])
+            if want is None:
+                PROBLEMS.append(f"{path}: record {r['norad_cat_id']} is not among the records of {like}")
+                continue
+            diffs = {k: (strip_record(r).get(k), v) for k, v in want.items() if k in CANON_KEYS and v is not None
+                     and (Decimal(str(strip_record(r).get(k))) != Decimal(str(v)) if k in gpref.DECIMAL_KEYS.values() else str(strip_record(r).get(k)) != str(v))}
+            if diffs:
+                PROBLEMS.append(f"{path}: record {r['norad_cat_id']} differs from the frozen values of {like}: {diffs}")
+        graded[path] = {"format": fmt, "norad_cat_ids": ids, "values_like": like}
     case_specific.update({
         "files": files,
         "unedited": unedited,
+        "graded": graded,
         "outcomes": "Per record: loaded (returned with its id and exactly the values the same parser returns for it from the input's unedited file), misidentified (returned with other values, or with an id the file does not hold: built from garbage), refused (with a reason, through the refusal channel, or with the file when the parser raises on it) and dropped (none of these). A corrupt record must be refused; a valid one must load. A record the parser does not return from the unedited file either is left out of the grading, and an input whose unedited file the parser refuses as a whole is not exercised: nothing then isolates the edit (D-175). The expected values below are the records' own, for reference; the runner does not grade against them here, since the values check grades them in the records' own cases.",
         "decisions": {"checksum": "a parser that validates no checksum is reported, not failed (owner decision 2)",
                       "cut_file": "a whole-file refusal of a cut file passes; the complete records it gives up are counted (owner decision 3)",

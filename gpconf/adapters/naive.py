@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 Preset `naive`: a demonstration of failure, not a parser anyone should use. It is the parser many projects
 actually have, written deliberately with the common shortcuts so that the runner's failures document what breaks

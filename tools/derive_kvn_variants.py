@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/derive_kvn_variants.py -- CCSDS-legal OMM renderings that CelesTrak does not emit.
 
@@ -115,17 +117,49 @@ def variants(r):
     return v
 
 
-def main():
+def xml_variant(r):
+    """The same record as an NDM/XML message (CCSDS 505.0-B-3, the unqualified OMM 2.0 schema CelesTrak's own XML
+    names): the one XML file that ships with the corpus, so that an XML reader's values are graded without fetched
+    data (D-299; the red team's E15). The orbital values are the source's, character for character; the layout is
+    this tool's own, one element per line, and the header describes this derived message."""
+    def el(name, value, indent):
+        return f"{' ' * indent}<{name}>{value}</{name}>"
+    meta = [("OBJECT_NAME", r["OBJECT_NAME"]), ("OBJECT_ID", r["OBJECT_ID"]), ("CENTER_NAME", "EARTH"),
+            ("REF_FRAME", "TEME"), ("TIME_SYSTEM", "UTC"), ("MEAN_ELEMENT_THEORY", "SGP/SGP4")]
+    mean = [(k, r[k]) for k in ("EPOCH", "MEAN_MOTION", "ECCENTRICITY", "INCLINATION", "RA_OF_ASC_NODE", "ARG_OF_PERICENTER", "MEAN_ANOMALY")]
+    tle = [(k, r[k]) for k in ("EPHEMERIS_TYPE", "CLASSIFICATION_TYPE", "NORAD_CAT_ID", "ELEMENT_SET_NO", "REV_AT_EPOCH", "BSTAR", "MEAN_MOTION_DOT", "MEAN_MOTION_DDOT")]
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<ndm xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-2.0.0-master-2.0.xsd">',
+             '  <omm id="CCSDS_OMM_VERS" version="2.0">',
+             '    <header>', el("CREATION_DATE", NOW.strftime("%Y-%m-%dT%H:%M:%S"), 6), el("ORIGINATOR", ORIGINATOR, 6), '    </header>',
+             '    <body>', '      <segment>', '        <metadata>'] + [el(k, v, 10) for k, v in meta] + ['        </metadata>',
+             '        <data>', '          <meanElements>'] + [el(k, v, 12) for k, v in mean] + ['          </meanElements>',
+             '          <tleParameters>'] + [el(k, v, 12) for k, v in tle] + ['          </tleParameters>',
+             '        </data>', '      </segment>', '    </body>', '  </omm>', '</ndm>']
+    return ("v07-xml-ndm-reserialised", "\n".join(lines) + "\n",
+            "The record as an NDM/XML message: an ndm root holding one omm element (OMM 2.0, unqualified schema), one element per line, header filled for this derived message",
+            ["505.0-B-3 (NDM/XML) section 4: the omm element in an ndm combined instantiation", "502.0-B-3 section 4.2: OMM header, metadata and data keywords"])
+
+
+def main(argv=None):
+    force = "--force" in (argv if argv is not None else sys.argv[1:])
     os.makedirs(OUT, exist_ok=True)
     src = os.path.join(ROOT, SRC)
     meta = json.load(open(src + ".meta.json", encoding="utf-8"))
     r = list(csv.DictReader(io.StringIO(open(src, encoding="utf-8").read())))[0]
-    for stem, text, desc, clauses in variants(r):
-        out = os.path.join(OUT, stem + ".kvn")
+    for stem, text, desc, clauses in list(variants(r)) + [xml_variant(r)]:
+        ext = ".xml" if stem.startswith("v07-xml") else ".kvn"
+        out = os.path.join(OUT, stem + ext)
+        if os.path.exists(out) and not force:
+            # a released derived file is frozen: its bytes are hashed in the manifest and carry their own generation
+            # time, so a run of this tool writes only what is not there yet (--force rewrites, for a new corpus)
+            print(f"{stem}{ext}: exists, left as it is")
+            continue
         with open(out, "w", newline="", encoding="utf-8") as f:
             f.write(text)
-        prov = {"file": os.path.relpath(out, ROOT), "provenance": "derived",
-                "label": "DERIVED: CCSDS-legal KVN re-serialisation of a CelesTrak record; not served by CelesTrak",
+        prov = {"file": os.path.relpath(out, ROOT).replace(os.sep, "/"), "provenance": "derived",
+                "label": ("DERIVED: CCSDS-legal XML re-serialisation of a CelesTrak record; not served by CelesTrak in this layout" if ext == ".xml" else
+                          "DERIVED: CCSDS-legal KVN re-serialisation of a CelesTrak record; not served by CelesTrak"),
                 "description": desc, "ccsds_502_0_b3_clauses": clauses,
                 "source_file": SRC, "source_sha256": meta["sha256"], "source_url": meta["url"],
                 "source_retrieved_at": meta["retrieved_at"], "source_norad_cat_id": int(r["NORAD_CAT_ID"]),
@@ -135,7 +169,7 @@ def main():
                 "header_values_note": "Any CREATION_DATE/ORIGINATOR/MESSAGE_ID/CLASSIFICATION values describe this derived message, not the provider.",
                 "output_sha256": hashlib.sha256(text.encode()).hexdigest()}
         json.dump(prov, open(out[:-4] + ".provenance.json", "w", encoding="utf-8"), indent=2)
-        print(f"{stem}.kvn ({len(text)} bytes)")
+        print(f"{stem}{ext} ({len(text)} bytes)")
 
 
 if __name__ == "__main__":

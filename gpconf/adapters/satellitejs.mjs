@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Preset `satellite.js` (tested with 7.1.0): satellite.js as-is through the runner's command protocol. Raw bytes on
 // stdin, a JSON array of records on stdout, exit 3 for a format the library has no reader for. twoline2satrec for
 // tle and 2le, json2satrec for json; csv, xml and kvn are unsupported. Moved into the package from the corpus's

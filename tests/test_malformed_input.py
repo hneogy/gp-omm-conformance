@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Malformed input to the reference readers is a clear error, never a wrong record (D-117).
 
 Audit item 10.9: a BOM on CSV, KVN and 2LE, an XML default namespace, a duplicate KVN keyword, a TLE day of

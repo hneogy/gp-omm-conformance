@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 A count agrees in number with the words beside it (D-239): one case passes where two pass, one request is made where
 two are, and no line hedges a plural with a bracketed s. The slip that started it was the Action's summary reading
@@ -199,8 +201,8 @@ class WhatTheRunnerSaysOfAnItem(unittest.TestCase):
         self.assertIn("256 records match frozen expected values", self.details)
 
     def test_data_checks(self):
-        self.assertIn("1 record, all checksums valid (data check)", self.details)
-        self.assertIn("256 records, all checksums valid (data check)", self.details)
+        self.assertIn("1 record, all checksums valid (data check; the parser under test is not involved)", self.details)
+        self.assertIn("256 records, all checksums valid (data check; the parser under test is not involved)", self.details)
         self.assertIn("1 catalog field decoded correctly (Alpha-5)", self.details)
         self.assertIn("256 catalog fields decoded correctly (Alpha-5)", self.details)
 

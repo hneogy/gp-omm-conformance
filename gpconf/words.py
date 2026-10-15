@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 gpconf/words.py -- number agreement for the text the runner prints (D-239). Standard library only.
 

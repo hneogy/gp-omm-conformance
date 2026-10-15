@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 name: ci
 on: [push, pull_request]
 permissions:
@@ -18,9 +20,28 @@ jobs:
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6, pinned by commit (D-269)
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Test-only tools for the quick gates (D-320), on one Python version; the package itself has no dependency
+        if: matrix.python-version == '3.12'
+        run: python -m pip install --quiet mypy==2.4.0 hypothesis==6.169.0
+      # With Hypothesis installed the suite includes tests/test_properties.py at 100 examples. Hypothesis needs Python
+      # 3.11 or later, so on 3.9 those tests are skipped, each by name; on 3.12 GPCONF_REQUIRE_HYPOTHESIS makes its
+      # absence an error, and the step after the suite checks that the eighteen properties ran (D-322).
       - run: python -m unittest discover -s tests -t . -v
+        env:
+          GPCONF_REQUIRE_HYPOTHESIS: ${{ matrix.python-version == '3.12' && '1' || '' }}
+      - name: The property tests ran, and none was skipped (D-322)
+        if: matrix.python-version == '3.12'
+        run: python tools/ran_not_skipped.py tests.test_properties 19
+        env:
+          GPCONF_REQUIRE_HYPOTHESIS: "1"
       - run: python -m gpconf run --preset reference --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 --case corrupt-input
       - run: python -m gpconf run --preset naive --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 --case corrupt-input || test $? -eq 1
+      - name: Type check at mypy's default settings (D-320); the stricter check is a ratchet in nightly.yml
+        if: matrix.python-version == '3.12'
+        run: python -m mypy gpconf --ignore-missing-imports
+      - name: Mutant fuzzing of the grader, smoke (D-287, D-320) — 500 one-bug parsers at a fixed seed; any survivor outside the reviewed allowlist fails the job. The 5,000 run is in nightly.yml and on every tag
+        if: matrix.python-version == '3.12'
+        run: python tools/mutant_fuzz.py --count 500 --seed 20261009 --jobs 4 --ci
 
   offline-windows:
     # The same offline run on Windows (D-269, after the audit of 2026-10-08: the kit names Windows in its

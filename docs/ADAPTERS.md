@@ -48,7 +48,7 @@ case names, the runner calls `parse(raw, fmt)` on that object, or calls the obje
 | field | | what the runner expects |
 |---|---|---|
 | `norad_cat_id` | core | an integer |
-| `epoch` | core | a `datetime` (a naive one is read as UTC, an aware one converted to UTC) or a string: calendar or day-of-year form, with or without a fraction, `Z` or an offset |
+| `epoch` | core | a `datetime` (a naive one is read as UTC, an aware one converted to UTC) or a string your parser built: calendar or day-of-year form, with or without a fraction, `Z` or an offset. Never the input's own epoch text handed back: a string that is not in the calendar form `YYYY-MM-DDThh:mm:ss[.f]` and stands in the file as you return it fails the record's `values` (D-306) |
 | `mean_motion` | core | revolutions per day |
 | `eccentricity` | core | |
 | `inclination`, `ra_of_asc_node`, `arg_of_pericenter`, `mean_anomaly` | core | degrees |
@@ -63,13 +63,23 @@ not keep it, rather than inventing a value. Keys the runner does not know are ig
 debugging; the shipped harnesses use keys that begin with `_`, such as `_catalog_field`. Two such keys have a meaning,
 `_refused` and `_adapter`, described under [Refusals](#refusals-the-refusal-channel).
 
-For a format your library cannot read, raise `gpconf.runner.Unsupported`. The file is then reported as `skip`, which
-in this corpus means exactly that: the parser has no reader for the format.
+For a format your library cannot read, raise `gpconf.runner.Unsupported`. The file is then reported as `skip`. A skip
+says that the parser answered unsupported for that format everywhere in this run: the runner compares the answer with
+every other read of the same format in the run and fails a mix, but it cannot tell a missing reader from a hidden
+one, so a skip is the adapter's claim, reported and counted, never verified (D-312). From
+v0.7.0 an outcome that is not a graded pass or fail (a skip, an `Unsupported`, a refusal, extra or duplicate
+records) is either all-or-none for its whole scope or graded and counted; there are no partial skips (D-280, the
+owner's rule after the audit of issue #1). Concretely: a format is unsupported for all of a run's inputs or none,
+so an adapter that parses some files of a format and raises `Unsupported` on others fails those files instead of
+skipping them, in the same case or another one of the same run.
 
 ### Values and tolerances
 
 The expected values are exact decimal strings. A value you return as a string, a `Decimal` or an `int` must match
-exactly. A value you return as a `float` passes within a relative 1e-12, and a zero must be an exact zero; an epoch
+exactly. A string must be a plain decimal number: an optional sign, ASCII digits with an optional point, an optional
+exponent, and nothing before or after it. Padding, an underscore between digits and the digits of another script are
+not numbers here, though Python's `Decimal()` would read them; such text is a value the runner cannot read, and the
+file fails as `parse` (D-319). An epoch string is held to ASCII digits in the same way. A value you return as a `float` passes within a relative 1e-12, and a zero must be an exact zero; an epoch
 passes within 2 microseconds. A pass that needed a tolerance is reported as `pass-tolerance`, apart from `pass`, with
 the per-field count, mean and maximum difference. The README's
 [Tolerances](../README.md#tolerances-and-how-they-are-reported) section gives the reasons.
@@ -78,9 +88,9 @@ the per-field count, mean and maximum difference. The README's
 
 | what the adapter does | what the report says |
 |---|---|
-| raises `Unsupported` | the file is `skip` (`format-supported`) |
+| raises `Unsupported` | the file is `skip` (`format-supported`) — unless this parser read another file of the same format in this run, which makes the skip a `fail` (D-280) |
 | raises anything else | the whole file fails as `parse`: "parser raised" with the exception's type and message |
-| returns a value the runner cannot read as a decimal or an epoch (`"fast"`, `"yesterday"`) | the same: the runner's own conversion raises, and the whole file fails as `parse` |
+| returns a value the runner cannot read as a decimal or an epoch (`"fast"`, `"yesterday"`, `" 15.49"`, `"15.49_32"`) | the same: the runner's own conversion raises, and the whole file fails as `parse` |
 | returns something other than a list of dicts (a dict, say) | the same |
 | returns no records for a file the corpus's own reader reads records from | the file fails closed as `records-returned`, and no other check on it runs |
 | returns an integer field that is not an integer (`"A0000"`, `100000.5`, `True`) | that record fails, and the report names the value and its type; a catalog number of that kind is counted as misidentified |
@@ -92,7 +102,7 @@ the per-field count, mean and maximum difference. The README's
 The PyEphem adapter handles TLEs only, so it is the smallest complete adapter that ships. Here it is whole, below its
 docstring.
 
-From [`gpconf/adapters/pyephem_adapter.py`](../gpconf/adapters/pyephem_adapter.py), lines 11 to 60:
+From [`gpconf/adapters/pyephem_adapter.py`](../gpconf/adapters/pyephem_adapter.py), lines 13 to 62:
 
 ```python
 import math
@@ -170,7 +180,7 @@ To run it: `pip install ephem`, then `python3 -m gpconf run --preset pyephem`, o
 python-sgp4 reads TLE and three OMM formats, writes TLEs, and decodes Alpha-5, so its adapter shows the whole
 protocol.
 
-From [`gpconf/adapters/sgp4_adapter.py`](../gpconf/adapters/sgp4_adapter.py), lines 4 to 67:
+From [`gpconf/adapters/sgp4_adapter.py`](../gpconf/adapters/sgp4_adapter.py), lines 6 to 69:
 
 ```python
 import io
@@ -249,7 +259,7 @@ class Parser:
   [refusal channel](#refusals-the-refusal-channel) section explains each key.
 
 The rest of the file answers the writer case and two of the vector hooks with the library's own functions. From
-[`gpconf/adapters/sgp4_adapter.py`](../gpconf/adapters/sgp4_adapter.py), lines 69 to 79:
+[`gpconf/adapters/sgp4_adapter.py`](../gpconf/adapters/sgp4_adapter.py), lines 71 to 81:
 
 ```python
     def write_tle(self, record):
@@ -298,7 +308,7 @@ instead, so the report names the value and its type.
 
 ### A worked example: satellite.js
 
-From [`gpconf/adapters/satellitejs.mjs`](../gpconf/adapters/satellitejs.mjs), lines 8 to 82:
+From [`gpconf/adapters/satellitejs.mjs`](../gpconf/adapters/satellitejs.mjs), lines 10 to 84:
 
 ```javascript
 import { readFileSync } from 'node:fs';
@@ -409,7 +419,7 @@ standard input and prints `{"result": <value>}`, `{"error": "<reason>"}` to reje
 reason, as the item skips for a Python adapter without the hook; an operation answers unsupported for all of its
 vectors or for none, and a mix fails the item. A non-zero exit counts as a rejection, exit 3 included (the vectors
 protocol never gave it the meaning the parse and write commands do), and so does an answer that carries none of the
-three keys. `parse_epoch` answers with an ISO string. A Python adapter's hook raises `gpconf.runner.Unsupported` for
+three keys. `parse_epoch` answers with an ISO string, which the runner converts; the vector's own text sent back as it came, where that is not already the calendar form, is a rejection (D-306). A Python adapter's hook raises `gpconf.runner.Unsupported` for
 the same effect.
 
 Once `--vectors-cmd` is given, the runner asks it for all five hooks. tle.js has no TLE writer and no OMM parser, so
@@ -417,7 +427,7 @@ its harness answers unsupported for `alpha5_encode`, `parse_epoch` and `parse_ca
 with the reason; before 0.5.0 there was no such answer, and an operation the library did not have answered an error,
 which failed its valid vectors. Without `--vectors-cmd`, every vector item skips.
 
-From [`gpconf/adapters/tlejs_vectors.mjs`](../gpconf/adapters/tlejs_vectors.mjs), lines 8 to 34:
+From [`gpconf/adapters/tlejs_vectors.mjs`](../gpconf/adapters/tlejs_vectors.mjs), lines 10 to 36:
 
 ```javascript
 // it (D-154). GPCONF_NODE_MODULE, set by `--module PATH`, names the library's entry file instead.
@@ -468,7 +478,7 @@ is no example here; `write_tle` in `sgp4_adapter.py`, above, follows the same co
 ## Refusals: the refusal channel
 
 A library that rejects a record should be heard, not lost. An adapter reports a rejected record by putting, in the
-same list as the records, an entry like this one from `gpconf/adapters/sgp4_adapter.py` (line 46):
+same list as the records, an entry like this one from `gpconf/adapters/sgp4_adapter.py` (line 48):
 
 ```python
 {"_refused": f"ValueError: {e}", "_field": l[2:7], "_input": l[:80]}
@@ -515,8 +525,12 @@ Each file's values item carries counts, printed in its detail and written to the
   standing in for it: the expected count less loaded, refused_matched and misidentified, never below 0.
 - **ids_not_returned**: the expected ids no record came back under, whatever came back under other ids; the count
   `dropped` carried before corpus 0.5.0, kept so that nothing is lost.
-- **extra**: misidentified records beyond the expected records left unaccounted for, when a parser returns more
-  records than the file holds.
+- **extra**: records beyond the expected ones — misidentified records left unaccounted for, and, from v0.7.0,
+  every surplus copy of an expected record (`duplicate_copies` carries the copy count on its own). A record
+  fails when the parser returns more copies of its id than the input holds, exact copies included, and a copy
+  that disagrees with the expected values fails its record too (D-311, which reverses the second half of D-281,
+  inside D-194's one-outcome-per-expected-record rule: the record keeps one outcome, however many copies came
+  back, and every copy is compared).
 
 One outcome per expected record (corpus 0.5.0, D-207): loaded, misidentified, refused_matched and dropped sum to the
 expected count, plus `extra`. A record returned with the wrong catalog number is counted once, as misidentified, and
@@ -540,12 +554,25 @@ optional methods on your adapter instead:
 | `alpha5_decode(field)` | a catalog field, `str` | the catalog number, `int` | the field is invalid: `I` or `O`, lowercase, a letter after the first place, the wrong length | `alpha5-decode` |
 | `alpha5_encode(n)` | a catalog number, `int` | the five-character field | the number cannot be written: 340000, 799501621 and -1 are tried | `alpha5-encode` |
 | `two_digit_year(yy)` | a two-digit year, `str` | the four-digit year | never: a raise fails that vector | `two-digit-year-pivot` |
-| `parse_epoch(text)` | a CCSDS epoch, `str` | a `datetime`, or an ISO string, compared within 2 microseconds | the text is not a CCSDS epoch (a one-digit month, a space for the `T`, an offset, a TLE epoch) | `ccsds-epoch-strings` |
+| `parse_epoch(text)` | a CCSDS epoch, `str` | a `datetime`, compared within 2 microseconds; a string fails the item, since the runner would be the one parsing it (D-306) | the text is not a CCSDS epoch (a one-digit month, a space for the `T`, an offset, a TLE epoch) | `ccsds-epoch-strings` |
 | `parse_catalog_id(text)` | a `NORAD_CAT_ID` as text | the number, exactly an `int` | the text is not an integer of up to nine digits (`A0000`, ten digits, `25544.0`, empty) | `catalog-number-is-integer` |
-| `write_tle(record)` | one record: integers for the catalog number and the counters, decimal strings for the elements, the epoch as an ISO string | two lines, three with a name, or one string holding them | the record cannot be written as a TLE; raise `Unsupported` to skip the case | the writer case |
+| `write_tle(record)` | one record: integers for the catalog number and the counters, decimal strings for the elements, the epoch as an ISO string | two lines, three with a name, or one string holding them | a record the TLE format cannot carry is refused with an exception; `Unsupported` must be the answer for every record or for none: a mix fails, and what was written stays graded (D-280). For every record, the case skips; that the library writes no TLE is the adapter's claim, which the runner reports and does not verify (D-312) | the writer case |
 
 Any of the five vector hooks may raise `gpconf.runner.Unsupported` for an operation your library does not have; the
-item then skips with the reason, provided every vector of that hook gets the same answer (D-205).
+item then skips with the reason, provided every vector of that hook gets the same answer (D-205). The runner checks
+that sameness and nothing more: that the operation is absent is the adapter's claim (D-312). `write_tle`
+follows the same rule from v0.7.0.
+
+Three more things the grader holds from v0.7.0, each found by the adversarial audit (issue #1; `tests/adversarial/`):
+the catalog number and the counters (`ephemeris_type`, `element_set_no`, `rev_at_epoch`) must be `int` — a float or
+a string that converts cleanly is reported with its value and type (D-131) and fails (D-283); a field with expected
+values that your parser never returns shows in the case result as a visible gap (`fields-not-returned`,
+not-exercised), and one returned for some records and omitted for others fails (D-284); where a format carries no
+value for `center_name`, `ref_frame`, `time_system` or `mean_element_theory`, the runner accepts `None` or the OMM
+constant defaults (`EARTH`, `TEME`, `UTC`, `SGP4`/`SGP/SGP4`) and fails anything else (D-285). In the corrupt-input
+case a refusal credits the corrupt record only on evidence — a `_field` that decodes to it, or an `_input` quoting
+text the edit introduced (for a cut, the cut site); a refusal that names no record credits none, as this document
+has always said (D-282).
 
 The writer case reads the lines `write_tle` returns back with the corpus's own reader. They must be two 69-character
 lines with valid checksums, with every field in its fixed columns, and with the catalog field as five digits below
@@ -561,7 +588,7 @@ is given.)
 
 The corpus's own readers implement all five vector hooks.
 
-From [`gpconf/adapters/reference.py`](../gpconf/adapters/reference.py), lines 39 to 75:
+From [`gpconf/adapters/reference.py`](../gpconf/adapters/reference.py), lines 45 to 81:
 
 ```python
     def alpha5_decode(self, field):
@@ -639,11 +666,11 @@ their tags; `-v` prints every item, not only the failures and the passes within 
 The command above prints:
 
 ```text
-gpconf 0.6.1 | corpus 0.6.1 | parser: gpconf.adapters.reference:Parser
+gpconf 0.7.0 | corpus 0.7.0 | parser: gpconf.adapters.reference:Parser
 
 case                                     status          exact  tol fail skip n/e n/f n/a
 alpha5-encoding-vectors                  pass                5    0    0    0   0   0   0
-alpha5-tle-derived                       pass               12    0    0    0   0   0   0
+alpha5-tle-derived                       pass               18    0    0    0   0   0   0
 ```
 
 followed by the gate and a count line. The first line names the runner, the corpus and the parser. Each case has one
@@ -652,14 +679,24 @@ any of its items has, and counts of its items: passed exactly, passed within tol
 (a data check, or data that did not occur, such as nine-digit ids outside a launch window), not fetched, and not
 available (a launch-window capture, which no fetch requests, D-229). Below the table come the
 gate over this month's launches, then the failing items and the passes within tolerance, grouped by case, and last
-the count line, which says how many cases need fetched data and how many cannot run from a fetch. The exit status is 0 when no case failed, 1 when one did, and 2 when nothing could run: a
+the count line, which says how many cases need fetched data and how many cannot run from a fetch.
+
+A status does not say everything, and from v0.7.0 the run says the rest (D-312). A case that did not skip as a whole
+but holds an item that skipped, or a file in which a field with expected values was never returned, carries that in
+its status cell: `pass (1 item skipped)`, `pass (5 field gaps)`, `pass (1 item skipped, 2 field gaps)`. The status,
+the counts and the exit status are what they were; the words in brackets are what the status leaves out. Under the
+count line a sentence totals them across the run, and when cases were not graded for lack of provider data a line
+says how many were: `5 of 18 cases graded offline; not a full conformance result.` A run on the five cases that
+ship is a run on five cases. The exit status is 0 when no case failed, 1 when one did, and 2 when nothing could run: a
 preset whose library is missing, or a corpus copy that is incomplete.
 
 ### Keep the report: `--json`
 
 `--json FILE` writes all of it. A script should read this report or the exit status, never the printed lines, whose
 wording can change from one version to the next (D-240). The top level holds `gpconf`, `corpus_version`, `parser` (and
-`preset` for a preset), `generated_at`, `summary`, `results` and `gates`. `summary`, from 0.6.0, holds the case totals
+`preset` for a preset), `generated_at`, `summary`, `inside_cases`, `results` and `gates`. `inside_cases`, from 0.7.0, holds
+`items_skipped`, `field_gaps` and `cases_graded` for the run, and a result that has either of the first two carries them
+as `annotations`. `summary`, from 0.6.0, holds the case totals
 as numbers:
 `cases`, the number of cases run, and one count for each status a case can end in, `pass`, `pass-tolerance`, `fail`,
 `skip`, `not-fetched`, `not-available` and `not-exercised`, zeros included; they are the numbers of the count line and

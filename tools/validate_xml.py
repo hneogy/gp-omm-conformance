@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """tools/validate_xml.py -- validate every raw XML fixture against the vendored SANA schema sets.
 Writes tools/_out/xml-validation.json. Run with the project venv (needs xmlschema)."""
 import glob

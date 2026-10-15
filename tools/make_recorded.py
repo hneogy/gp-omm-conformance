@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """tools/make_recorded.py -- write the one provider response the corpus ships, with its provenance (D-247).
 
 CelesTrak answers a GP query that has nothing to return in the format asked for with HTTP 404 and a 16-byte body,
@@ -80,7 +82,7 @@ def main():
         "holds_orbital_data": False,
         "exception": ("The one provider response shipped with the corpus: a named exception to D-023, which ships no raw CelesTrak "
                       "bytes (DECISIONS.md, D-247). No other provider response is shipped."),
-        "licence": "CelesTrak's text, reproduced as recorded. The corpus's MIT licence does not cover it (NOTICE).",
+        "licence": "CelesTrak's text, reproduced as recorded. The corpus's licence does not cover it (NOTICE).",
         "how_it_is_used": ("gpconf fetch writes this body to each path of written_by_the_fetch_as, with metadata that says it was "
                            "written from this record, and requests none of those URLs. The runner hands it to the parser under test "
                            "(check empty-answer-yields-no-records)."),

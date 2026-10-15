@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Preset `pyephem`: PyEphem (the `ephem` package, an optional dependency, tested with 4.2.1). TLE and 2LE only;
 every other format is Unsupported.
 

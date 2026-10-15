@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-155, v0.3.0 stage 4: harnesses/, the recipes for the five libraries of the one-off runs that cannot be presets; and, since
 D-216, a sixth recipe of another kind, Vallado's SGP4 C++ as CelesTrak publishes it.
 
@@ -136,7 +138,7 @@ class SatDump(unittest.TestCase):
 
 @unittest.skipUnless(os.path.isdir(ORIGINALS), "the one-off runs' originals are private")
 class CopiesOfTheOneOffRuns(unittest.TestCase):
-    """The recipes' harness files are the one-off runs' files, byte for byte, except the first comment line of astroz's
+    """The recipes' harness files are the one-off runs' files, byte for byte under the two header lines, except the first comment line of astroz's
     common.zig, which says whose code it is and the library's licence, reworded for the public copy. astroz's
     harness.zig is round two's, which reports refusals (D-185) and also builds at d558933; Gpredict's harness.c is
     round two's too (D-178), and so is libsgp4's harness.cpp (D-182)."""
@@ -146,6 +148,9 @@ class CopiesOfTheOneOffRuns(unittest.TestCase):
             for rel in spec["files"] - {"README.md"}:
                 with self.subTest(file=f"{name}/{rel}"):
                     ours = open(os.path.join(H, name, rel), encoding="utf-8").read().splitlines()
+                    # the two header lines every source file carries from v0.7.0 (D-310); the originals have none
+                    self.assertEqual([l.lstrip("/# ") for l in ours[:2]], ["SPDX-License-Identifier: Apache-2.0", "Copyright 2026 NEOGY LLC"])
+                    ours = ours[2:]
                     theirs = open(os.path.join(ORIGINALS, ORIGINAL_DIR[name], ORIGINAL_FILE.get((name, rel), rel)), encoding="utf-8").read().splitlines()
                     if name == "astroz" and rel == "common.zig":
                         ours, theirs = ours[1:], theirs[1:]  # the first comment line says whose code it is, reworded for the public copy

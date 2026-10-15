@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Shared helpers for the gp-omm-conformance harness over astroz (the corpus's own code; astroz, GPL-3.0 through v0.13.0 and MIT from v0.14.0, is only called).
 const std = @import("std");
 

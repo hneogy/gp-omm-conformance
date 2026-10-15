@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Shared by the harness and the vectors helper: JSON output helpers, the ISO rendering of a libsgp4 DateTime,
 // and a checksum routine of my own for the synthetic lines the vectors helper builds.
 #pragma once

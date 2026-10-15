@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-161: docs/ADAPTERS.md, the adapter guide, stays true to the repository it describes.
 
 Every code block it presents as taken from a shipped file is that file's text at the lines it names, so an adapter

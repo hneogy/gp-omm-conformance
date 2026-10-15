@@ -2,7 +2,7 @@
  "case": "alpha5-encoding-vectors",
  "title": "Specification vectors: the Alpha-5 table with boundaries and invalid inputs, catalog-id text forms, the two-digit-year pivot and CCSDS epoch strings",
  "schema_version": "1.0",
- "generated_at": "2026-09-23T21:49:02Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "vectors",
  "sources": {

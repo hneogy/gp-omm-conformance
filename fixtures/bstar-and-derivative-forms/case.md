@@ -15,6 +15,7 @@ Drag-term encodings: negative BSTAR and first derivative, non-zero second deriva
 
 ## Checks
 
+- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 - **bstar-implied-decimal-exponent** — TLE BSTAR and second-derivative fields are +/-NNNNN+/-E with an implied leading decimal point: ' 15975-3' is 0.15975e-3; zero is written ' 00000+0'.
 - **negative-bstar-and-ndot** — BSTAR and the first derivative can be negative; parsers must keep the sign.
 - **mmdot-is-tle-field-value** — OMM MEAN_MOTION_DOT equals the TLE first-derivative field as printed (the TLE 'ndot/2' convention); MEAN_MOTION_DDOT likewise equals the TLE second-derivative field.

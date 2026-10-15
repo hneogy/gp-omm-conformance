@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-160: SECURITY.md, the public repository's security policy, stays true to the repository it describes.
 
 Every path it names exists, so that a move or a rename cannot leave the policy pointing at nothing; its report address

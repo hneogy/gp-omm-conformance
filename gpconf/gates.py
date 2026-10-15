@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Gates (D-142): headlines read across existing cases, computed from the structured counts behind values items.
 
 A gate answers one operational question over one snapshot, per format the parser reads, in words that name the
@@ -113,7 +115,9 @@ def _numbers(r, expected):
     if r.get("dropped"):
         parts.append(f"{r['dropped']} dropped " + ("silently" if r.get("refusals_reported") else "(refusals not reported by this adapter)"))
     if r.get("extra"):
-        parts.append(f"{r['extra']} of them beyond the file's records")
+        # misidentified records beyond the expected ones, and from 0.7.0 every surplus copy of an expected record
+        # (D-281): the headline used to say "256 loaded" of a parser that returned 512 (D-298)
+        parts.append(f"{r['extra']} returned beyond the file's records")
     return ", ".join(parts) if parts else "0 returned"
 
 

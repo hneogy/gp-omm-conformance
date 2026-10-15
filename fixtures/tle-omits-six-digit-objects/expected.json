@@ -2,7 +2,7 @@
  "case": "tle-omits-six-digit-objects",
  "title": "A group with only 6-digit objects: OMM formats return 256 records, the TLE request returns HTTP 404",
  "schema_version": "1.0",
- "generated_at": "2026-10-09T14:36:21Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {

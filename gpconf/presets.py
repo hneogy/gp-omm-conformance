@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Presets: `gpconf run --preset NAME` runs a shipped adapter with no adapter written (D-151).
 
 Each preset names the adapter module, the library it exposes, the version it was tested against and, for a

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 /* Harness for gp-omm-conformance: reads TLE text on stdin, hands every 3-line (or name-less 2-line) set to Gpredict's
    own Get_Next_Tle_Set() (src/sgpsdp/sgp_in.c, unmodified), and prints the parsed tle_t as JSON records in the
    runner's --cmd protocol. usage: gpredict-harness <fmt>; exit 3 = format unsupported. A set Get_Next_Tle_Set()

@@ -2,7 +2,7 @@
  "case": "supgp-celestrak-classification-c",
  "title": "CelesTrak supplemental GP: classification C, element set 0, RMS/DATA_SOURCE columns, 72000-series ids",
  "schema_version": "1.0",
- "generated_at": "2026-10-09T14:36:21Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {
@@ -272,6 +272,10 @@
  },
  "records": [],
  "checks": [
+  {
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
+  },
   {
    "id": "supgp-extra-keys-tolerated",
    "description": "SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail."

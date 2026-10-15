@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-159, v0.3.0 stage 8: every version constant agrees, so that the release step's bump cannot miss one.
 
 The version is set by hand in four places, gpconf/__init__.py, pyproject.toml, tools/make_manifest.py (CORPUS_VERSION)

@@ -1,6 +1,6 @@
 # alpha5-tle-derived
 
-Derived Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T)
+Derived Alpha-5 TLE lines rendered from real CelesTrak OMM records (letters A and T), plus synthetic-derived sets for every letter and every two-digit epoch year
 
 ## Evidence basis
 
@@ -19,20 +19,21 @@ Derived, not provider output: real CelesTrak OMM records rendered into TLE layou
 
 ## Checks
 
-- **alpha5-decode** — An Alpha-5 catalog field decodes as (letter value)*10000 + digits with A=10 ... Z=33 and I, O unused; 'I', 'O' and lowercase are invalid.
 - **tle-catalog-field-decodes** — Columns 3-7 of TLE lines 1 and 2 decode to the same integer (five digits, or Alpha-5 letter + four digits).
 - **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0).
-- **tle-values-match-omm-within-tle-precision** — The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution.
+- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 
 ## Coverage
 
 Provides:
 
-- 604 Alpha-5 TLE sets, each a name line, line 1 and line 2 (1,208 element lines, 1,812 lines in the four files): 257 with letter A (ids 100000-100789), 347 with letter T (ids 270000-270449)
+- 604 Alpha-5 TLE sets derived from real records, each a name line, line 1 and line 2 (1,208 element lines, 1,812 lines in the four files): 257 with letter A (ids 100000-100789), 347 with letter T (ids 270000-270449)
+- 46 synthetic-derived TLE sets, the lowest and highest id of each of the 24 Alpha-5 letters less the two ids real records hold (100000, 270000): SARAMAGO's first-record elements rendered with the catalog number replaced, each id a specification vector, not a catalogued object (D-096, D-125, D-286, D-300)
+- 100 synthetic-derived TLE sets, one per two-digit epoch year 00-99 (ids 330100-330199), the same elements with the epoch's year replaced: a reader's pivot is graded on data wherever it sits (D-300)
 
 Gaps (stated explicitly for this case):
 
-- letters B-H, J-N, P-S and U-Z appear in no real catalog number yet (the catalog is at ~100789 and the only other 6-digit block is 27xxxx); those letters are covered by vectors only
+- letters B-H, J-N, P-S and U-Z appear in no real catalog number yet (the catalog is at ~100789 and the only other 6-digit block is 27xxxx); the parse path reads them through the synthetic-derived file and the hooks through the vectors, and no fabricated data poses as catalog data: D-016 stands, with every synthetic input naming its source record (D-286)
 - these lines are derived, not provider output: CelesTrak serves no Alpha-5 and Space-Track data is not used
 - renderer validation gap: the byte-for-byte validation (304 of 304 fetched TLE sets) used only sub-100000 CelesTrak output, because CelesTrak emits no Alpha-5. The encoding step has since been corroborated against Space-Track output by the project owner (D-070: 44 records, 0 defects, letters A and T), but the derived lines are rendered with CelesTrak's eccentricity truncation and differ from Space-Track's own TLE lines in two conventions (zero second-derivative sign at column 51; eccentricity rounding versus truncation at columns 32-33), so they are not byte-identical to Space-Track output. No Space-Track data enters this repository; the public claim describes that verification, not the data.
 
@@ -54,5 +55,7 @@ Every file of this case ships with the repository; nothing is fetched.
 | `derived/alpha5-tle/alpha5-T-270449-analyst-first.tle` | stable | none: derived file shipped with the repository | 168 | generated 2026-09-21T01:01:34Z | `74a8c9e508c0b062…` |
 | `derived/alpha5-tle/alpha5-A-last-30-days-snapshot.tle` | stable | none: derived file shipped with the repository | 43008 | generated 2026-09-21T01:01:34Z | `72e2845cdb484932…` |
 | `derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle` | stable | none: derived file shipped with the repository | 58128 | generated 2026-09-21T01:01:34Z | `f4868060a6ab61d3…` |
+| `derived/alpha5-tle/alpha5-synthetic-letters.tle` | stable | none: derived file shipped with the repository | 7728 | generated 2026-10-10T02:16:22Z | `cfca1468f2d79981…` |
+| `derived/alpha5-tle/alpha5-synthetic-epoch-years.tle` | stable | none: derived file shipped with the repository | 16800 | generated 2026-10-10T02:16:22Z | `de427c200042f372…` |
 
 Expected values: `fixtures/alpha5-tle-derived/expected.json` (schema_version 1.0).

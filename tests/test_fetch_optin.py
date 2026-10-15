@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-231: the legacy SATCAT file is fetched only on request.
 
 pub/satcat.txt is 9.4 MB, three quarters of the bytes of the whole fetch list, and one case reads it: a data check on

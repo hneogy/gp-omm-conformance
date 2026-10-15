@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Where the corpus's own files are, and where the fetched provider data is (D-150).
 
 Two roots. The corpus root holds what ships with the corpus: manifest.json, every fixtures/<case>/expected.json and

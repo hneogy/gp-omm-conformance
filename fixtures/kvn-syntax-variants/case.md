@@ -15,6 +15,7 @@ Six CCSDS-legal renderings of one record that CelesTrak never emits: day-of-year
 - **kvn-syntax-tolerance** — KVN parsers accept blank lines, COMMENT lines at allowed positions, arbitrary whitespace around '=', bracketed units, day-of-year epochs, an optional trailing Z, signed integers, lowercase 'e' exponents, LF or CRLF endings.
 - **optional-tle-parameters-may-be-absent** — EPHEMERIS_TYPE, CLASSIFICATION_TYPE, NORAD_CAT_ID, ELEMENT_SET_NO and REV_AT_EPOCH are marked O in CCSDS Table 4-3, but that table heads the block "TLE Related Parameters (This section is only required if MEAN_ELEMENT_THEORY=SGP/SGP4)" and the NORAD_CAT_ID row adds "This keyword is only required if MEAN_ELEMENT_THEORY=SGP/SGP4.", so for an SGP/SGP4 message the standard is ambiguous; the corpus accepts their absence from a valid OMM.
 - **omm-version-3-accepted** — CCSDS_OMM_VERS 3.0 messages (with CLASSIFICATION and MESSAGE_ID in the header) are accepted alongside 2.0.
+- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 
 ## Coverage
 
@@ -29,7 +30,7 @@ Provides:
 Gaps (stated explicitly for this case):
 
 - lowercase normative text values (7.5.3) and the 254-character line limit are not exercised
-- no XML variants in this version
+- no XML variants here: the corpus's one derived XML file, this record re-serialised (v07 in this folder), is graded for its values in the corrupt-input case, so that this case stays a case about KVN (D-299)
 
 ## Ambiguities recorded
 

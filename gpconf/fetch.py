@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 gpconf fetch -- download corpus source files from CelesTrak exactly once each.
 
@@ -640,8 +642,8 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     if root is None:
         try:
             loc = locate.resolve(args.root, args.data)
-        except locate.CorpusNotFound as e:
-            print(f"gpconf fetch: {e}", file=sys.stderr)
+        except locate.CorpusNotFound as not_found:
+            print(f"gpconf fetch: {not_found}", file=sys.stderr)
             return 2
         corpus, root, data_why = loc["corpus"], loc["data"], loc["data_why"]
         print(f"provider data: {root} ({data_why})", file=out)

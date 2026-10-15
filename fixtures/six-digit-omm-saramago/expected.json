@@ -2,7 +2,7 @@
  "case": "six-digit-omm-saramago",
  "title": "Catalog number 100000 (SARAMAGO): first 6-digit object, OMM formats only, TLE unavailable",
  "schema_version": "1.0",
- "generated_at": "2026-10-09T14:36:21Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {

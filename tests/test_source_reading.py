@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """A source file the reference reader cannot read must fail the case, not pass it vacuously (D-113).
 
 Four reproductions from the audit of 2026-09-23: an HTML error body saved as a TLE file, a TLE cut off after

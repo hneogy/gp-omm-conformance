@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-248: "TLE set" and "line" are used strictly, and the two figures the corpus quotes most are counts of sets.
 
 A TLE set is one object's lines: line 1 and line 2, with the name line before them where the format has one. A line is
@@ -37,15 +39,19 @@ def flat(text):
 
 
 class TheDerivedFiles(unittest.TestCase):
-    """The figures, counted from the four files the corpus ships."""
+    """The figures, counted from the files the corpus ships: 604 sets derived from real records in four files, and
+    146 synthetic-derived sets in two more (46 for the letters, 100 for the two-digit years; D-286, D-300), counted
+    apart so the published 604 stays a count of real-record derivations."""
 
     @classmethod
     def setUpClass(cls):
-        cls.files = sorted(glob.glob(os.path.join(ROOT, "derived", "alpha5-tle", "*.tle")))
+        cls.all_files = sorted(glob.glob(os.path.join(ROOT, "derived", "alpha5-tle", "*.tle")))
+        cls.files = [p for p in cls.all_files if "synthetic" not in os.path.basename(p)]
+        cls.synthetic = [p for p in cls.all_files if "synthetic" in os.path.basename(p)]
         cls.lines = [line for p in cls.files for line in read(os.path.relpath(p, ROOT).replace(os.sep, "/")).splitlines()]
 
     def test_604_sets_are_1208_element_lines_and_1812_lines(self):
-        self.assertEqual(len(self.files), 4)
+        self.assertEqual((len(self.files), len(self.synthetic)), (4, 2))
         line1 = [x for x in self.lines if x.startswith("1 ")]
         line2 = [x for x in self.lines if x.startswith("2 ")]
         self.assertEqual((len(line1), len(line2)), (604, 604))
@@ -57,6 +63,27 @@ class TheDerivedFiles(unittest.TestCase):
         letters = [x[2] for x in self.lines if x.startswith("1 ")]
         self.assertEqual((letters.count("A"), letters.count("T"), len(letters)), (257, 347, 604))
         self.assertEqual(len({x[2:7] for x in self.lines if x.startswith("1 ")}), 603)   # 270449 is there twice
+
+    def synthetic_line1(self, name):
+        (p,) = [p for p in self.synthetic if os.path.basename(p) == name]
+        lines = read(os.path.relpath(p, ROOT).replace(os.sep, "/")).splitlines()
+        return [x for x in lines if x.startswith("1 ")], lines
+
+    def test_the_letters_file_carries_both_ends_of_every_letter(self):
+        # D-286, D-300: X0000 and X9999 for each of the 24 letters, less the two ids real records hold (A0000, T0000)
+        line1, lines = self.synthetic_line1("alpha5-synthetic-letters.tle")
+        self.assertEqual((len(line1), len(lines)), (46, 138))
+        fields = sorted(x[2:7] for x in line1)
+        letters = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+        self.assertEqual(fields, sorted([f"{c}0000" for c in letters if c not in "AT"] + [f"{c}9999" for c in letters]))
+        real = {x[2:7] for x in self.lines if x.startswith("1 ")}
+        self.assertFalse(real & set(fields), "a synthetic set never takes a real record's catalog number (D-016)")
+
+    def test_the_years_file_carries_every_two_digit_year(self):
+        # D-300: one set per two-digit epoch year, under the id that names it (Z01yy)
+        line1, lines = self.synthetic_line1("alpha5-synthetic-epoch-years.tle")
+        self.assertEqual((len(line1), len(lines)), (100, 300))
+        self.assertEqual([(x[2:7], x[18:20]) for x in line1], [(f"Z01{yy:02d}", f"{yy:02d}") for yy in range(100)])
 
 
 class TheWords(unittest.TestCase):
@@ -77,14 +104,15 @@ class TheWords(unittest.TestCase):
 
     def test_the_readme_says_sets_with_their_lines(self):
         readme = flat(read("README.md"))
-        self.assertIn("| `alpha5-tle-derived` | 604 derived Alpha-5 TLE sets, 1,208 element lines (letters A and T), from real CelesTrak records |", readme)
+        self.assertIn("| `alpha5-tle-derived` | 604 derived Alpha-5 TLE sets, 1,208 element lines (letters A and T), from real CelesTrak records; "
+                      "146 synthetic-derived sets for every letter and every two-digit epoch year |", readme)
         self.assertIn("was validated (304 of 304 fetched TLE sets byte for byte: the name line, line 1 and line 2 of each)", readme)
         self.assertIn("by reproducing 304 of 304 fetched CelesTrak TLE sets byte for byte", readme)
         self.assertIn('The corpus says "TLE set" for an object\'s lines and "line" for one line: 604 derived Alpha-5 TLE sets, 304 fetched TLE sets (D-248).', readme)
 
     def test_the_case_document_gives_all_three_counts(self):
         doc = read("fixtures/alpha5-tle-derived/case.md")
-        self.assertIn("604 Alpha-5 TLE sets, each a name line, line 1 and line 2 (1,208 element lines, 1,812 lines in the four files): "
+        self.assertIn("604 Alpha-5 TLE sets derived from real records, each a name line, line 1 and line 2 (1,208 element lines, 1,812 lines in the four files): "
                       "257 with letter A (ids 100000-100789), 347 with letter T (ids 270000-270449)", doc)
         self.assertIn("from 304 TLE sets fetched from CelesTrak, each with its OMM record", doc)
 

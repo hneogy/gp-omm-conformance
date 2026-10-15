@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Preset `reference`: the corpus's own readers, the control. It passes every case that exercises a parser, since it
 produced the expected values. Standard library only."""
 import datetime as dt
@@ -28,6 +30,10 @@ class Parser:
         out = []
         for r in recs:
             d = r if "_refused" in r else {k: r.get(k) for k in CORE_FIELDS + OPTIONAL_FIELDS if r.get(k) is not None or k in CORE_FIELDS}
+            if "_refused" not in d and isinstance(d.get("epoch"), str):
+                # the control parses every epoch itself (D-306): a KVN day-of-year epoch used to leave here as the
+                # file's own text, for the runner to parse, which is what a parser under test may no longer do
+                d["epoch"] = tlemod.iso_epoch(d["epoch"])
             out.append(d)  # a refusal (D-144) is passed on as it is
         return out
 

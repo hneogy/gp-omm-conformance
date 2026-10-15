@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Stand-in for the 'cesium' package: the satellites layer's update path only constructs values and calls static
 // helpers on these seven names; nothing it computes with them is read back by the harness.
 const anything = new Proxy(function () {}, {

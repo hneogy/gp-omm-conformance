@@ -49,7 +49,7 @@ Release 1.2.2:
 
 The stand-in files the corpus used for its own run are not in this folder. They define SatDump's own functions and
 objects rather than calling them, and the corpus keeps anything written to replace part of a GPL-licensed program out
-of its MIT-licensed repository (corpus decision D-152).
+of its own repository, which is not under the GPL (corpus decision D-152).
 
 ## Build, master
 

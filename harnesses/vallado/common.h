@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Shared by the harness and the vectors helper: JSON output helpers, the call into the reference reader, the calendar
 // form of the epoch the reader stored, and a checksum routine of my own for the synthetic lines the vectors helper builds.
 #pragma once

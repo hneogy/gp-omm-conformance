@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Writer-side case (tle-writer-alpha5) and gpconf/writer.py. Run: python -m unittest tests.test_writer
 
 The reference writer (the corpus renderer) must pass every check exactly; the naive writer (integer-formatted
@@ -52,9 +54,14 @@ class ExpectedInputsTests(unittest.TestCase):
         recs = exp["records"]
         synthetic = [r for r in recs if r["provenance"] == "synthetic-derived"]
         frozen = [r for r in recs if r["provenance"] == "derived"]
-        self.assertEqual(sorted(r["norad_cat_id"] for r in synthetic), [-1, 99999, 340000, 799501621])
-        refusals = [r for r in synthetic if r["norad_cat_id"] != 99999]
+        letters = ([i for i in range(100000, 340000, 10000) if i not in (100000, 270000)] + list(range(109999, 340000, 10000))  # both ends of all 24 letters less the two real ids (D-300)
+                   + list(range(330100, 330200)))                                                                            # and the hundred two-digit-year sets
+        self.assertEqual(sorted(r["norad_cat_id"] for r in synthetic), sorted([-1, 99999, 340000, 799501621] + letters))
+        refusals = [r for r in synthetic if r["norad_cat_id"] in (-1, 340000, 799501621)]
         self.assertTrue(all(r["representable_in_tle"] is False and r["expected_behaviour"] == "refuse" for r in refusals))
+        letter_recs = [r for r in synthetic if r["norad_cat_id"] in letters]
+        self.assertTrue(all(r["representable_in_tle"] is True and r.get("expected_behaviour", "write") == "write" for r in letter_recs))
+        self.assertTrue(all(r.get("synthetic_statement") for r in letter_recs))   # D-286: each names its source and what its id is
         vector = next(r for r in synthetic if r["norad_cat_id"] == 99999)  # the positive-exponent BSTAR vector (D-125)
         self.assertEqual((vector["representable_in_tle"], vector["expected_behaviour"], vector["canonical"]["bstar"]), (True, "write", "1.2345"))
         self.assertEqual(vector["expected_tle_field"], {"bstar_field": " 12345+1"})
@@ -64,7 +71,7 @@ class ExpectedInputsTests(unittest.TestCase):
         self.assertTrue(all(r["tier"] == "stable" and r["representable_in_tle"] for r in frozen))
         self.assertEqual(len(frozen), len({r["norad_cat_id"] for r in frozen}))
         self.assertEqual(len(synthetic) + len(frozen), len(recs))
-        self.assertEqual(len(frozen), 606)  # 603 distinct Alpha-5 ids (270449 is in two derived files) + 25544, 69999, 81011
+        self.assertEqual(len(frozen), 606)  # 603 distinct real Alpha-5 ids (270449 is in two derived files) + 25544, 69999, 81011; the synthetic letters are counted above
         letters = [r["expected_catalog_field"][0] for r in frozen if r["norad_cat_id"] >= 100000]
         self.assertEqual((letters.count("A"), letters.count("T"), len(letters)), (257, 346, 603))
         for r in frozen:
@@ -143,7 +150,7 @@ class NaiveWriterTests(unittest.TestCase):
         self.assertEqual(by["tle-writer-refuses-unencodable"].status, "fail")
         self.assertIn("0 of 3", by["tle-writer-refuses-unencodable"].detail)
         self.assertIn("instead of a refusal", by["tle-writer-refuses-unencodable"].detail)
-        self.assertIn("4 of 607 catalog fields correct", by["tle-writer-catalog-field"].detail)  # the four five-digit ids incl. the D-125 vector
+        self.assertIn("4 of 753 catalog fields correct", by["tle-writer-catalog-field"].detail)  # the four five-digit ids incl. the D-125 vector; 753 = 756 inputs - 3 unrepresentable
 
 
 class Sgp4WriterTests(unittest.TestCase):
@@ -154,7 +161,14 @@ class Sgp4WriterTests(unittest.TestCase):
             self.skipTest("python-sgp4 not installed")
         r = run_case(Sgp4())
         by = items(r)
-        self.assertEqual(by["tle-writer-catalog-field"].status, "pass", by["tle-writer-catalog-field"].detail)
+        from sgp4.api import accelerated
+        if accelerated:
+            # the accelerated library fails the catalog field on two synthetic-letter inputs; the specifics are
+            # recorded privately until reported upstream (Batch G convention; D-286, 2026-10-09)
+            self.assertEqual(by["tle-writer-catalog-field"].status, "fail")
+            self.assertEqual(by["tle-writer-catalog-field"].detail.split(" ", 3)[:3], ["749", "of", "753"])
+        else:
+            self.assertEqual(by["tle-writer-catalog-field"].status, "pass", by["tle-writer-catalog-field"].detail)
         self.assertEqual(by["tle-checksums-valid"].status, "pass", by["tle-checksums-valid"].detail)
         # omm.initialize refuses 340000 and 799501621; to_alpha5(-1) returns '-0001' (no lower bound, as the vectors
         # case already records), so the library writes a line for -1 and the refusal check fails on that id alone

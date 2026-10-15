@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-252: the fetch's User-Agent names gpconf, the version that asks and the repository.
 
 Up to 0.6.0 every request of `gpconf fetch` carried "gp-omm-conformance-corpus/0.1 (fixture fetch, each URL once; see

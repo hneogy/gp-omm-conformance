@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Presets `tle.js` and `tle.js-api` (tested with 5.0.3): tle.js as-is through the runner's command protocol. Each
 // element set (name line optional) is handed as one string to the library's public getters; the harness only splits
 // the file into sets, which the library leaves to the caller, each line 1 with whatever line follows it (D-183). Raw

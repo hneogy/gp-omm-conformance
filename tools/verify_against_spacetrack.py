@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/verify_against_spacetrack.py -- verify the corpus's derived Alpha-5 TLE lines against
 Space-Track, using YOUR OWN Space-Track account. Standard library only.

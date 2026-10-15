@@ -2,7 +2,7 @@
  "case": "baseline-iss-five-formats",
  "title": "ISS current GP record: the same object in TLE, 2LE, CSV, JSON, JSON-PRETTY, XML and KVN (live)",
  "schema_version": "1.0",
- "generated_at": "2026-10-09T14:36:21Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {
@@ -491,6 +491,10 @@
   }
  ],
  "checks": [
+  {
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
+  },
   {
    "id": "omm-formats-agree",
    "description": "For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them."

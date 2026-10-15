@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-157, v0.3.0 stage 6: stable-tier files are reused across corpus versions on a hash match (D-153).
 
 In a per-user cache, one folder per corpus version, `gpconf fetch` for a new version copies a stable-tier file from an

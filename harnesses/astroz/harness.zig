@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Harness for gp-omm-conformance over astroz (ATTron/astroz, GPL-3.0 through v0.13.0, MIT from v0.14.0; called unmodified through its Tle module):
 // TLE and 2LE through Tle.MultiIterator + Tle.parseLines (the library's own file walk), OMM JSON through
 // Tle.parseOmmArray. Runner --cmd protocol: raw bytes on stdin, JSON records on stdout, exit 3 for formats the

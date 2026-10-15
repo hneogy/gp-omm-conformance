@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 The JSON report carries the case totals as numbers, in `summary` (D-240): what a script reads in place of the printed
 count line, whose wording can change from one version to the next (it did in D-239). These tests hold the summary to
@@ -93,7 +95,8 @@ class TheReport(unittest.TestCase):
     def test_the_field_is_an_addition(self):
         """Every field the report had before D-240 is still there, in the order it had."""
         keys = list(self.report)
-        self.assertEqual(keys, ["gpconf", "corpus_version", "parser", "preset", "generated_at", "summary", "results", "gates"])
+        self.assertEqual(keys, ["gpconf", "corpus_version", "parser", "preset", "generated_at", "summary", "inside_cases", "results", "gates"])   # inside_cases: D-312
+        self.assertEqual(sorted(self.report["inside_cases"]), ["cases_graded", "field_gaps", "items_skipped"])
         self.assertEqual(sorted(self.report["results"][0]), sorted(["case", "title", "status", "counts", "modes", "drift", "items"]))
 
     def test_the_action_s_outputs_are_the_summary_s_numbers(self):
@@ -117,7 +120,7 @@ class WhatAScriptIsTold(unittest.TestCase):
     def test_the_adapter_guide_says_it_and_describes_the_summary(self):
         guide = flat(read("docs", "ADAPTERS.md"))
         self.assertIn("A script should read this report or the exit status, never the printed lines, whose wording can change from one version to the next (D-240)", guide)
-        self.assertIn("`generated_at`, `summary`, `results` and `gates`", guide)
+        self.assertIn("`generated_at`, `summary`, `inside_cases`, `results` and `gates`", guide)   # inside_cases: D-312
         for status in CASE_STATUSES:
             self.assertIn(f"`{status}`", guide)
         self.assertIn("they add up to `cases`", guide)

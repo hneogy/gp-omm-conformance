@@ -14,13 +14,15 @@ parsers were run:
 A failure here is a statement about the parser, not about the corpus: the reference parser
 passes every case that exercises a parser; `satcat-70000-cutoff` is a data check the runner makes itself and
 reports as not exercised for every parser, on a file the fetch brings only on request (D-231). Draft upstream reports for the python-sgp4 findings are in `docs/upstream/`.
+The Alpha-5 letters I and O that python-sgp4's compiled `Satrec` writes, in the writer case below, are reported as
+[brandon-rhodes/python-sgp4#173](https://github.com/brandon-rhodes/python-sgp4/issues/173) (filed 2026-10-10, D-307).
 
 The counts below were measured on the maintainer's copy, with ten launch-window captures that a new user's fetch
 cannot obtain (D-229). A run from a fresh fetch reproduces fewer: `supgp-celestrak-classification-c` cannot run at
 all and reports `not-available`, and the failures that rest on the nominal 799501621 do not occur, so the naive
 adapter fails 14 cases where 15 are listed here and python-sgp4 fails 6 where 8 are; the reference passes 16.
 
-Generated 2026-10-04T19:46:32Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-10-04T19:46:30Z with gpconf 0.6.1 on corpus 0.6.1 (parser preset reference); naive: run 2026-10-04T19:46:31Z with gpconf 0.6.1 on corpus 0.6.1 (parser preset naive (a demonstration of failure, not a parser anyone should use)); sgp4: run 2026-10-04T19:46:32Z with gpconf 0.6.1 on corpus 0.6.1 (parser preset sgp4 (python-sgp4 2.27, the version it was tested with)).
+Generated 2026-10-11T18:22:00Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-10-11T18:21:58Z with gpconf 0.7.0 on corpus 0.7.0 (parser preset reference); naive: run 2026-10-11T18:21:59Z with gpconf 0.7.0 on corpus 0.7.0 (parser preset naive (a demonstration of failure, not a parser anyone should use)); sgp4: run 2026-10-11T18:22:00Z with gpconf 0.7.0 on corpus 0.7.0 (parser preset sgp4 (python-sgp4 2.27, the version it was tested with)).
 
 ## Status by case
 
@@ -40,9 +42,9 @@ Generated 2026-10-04T19:46:32Z by `tools/make_failures.py` from the runner repor
 | `tle-vs-omm-precision-loss` | pass (0 failing) | fail (7 failing) | pass-tolerance (0 failing) |
 | `omm-xml-schema` | pass (0 failing) | fail (6 failing) | fail (3 failing) |
 | `alpha5-encoding-vectors` | pass (0 failing) | fail (4 failing) | fail (2 failing) |
-| `alpha5-tle-derived` | pass (0 failing) | fail (4 failing) | pass-tolerance (0 failing) |
+| `alpha5-tle-derived` | pass (0 failing) | fail (6 failing) | pass-tolerance (0 failing) |
 | `kvn-syntax-variants` | pass (0 failing) | fail (4 failing) | skip (0 failing) |
-| `tle-writer-alpha5` | pass (0 failing) | fail (3 failing) | fail (1 failing) |
+| `tle-writer-alpha5` | pass (0 failing) | fail (3 failing) | fail (3 failing) |
 | `corrupt-input` | pass (0 failing) | fail (3 failing) | fail (3 failing) |
 
 ## Gate: this month's launches
@@ -141,12 +143,14 @@ One headline per parser, read across existing cases from the record counts behin
 
 ### `alpha5-tle-derived`
 
-4 failing items.
+6 failing items.
 
 - **parse** (alpha5-A-100000-saramago-first.tle): parser raised ValueError: invalid literal for int() with base 10: 'A0000'
 - **parse** (alpha5-T-270449-analyst-first.tle): parser raised ValueError: invalid literal for int() with base 10: 'T0449'
 - **parse** (alpha5-A-last-30-days-snapshot.tle): parser raised ValueError: invalid literal for int() with base 10: 'A0404'
 - **parse** (alpha5-T-analyst-27xxxx-snapshot.tle): parser raised ValueError: invalid literal for int() with base 10: 'T0000'
+- **parse** (alpha5-synthetic-letters.tle): parser raised ValueError: invalid literal for int() with base 10: 'A9999'
+- **parse** (alpha5-synthetic-epoch-years.tle): parser raised ValueError: invalid literal for int() with base 10: 'Z0100'
 
 ### `kvn-syntax-variants`
 
@@ -161,10 +165,10 @@ One headline per parser, read across existing cases from the record counts behin
 
 3 failing items.
 
-- **tle-checksums-valid** (set): 4 of 607 records correct; id 100000: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 270449: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100404: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100405: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100406: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100407: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100408: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100409: line 1 is 70 characters, …
-- **tle-writer-catalog-field** (set): 4 of 607 catalog fields correct; id 100000: field '10000' written for 100000 (expected 'A0000'; decodes to 10000); id 270449: field '27044' written for 270449 (expected 'T0449'; decodes to 27044); id 100404: field '10040' written for 100404 (expected 'A0404'; decodes to 10040); id 100405: field '10040' written for 100405 (expected 'A0405'; decodes to 10040); id 100406: field '10040' written for 100406 (expected 'A0406'; decodes to 10040); id 100407: field '10040' written for 100407 (expected 'A0407'; decodes to 10040); id 100408: field '10040' written for 100408 (expected 'A0408'; decodes to 1 …
+- **tle-checksums-valid** (set): 4 of 753 records correct; id 100000: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 270449: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100404: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100405: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100406: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100407: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100408: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100409: line 1 is 70 characters, …
+- **tle-writer-catalog-field** (set): 4 of 753 catalog fields correct; id 100000: field '10000' written for 100000 (expected 'A0000'; decodes to 10000); id 270449: field '27044' written for 270449 (expected 'T0449'; decodes to 27044); id 100404: field '10040' written for 100404 (expected 'A0404'; decodes to 10040); id 100405: field '10040' written for 100405 (expected 'A0405'; decodes to 10040); id 100406: field '10040' written for 100406 (expected 'A0406'; decodes to 10040); id 100407: field '10040' written for 100407 (expected 'A0407'; decodes to 10040); id 100408: field '10040' written for 100408 (expected 'A0408'; decodes to 1 …
 - **tle-writer-refuses-unencodable** (set): 0 of 3 numbers the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused; written instead of refused: id 340000: lines written instead of a refusal (line 1 columns 3-7 '34000', 70 characters); id 799501621: lines written instead of a refusal (line 1 columns 3-7 '79950', 73 characters); id -1: lines written instead of a refusal (line 1 columns 3-7 '-0001', 69 characters)
-- passed: **tle-writer-column-layout** (4 records with every field in its fixed columns); **tle-writer-round-trip** (607 records read back at the TLE field resolution (rendering observed per field: epoch: exact 4; mean_motion: exact 4; eccentricity: exact 2, quantised 2; inclination: exact 4; ra_of_asc_node: exact 4; arg_of_pericenter: …)
+- passed: **tle-writer-column-layout** (4 records with every field in its fixed columns); **tle-writer-round-trip** (753 records read back at the TLE field resolution (rendering observed per field: epoch: exact 4; mean_motion: exact 4; eccentricity: exact 2, quantised 2; inclination: exact 4; ra_of_asc_node: exact 4; arg_of_pericenter: …)
 
 ### `corrupt-input`
 
@@ -220,10 +224,12 @@ One headline per parser, read across existing cases from the record counts behin
 
 ### `tle-writer-alpha5`
 
-1 failing item.
+3 failing items.
 
+- **tle-writer-catalog-field** (set): 749 of 753 catalog fields correct; id 180000: field 'I0000' written for 180000 (expected 'J0000'; catalog field 'I0000' is neither five digits nor Alpha-5); id 189999: field 'I9999' written for 189999 (expected 'J9999'; catalog field 'I9999' is neither five digits nor Alpha-5); id 230000: field 'O0000' written for 230000 (expected 'P0000'; catalog field 'O0000' is neither five digits nor Alpha-5); id 239999: field 'O9999' written for 239999 (expected 'P9999'; catalog field 'O9999' is neither five digits nor Alpha-5)
+- **tle-writer-round-trip** (set): 749 of 753 records correct; id 180000: reference reader raised ValueError: invalid Alpha-5 field 'I0000': one digit or uppercase letter (never I or O) followed by four digits; id 189999: reference reader raised ValueError: invalid Alpha-5 field 'I9999': one digit or uppercase letter (never I or O) followed by four digits; id 230000: reference reader raised ValueError: invalid Alpha-5 field 'O0000': one digit or uppercase letter (never I or O) followed by four digits; id 239999: reference reader raised ValueError: invalid Alpha-5 field 'O9999': one digit or uppercase letter (never I or O) follo …
 - **tle-writer-refuses-unencodable** (set): 2 of 3 numbers the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused (340000, 799501621); written instead of refused: id -1: lines written instead of a refusal (line 1 columns 3-7 '-0001', 69 characters)
-- passed: **tle-checksums-valid** (607 records written as two 69-character lines with valid checksums); **tle-writer-catalog-field** (607 catalog fields written correctly (five digits below 100000, Alpha-5 from 100000)); **tle-writer-column-layout** (607 records with every field in its fixed columns); **tle-writer-round-trip** (607 records read back at the TLE field resolution (rendering observed per field: epoch: exact 607; mean_motion: exact 607; eccentricity: exact 71, quantised 246, round 256, truncate 34; inclination: exact 607; ra_of_asc_ …)
+- passed: **tle-checksums-valid** (753 records written as two 69-character lines with valid checksums); **tle-writer-column-layout** (753 records with every field in its fixed columns)
 
 ### `corrupt-input`
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Negative tests (D-119, audit items 10.16 and 10.5): a wrong value is detected and named; the tolerance
 boundaries behave; CommandParser.parse beyond Unsupported; and the epoch-string vectors compare the instant a
 parse_epoch hook returns, so a hook that returns a constant fails.

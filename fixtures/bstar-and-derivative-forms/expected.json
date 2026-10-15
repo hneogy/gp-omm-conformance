@@ -2,7 +2,7 @@
  "case": "bstar-and-derivative-forms",
  "title": "Drag terms: negative BSTAR, negative first derivative, non-zero second derivative, implied-decimal exponent fields",
  "schema_version": "1.0",
- "generated_at": "2026-10-09T14:36:21Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {
@@ -7123,6 +7123,10 @@
   }
  ],
  "checks": [
+  {
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
+  },
   {
    "id": "bstar-implied-decimal-exponent",
    "description": "TLE BSTAR and second-derivative fields are +/-NNNNN+/-E with an implied leading decimal point: ' 15975-3' is 0.15975e-3; zero is written ' 00000+0'."

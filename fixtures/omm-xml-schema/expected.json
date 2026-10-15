@@ -2,7 +2,7 @@
  "case": "omm-xml-schema",
  "title": "CelesTrak OMM XML against the SANA schemas: valid as NDM/XML 2.0, invalid as 3.0 on the version attribute",
  "schema_version": "1.0",
- "generated_at": "2026-09-23T21:49:02Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "xml",
  "sources": {
@@ -254,8 +254,8 @@
    "description": "CelesTrak XML has an <ndm> root containing one <omm> per record with id=CCSDS_OMM_VERS and version=2.0; CREATION_DATE and ORIGINATOR elements are present but empty."
   },
   {
-   "id": "omm-version-3-accepted",
-   "description": "CCSDS_OMM_VERS 3.0 messages (with CLASSIFICATION and MESSAGE_ID in the header) are accepted alongside 2.0."
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
   }
  ],
  "tests": [

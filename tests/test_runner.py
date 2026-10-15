@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """Runner self-tests. Run: python -m unittest discover -s tests (from the repository root)."""
 import os
 import sys

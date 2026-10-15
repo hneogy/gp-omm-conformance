@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """The provider's empty answer, handed to the parser under test (D-143): zero records and no error is the only pass."""
 import json
 import os

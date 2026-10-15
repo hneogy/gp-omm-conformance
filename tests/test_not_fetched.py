@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-148: a provider file that is not on disk reports not-fetched, never skip, which the corpus keeps for a parser
 with no reader for a format or no hook for a check. The count line says how many cases need fetched data, a case
 that ran on part of its files is named below it, and the fetch command names a script that exists."""

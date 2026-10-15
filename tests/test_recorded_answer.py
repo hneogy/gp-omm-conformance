@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-247: the one provider response the corpus ships, and the fetch that no longer requests it.
 
 CelesTrak answers a TLE request for an object numbered above 99999 with HTTP 404 and the 16-byte text
@@ -328,7 +330,7 @@ class TheExceptionIsNamed(unittest.TestCase):
         self.assertIn("One exception, named here because the rule has no other (D-247, which amends D-023): the corpus ships one response from CelesTrak, "
                       "`recorded/celestrak-no-gp-data-found.txt`.", readme)
         self.assertIn("It holds no orbital data: no element, no catalog number, nothing that stands in for a fetch.", readme)
-        self.assertIn("It is CelesTrak's text, and the MIT licence does not cover it.", readme)
+        self.assertIn("It is CelesTrak's text, and the corpus's licence does not cover it.", readme)
         # the status paragraph: "is now 46 requests" at 0.6.0, where the change was made; from 0.6.1 it says the list is 0.6.0's
         self.assertIn("A user's fetch is 46 requests, the same 46 as in 0.6.0, and asks for nothing it knows will answer 404", readme)
 

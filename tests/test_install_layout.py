@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-150, v0.3.0 stage 1: the runner works when installed, not only from a clone.
 
 Two roots: the corpus root (what ships) and the data root (what this machine fetched). An installed copy finds its

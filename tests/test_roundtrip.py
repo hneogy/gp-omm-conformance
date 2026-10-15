@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """TLE -> OMM values -> TLE round trip through the corpus's own rules.
 
 A TLE parsed by the reference reader, expressed as OMM keyword text (as an OMM producer would write

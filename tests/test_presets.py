@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-151, v0.3.0 stage 2: `gpconf run --preset NAME` runs a shipped adapter with no adapter written.
 
 Four presets: reference and naive (standard library), sgp4 (python-sgp4) and pyephem (PyEphem). The adapters live in

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-156, v0.3.0 stage 5: tools/stage_package.py and the packaging metadata.
 
 The staging script takes a public export as its only input and refuses anything else; it walks the package
@@ -227,7 +229,8 @@ class Metadata(unittest.TestCase):
     def test_the_extras_are_the_library_presets_and_crosscheck_is_gone(self):
         extras = re.search(r"\[project\.optional-dependencies\]\n(.*?)\n\[", self.text, re.S).group(1)
         names = re.findall(r'(?m)^(\w[\w-]*)\s*=', extras)
-        self.assertEqual(names, ["sgp4", "pyephem"])
+        self.assertEqual(names, ["sgp4", "pyephem", "test"])   # test: Hypothesis, for the suite only (D-322)
+        self.assertIn('test = ["hypothesis>=6.100"]', extras)
         self.assertIn('sgp4 = ["sgp4>=2.27"]', extras)   # D-269: 2.26 dropped Python 3.9; the pin keeps 3.9 loud instead of silently older
         self.assertIn('pyephem = ["ephem"]', extras)
         self.assertNotIn("crosscheck", self.text)

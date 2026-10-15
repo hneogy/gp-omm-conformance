@@ -2,7 +2,7 @@
  "case": "corrupt-input",
  "title": "Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, a file cut mid-record",
  "schema_version": "1.0",
- "generated_at": "2026-09-27T15:25:24Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "corrupt-input",
  "sources": {
@@ -113,6 +113,18 @@
    "provenance": "derived",
    "record_count": 3,
    "provenance_file": "derived/corrupt-input/unedited-array.provenance.json"
+  },
+  "derived/kvn-variants/v07-xml-ndm-reserialised.xml": {
+   "tier": "stable",
+   "format": "xml",
+   "url": null,
+   "retrieved_at": "2026-10-10T02:17:11Z",
+   "http_status": null,
+   "bytes": 1661,
+   "sha256": "771239196718ade8d9c376793bcaecf467715cfaa98bad071b2c154ae5f60fa1",
+   "provenance": "derived",
+   "record_count": 1,
+   "provenance_file": "derived/kvn-variants/v07-xml-ndm-reserialised.provenance.json"
   }
  },
  "records": [
@@ -737,6 +749,10 @@
   {
    "id": "corrupt-input-neighbours-load",
    "description": "The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded here, since the values check grades it on the same records in their own cases (D-175). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed."
+  },
+  {
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
   }
  ],
  "tests": [
@@ -749,7 +765,8 @@
    "five corrupt inputs, each one stated edit of 69999's first record (a stable-tier record): line 1's checksum digit changed from 6 to 1; line 2 one character short, the eccentricity's fourth digit (column 30) lost so that every column after it moves left; the letter O for the 0 in column 26 of line 1, inside the epoch field, the checksum still valid; line 1 with no line 2 after it; the file cut mid-record, as a CSV that ends inside its last row's MEAN_MOTION_DOT value and as a JSON array whose closing bracket is missing",
    "each TLE input between two valid sets, 25544's first record before it and 20453 from the decaying snapshot after it, so that the counts on the neighbours measure whether a parser picks up again; the CSV holds the same two records before the cut row, the JSON all three records complete",
    "no provider file: every record rendered by the corpus from values frozen in this corpus's public expected.json files, a public clone rebuilding the same bytes",
-   "three unedited files, the inputs' records with no edit (one TLE file for inputs 1 to 4, the CSV with its last row whole, the JSON array closed), against which every record a parser returns from an input is compared (D-175)"
+   "three unedited files, the inputs' records with no edit (one TLE file for inputs 1 to 4, the CSV with its last row whole, the JSON array closed), against which every record a parser returns from an input is compared (D-175)",
+   "OMM values graded without fetched data (D-299): the unedited CSV and JSON files are also held to the frozen expected values, and one derived XML file, the ISS first record re-serialised (derived/kvn-variants/v07-xml-ndm-reserialised.xml), is graded for its values; the records carry negative drag terms"
   ],
   "gaps": [
    "the shifted CSV column (the plan's input 6) is held, not included (owner decision 4, D-171)",
@@ -865,6 +882,15 @@
      69999
     ],
     "provenance_file": "derived/corrupt-input/unedited-array.provenance.json"
+   }
+  },
+  "graded": {
+   "derived/kvn-variants/v07-xml-ndm-reserialised.xml": {
+    "format": "xml",
+    "norad_cat_ids": [
+     25544
+    ],
+    "values_like": "c5-cut-last-row.csv"
    }
   },
   "outcomes": "Per record: loaded (returned with its id and exactly the values the same parser returns for it from the input's unedited file), misidentified (returned with other values, or with an id the file does not hold: built from garbage), refused (with a reason, through the refusal channel, or with the file when the parser raises on it) and dropped (none of these). A corrupt record must be refused; a valid one must load. A record the parser does not return from the unedited file either is left out of the grading, and an input whose unedited file the parser refuses as a whole is not exercised: nothing then isolates the edit (D-175). The expected values below are the records' own, for reference; the runner does not grade against them here, since the values check grades them in the records' own cases.",

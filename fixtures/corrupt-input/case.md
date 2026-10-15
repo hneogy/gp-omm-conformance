@@ -28,6 +28,7 @@ Each file hands the parser one corrupt input between valid records. The right an
 - **corrupt-tle-missing-line-2** — A TLE set whose line 1 is followed directly by the next set's name line: the orphan line 1 is refused with a reason. Passing over it without a word counts as dropped, and pairing it with the lines after it builds a record from garbage.
 - **corrupt-file-cut** — A file cut mid-record, as a CSV that ends inside its last row and as a JSON array missing its closing bracket: the complete records load and the cut is reported with a reason, or the file is refused as a whole with a reason, which is fail-closed; the complete records a whole-file refusal gives up are counted, not failed (owner decision, D-171). Loading the complete records while saying nothing of the cut is silent partial loading and fails, as does a record read from the cut row.
 - **corrupt-input-neighbours-load** — The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded here, since the values check grades it on the same records in their own cases (D-175). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed.
+- **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 
 ## Coverage
 
@@ -37,6 +38,7 @@ Provides:
 - each TLE input between two valid sets, 25544's first record before it and 20453 from the decaying snapshot after it, so that the counts on the neighbours measure whether a parser picks up again; the CSV holds the same two records before the cut row, the JSON all three records complete
 - no provider file: every record rendered by the corpus from values frozen in this corpus's public expected.json files, a public clone rebuilding the same bytes
 - three unedited files, the inputs' records with no edit (one TLE file for inputs 1 to 4, the CSV with its last row whole, the JSON array closed), against which every record a parser returns from an input is compared (D-175)
+- OMM values graded without fetched data (D-299): the unedited CSV and JSON files are also held to the frozen expected values, and one derived XML file, the ISS first record re-serialised (derived/kvn-variants/v07-xml-ndm-reserialised.xml), is graded for its values; the records carry negative drag terms
 
 Gaps (stated explicitly for this case):
 
@@ -69,5 +71,6 @@ Every file of this case ships with the repository; nothing is fetched.
 | `derived/corrupt-input/unedited-sets.tle` | stable | none: derived file shipped with the repository | 504 | generated 2026-09-27T15:12:19Z | `6d53b5f62556841e…` |
 | `derived/corrupt-input/unedited-rows.csv` | stable | none: derived file shipped with the repository | 698 | generated 2026-09-27T15:12:19Z | `5c0ee080f1312fb6…` |
 | `derived/corrupt-input/unedited-array.json` | stable | none: derived file shipped with the repository | 1281 | generated 2026-09-27T15:12:19Z | `54e8a8e19244f296…` |
+| `derived/kvn-variants/v07-xml-ndm-reserialised.xml` | stable | none: derived file shipped with the repository | 1661 | generated 2026-10-10T02:17:11Z | `771239196718ade8…` |
 
 Expected values: `fixtures/corrupt-input/expected.json` (schema_version 1.0).

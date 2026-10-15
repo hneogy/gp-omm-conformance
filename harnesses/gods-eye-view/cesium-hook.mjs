@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 import { pathToFileURL } from 'node:url';
 const STUB = pathToFileURL(new URL('./cesium-stub.mjs', import.meta.url).pathname).href;
 export async function resolve(specifier, context, next) {

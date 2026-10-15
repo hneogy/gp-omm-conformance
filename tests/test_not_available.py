@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """D-229: a launch-window capture is requested by no fetch, and a case that needs one says not-available.
 
 The fetch list carried ten requests for things CelesTrak serves only around a launch: the Starlink G15-27

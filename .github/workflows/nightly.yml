@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
+name: nightly
+# The gates that are too slow for every push (D-320): the 5,000-mutant fuzzer, the property tests at 2,000 examples,
+# branch coverage against a floor, and the stricter type check as a ratchet. Every night, on every tag, and by hand.
+# GitHub stops a scheduled workflow after 60 days without a commit to the repository; a push starts it again.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  slow-gates:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5, pinned by commit (D-269)
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6, pinned by commit (D-269)
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --quiet mypy==2.4.0 hypothesis==6.169.0 coverage==7.16.2
+      - name: Mutant fuzzing of the grader (D-287) — 5,000 one-bug parsers at a fixed seed; any survivor outside the reviewed allowlist fails the job
+        run: python tools/mutant_fuzz.py --count 5000 --seed 20261009 --jobs 4 --ci
+      - name: Property tests at 2,000 examples; none may be skipped (D-322)
+        run: python tools/ran_not_skipped.py tests.test_properties 19
+        env:
+          GPCONF_PROPERTY_EXAMPLES: "2000"
+          GPCONF_REQUIRE_HYPOTHESIS: "1"
+      - name: Branch coverage of the package under the suite, against a floor that is raised as tests land and never lowered
+        # Measured 2026-10-11 in this tree, which holds no provider data: 85% for the package, 80% for the runner.
+        run: |
+          python -m coverage run --branch --source=gpconf -m unittest discover -s tests -t .
+          python -m coverage report --fail-under=84
+          python -m coverage report --include=gpconf/runner.py --fail-under=79
+      - name: Type check with the bodies of unannotated functions checked, as a ratchet — the count may fall, never rise
+        run: |
+          python -m mypy gpconf --ignore-missing-imports --check-untyped-defs > mypy.txt || true
+          tail -1 mypy.txt
+          n=$(grep -c ": error:" mypy.txt || true)
+          echo "errors: $n (ceiling 79)"
+          test "$n" -le 79

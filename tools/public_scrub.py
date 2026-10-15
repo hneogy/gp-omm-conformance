@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/public_scrub.py -- what the public release withholds (DECISIONS D-049).
 

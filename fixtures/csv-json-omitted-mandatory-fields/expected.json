@@ -2,7 +2,7 @@
  "case": "csv-json-omitted-mandatory-fields",
  "title": "CelesTrak CSV and JSON omit the constant mandatory metadata keywords",
  "schema_version": "1.0",
- "generated_at": "2026-09-23T21:49:02Z",
+ "generated_at": "2026-10-10T02:31:38Z",
  "generator": "tools/make_expected.py",
  "kind": "facts",
  "sources": {
@@ -863,6 +863,10 @@
   {
    "id": "supgp-extra-keys-tolerated",
    "description": "SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail."
+  },
+  {
+   "id": "catalog-number-is-integer",
+   "description": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN."
   }
  ],
  "tests": [

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 NEOGY LLC
 // Vector hooks for the corpus, each through the library's own entry points (nothing decoded by this program):
 //   alpha5_decode(field): a valid line pair with the field in columns 3-7 of both lines -> Tle::NoradNumber()
 //   two_digit_year(yy):   the same pair with the epoch year set -> Tle::Epoch().Year()

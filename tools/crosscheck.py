@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/crosscheck.py -- independent cross-check of the reference readers against python-sgp4
 and Skyfield. Run with the project venv. Writes tools/_out/crosscheck.json and docs/CROSSCHECK.md.

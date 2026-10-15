@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 tools/validate_render.py -- check that tools/tlerender.py reproduces CelesTrak's TLE lines.
 

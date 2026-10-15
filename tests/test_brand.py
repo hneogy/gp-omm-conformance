@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 """
 docs/BRAND.md is the single source for the project's name and for the lines it describes itself with (D-241). These
 tests hold the surfaces in this repository to it, word for word (D-242): the README's first screen, the package's
@@ -84,7 +86,7 @@ class TheReadme(unittest.TestCase):
                     "https://github.com/shashwatak/satellite-js/pull/187", "https://github.com/ATTron/astroz/issues/97",
                     "https://github.com/ATTron/astroz/issues/98", "https://github.com/ATTron/astroz/pull/99",
                     "https://github.com/dnwrnr/sgp4/pull/42#issuecomment-5824123874", "https://github.com/dnwrnr/sgp4/pull/46",
-                    "https://github.com/csete/gpredict/pull/428"):
+                    "https://github.com/csete/gpredict/pull/428", "https://github.com/csete/gpredict/pull/430"):
             self.assertIn(url, table)
         rows = [line for line in table.splitlines() if line.startswith("| ") and not line.startswith("| library") and not line.startswith("|---")]
         self.assertEqual([r.split(" | ")[0] for r in rows], ["| python-sgp4", "| satellite.js", "| astroz", "| libsgp4", "| Gpredict"])   # Gpredict joined with PR #428, merged 2026-10-08 (D-267, D-269)
@@ -133,7 +135,7 @@ class ThePackageAndTheAction(unittest.TestCase):
 
     def test_the_action_is_named_gpconf_and_called_by_the_repository(self):
         action = read("action.yml")
-        self.assertEqual(action.splitlines()[0], "name: gpconf")
+        self.assertEqual([l for l in action.splitlines() if not l.startswith("#")][0], "name: gpconf")   # under the SPDX header (D-310)
         self.assertIn("Runs a parser against gpconf, the GP/OMM conformance corpus, offline", flat(action))
         self.assertIn('title = f"### gpconf: preset `{preset}`\\n\\n"', read("tools", "action_report.py"))
         self.assertIn("- uses: hneogy/gp-omm-conformance@v", read("README.md"))

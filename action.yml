@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
 name: gpconf
 description: >-
   Runs a parser against gpconf, the GP/OMM conformance corpus, offline, and reports the results in the job summary.
