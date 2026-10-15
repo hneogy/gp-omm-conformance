@@ -30,8 +30,8 @@ information, not as a parser pass, so the exact-pass counts of the TLE cases fal
 independent audit in `AUDIT.md` covered v0.1.0; neither the writer-side case of v0.2.0, the fixes of v0.2.1, the
 packaging and protocol changes of v0.3.0, the corrupt-input case of v0.4.0, the changes of v0.5.0, those of
 v0.5.1, those of v0.6.0, those of v0.6.1, those of v0.6.2 nor those of this release have been separately audited:
-the two readings of this release audited the grader, not the answer key. The version DOI is added once Zenodo has
-archived the release; the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
+the two readings of this release audited the grader, not the answer key. Version DOI 10.5281/zenodo.23382463 (Zenodo
+record 23382463); the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
 
 Changed, the grader's rule (D-280): an outcome that is not a graded pass or fail (a skip, an `Unsupported`, a
 refusal, extra or duplicate records) is all-or-none for its scope or graded and counted; there are no partial
