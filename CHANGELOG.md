@@ -15,7 +15,8 @@ verdict changes: python-sgp4's `mean-motion-derivative-convention` passes within
 its MEAN_MOTION_DDOT now compared too (D-358); every other library row keeps every case status.
 
 Mutation testing of the grading code before the release: 81.8% of the logic changes and 66.8% of the number changes
-killed by the suite; the survivors are reviewed for the next release.
+killed by the suite; the survivors are reviewed for the next release. Version DOI 10.5281/zenodo.23853937 (Zenodo
+record 23853937); the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
 
 Added: two cases' inputs, lane C's proposals. `vectors/alpha5.json` holds a blank and an empty catalog field among the
 fields a decoder must reject (a decoder reading either as 0 passed), and the alpha5-decode item shows each field it
