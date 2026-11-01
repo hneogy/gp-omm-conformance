@@ -247,6 +247,7 @@ class ReadingMutants(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn("1 fail", out)
 
+    @unittest.skipIf(sys.platform == "win32", "Windows ignores folder permissions: a read-only folder still takes a new file (D-374)")
     def test_m12_m13_the_write_checks(self):
         from gpconf.__main__ import json_target_problem
         ro = os.path.join(self.tmp, "ro")
@@ -257,6 +258,13 @@ class ReadingMutants(unittest.TestCase):
         self.assertEqual(json_target_problem(os.path.join(ro, "new.json")), "cannot be written")   # a new file, a folder read-only
         self.assertIsNone(json_target_problem(existing))                                            # a writable file in it may be written
         os.chmod(ro, 0o755)
+
+    def test_m13_a_read_only_file(self):
+        # the read-only file of test_m12_m13, held on every platform: Windows honours a file's read-only attribute (D-374)
+        from gpconf.__main__ import json_target_problem
+        existing = os.path.join(self.tmp, "x.json")
+        open(existing, "w").close()
+        self.assertIsNone(json_target_problem(existing))
         os.chmod(existing, 0o444)
         self.assertEqual(json_target_problem(existing), "cannot be written")
         os.chmod(existing, 0o644)

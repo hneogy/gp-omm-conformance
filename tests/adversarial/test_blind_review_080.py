@@ -154,6 +154,7 @@ class CheckTleAgainstTheSource(unittest.TestCase):
         with open(js, encoding="utf-8") as f:
             self.assertEqual(json.load(f)["source"]["not_compared"], [])
 
+    @unittest.skipIf(sys.platform == "win32", "Windows forbids control characters in file names (D-374)")
     def test_the_paths_are_printed_escaped(self):
         """The re-reading's N13 and N14: a file name and an --against name holding a terminal escape."""
         code, out = check_tle(self.write("e\x1bx.tle", self.lines), "--against", shutil.copy(ROWS, os.path.join(self.tmp, "s\x1by.csv")))
