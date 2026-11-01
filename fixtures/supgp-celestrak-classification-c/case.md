@@ -9,7 +9,7 @@ CelesTrak supplemental GP: classification C, element set 0, RMS/DATA_SOURCE colu
 
 ## How to read a failure
 
-CelesTrak supplemental records differ from the GP records of the 18th Space Defense Squadron (18 SDS): CLASSIFICATION_TYPE C, ELEMENT_SET_NO 0, extra RMS and DATA_SOURCE columns, 72000-series ids (the use of the 70000-79999 block is described only by a secondary source), and a TLE epoch rounded to the TLE's 864 microsecond resolution. Parsers that hard-code 'U', reject unknown columns, or compare epochs exactly will fail.
+CelesTrak supplemental records differ from the GP records of the 18th Space Defense Squadron (18 SDS): CLASSIFICATION_TYPE C, ELEMENT_SET_NO 0, extra RMS and DATA_SOURCE columns, 72000-series ids (placeholder numbers CelesTrak's pre-launch supplemental data gives a launch stack, not catalogued objects; confirmed in correspondence with CelesTrak, October 2026), and a TLE epoch rounded to the TLE's 864 microsecond resolution. Parsers that hard-code 'U', reject unknown columns, or compare epochs exactly will fail.
 
 ## Checks
 
@@ -19,7 +19,7 @@ CelesTrak supplemental records differ from the GP records of the 18th Space Defe
 - **element-set-zero-and-rev-one** — ELEMENT_SET_NO may be 0 and REV_AT_EPOCH may be 1 or 0.
 - **omm-formats-agree** — For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them.
 - **tle-values-match-omm-within-tle-precision** — The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution.
-- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0).
+- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (ASCII digits count their value, '-' counts 1, everything else 0); a line a writer returns must also be ASCII throughout (D-325).
 
 ## Coverage
 
@@ -32,7 +32,7 @@ Provides:
 Gaps (stated explicitly for this case):
 
 - perishable: this post-deployment file is replaced after cataloguing, so the five files are the corpus's own capture of that launch window, no fetch requests them, and from a fetch the case is not-available: only the maintainer's copy can run it (D-229)
-- the meaning of the 72000-series ids (the 70000-79999 block) is described only by a secondary source (RESEARCH.md §1); primary sources cover only the 80000-89999 analyst range and the 69999 end of the legacy range
+- what the rest of the 70000-79999 block holds, beside the 72000-series placeholders (confirmed in correspondence with CelesTrak, October 2026), is described by no primary source (RESEARCH.md §1)
 - the 72000-series placeholders raise the same identity-over-time question as the nine-digit nominals, stated as an open question in that case's gaps: 72000 and 72001 share their OBJECT_IDs, 2026-219A and 2026-219B, with two of the per-satellite nominals [tested]
 
 ## Library behaviour observed (docs/CROSSCHECK.md)

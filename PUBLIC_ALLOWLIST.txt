@@ -25,6 +25,8 @@ pyproject.toml
 .github/workflows/ci.yml
 # The slow gates (D-320): nightly, on every tag, and by hand.
 .github/workflows/nightly.yml
+# Trusted Publishing (D-361): on a tag, build, check against the maintainer's hashes in the tag's message, publish.
+.github/workflows/publish.yml
 # The adapter guide (D-161); docs/ files are named one by one, so each new one needs its own line.
 docs/ADAPTERS.md
 docs/CROSSCHECK.md

@@ -8,7 +8,8 @@ GPCONF_DATA says. The fetch script is the `gpconf fetch` subcommand; tools/fetch
 
 The installed copy is simulated without a build: the package's files are copied into a scratch site folder and the
 corpus's shipped files into its corpus/ folder, as the build of a later stage will do, and every run is a subprocess
-with only that folder on PYTHONPATH, a scratch HOME and no GPCONF_DATA. No test makes a network request: the fetch
+with only that folder on PYTHONPATH (and, where tools/run_suite.py runs the suite, its crash detector's folder, which
+holds a sitecustomize that imports only the standard library: tests/crashwatch.py), a scratch HOME and no GPCONF_DATA. No test makes a network request: the fetch
 is exercised with --dry-run or with a stub in place of the request."""
 import contextlib
 import glob
@@ -33,6 +34,7 @@ sys.path.insert(0, ROOT)
 
 from gpconf import locate  # noqa: E402
 from gpconf import fetch as gfetch  # noqa: E402
+from tests.crashwatch import watched  # noqa: E402
 from gpconf.__main__ import main as gpconf_main  # noqa: E402
 
 VERSION = locate.corpus_version(ROOT)
@@ -70,7 +72,7 @@ def install(tmp, with_corpus=True):
 
 
 def run_installed(site, home, cwd, *args, extra_env=None):
-    env = {"PATH": os.environ.get("PATH", ""), "HOME": home, "PYTHONPATH": site, "PYTHONDONTWRITEBYTECODE": "1"}
+    env = watched({"PATH": os.environ.get("PATH", ""), "HOME": home, "PYTHONPATH": site, "PYTHONDONTWRITEBYTECODE": "1"})
     if sys.platform.startswith("win"):
         env.update({"USERPROFILE": home, "LOCALAPPDATA": os.path.join(home, "AppData", "Local"), "SYSTEMROOT": os.environ.get("SYSTEMROOT", "")})
     env.update(extra_env or {})

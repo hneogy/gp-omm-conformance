@@ -322,6 +322,11 @@
 "tle-values-match-omm-within-tle-precision",
 "iss-live",
 "pass"
+],
+[
+"tle-values-match-omm-within-tle-precision",
+"iss-live: iss.2le",
+"pass"
 ]
 ],
 "status": "pass"
@@ -464,6 +469,11 @@
 "corrupt-input": {
 "items": [
 [
+"values",
+"unedited-sets.tle",
+"pass"
+],
+[
 "catalog-number-is-integer",
 "c1-checksum-digit.tle",
 "pass"
@@ -517,6 +527,16 @@
 "corrupt-input-neighbours-load",
 "c4-line-2-missing.tle",
 "pass"
+],
+[
+"corrupt-tle-invalid-catalog-field",
+"c6-invalid-catalog-field.tle",
+"pass"
+],
+[
+"corrupt-input-neighbours-load",
+"c6-invalid-catalog-field.tle",
+"fail"
 ],
 [
 "values",
@@ -851,6 +871,11 @@
 [
 "tle-values-match-omm-within-tle-precision",
 "iss-first",
+"pass"
+],
+[
+"tle-values-match-omm-within-tle-precision",
+"iss-first: iss-first.2le",
 "pass"
 ]
 ],
@@ -1363,5 +1388,5 @@ null,
 }
 },
 "library_version": null,
-"recorded_with_gpconf": "0.7.0"
+"recorded_with_gpconf": "0.8.0"
 }

@@ -19,12 +19,16 @@ Column layout: CelesTrak TLE format documentation
 """
 import datetime as dt
 import re
-from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP, ROUND_HALF_EVEN
 
 ALPHA5_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ"  # I and O skipped (Space-Track)
 
 
 def to_alpha5(n):
+    import numbers
+    if not isinstance(n, numbers.Integral) or isinstance(n, bool):
+        # a catalog number is an integer (D-325): int() made 25544.9, '25544' and True into numbers it then encoded
+        raise ValueError(f"catalog number {n!r} ({type(n).__name__}) is not an integer")
     n = int(n)
     if n < 0:
         raise ValueError("negative catalog number")
@@ -48,16 +52,33 @@ def from_alpha5(field):
 
 
 def checksum(line):
-    return sum(int(c) if c.isdigit() else (c == "-") for c in line[:68]) % 10
+    # ASCII digits only (D-325): str.isdigit() is true of superscripts and of other scripts' digits, so a written line
+    # with '¹' in it raised ValueError inside the runner and one with an Arabic-Indic digit counted it as a digit
+    return sum(int(c) if c in "0123456789" else (c == "-") for c in line[:68]) % 10
 
 
 def exp_field(text, mantissa_mode="truncate"):
-    """OMM decimal text -> 8-char TLE implied-decimal exponent field, e.g. '.15975118E-3' -> ' 15975-3'."""
-    d = Decimal((text or "0").strip() or "0")
+    """OMM decimal text -> 8-char TLE implied-decimal exponent field, e.g. '.15975118E-3' -> ' 15975-3'. Text that is not
+    a finite decimal number raises ValueError naming it (W5, D-350): a NaN raised InvalidOperation, an infinity
+    TypeError; a Decimal is read as its text. A value whose exponent no field holds raises ValueError naming it: one
+    whose exponent, as 0.ddddd times 10 to it, lies beyond -10 to 9 from that exponent alone, before any arithmetic
+    (D-354), and, after it, one of -10 that does not round up into the field, or one rounding up to 10."""
+    raw = ("0" if text is None else str(text)).strip() or "0"
+    try:
+        d = Decimal(raw)
+    except InvalidOperation:
+        raise ValueError(f"{text!r} is not a decimal number, which no TLE exponent field can hold") from None
+    if not d.is_finite():
+        raise ValueError(f"{text!r} is not a finite number, which no TLE exponent field can hold")
     if d == 0:
         return " 00000+0"
     sign = "-" if d < 0 else " "
     a = d.copy_abs()
+    # the field holds 0.ddddd * 10**e for e from -9 to 9, and rounding raises e by one at most: a value whose e is
+    # outside -10 to 9 is refused before it is normalised or divided, so that 1E-9999999 is not normalised to nothing
+    # (read as 0) and 1E+999999999 costs nothing (D-354)
+    if not -10 <= a.adjusted() + 1 <= 9:
+        raise ValueError(f"exponent {a.adjusted() + 1} not representable in a TLE field")
     t = a.normalize().as_tuple()
     digits = "".join(map(str, t.digits))
     e = len(digits) + t.exponent  # a == 0.<digits> * 10**e
@@ -79,12 +100,20 @@ def exp_field(text, mantissa_mode="truncate"):
 EPOCH_RE = re.compile(r"(\d{4})-(?:(\d{2})-(\d{2})|(\d{3}))T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})?", re.ASCII)
 
 
+def epoch_text(t):
+    """A naive datetime as the corpus writes an epoch, 'YYYY-MM-DDThh:mm:ss.ffffff', the year in four digits on every
+    platform (strftime's %Y leaves a year below 1000 unpadded on some C libraries; D-355)."""
+    return (f"{t.year:04d}-{t.month:02d}-{t.day:02d}T{t.hour:02d}:{t.minute:02d}:{t.second:02d}.{t.microsecond:06d}")
+
+
 def iso_epoch(text):
     """An epoch string in any form the corpus accepts -> canonical 'YYYY-MM-DDThh:mm:ss.ffffff' (UTC, naive).
     Accepts the CCSDS 502.0-B-3 7.5.10 calendar and day-of-year forms, any number of fraction digits (quantised
     to microseconds, half even), an optional 'Z', a '+HH:MM'/'-HH:MM' offset (converted to UTC: a parser under test
-    may return one) and second 60 (a leap second, mapped to :59 as the reference adapter does). Raises ValueError
-    for anything else, so a caller never sees a bare strptime failure (D-119)."""
+    may return one) and second 60 at 23:59:60 UTC on 30 June or 31 December, the dates on which leap seconds are
+    inserted in practice (mapped to :59 as the reference adapter does; anywhere else it is refused, D-370: ITU-R TF.460
+    also allows the end of any other month, never used yet). Raises ValueError for anything else, so
+    a caller never sees a bare strptime failure (D-119)."""
     s = str(text).strip()
     m = EPOCH_RE.fullmatch(s)
     if not m:
@@ -104,11 +133,16 @@ def iso_epoch(text):
     elif sec > 60:
         raise ValueError(f"second {ss} in {text!r}")
     us = int((Decimal("0" + frac) * 1_000_000).quantize(Decimal(1), rounding=ROUND_HALF_EVEN)) if frac else 0
-    t = dt.datetime(date.year, date.month, date.day, int(hh), int(mi), sec) + dt.timedelta(microseconds=us)
+    t = dt.datetime(date.year, date.month, date.day, int(hh), int(mi), sec)
     if zone and zone != "Z":
         sign = 1 if zone[0] == "+" else -1
         t -= sign * dt.timedelta(hours=int(zone[1:3]), minutes=int(zone[4:6]))
-    return t.strftime("%Y-%m-%dT%H:%M:%S.%f")
+    if int(ss) == 60 and not ((t.month, t.day) in ((6, 30), (12, 31)) and (t.hour, t.minute) == (23, 59)):
+        # leap seconds are inserted at the end of 30 June or 31 December, UTC, in practice (ITU-R TF.460 allows the end of
+        # any month; no other has been used); read as :59 anywhere, a parser one second late (13:13:60 for 13:13:59)
+        # passed (D-370; the second blind review's F6)
+        raise ValueError(f"second 60 outside a leap second (23:59:60 UTC on 30 June or 31 December) in {text!r}")
+    return epoch_text(t + dt.timedelta(microseconds=us))
 
 
 def epoch_field(iso, rounding=ROUND_HALF_UP):
@@ -176,7 +210,7 @@ def omm_fields_from_record(rec):
         if v is None:
             out[kw] = ""
         elif isinstance(v, dt.datetime):
-            out[kw] = v.strftime("%Y-%m-%dT%H:%M:%S.%f")
+            out[kw] = epoch_text(v)
         elif isinstance(v, float):
             out[kw] = repr(v)
         else:

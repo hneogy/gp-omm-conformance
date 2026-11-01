@@ -12,6 +12,7 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 from public_scrub import SUPGP_CASES, supgp_value_strings  # noqa: E402
+import export_public  # noqa: E402
 
 TEXT_EXT = (".json", ".md", ".py", ".txt", ".csv", ".kvn", ".xml", ".tle", ".2le", ".yml", ".toml", ".xsd", ".log", "")
 
@@ -57,7 +58,18 @@ class ExportGuardTests(unittest.TestCase):
                 for f in fs:
                     if wanted(f):
                         rel = os.path.relpath(os.path.join(d, f), ROOT)
+                        if rel.replace(os.sep, "/") in export_public.WITHHELD:
+                            self.assertNotIn(rel, rels, f"{rel} is withheld (D-367) but was exported")
+                            continue
                         self.assertIn(rel, rels, f"{rel} is not in the export: add a line for its folder or file type to PUBLIC_ALLOWLIST.txt")
+
+    def test_sm26s_adapters_are_withheld(self):
+        # D-367: SM-26's adapters stay out of the public export until SM-26's permission is confirmed; the tests that
+        # load them skip there (tests/adversarial/test_adversarial.py).
+        rels = {os.path.relpath(f, self.dest).replace(os.sep, "/") for f in self.files}
+        self.assertEqual(sorted(export_public.WITHHELD), ["tests/adversarial/sm26.py"])
+        self.assertNotIn("tests/adversarial/sm26.py", rels)
+        self.assertIn("tests/adversarial/test_adversarial.py", rels)
 
     def test_the_action_is_exported(self):
         # D-158: action.yml at the root is what `uses: hneogy/gp-omm-conformance@<tag>` reads; its script is in tools/

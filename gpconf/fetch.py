@@ -55,7 +55,9 @@ The fetch's own choices, which CelesTrak does not ask for (D-230):
 """
 import argparse
 import datetime as dt
+import gzip
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -64,6 +66,8 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import zlib
+from typing import Any
 
 from . import __version__, locate
 from .words import pick, qty
@@ -73,6 +77,9 @@ RECORDED_PROVENANCE = "recorded"   # a file's metadata says so when the fetch wr
 PAUSE_SECONDS = 2.0
 MIN_REFETCH_AGE_SECONDS = 2 * 3600
 TIMEOUT = 60
+# The most an answer may be, on the wire and decompressed: CelesTrak asks for no more than 100 MB a day from one address,
+# so an answer past it is no answer the fetch list expects (D-370; the second blind review's F13)
+MAX_ANSWER_BYTES = 100_000_000
 TOOL_VERSION = "tools/fetch.py v3 (full header capture; stops on any unexpected response)"
 NO_DATA_TEXTS = ("No GP data found", "No SupGP data found")  # CelesTrak's body for a query with nothing to return
 UNEXPECTED = ".unexpected"          # suffix of a response the fetch list did not expect, kept beside the data (D-228)
@@ -165,6 +172,28 @@ def unexpected_age_seconds(entry, now, root=None):
         return (now - t).total_seconds()
     except (KeyError, ValueError):
         return now.timestamp() - os.path.getmtime(body)
+
+
+def decode_body(raw, headers_all):
+    """The body as the provider sent it -> (body, content coding, problem or None) (D-329). The fetch asks for gzip, to
+    keep the transfer small, and keeps what it writes, hashes and records as the data itself: a gzip answer is
+    decompressed here, so a file's SHA-256 means the same as before. An answer in a coding that was not asked for, or a
+    gzip body that does not decompress, is a response the fetch did not expect."""
+    coding = next((v for k, v in headers_all if k.lower() == "content-encoding"), "").strip().lower()
+    if coding in ("", "identity"):
+        return raw, "identity", None
+    if coding == "gzip":
+        try:
+            d = zlib.decompressobj(16 + zlib.MAX_WBITS)   # gzip framing; at most the cap and one byte, never all of it
+            body = d.decompress(raw, MAX_ANSWER_BYTES + 1)
+            if len(body) > MAX_ANSWER_BYTES:
+                return raw, "gzip", f"a gzip body that decompresses past {MAX_ANSWER_BYTES:,} bytes (D-370)"
+            if not d.eof:
+                raise EOFError("the gzip body ends before its end")
+            return body, "gzip", None
+        except (OSError, EOFError, zlib.error) as e:
+            return raw, "gzip", f"a gzip body that does not decompress ({e})"
+    return raw, coding, f"Content-Encoding {coding!r}, which was not asked for"
 
 
 def why_unexpected(entry, status, body):
@@ -297,7 +326,7 @@ def record_one(entry, corpus, root=None):
     URL, so that the runner reads the file as it reads a fetched one, and says in so many words that this fetch did not
     ask for it."""
     body, prov = recorded_answer(entry, corpus)
-    capture = next((c for c in prov.get("captures", []) if c.get("url") == entry["url"]), {})
+    capture: dict[str, Any] = next((c for c in prov.get("captures", []) if c.get("url") == entry["url"]), {})
     d, path, meta_path = target_paths(entry, root)
     os.makedirs(d, exist_ok=True)
     status = capture.get("http_status", prov.get("http_status"))
@@ -427,7 +456,7 @@ def manifest_sources(root=None):
     p = os.path.join(root, "manifest.json")
     if not os.path.exists(p):
         return {}
-    out = {}
+    out: dict[str, dict[str, Any]] = {}
     with open(p, encoding="utf-8") as f:
         m = json.load(f)
     for c in m.get("cases", []):
@@ -527,28 +556,59 @@ def print_drift(report, out=None):
     return len(stable_drift)
 
 
+def read_capped(resp):
+    """The whole answer, read a megabyte at a time to at most MAX_ANSWER_BYTES and one byte, so that no more is ever
+    held (D-370). http.client's sized read gives back what arrived and stops, with no IncompleteRead, where an answer
+    with a Content-Length ends early: so the length it was still waiting for is checked here, and an answer cut short
+    raises IncompleteRead, to stop the run in words (D-370's reading). A chunked answer cut short raises in the read."""
+    parts, n = [], 0
+    while n <= MAX_ANSWER_BYTES:
+        part = resp.read(min(1 << 20, MAX_ANSWER_BYTES + 1 - n))
+        if not part:
+            break
+        parts.append(part)
+        n += len(part)
+    body = b"".join(parts)
+    missing = getattr(resp, "length", None)
+    if n <= MAX_ANSWER_BYTES and isinstance(missing, int) and missing > 0:
+        raise http.client.IncompleteRead(body, missing)
+    return body
+
+
 def fetch_one(entry, root=None):
     d, path, meta_path = target_paths(entry, root)
     os.makedirs(d, exist_ok=True)
-    req_headers = {"User-Agent": user_agent(), "Accept": "*/*"}
+    req_headers = {"User-Agent": user_agent(), "Accept": "*/*", "Accept-Encoding": "gzip"}   # a smaller transfer (D-329)
     req = urllib.request.Request(entry["url"], headers=req_headers)
     started = now_utc(precise=True)
     t0 = time.monotonic()
     try:
         with _opener.open(req, timeout=TIMEOUT) as resp:
             status, reason, version = resp.status, resp.reason, resp.version
-            body = resp.read()
+            body = read_capped(resp)   # never more than the cap and one byte in memory; an answer cut short raises (D-370)
             headers_all = [[k, v] for k, v in resp.headers.items()]
     except urllib.error.HTTPError as e:
         status, reason, version = e.code, e.reason, getattr(e, "version", None) or 11
-        body = e.read() or b""
+        try:
+            body = read_capped(e) or b""   # an error page is held to the same cap (D-370)
+        except http.client.HTTPException as cut:
+            print(f"\nSTOP: network error for {entry['url']}: {type(cut).__name__}: {cut}\nNot retrying.", file=sys.stderr)
+            sys.exit(3)
         headers_all = [[k, v] for k, v in e.headers.items()] if e.headers is not None else []
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
-        print(f"\nSTOP: network error for {entry['url']}: {e}\nNot retrying.", file=sys.stderr)
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as e:
+        # http.client's own errors (an answer cut short, IncompleteRead) are no OSError: they ended the fetch in a
+        # traceback, not in the STOP this says (D-370; the second blind review's F13)
+        print(f"\nSTOP: network error for {entry['url']}: {type(e).__name__}: {e}\nNot retrying.", file=sys.stderr)
+        sys.exit(3)
+    if len(body) > MAX_ANSWER_BYTES:
+        print(f"\nSTOP: the answer for {entry['url']} is larger than {MAX_ANSWER_BYTES:,} bytes, past what CelesTrak asks "
+              "one address to download in a day\nNot retrying.", file=sys.stderr)
         sys.exit(3)
     finished = now_utc(precise=True)
     elapsed_ms = round((time.monotonic() - t0) * 1000)
-    why = why_unexpected(entry, status, body)
+    on_wire = len(body)
+    body, coding, bad_coding = decode_body(body, headers_all)
+    why = bad_coding or why_unexpected(entry, status, body)
     meta = {
         "url": entry["url"],
         "retrieved_at": started[:19] + "Z",
@@ -563,6 +623,8 @@ def fetch_one(entry, root=None):
         "response_headers_ordered": headers_all,
         "bytes": len(body),
         "sha256": hashlib.sha256(body).hexdigest(),
+        "content_encoding": coding,     # how the body came over the wire; bytes and sha256 are of the decoded data (D-329)
+        "bytes_on_wire": on_wire,
         "provenance": "live",
         "case": entry["case"],
         "purpose": entry.get("purpose", ""),

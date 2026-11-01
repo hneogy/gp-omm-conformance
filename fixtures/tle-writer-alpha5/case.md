@@ -21,7 +21,7 @@ The writer-side mirror of the corpus. Each input record is handed to the adapter
 
 ## Checks
 
-- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0).
+- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (ASCII digits count their value, '-' counts 1, everything else 0); a line a writer returns must also be ASCII throughout (D-325).
 - **tle-writer-catalog-field** — A TLE writer puts the catalog number in columns 3-7 of both lines as five digits with leading zeros below 100000 and, from 100000 to 339999, as Alpha-5 (letter value 10-33, A=10 ... Z=33 with I and O never used, then the last four digits); both lines carry the same field.
 - **tle-writer-column-layout** — Every field of a written TLE sits in its fixed columns: on line 1 the decimal points at columns 24 and 35 and the separators at 2, 9, 18, 33, 44, 53, 62 and 64; on line 2 the decimal points at 12, 21, 38, 47 and 55, the separators at 2, 8, 17, 26, 34, 43 and 52, seven eccentricity digits, right-justified element set and revolution numbers. A left-justified value with a recomputed checksum has the right length and checksum and still fails this check.
 - **tle-writer-round-trip** — The written lines, read back by the corpus reference reader, reproduce the record's epoch, mean motion, eccentricity, inclination, RA of ascending node, argument of pericenter, mean anomaly and BSTAR at each field's resolution, quantised by truncation or by rounding half up (CelesTrak truncates the eccentricity, Space-Track rounds it; either is accepted and the convention observed is reported).
@@ -66,7 +66,7 @@ The `raw/` files below are not in the repository: `tools/fetch.py` creates them 
 | `derived/alpha5-tle/alpha5-T-270449-analyst-first.tle` | stable | none: derived file shipped with the repository | 168 | generated 2026-09-21T01:01:34Z | `74a8c9e508c0b062…` |
 | `derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle` | stable | none: derived file shipped with the repository | 58128 | generated 2026-09-21T01:01:34Z | `f4868060a6ab61d3…` |
 | `derived/alpha5-tle/alpha5-synthetic-epoch-years.tle` | stable | none: derived file shipped with the repository | 16800 | generated 2026-10-10T02:16:22Z | `de427c200042f372…` |
-| `derived/alpha5-tle/alpha5-synthetic-letters.tle` | stable | none: derived file shipped with the repository | 7728 | generated 2026-10-10T02:16:22Z | `cfca1468f2d79981…` |
+| `derived/alpha5-tle/alpha5-synthetic-letters.tle` | stable | none: derived file shipped with the repository | 7728 | generated 2026-10-29T01:39:43Z | `1592e5efd9f1178e…` |
 | `fixtures/analyst-objects/raw/analyst-270449-first.csv` | stable | 200 | 363 | 2026-09-21T00:44:08Z | `f9caeec84ba49dc0…` |
 | `fixtures/analyst-objects/raw/analyst-81011-first.csv` | stable | 200 | 357 | 2026-09-21T00:44:23Z | `339ed35b58d6300d…` |
 | `fixtures/analyst-objects/raw/analyst.csv` | live | 200 | 76633 | 2026-09-21T00:11:30Z | `e1d437ebf2a53ed9…` |

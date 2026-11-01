@@ -24,11 +24,12 @@ misidentified records beyond the expected records left are counted as extra, nev
 """
 import json
 import os
+from typing import Any
 
 from .tle import to_alpha5
 from .words import qty
 
-GATES = [
+GATES: list[dict[str, Any]] = [
     {
         "id": "last-30-days",
         "name": "this month's launches",
@@ -71,7 +72,10 @@ def format_result(items):
                     "refusals_reported": c.get("refusals_reported"), "top_refusal_reason": c.get("top_refusal_reason")}
     for it in items:
         if it.check == "parse" and it.status == "fail":
-            return {"state": "measured", "note": "the parser raised on the file", "expected": None, "returned": 0, "loaded": 0, "misidentified": 0, "dropped": None}
+            # a value the runner could not read is not an exception the parser raised (D-325)
+            note = ("the runner could not read a value the parser returned" if (it.detail or "").startswith("the parser returned a value")
+                    else "the parser raised on the file")
+            return {"state": "measured", "note": note, "expected": None, "returned": 0, "loaded": 0, "misidentified": 0, "dropped": None}
     for it in items:
         if it.check == "format-supported" and it.status == "skip":
             return {"state": "not read"}

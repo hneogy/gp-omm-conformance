@@ -7,7 +7,14 @@ the reference adapter included. G2, a false PASS: text a parser returned for an 
 Python's most generous readers, so digits of another script, an underscore between digits and padding were graded as
 the number they spell.
 
+The G1 routes, and G2's route on one TLE/OMM set, need a set of two files. They run on the provider's two files where
+they are on disk, and everywhere on a synthetic two-file set written by the test from the frozen values of the case's
+public expected.json (D-362), so that they run in a clone, an export and public CI too.
+
 Run: python -m unittest tests.adversarial.test_hardening"""
+import csv
+import io
+import json
 import os
 import shutil
 import sys
@@ -18,6 +25,7 @@ from decimal import Decimal
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 
+from gpconf import reference as reference_reader  # noqa: E402
 from gpconf import tle as tlemod  # noqa: E402
 from gpconf.runner import Runner, UnreadableValue, Unsupported, norm_record  # noqa: E402
 from gpconf.adapters.reference import Parser as Reference  # noqa: E402
@@ -26,6 +34,7 @@ NO_DATA = ["alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants
 EMPTY = tempfile.mkdtemp(prefix="gpconf-hardening-empty-")
 OTHER_DIGITS = str.maketrans("0123456789", "\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669")   # Arabic-Indic
 BSTAR_RAW = os.path.join(ROOT, "fixtures", "bstar-and-derivative-forms", "raw")
+BSTAR_EXPECTED = os.path.join(ROOT, "fixtures", "bstar-and-derivative-forms", "expected.json")
 COUNT = "tle-count-equals-omm-count-below-100000"
 
 
@@ -210,20 +219,52 @@ class RefusedTextCannotHideInTheCasesThatPairFormats(unittest.TestCase):   # G2,
         self.assertTrue(all(any(i.check == "parse" and i.status == "fail" for i in x.items) for x in r.values()))
 
 
-@unittest.skipUnless(os.path.exists(os.path.join(BSTAR_RAW, "decaying.csv")) and os.path.exists(os.path.join(BSTAR_RAW, "decaying.tle")),
-                     "the provider files are not on disk (a fresh clone or an export)")
-class AHalfFetchedSetBlamesNoParser(unittest.TestCase):              # G1, D-318
+def synthetic_decaying(dest, names=("decaying.csv", "decaying.tle")):
+    """The case's `decaying` set as a synthetic two-file set (D-362), written into dest from the frozen values of the
+    case's public expected.json, the way test_strict_files_080.py writes its files: no provider byte is read, copied or
+    shipped. decaying.csv holds every record of the set (82) in CelesTrak's columns and order; decaying.tle holds those
+    whose catalog number the TLE format carries, below 100000 (79), name line and two lines each, rendered by the
+    corpus's writer as CelesTrak renders (BSTAR and the second derivative rounded to five digits, the eccentricity
+    truncated to seven, the epoch to 1e-8 day), with CR LF line ends as the provider's files have. Each file has a
+    .meta.json beside it saying it is synthetic. Returns the records written."""
+    import csv
+    import io
+    import json
+    with open(BSTAR_EXPECTED, encoding="utf-8") as f:
+        exp = json.load(f)
+    records = [r for r in exp["records"] if r["set"] == "decaying"]
+    columns = exp["sources"]["fixtures/bstar-and-derivative-forms/raw/decaying.csv"]["facts"]["columns"]
+    raw = os.path.join(dest, "fixtures", "bstar-and-derivative-forms", "raw")
+    os.makedirs(raw, exist_ok=True)
+    texts = {}
+    out = io.StringIO()
+    w = csv.writer(out, lineterminator="\r\n")
+    w.writerow(columns)
+    for r in records:
+        fields = tlemod.omm_fields_from_record(r["canonical"])
+        w.writerow([fields[c] for c in columns])
+    texts["decaying.csv"] = out.getvalue()
+    lines = []
+    for r in records:
+        if r["norad_cat_id"] < 100000:
+            lines += tlemod.render(tlemod.omm_fields_from_record(r["canonical"]), mantissa_mode="round", ecc_mode="truncate")
+    texts["decaying.tle"] = "".join(line + "\r\n" for line in lines)
+    for name in names:
+        with open(os.path.join(raw, name), "w", encoding="ascii", newline="") as f:
+            f.write(texts[name])
+        with open(os.path.join(raw, name + ".meta.json"), "w", encoding="utf-8") as f:
+            json.dump({"provenance": "synthetic", "written_by": "tests/adversarial/test_hardening.py (D-362)",
+                       "from": "the frozen values of fixtures/bstar-and-derivative-forms/expected.json",
+                       "note": "not provider data: no byte of it was fetched"}, f, indent=1)
+    return records
+
+
+class HalfFetchedSetRoutes:
+    """G1, D-318: the four routes and twins, on whatever two files `half()` puts in a data folder."""
     CASE = ["bstar-and-derivative-forms"]
 
     def half(self, *names):
-        data = tempfile.mkdtemp(prefix="gpconf-half-")
-        self.addCleanup(shutil.rmtree, data, True)
-        os.makedirs(os.path.join(data, "fixtures", "bstar-and-derivative-forms", "raw"))
-        for n in names:
-            for ext in ("", ".meta.json"):
-                if os.path.exists(os.path.join(BSTAR_RAW, n + ext)):
-                    shutil.copy(os.path.join(BSTAR_RAW, n + ext), os.path.join(data, "fixtures", "bstar-and-derivative-forms", "raw", n + ext))
-        return data
+        raise NotImplementedError
 
     def counts(self, r):
         return [(i.status, i.cause, i.detail) for i in r["bstar-and-derivative-forms"].items if i.check == COUNT and i.file == "decaying"]
@@ -269,6 +310,79 @@ class AHalfFetchedSetBlamesNoParser(unittest.TestCase):              # G1, D-318
         r = run(NoTleHere(), self.CASE + ["alpha5-tle-derived"], both)
         self.assertIn("bstar-and-derivative-forms", failing(r))       # all-or-none (D-280): the dodge fails
         self.assertTrue(any("(D-280)" in i.detail for i in r["bstar-and-derivative-forms"].items if i.status == "fail"))
+
+
+@unittest.skipUnless(os.path.exists(os.path.join(BSTAR_RAW, "decaying.csv")) and os.path.exists(os.path.join(BSTAR_RAW, "decaying.tle")),
+                     "the provider files are not on disk (a fresh clone or an export); the synthetic set below runs instead")
+class AHalfFetchedSetBlamesNoParser(HalfFetchedSetRoutes, unittest.TestCase):              # G1, D-318, on the provider's files
+    def half(self, *names):
+        data = tempfile.mkdtemp(prefix="gpconf-half-")
+        self.addCleanup(shutil.rmtree, data, True)
+        os.makedirs(os.path.join(data, "fixtures", "bstar-and-derivative-forms", "raw"))
+        for n in names:
+            for ext in ("", ".meta.json"):
+                if os.path.exists(os.path.join(BSTAR_RAW, n + ext)):
+                    shutil.copy(os.path.join(BSTAR_RAW, n + ext), os.path.join(data, "fixtures", "bstar-and-derivative-forms", "raw", n + ext))
+        return data
+
+
+class AHalfFetchedSetBlamesNoParserOnASyntheticSet(HalfFetchedSetRoutes, unittest.TestCase):   # G1, D-318, everywhere (D-362)
+    """The same routes and twins on the synthetic two-file set, so that they run in a clone, an export and public CI,
+    where the provider's files are not; and where they are too, so that the set itself is held to the reader."""
+
+    def half(self, *names):
+        data = tempfile.mkdtemp(prefix="gpconf-synthetic-half-")
+        self.addCleanup(shutil.rmtree, data, True)
+        synthetic_decaying(data, names)
+        return data
+
+    def test_the_synthetic_set_is_what_the_frozen_values_say_and_a_correct_parser_passes_it(self):
+        """The twin of every route above: the reference adapter fails nothing on it, the reference reader reads back
+        every frozen value from it, and the TLE fields are the ones the provider printed, as the case froze them."""
+        data = self.half("decaying.csv", "decaying.tle")
+        with open(BSTAR_EXPECTED, encoding="utf-8") as f:
+            frozen = {r["norad_cat_id"]: r for r in json.load(f)["records"] if r["set"] == "decaying"}
+        raw = os.path.join(data, "fixtures", "bstar-and-derivative-forms", "raw")
+        _, csv_recs, _ = reference_reader.read_file(os.path.join(raw, "decaying.csv"))
+        _, tle_recs, _ = reference_reader.read_file(os.path.join(raw, "decaying.tle"))
+        self.assertEqual((len(csv_recs), len(tle_recs)), (82, 79))                     # the counts of the provider's two files
+        self.assertEqual(sorted(r["norad_cat_id"] for r in csv_recs), sorted(frozen))
+        for rec in csv_recs:                                                              # every frozen value, read back
+            for k, v in frozen[rec["norad_cat_id"]]["canonical"].items():
+                self.assertEqual(str(rec[k]), str(v), (rec["norad_cat_id"], k))
+        for rec in tle_recs:                                                              # every TLE field as the provider printed it
+            want = frozen[rec["norad_cat_id"]]["by_format"]["tle"]["fields"]
+            self.assertEqual({k: rec["tle"].get(k) for k in want}, want, rec["norad_cat_id"])
+        r = run(Reference(), self.CASE, data)
+        self.assertEqual(failing(r), [])
+        self.assertEqual([(i.check, i.detail) for i in r["bstar-and-derivative-forms"].items if i.status == "fail"], [])
+        ((status, _, detail),) = self.counts(r)
+        self.assertEqual(status, "pass")
+        self.assertIn("TLE has 79 records, OMM has 79 ids below 100000 and 3 at or above", detail)
+
+
+class PaddingInTheOmmFileOnlyOnASyntheticSet(unittest.TestCase):    # G2, D-319, the route of the class above that needs one set
+    """The route of RefusedTextCannotHideInTheCasesThatPairFormats that runs on one TLE/OMM set, on the synthetic set
+    (D-362): BSTAR padded in the OMM file only fails the file as `parse`, never as an internal error. The two pairing
+    cases read several provider files each and are run where those are on disk, above."""
+
+    def test_padding_in_the_omm_file_only_is_a_parse_failure_not_an_internal_error_and_its_twin_passes(self):
+        data = tempfile.mkdtemp(prefix="gpconf-synthetic-pad-")
+        self.addCleanup(shutil.rmtree, data, True)
+        synthetic_decaying(data)
+
+        class Adapter(Reference):
+            def parse(self, raw, fmt):
+                out = super().parse(raw, fmt)
+                for r in out:
+                    if fmt not in ("tle", "2le") and "_refused" not in r and r.get("bstar") is not None:
+                        r["bstar"] = " " + str(r["bstar"])
+                return out
+        r = run(Adapter(), ["bstar-and-derivative-forms"], data)
+        self.assertEqual(failing(r), ["bstar-and-derivative-forms"])
+        self.assertEqual([i.detail for c in r.values() for i in c.items if "internal error" in i.detail], [])
+        self.assertTrue(any(i.check == "parse" and i.status == "fail" and i.file.endswith("decaying.csv") for i in r["bstar-and-derivative-forms"].items))
+        self.assertEqual(failing(run(Reference(), ["bstar-and-derivative-forms"], data)), [])    # the twin: no padding
 
 
 if __name__ == "__main__":

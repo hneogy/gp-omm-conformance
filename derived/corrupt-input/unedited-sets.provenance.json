@@ -6,9 +6,10 @@
     1,
     2,
     3,
-    4
+    4,
+    6
   ],
-  "description": "The three TLE sets of inputs 1 to 4 with no edit, in the inputs' order.",
+  "description": "The three TLE sets of inputs 1 to 4 and 6 with no edit, in the inputs' order.",
   "rendering": {
     "renderer": "gpconf/tle.py render",
     "settings": {
@@ -36,7 +37,8 @@
         1,
         2,
         3,
-        4
+        4,
+        6
       ],
       "norad_cat_id": 69999,
       "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
@@ -58,7 +60,7 @@
   ],
   "basis": "DECISIONS D-175 (owner instruction 2026-09-27): what a parser returns from each corrupt input is compared with what the same parser returns from this file, the same records with no edit",
   "generator": "tools/derive_corrupt_inputs.py",
-  "generated_at": "2026-09-27T15:12:19Z",
+  "generated_at": "2026-10-26T11:16:07Z",
   "line_endings": "CRLF",
   "bytes": 504,
   "output_sha256": "6d53b5f62556841e73b55c3a969d230f31510c5fbb45f145b468a2e429b204d6"

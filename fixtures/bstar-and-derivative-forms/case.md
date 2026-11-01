@@ -20,7 +20,7 @@ Drag-term encodings: negative BSTAR and first derivative, non-zero second deriva
 - **negative-bstar-and-ndot** — BSTAR and the first derivative can be negative; parsers must keep the sign.
 - **mmdot-is-tle-field-value** — OMM MEAN_MOTION_DOT equals the TLE first-derivative field as printed (the TLE 'ndot/2' convention); MEAN_MOTION_DDOT likewise equals the TLE second-derivative field.
 - **tle-values-match-omm-within-tle-precision** — The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution.
-- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0).
+- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (ASCII digits count their value, '-' counts 1, everything else 0); a line a writer returns must also be ASCII throughout (D-325).
 - **tle-count-equals-omm-count-below-100000** — The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query. With the corpus's record of the TLE answer in place of a fetched one (D-247), it is compared only while the fetched OMM set holds no id below 100000.
 
 ## Coverage

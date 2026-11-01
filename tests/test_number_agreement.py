@@ -42,8 +42,10 @@ def load_tool(name):
 class Result:
     """What the lines under the table read of a case's result."""
 
-    def __init__(self, case_id, status, missing=(), unavailable=(), unexpected=None, on_request=None):
+    def __init__(self, case_id, status, missing=(), unavailable=(), unexpected=None, on_request=None, modes=None):
         self.case_id, self.status = case_id, status
+        # the files read from disk, as CaseResult keeps them: a case that ran reads one unless it says otherwise (D-350)
+        self.modes = {"f": "snapshot"} if modes is None and status != "not-fetched" else (modes or {})
         self._missing, self._unavailable = list(missing), list(unavailable)
         self.unexpected, self.on_request, self.reused = unexpected or {}, on_request or {}, {}
 
@@ -104,6 +106,17 @@ class TheLinesUnderTheTable(unittest.TestCase):
                       lines_under_the_table([Result("a", "pass", ["f", "g"])]))
         self.assertIn("2 cases ran without 2 of their provider files, so each result covers only the files on disk (column n/f): a, b.",
                       lines_under_the_table([Result("a", "pass", ["f"]), Result("b", "fail", ["g"])]))
+
+    def test_cases_with_none_of_their_files_on_disk_that_did_not_report_not_fetched(self):
+        """A data check that needs no file makes such a case not-exercised; it ran on none of its files (D-350)."""
+        one = lines_under_the_table([Result("a", "not-exercised", ["f"] * 6, modes={})])
+        self.assertIn("1 case read none of its provider files (6 not on disk, column n/f): a.", one)
+        self.assertNotIn("ran without", one)
+        two = lines_under_the_table([Result("a", "not-exercised", ["f"], modes={}), Result("b", "not-exercised", ["g"], modes={})])
+        self.assertIn("2 cases read none of their provider files (2 not on disk, column n/f): a, b.", two)
+        self.assertNotIn("ran without", two)
+        recapture = lines_under_the_table([Result("a", "not-exercised", ["x-recapture.tle"], modes={})])
+        self.assertIn("A re-capture file is the same endpoint requested a second time", recapture)
 
     def test_cases_no_fetch_can_run(self):
         one = lines_under_the_table([Result("a", "not-available", unavailable=["f"])])

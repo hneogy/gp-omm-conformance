@@ -61,6 +61,8 @@ class TheList(unittest.TestCase):
         asked = [e for e in default if not e.get("recorded")]              # four are written from the corpus's record (D-247)
         self.assertEqual((len(asked), size(asked)), (46, 3131816))
         self.assertGreater(size(on_request) / size(user), 0.74)                        # three quarters
+        # the README's "by far the largest piece of a full fetch" (D-373): larger than every other requested file together
+        self.assertGreater(size(on_request), size([e for e in user if not e.get("opt_in") and not e.get("recorded")]))
 
     def test_only_the_data_check_reads_it(self):
         with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
@@ -197,7 +199,8 @@ class TheRunner(unittest.TestCase):
         self.assertEqual(r.status, "not-exercised")
         self.assertEqual((r.counts()["not-exercised"], r.counts()["not-fetched"]), (1, 6))
         self.assertIn("1 case: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 0 not available, 1 not exercised", text)
-        self.assertIn(f"1 case ran without 6 of its provider files, so its result covers only the files on disk (column n/f): {CASE}.", text)
+        self.assertIn(f"1 case read none of its provider files (6 not on disk, column n/f): {CASE}.", text)
+        self.assertNotIn("ran without", text)   # it read no file at all (D-350)
         self.assertIn("Provider data is not shipped with the corpus; fetch it with", text)
 
     def test_a_refusal_kept_for_the_file_is_reported_as_one(self):

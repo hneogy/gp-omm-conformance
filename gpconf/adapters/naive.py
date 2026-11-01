@@ -17,6 +17,7 @@ import datetime as dt
 import io
 import json
 import xml.etree.ElementTree as ET
+from typing import Optional
 
 
 def _year(yy):
@@ -50,11 +51,12 @@ class Parser:
             for seg in root.iter("segment"):
                 f = {}
                 for blk in ("metadata", "data/meanElements", "data/tleParameters"):
-                    for e in seg.find(blk):
+                    for e in seg.find(blk):  # type: ignore[union-attr]  # naive by design: every block assumed present
                         f[e.tag] = e.text
                 out.append(self._omm(f))
             return out
         if fmt == "kvn":
+            cur: Optional[dict[str, str]]
             out, cur = [], None
             for line in text.splitlines():
                 if not line.strip():
@@ -63,7 +65,7 @@ class Parser:
                 if k == "CCSDS_OMM_VERS":
                     cur = {}
                     out.append(cur)
-                cur[k] = v
+                cur[k] = v  # type: ignore[index]  # naive by design: the version line assumed first
             return [self._omm(f) for f in out]
         raise ValueError(fmt)
 

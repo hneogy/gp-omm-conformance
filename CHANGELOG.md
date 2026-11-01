@@ -2,8 +2,353 @@
 
 Notable changes to the corpus. The version number is assigned when the owner tags a release, under
 the rule in the README (patch: documentation and tooling only; minor: refreshed live snapshots, added
-cases, or an additive protocol change; major: changed `expected.json` schema or check semantics).
+cases, or an additive protocol change; major: a changed `expected.json` schema; a change of check semantics is minor
+before 1.0 and major from 1.0).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
+
+## [0.8.0] - 2026-11-01
+
+A minor release under the versioning rule (D-333): the grading behaviour that `docs/ADAPTERS.md` documents changes,
+among the entries below, where an input holds a catalog number more than once, across the two TLE files and the OMM
+records of a set, and in the cases that have no values item, and two cases gain inputs. Re-run under this runner, one published case
+verdict changes: python-sgp4's `mean-motion-derivative-convention` passes within tolerance where it passed exactly,
+its MEAN_MOTION_DDOT now compared too (D-358); every other library row keeps every case status.
+
+Mutation testing of the grading code before the release: 81.8% of the logic changes and 66.8% of the number changes
+killed by the suite; the survivors are reviewed for the next release.
+
+Added: two cases' inputs, lane C's proposals. `vectors/alpha5.json` holds a blank and an empty catalog field among the
+fields a decoder must reject (a decoder reading either as 0 passed), and the alpha5-decode item shows each field it
+accepted or crashed on, and the value returned, as they are; and the corrupt-input case a sixth input, 69999's first
+record with the invalid Alpha-5 catalog field I9999 on both lines, both checksums valid, checked by
+`corrupt-tle-invalid-catalog-field` (no shipped TLE file held one, so a reader that read it as 189999 was caught only
+through its decode hook); a refusal whose `_field` is the catalog field the edit introduced is credited, as one whose
+`_input` quotes the edit. Fixed: four tests that failed on Windows or without the ignored provider captures, none in
+the code under test (the N5 tests' guard, a command quoted for cmd.exe, a key with "/" on Windows) (D-360).
+
+Fixed: the pairs cases' escapes. `mmdot-is-tle-field-value` holds MEAN_MOTION_DDOT to the TLE field's five rounded
+digits too, as its case says; a key the parser leaves out is read as None in the TLE/OMM pairs, and a field every TLE
+carries left out or None on either side fails; and on the KVN variant without NORAD_CAT_ID, a value that is no integer,
+or an empty text, for one of the integer keywords it leaves out fails (D-358).
+
+Fixed: the one record of the corpus's KVN variant without NORAD_CAT_ID is counted loaded only, where it was counted
+loaded and misidentified both, whether its bytes are the snapshot's or not; a record whose id is not an integer is
+misidentified, and counted neither loaded nor a duplicate copy, the file's record not returned where only such records
+come back; and D-311's failure on that file names the record the file leaves without an id, not an id no copy carried
+(D-357).
+
+Fixed: a tie between refusal reasons in the corrupt-input case is settled by the reason's text, not by the hash seed,
+and refusal reasons are counted once each (16,000 distinct took 10 s); and a refusal without a reason is said to count
+as no refusal, crediting no record (D-356).
+
+Fixed: words that said something other than what happened. A number past what the runner's decimals hold reads as a
+value the runner cannot read, not as "parser raised InvalidOperation"; an epoch is written with a four-digit year on
+every platform, not through the C library's strftime; and a case reporting not-fetched with some of its files on disk
+says so. Every Python a test starts with an environment of its own is watched by the crash check too
+(`tests/crashwatch.py`) (D-355).
+
+Fixed: a value whose exponent no TLE field can hold is refused from its exponent, before any arithmetic: in the
+TLE/OMM consistency check an OMM BSTAR or second derivative of 1E-9999999 was normalised to nothing and read as 0 (so
+a parser answering it where the TLE field holds 0 passed), and one of 1E+999999999 was written out in full, costing
+seconds and most of a gigabyte; `tle.exp_field` raises ValueError naming the exponent for both, where it returned "
+00000+1" and raised decimal.Overflow (D-354).
+
+Fixed: in the TLE/OMM consistency check, an OMM BSTAR, second derivative or eccentricity a parser returns empty (None)
+for an id the input holds more than once is judged, where D-351 failed it until this entry: the parser's copy must
+take an input copy of the id that leaves the field empty at its own epoch (within the item's 432 us TLE/OMM epoch
+allowance, the input's epochs read in any CCSDS form), each input copy taken once, however many TLE copies the
+parser's copy pairs with; where none is left the item fails, and where one is taken the parser's TLE value is compared
+with the values the input's TLE copies give at the input TLE epoch nearest the parser's TLE copy's, or its OMM copy's
+where the TLE copy has none. Neither the parser's element set numbers nor an epoch it drops choose the copy it is
+judged by (D-352).
+
+Fixed: values and files that ended a case as "internal error in runner" now read as what they are. In the TLE/OMM
+consistency check an OMM BSTAR, second derivative or eccentricity a parser returns empty (None) is judged, for an id
+the input holds once, by the input's record of it: where the record gives a value the item fails, and where it is
+empty too the TLE value is compared with the input's TLE file instead (for an id held more than once, D-352) (the
+reference adapter passes a provider CSV with an empty BSTAR, where it ended the case); one no TLE field holds as
+providers write it (1E99, 1E-99, 1E30, 1E+1000000), like an eccentricity of 1E+30 or below 0, fails the item naming
+it. The SATCAT case reads an empty legacy `satcat.txt` as a data item, and does not read an error page an earlier
+fetch saved in a file's place, refusing it in the words the other cases use; the report marks such a response
+`in_place`. A `.meta.json` that is not a JSON object, or a directory, no longer ends a case. Added:
+`tools/run_suite.py` (POSIX systems), which runs the suite with a check of the crashes during it: every Python the
+suite starts that inherits its environment writes a fatal signal's traceback to a file of its own (faulthandler;
+SIGTRAP included), the deliberate crashes of the crash tests are marked, and the run ends "crash reports: N expected,
+M unexpected", stopping on an unexpected one; the suite is not run where the check cannot see its own canary. The
+crash tests' deliberate crashes no longer leave macOS crash reports (D-351).
+
+Changed: `tle.exp_field`, the reference writer's exponent field, raises a `ValueError` naming any value that is not a
+finite decimal number, where a NaN raised `InvalidOperation`, an infinity `TypeError` and a `Decimal` handed in
+`AttributeError`; a case none of whose provider files is on disk but whose status a check that needs no file made other
+than not-fetched (the SATCAT case) reads "read none of its provider files (6 not on disk, column n/f)", where the line
+read "ran without 6 of its provider files, so its result covers only the files on disk"; and `tools/make_failures.py`
+keeps whole the closing sentence of a values detail that says the input holds an id more than once when it cuts the
+detail at 600 characters (D-350).
+
+Changed: where the frozen values cover part of a file (`starlink-all.csv`, held to its 27 nine-digit records), a record
+under a catalog number the file does not hold fails the values item, as it does elsewhere; it passed, run alone or in a
+full run. The file's other records are in no count but `returned`: they were counted misidentified, 11,114 of
+them for a correct parser, and stood in for expected records a parser dropped; a surplus copy of one is counted in
+`extra` and `duplicate_copies`; and one of them dropped with nothing said fails the item, where a parser returning the
+27 alone passed (D-349).
+
+Changed: a record under a catalog number the file does not hold, or with none, fails the pairs, facts and XML cases
+too, as `records-returned` in the values item's words, and the TLE/OMM consistency check and `mmdot-is-tle-field-value`
+fail where the two files share a catalog number and no pair forms; run alone a pairs case passed a wrong copy under
+another number or with none, and a parser returning every TLE record without its number, at "0 TLE/OMM pairs
+consistent", and the facts and XML cases a record renumbered in place, its count unchanged (D-348).
+
+Changed: a parser returning more copies of a catalog number than a file holds fails the pairs, facts and XML cases
+too, as `records-returned`, in the values item's words; these cases have no values item, so run alone a pairs or facts
+case passed a surplus copy (a wrong one placed before the right one, in the pairs cases), and the XML case one that
+stood in for a dropped record (in a full run another case's values item failed both). A correct parser's report gains
+no item (D-346).
+
+Changed: every TLE file of a set, its `.tle` and its `.2le`, is compared with the set's OMM records in items of its
+own, the others named after the set and the file ("iss-live: iss.2le"), where only the first was, so a set's `.2le`
+was never compared with its OMM records, not even where its `.tle` was missing; a recapture, a second fetch of the TLE
+answer made later, is not compared with them. On the corpus's data the two ISS sets each gain one consistency item (D-345).
+
+Changed: where an input holds a catalog number more than once, a parser returning fewer copies than the input holds
+fails, as one returning more did (D-311); the values item's counts and words count the input's records, not its ids,
+so every record of such an id is in an outcome; and the two-digit-year pivot, TLE/OMM consistency, OMM-formats-agree
+and presence checks read every copy of such an id, each record against a copy of its id, where they kept one copy and
+a correct parser reading a history of one object (as Space-Track's GP_History class answers) failed them; a history of
+thousands of element sets is read in well under a second. An id the input holds once is read as before, so where
+every id is held once, as in every input the corpus has, every verdict and count is what it was, and records without a
+catalog number are counted as before; one count moves there: where a parser returns no record of a file holding
+two or more records without a catalog number, `ids_not_returned` counts them as one id, as the values item does (D-344).
+
+Changed: where an input holds a catalog number more than once (a live file can; Space-Track's history answers do),
+each copy a parser returns is compared with the input's record it matches, and the values item says so where the
+records differ; before, every copy was compared with the last of them, so a correct parser failed and one returning
+the last record twice passed. Until the next entry, a parser returning one record of such an id passes, as keeping the
+last did before. Where more than 10,000 copy-and-record pairs of one id are left after its records are matched by
+element set number and revolution, the rest are paired in epoch order (D-343).
+
+Changed: the corrupt-input case's unedited TLE file is held to its records' frozen values, as the CSV and JSON ones
+are, so a parser that drops a record from it as well as from the inputs, or reads every TLE set imprecisely, fails
+that file's values item where it read not-exercised or passed; a reader returning floats reads within tolerance there,
+and one that never returns an optional field gains a field gap; the case's other items still compare the parser with
+itself. The guard reads no class a parser claims: a parser that claimed to be the guard was left unguarded, and a
+command's crash is now known as the runner's by identity, so one that comes up through a wrapper or a proxy unchanged
+is a crash, as is one a `CommandParser` subclass raises; a wrapper's copy of a crash is its own raise (D-342).
+
+Changed: a parser's command (`--cmd`, `--vectors-cmd`, `--write-cmd`) ended by a signal, or still running after its
+120 seconds, is a crash, and a crash is never a refusal or a rejection: a corrupt input it crashes on fails, and so do
+a vector it must reject and an id the TLE field cannot carry; elsewhere it fails as before, in words naming the signal
+or the time. From a shell command, only an exit of 128 plus the number of SIGSEGV, SIGBUS, SIGABRT, SIGILL, SIGFPE,
+SIGTRAP, SIGSYS, SIGKILL, SIGXCPU or SIGXFSZ (139 for SIGSEGV) is read as a signal, so a harness refuses with exit 1;
+the rule is POSIX's. A provider TLE line blank in column 68, the last digit of its element set or revolution number,
+is refused in words, as a line cut short inside that number (D-341).
+
+Changed: the README, the supplemental case's notes and `docs/RESEARCH.md` say what the 70000-99999 block holds: in
+the regular GP data, only analyst objects, 80000-89999; CelesTrak's pre-launch supplemental data uses placeholder
+numbers such as 72000 and 72001 for a launch stack, which are not catalogued objects, and that may change for future
+launches (confirmed in correspondence with CelesTrak, October 2026). Text only; no value moves (D-340).
+
+Changed: in the corrupt-input case, a parser that raises on an unedited comparison file, a valid file of its format,
+fails it as `parse`, as on any other valid file; before, nothing failed: the inputs it is the comparison for were set
+aside, as they still are, and the case could read `not-exercised` where the same parser reading the file failed
+(D-339).
+
+Changed: a TLE kept as 80-column card images, its element lines blank from column 70 to 80, reads as its 69-column
+lines, where it was refused whole; any other character past column 69, a line past column 80, or a card blank in its
+checksum column (a line cut short, or one whose checksum was never written) is refused in words. The writer case still
+holds written lines to 69 columns; `check-tle`, which takes trailing whitespace off the lines it checks, now notes it
+on each written element line, which line and which columns, as information, the exit code unchanged (D-338).
+
+Changed: the reference reader, which makes the expected values and is the oracle on a user's live bytes, reads a
+provider file's numbers as strictly as the runner reads a parser's answer, and refuses what the format does not allow,
+in words naming the field, the keyword or the line: underscores, other scripts' digits, Unicode spaces, NaN and
+Infinity, a number that would run past 4,300 digits on either side of the point or whose exponent is past what
+Python's Decimal holds, an integer of more than 4,300 digits, and padding outside the format's own; line breaks other
+than CR and LF (what older TLE files carry, a page break at the start of a line, a line of blanks and tabs, a DOS
+end-of-file mark or NUL padding at the end, still reads, and a saved copy with CR CR LF line ends, which gave no set
+before, now reads); a KVN line that is not printable ASCII (a tab apart), not a COMMENT or KEYWORD = value, or before
+its message's version line, and units the NDM/XML schemas do not list for the keyword; a TLE line, the name line
+included, that is not printable ASCII, a value over the blank between two fields, a sign in an unsigned column, an
+exponent where the format has none, an exponent field out of its columns, a line 2 whose catalog field is not line
+1's, an element line that pairs with nothing, an international designator that is not one; a stray line that is not
+printable ASCII; a repeated CSV column, JSON key or XML element or block, an XML `units` attribute KVN would not
+allow; a CSV the csv module cannot read, its header included; a JSON text field that is not text; markup or text
+between elements in XML; an epoch the epoch reader cannot read, with anything around it, or with an offset outside
+XML. Each was read as a number, read as something else, or left out without a word (a KVN value with a line separator
+inside read as its first digits; a BSTAR written one column over lost its sign), or ended as an error of the corpus
+(`1E9999999999` was written out in full until memory ran out). Every frozen expected value is unchanged. On live bytes
+the file's epoch is read as an instant before it is compared, so a legal CCSDS day-of-year epoch, a trailing Z or a
+seventh fraction digit no longer fails every parser, and a leap second takes either instant; a TLE name line loses
+Space-Track's leading `0 `, and where a file carries no classification (a blank TLE column, an OMM file's empty, null
+or absent CLASSIFICATION_TYPE) a parser may answer None or `U`, as D-285 allows for metadata a format does not carry.
+Lines a writer wrote are held to the same rules, but for the name and the designator, which are reported, never
+failed. `check-tle --against` stops with exit 2, naming the file and what is wrong, when the reference reader rejects
+the records file, where it failed each record or ended in a traceback (D-336).
+
+Changed: small edges of the grader, from the hardening review of 2026-10-11 (D-325). A NaN or an infinity returned as
+an element value fails the file as `parse`, and an infinite catalog number or counter fails as not an integer, where
+both ended as "internal error in runner" or "parser raised OverflowError". A file that fails on a value the runner
+cannot read says "the parser returned a value the runner cannot read", not "parser raised", and the gate's note says
+the same. An epoch string with whitespace around it fails the file as `parse`, as element text has since D-319. A
+written TLE line must be ASCII: a digit of another script in an element field, with the check digit recomputed,
+passed the writer case; the checksum counts ASCII digits only. The reference adapter's `parse_epoch` refuses day 366
+of a year of 365 days, and `vectors/ccsds-epoch-strings.json` gains that string as its sixth invalid form; its
+`parse_catalog_id` takes ASCII digits only. `gpconf.to_alpha5` takes integers only and raises `ValueError` for
+`25544.0`, `'25544'` or `True`, which it used to encode; the reference's two-digit year takes two digits or an integer
+from 0 to 99. No case status moved in the sixteen published runs and GPKit's.
+
+Changed: an answer that is not an iterable of records, a dict, or a list holding strings, fails the file as `parse`
+(in the corrupt-input case under the input's own check, and for the provider's empty answer under its check) in the
+words "the parser returned a value the runner cannot read", where it read "parser raised AttributeError" or ended the
+corrupt-input case as "internal error in runner"; the corrupt-input case's comparison file fails as `parse` too, where
+it was set aside with no failure; a command adapter's JSON that is not an array of objects says the same. A list, a
+tuple, a generator or any other iterable of mappings is read (D-330, D-334).
+
+Changed: everything a Python adapter returns, its answer, every value in it, a hook's answer, a written line, an
+attribute, is read once into plain built-in values inside the guard that already caught an exit, and no check calls a
+method of an object the adapter made (D-337). A subclass of `str`, `int`, `float`, `bytes`, `Decimal` or `datetime` is
+the value it holds, whatever its own `__eq__`, `strip()`, `__repr__` or `strftime()` say, so a `str` Enum is the text
+it holds; a `datetime.timezone` is built again from what it holds; text from an object of the adapter's own is its
+`str()`, so the input's own epoch handed back in a wrapper fails as unparsed (D-306); numpy's floats, `float32`
+included, are compared as the values they hold, not as the text they print; a key that is not text is ignored, where
+it ended three cases as "internal error in runner". A `list` or `tuple` subclass whose own iteration shows other
+entries than it holds, or a `dict` subclass whose own `keys()` and `[]` show other fields or values than it holds,
+fails the file in those words (an answer's records may come in any order, and a field listed twice with one value is
+one field); any other container is graded by the one face the runner reads, iteration or `keys()` and `[]`, a stated
+limit, and so is a transparent proxy, read through its own methods. A list, tuple or dict in a record's field, which
+no check reads, is handed on as its text, cut at 1,000 characters with a digest of all it holds, never equal to a text
+the parser returned, and written once however many records share it; a set or a deque is read as a list; and an
+integer longer than Python will write in decimal, or a `Decimal` as long in an integer field, fails in words, where it
+ended three cases as "internal error in runner". An exception the parser raises keeps Python's own words when what
+they read is plain, and is otherwise written from its arguments, bounded, so an exception holding a structure that
+shares its parts, or one nested deeper than the reading goes, no longer stops the run. A subclass of `deque`, `set`
+or `frozenset`, a `UserList` and a dict's view are read through their iteration and a `UserString` as its text; an
+object that Python's own writing (a builtin or standard-library type's) would print by walking what it holds (a
+namespace, a slice, an `Enum` member, a `UUID`, a large array) is written as its type's name, never printed, which
+loses detail in fields no check reads, and fails a `Fraction`, or a `ZoneInfo` on Python 3.10 and later, in a field a
+check reads, where Python's writing would have read (stated limits); a third-party library's own writing (lxml's,
+numpy's) is its text, as before. Each answer
+is read within a budget, ten million objects and a billion bytes, twenty times the objects of the largest real reading
+measured: an answer past it, an iterable that never ends among them, fails in words instead of hanging the run. A record's own `_notes` or `_bad`
+key, which ended cases as "internal error in runner", is dropped. A refusal whose `_input` is bytes is quoted as its
+text. `write_tle` may still answer a list, a tuple, a text block, bytes or a generator of lines; an answer that is no
+lines counts in the checksum item, and the items that checked nothing read `not-exercised`, where they read "-753 of 0
+records correct" and "pass". An exit or an exception raised while the answer is read is the parser's: an exit fails
+the case as `parser-exit` and the run goes on, even one raised as the runner's own type, and the runner's own
+`CorpusIncomplete` raised by a parser no longer ends the run. The empty-answer check takes an adapter that is itself
+callable, as every other check does. Each of these let a wrong parser pass, failed a correct one, or ended the run,
+before. `docs/ADAPTERS.md` states what the runner trusts: a wrong value that survives the reading is an escape; an
+in-process adapter that attacks the runner itself is outside the model, and an untrusted parser runs behind `--cmd`,
+which is no sandbox.
+
+Changed: the fetch asks for gzip (`Accept-Encoding: gzip`). A gzip answer is decompressed before it is written, so a
+file's bytes and SHA-256 are the data itself and a stable-tier file still matches the manifest; the metadata records
+`content_encoding` and `bytes_on_wire`. An answer in a coding that was not asked for, or a gzip body that does not
+decompress, stops the run like any other unexpected response (D-329).
+
+Corrected: `vectors/ccsds-epoch-strings.json` said a parser hard-coded to `%Y-%m-%dT%H:%M:%S.%f`, python-sgp4's
+`sgp4.omm.initialize` for one, rejects five of its valid strings; python-sgp4 2.27 rejects six of the eight (D-331).
+
+Corrected: the README said the second blind audit of v0.7.0 read "this release's candidate"; it read a candidate built on 2026-10-10, and three grader changes made after it were read by a separate reviewer only. The published v0.7.0 release notes are corrected the same way (D-332, D-335).
+
+Added: a release workflow for PyPI's Trusted Publishing, `.github/workflows/publish.yml` (D-361). On a pushed tag it
+builds the sdist and the wheel from the tag as the maintainer does (`tools/stage_package.py`, the pinned toolchain, the
+tagged commit's time as `SOURCE_DATE_EPOCH`), and publishes them only when both are byte for byte the files whose
+SHA-256 the maintainer's own build wrote into the annotated tag's message: checked once in the job that builds and once
+more in the job that publishes, which holds nothing but the OIDC permission, runs no build tool, and stops if the tag
+is no longer the one the build job read. It publishes by OIDC, with no stored token, with
+PEP 740 attestations, from a protected environment whose deployments the maintainer approves; run by hand on a tag,
+it publishes to TestPyPI only. `tools/release_hashes.py` writes the tag's message
+from a build and makes the check. Not used yet: until a release has gone out this way, releases are uploaded by hand
+as before.
+
+Added: the adversarial tests of D-318, a TLE/OMM set with one of its two files absent, run without provider data: on a
+synthetic two-file set the test writes from the frozen values of the case's `expected.json` (82 records in the CSV, the
+79 the TLE format carries in the TLE), with a test that holds the set to those values; so they run in a clone, an
+export and CI, where they used to skip, and with D-318's fix taken out they fail. D-319's route on one set runs there
+too (D-362).
+
+Added: an adversarial adapter that returns `rev_at_epoch` as a float, the same number as 95679.0 and a number no
+counter can be as 95679.5, with its twin returning an int: each float fails the three no-data cases whose records carry
+the field, and the twin passes them, as D-283 and D-295 require (D-363).
+
+Changed: type annotations in the presets, the fetch, the gates, the naive adapter and the python-sgp4 and PyEphem
+adapters; nothing they do changes. mypy with the bodies of unannotated functions checked now finds no error in those
+six modules, and 47 in the package, where it found 72 (D-364, D-365); the nightly ratchet's ceiling is 47.
+
+Changed: the README gives the size of a user's fetch as measured at the 0.8.0 release, 1,276,413 bytes downloaded
+and 3,162,546 written: 0.8.0 asks for gzip, so the download is the compressed size (D-368, D-373).
+
+Fixed: a TLE reader whose letter table swapped two letters (V and W, B and C) passed every case that needs no provider
+data: the synthetic-letters sets carried one record's elements under every catalog number, so a record read under
+another letter's id matched on its values. Each of the 46 sets now has its own mean anomaly, stepping by 7 degrees, so
+such a record fails on its values; the derived file, the two cases that read it and the manifest are regenerated
+(D-372).
+
+Added: the corpus's own wrong-on-purpose adapters for the findings SM-26 reported in
+[issue #1](https://github.com/hneogy/gp-omm-conformance/issues/1), written from the findings as this log describes them,
+without SM-26's code: a TLE reader whose own letter table is wrong from U, its decode hook right, and the catalog number
+and each counter returned as text, each with a correct twin (`tests/adversarial/test_own_s_findings_080.py`); the
+corpus's adapters already held SM-26's other four findings. So the public export holds the grader to all six of
+SM-26's findings, which are SM-26's, credited here (D-371).
+
+Changed: SM-26's wrong-on-purpose adapters (`tests/adversarial/sm26.py`, contributed in
+[issue #1](https://github.com/hneogy/gp-omm-conformance/issues/1)) are left out of the public export from this release (v0.7.0 still holds them) until SM-26's
+permission to publish them under the project's licence is confirmed; the tests that load them skip, or run without
+them, and all of them still run in the maintainer's checks (D-367).
+
+Fixed: what a blind review of the 0.8.0 candidate found (a fresh session given the wheel alone, 2026-10-27).
+`check-tle --against` fails a file in which a source record was written by no file, an id written fewer times than the
+source holds it among them, or an id more often, where each record passing on its own passed the file with exit 0; a number the TLE format cannot carry,
+written by none, is noted as the refusal it should be, and the secondary fields stay information (D-095). The Alpha-5
+decode vectors hold five more fields a decoder must reject, a letter, a sign, a point or a blank after the first
+character (`A12B4`, `A1-34`, `A12.4`, `A1 34`, `1234A`), so a decoder that reads only a field's first two characters
+fails. A command's output is read past a UTF-8 byte-order mark, and a TLE name is compared without the blanks that pad
+its line to 24 columns, where each failed a correct parser (the name in the values item and in the analyst case's UNKNOWN check alike). Text a parser or a written file controls is printed with its
+control characters, line separators and bidirectional controls escaped, so that it cannot forge a report line, reorder
+what is shown or move the terminal's cursor; the JSON reports carry the text as it was. And the writer case's status says when a secondary field was not kept, as "pass (1 secondary field not
+kept)", where only `-v` showed it; the verdict is unchanged (D-369).
+
+Fixed: what a second blind review of the 0.8.0 candidate found (a fresh session given the wheel alone, 2026-10-28).
+`check-tle --against` no longer says pass for a record whose id the source holds more than once: such a record reads
+`[not compared]`, the summary counts it apart, and the run exits 3 where nothing failed but a record was not compared
+(0 only when every record passed). A reader that hands a day-of-year epoch back unconverted fails `kvn-syntax-variants`
+with its `Z` made `+00:00`, or a zero added to its fraction, as it did with the text as it was (D-306). Second 60 is read
+only at 23:59:60 UTC on 30 June or 31 December, the dates on which leap seconds are inserted in practice; anywhere else
+it is refused, so a reader one second late fails. The Alpha-5 decode vectors hold three more fields a decoder must reject: digits that are not ASCII
+(`A１２３４`), an underscore (`A1_23`) and a plus sign (`A+123`). And, outside the grader: the fetch stops in words on
+an answer cut short, where it ended in a traceback, and holds an answer, on the wire and decompressed, to 100 MB; and
+`--json` to a path that cannot be written is refused before anything runs, with exit status 2 (D-370).
+
+Known limitations: in the TLE/OMM pair check, two copies of a catalog number at one epoch with the same element set
+number and revolution are paired by the order they come in, so a correct parser returning one file's copies in the
+other order fails the pair (older; D-358's second reading, finding 8). No input of this release can reach it: no file
+the corpus reads holds a catalog number more than once (checked over all 90 listed sources, 2026-10-25); a provider
+answer that repeats one, a live re-issue that keeps its number, could. To be mended after 0.8.0. And for a catalog
+number a file holds more than once, the pairs, facts and XML cases do not yet check copies returned short or moved onto
+another copy's epoch, nor the values copy for copy at one epoch (the copy checks split off D-358, to come after 0.8.0
+as D-359, on the owner's ruling, 2026-10-26): no input of this release holds one (checked over all 90 listed sources);
+the values item of the gp cases grades each copy of such an id against the input's (D-343, D-344). From the blind
+review, for 0.8.1: the writer case grades none of the secondary fields, so a writer that changes one passes, its status
+now saying so, and no input carries a classification other than U; a run in which nothing was graded, or in which every
+answer was unsupported, exits 0, its status and its "graded" line saying so (D-312); the catalog-number and epoch
+vectors hold no -5, no day 000, no hour 24 and no valid day 366 of a leap year, so a parser wrong on those passes them;
+a command (`--cmd`, `--vectors-cmd`, `--write-cmd`) has 120 seconds a call and no limit for the run, and its output
+is read whole into memory, with no cap; and `check-tle --against` does not yet pair the copies of an id a source holds
+more than once (a history) with the records written from them: their round trip is not made, and each such record and id
+is said "not compared: source holds N copies (per-epoch pairing comes in 0.8.1)", where it was made against the
+source's last record and failed a correct file; which copies were written is not checked either, so the same copy
+written twice is not failed, with the note (D-369, D-370). From the second blind review, for 0.8.1: the writer case does
+not tell a secondary field a writer changed (a sign flipped, a classification letter that is none) from one it zeroed
+or dropped, and fails neither; the corrupt-input case makes one edit to each input, so a parser that reads any other letter
+as 0, or repairs every other corruption, passes it; `check-tle` takes a name line that begins "1 " or "2 " for an
+element line, and one that begins "#" for a comment; the decode vectors hold no Alpha-5 field with a line break after
+it, which a harness that places the field in a TLE line cannot pass on (0.8.1 will say which decode vectors apply to
+such a harness), and no encode or two-digit-year vector outside the documented domain; the epoch and catalog-number vectors
+hold no year divisible by four that is no leap year (2100-366), no lower-case `t` or `z`, no trailing `.`, and no
+catalog number in other digits; D-306's check takes a day-of-year epoch handed back with a digit added below the
+microsecond, or the same instant written with another offset, for an epoch read; second 60 is refused but on 30 June and
+31 December, so a reader one second late at 23:59:59 of those two days still passes; and the reading's budget is for
+each answer, and a long text costs its length in each record that carries it (D-370).
 
 ## [0.7.0] - 2026-10-15
 

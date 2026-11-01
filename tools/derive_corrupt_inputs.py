@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
 """
-tools/derive_corrupt_inputs.py -- the inputs of the corrupt-input case (D-171; v0.4.0 plan, section 5, inputs 1 to 5).
+tools/derive_corrupt_inputs.py -- the inputs of the corrupt-input case (D-171; v0.4.0 plan, section 5, inputs 1 to 5; input 6,
+an invalid Alpha-5 catalog field, D-360).
 
 Corrupt provider output cannot be captured on demand, so each input is made: a real record frozen in this corpus with
 one stated edit, placed between valid real records so that the records around it measure whether a parser picks up
 again after it. Provenance synthetic-derived under the D-096 precedent; the owner approved the five inputs on
-2026-09-27.
+2026-09-27, and a sixth on 2026-10-23 (lane C's proposal; D-360).
 
 Every record is rendered by the corpus from values frozen in the public fixtures/<case>/expected.json files; no
 provider file is read, so a public clone rebuilds the same bytes. TLE lines come from gpconf/tle.py's renderer with
@@ -42,6 +43,8 @@ RENDER = {"mantissa_mode": "round", "ecc_mode": "truncate"}  # the derived Alpha
 CSV_COLUMNS = ref.CELESTRAK_CSV_JSON_KEYS
 APPROVAL = ("owner approval 2026-09-27 of the v0.4.0 plan's inputs 1 to 5 (section 5) with decisions 2 to 4 of its "
             "section 10; synthetic-derived provenance under the D-096 precedent (PLAN.md section 2.1); DECISIONS D-171")
+APPROVAL6 = ("owner approval 2026-10-23 of a sixth input, an invalid catalog field (I9999 or blank), beside D-171's five; "
+             "synthetic-derived provenance under the D-096 precedent; DECISIONS D-360")
 EDITED = "SYNTHETIC-DERIVED: real records frozen in this corpus, rendered by the corpus, with one stated edit; served by no provider"
 UNEDITED = "DERIVED: real records frozen in this corpus, rendered by the corpus with no edit; served by no provider"
 UNEDITED_BASIS = ("DECISIONS D-175 (owner instruction 2026-09-27): what a parser returns from each corrupt input is "
@@ -115,7 +118,7 @@ def tle_text(sets):
     return "".join(EOL.join(s) + EOL for s in sets)
 
 
-def write(name, text, meta, edited=True):
+def write(name, text, meta, edited=True, approval=APPROVAL):
     os.makedirs(OUT, exist_ok=True)
     data = text.encode("utf-8")
     path = os.path.join(OUT, name)
@@ -124,7 +127,7 @@ def write(name, text, meta, edited=True):
     stem = name.rsplit(".", 1)[0]
     meta = {"file": f"derived/corrupt-input/{name}", "provenance": "synthetic-derived" if edited else "derived",
             "label": EDITED if edited else UNEDITED, **meta,
-            **({"owner_approval": APPROVAL} if edited else {"basis": UNEDITED_BASIS}), "generator": "tools/derive_corrupt_inputs.py",
+            **({"owner_approval": approval} if edited else {"basis": UNEDITED_BASIS}), "generator": "tools/derive_corrupt_inputs.py",
             "generated_at": NOW, "line_endings": "CRLF", "bytes": len(data), "output_sha256": hashlib.sha256(data).hexdigest()}
     with open(os.path.join(OUT, stem + ".provenance.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
@@ -189,6 +192,26 @@ def main():
           {"input": 4, "check": "corrupt-tle-missing-line-2", "description": "A set with no line 2, between two valid sets.",
            "rendering": rendering, "records": records(edit)})
 
+    # Input 6 (D-360; the owner's approval of a sixth input, 2026-10-23, on lane C's proposal): an invalid Alpha-5
+    # catalog field, I9999, in columns 3 to 7 of both lines, both checksums recomputed so that the field is the only
+    # defect. The letter I is never used in Alpha-5, so the field names no object; a decoder that maps letters by their
+    # code without skipping I reads 189999, and one that reads a blank or a letter loosely reads something else.
+    field = "I9999"
+    assert l1[2:7] == l2[2:7] == "69999"
+    def recheck(line):
+        body = line[:68]
+        return body + str(T.checksum(body + "0"))
+    b1, b2 = recheck(l1[:2] + field + l1[7:]), recheck(l2[:2] + field + l2[7:])
+    assert T.checksum(b1) == int(b1[68]) and T.checksum(b2) == int(b2[68]), "the checksums should be valid"
+    edit = {"lines": [1, 2], "columns": "3-7", "was": l1[2:7], "now": field,
+            "checksums": {"line 1": [l1[68], b1[68]], "line 2": [l2[68], b2[68]]},
+            "statement": f"the catalog field (columns 3 to 7) of both lines changed from {l1[2:7]!r} to {field!r}, an invalid Alpha-5 field "
+                         f"(the letter I is never used), both checksums recomputed ({l1[68]} to {b1[68]} and {l2[68]} to {b2[68]}) so that the field is "
+                         f"the only defect"}
+    write("c6-invalid-catalog-field.tle", tle_text([before, (l0, b1, b2), after]),
+          {"input": 6, "check": "corrupt-tle-invalid-catalog-field", "description": "A set whose catalog field is an invalid Alpha-5 field on both lines, between two valid sets.",
+           "rendering": rendering, "records": records(edit)}, approval=APPROVAL6)
+
     # Input 5: a file cut mid-record, in CSV (inside its last row) and in JSON (the closing bracket missing). The cut
     # record is 69999's, last in both files; the complete records are the two neighbours.
     rows = [omm_row(BEFORE), omm_row(AFTER), omm_row(CORRUPT)]
@@ -219,13 +242,13 @@ def main():
            "file_edit": edit,
            "records": [{"position": i + 1, "role": "valid", **w} for i, (_, w) in enumerate(rows)]})
 
-    # The unedited files (D-175): each input's records as the input lays them out, with no edit. Inputs 1 to 4 share
+    # The unedited files (D-175): each input's records as the input lays them out, with no edit. Inputs 1 to 4 and 6 share
     # one TLE file; input 5's CSV has its last row whole and its JSON array is closed. Each input is its unedited file
     # with its one edit made, which tests/test_corrupt_input.py checks byte for byte.
     write("unedited-sets.tle", tle_text([before, corrupt, after]),
-          {"for_inputs": [1, 2, 3, 4], "description": "The three TLE sets of inputs 1 to 4 with no edit, in the inputs' order.",
+          {"for_inputs": [1, 2, 3, 4, 6], "description": "The three TLE sets of inputs 1 to 4 and 6 with no edit, in the inputs' order.",
            "rendering": rendering,
-           "records": [{"position": 1, "role": "valid", **w_before}, {"position": 2, "role": "valid", "edited_in_inputs": [1, 2, 3, 4], **w_corrupt},
+           "records": [{"position": 1, "role": "valid", **w_before}, {"position": 2, "role": "valid", "edited_in_inputs": [1, 2, 3, 4, 6], **w_corrupt},
                        {"position": 3, "role": "valid", **w_after}]}, edited=False)
     write("unedited-rows.csv", full,
           {"for_inputs": [5], "description": "The CSV of input 5 with its last row whole: three complete records.",

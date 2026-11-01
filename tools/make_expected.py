@@ -16,7 +16,7 @@ import io
 import json
 import os
 import sys
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gpref  # noqa: E402
@@ -329,6 +329,9 @@ def build_derived_tle(case, out_sources, out_records):
                 if years:
                     yy = f"{t['norad_cat_id'] - 330100:02d}"
                     canon["epoch"] = f"{years[yy]:04d}" + canon["epoch"][4:]
+                anomalies = prov.get("mean_anomaly_by_id")  # the letters file: each set its own mean anomaly (D-372)
+                if anomalies:
+                    canon["mean_anomaly"] = type(canon["mean_anomaly"])(anomalies[str(t["norad_cat_id"])])
             d = tle_diff(canon, t)
             unexpected = {k: v for k, v in d.items() if k not in ("eccentricity", "bstar", "mean_motion_ddot", "object_name_truncated_to_24")}
             if unexpected:
@@ -498,8 +501,20 @@ CORRUPT_EXPECTED = {  # per check: what the corrupt record must come to, and wha
     "corrupt-tle-line-short": ("refuse", "fail", "read line 2, one character short, as a complete line"),
     "corrupt-tle-letter-in-number": ("refuse", "fail", "read the epoch field with a letter in it as a number"),
     "corrupt-tle-missing-line-2": ("refuse", "fail", "read a set that has no line 2"),
+    "corrupt-tle-invalid-catalog-field": ("refuse", "fail", "read the invalid catalog field as a catalog number (D-360)"),
     "corrupt-file-cut": ("refuse", "fail", "read the cut row as a record"),
 }
+
+
+def _differs(k, got, want):
+    """A held value against a frozen one: a decimal key by its value, any other by its text; a held value that is no
+    number (None, empty, text) differs, and never raises."""
+    if k in gpref.DECIMAL_KEYS.values():
+        try:
+            return Decimal(str(got)) != Decimal(str(want))
+        except InvalidOperation:
+            return True
+    return str(got) != str(want)
 
 
 def build_corrupt_input(case, out_sources, out_records, out_notes, case_specific):
@@ -559,6 +574,26 @@ def build_corrupt_input(case, out_sources, out_records, out_notes, case_specific
         files[os.path.basename(path)] = spec
     for path, u in unedited.items():
         out_sources[path] = source_entry(path, "stable", fmt=u["format"], record_count=u.pop("record_count"))
+        # each unedited file is held to the frozen values of its inputs' records (D-299, D-342): they must be its own
+        try:
+            _, urecs, _ = gpref.read_file(os.path.join(ROOT, path))
+        except Exception as x:   # a file the reference reader refuses holds none of its inputs' records as they are
+            PROBLEMS.append(f"{path}: the reference reader refuses it ({type(x).__name__}: {x})")
+            continue
+        mine = {r.get("norad_cat_id"): strip_record(r) for r in urecs}
+        held = sorted((r.get("norad_cat_id") for r in urecs), key=repr)
+        if held != sorted(u["norad_cat_ids"], key=repr):
+            PROBLEMS.append(f"{path}: holds {held}, where its inputs' records are {sorted(u['norad_cat_ids'])}, each once")
+        for e in out_records:
+            if files.get(e["file"], {}).get("unedited") != path:
+                continue
+            if e["norad_cat_id"] not in mine:
+                PROBLEMS.append(f"{path}: record {e['norad_cat_id']} of {e['file']} is not in it")
+                continue
+            got = mine[e["norad_cat_id"]]
+            diffs = {k: (got.get(k), v) for k, v in e["expected"].items() if k in CANON_KEYS and v is not None and _differs(k, got.get(k), v)}
+            if diffs:
+                PROBLEMS.append(f"{path}: record {e['norad_cat_id']} differs from the frozen values of {e['file']}: {diffs}")
     graded = {}
     spec_g = case["sets"].get("graded", {})
     for path in spec_g.get("files", []):   # files graded for their values only (D-299): no input depends on them
@@ -582,12 +617,12 @@ def build_corrupt_input(case, out_sources, out_records, out_notes, case_specific
         "files": files,
         "unedited": unedited,
         "graded": graded,
-        "outcomes": "Per record: loaded (returned with its id and exactly the values the same parser returns for it from the input's unedited file), misidentified (returned with other values, or with an id the file does not hold: built from garbage), refused (with a reason, through the refusal channel, or with the file when the parser raises on it) and dropped (none of these). A corrupt record must be refused; a valid one must load. A record the parser does not return from the unedited file either is left out of the grading, and an input whose unedited file the parser refuses as a whole is not exercised: nothing then isolates the edit (D-175). The expected values below are the records' own, for reference; the runner does not grade against them here, since the values check grades them in the records' own cases.",
+        "outcomes": "Per record: loaded (returned with its id and exactly the values the same parser returns for it from the input's unedited file), misidentified (returned with other values, or with an id the file does not hold: built from garbage), refused (with a reason, through the refusal channel, or with the file when the parser raises on it) and dropped (none of these). A corrupt record must be refused; a valid one must load. A record the parser does not return from the unedited file either is left out of the grading, and an input whose unedited file the parser refuses as a whole is not exercised: nothing then isolates the edit (D-175); each unedited file is also held to its records' frozen values, so a record missing from it fails there (D-299, D-342); a raise on the unedited file, a valid file of its format, fails that file as `parse` (D-339). The expected values below are the records' own: the items that isolate the edit do not grade against them, and each unedited file's values item does (D-299, D-342).",
         "decisions": {"checksum": "a parser that validates no checksum is reported, not failed (owner decision 2)",
                       "cut_file": "a whole-file refusal of a cut file passes; the complete records it gives up are counted (owner decision 3)",
                       "shifted_column": "held, not included (owner decision 4)"},
     })
-    out_notes.append(f"{len(files)} files, {len(out_records)} records ({sum(1 for r in out_records if r['role'] == 'corrupt')} corrupt); synthetic-derived under the D-096 precedent, owner approval 2026-09-27 (D-171).")
+    out_notes.append(f"{len(files)} files, {len(out_records)} records ({sum(1 for r in out_records if r['role'] == 'corrupt')} corrupt); synthetic-derived under the D-096 precedent, owner approval 2026-09-27 (D-171) and, for the sixth input, 2026-10-23 (D-360).")
 
 
 def main():

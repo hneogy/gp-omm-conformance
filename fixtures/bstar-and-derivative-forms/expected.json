@@ -2,7 +2,7 @@
  "case": "bstar-and-derivative-forms",
  "title": "Drag terms: negative BSTAR, negative first derivative, non-zero second derivative, implied-decimal exponent fields",
  "schema_version": "1.0",
- "generated_at": "2026-10-10T02:31:38Z",
+ "generated_at": "2026-10-15T01:46:56Z",
  "generator": "tools/make_expected.py",
  "kind": "gp",
  "sources": {
@@ -7145,7 +7145,7 @@
   },
   {
    "id": "tle-checksums-valid",
-   "description": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0)."
+   "description": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (ASCII digits count their value, '-' counts 1, everything else 0); a line a writer returns must also be ASCII throughout (D-325)."
   },
   {
    "id": "tle-count-equals-omm-count-below-100000",

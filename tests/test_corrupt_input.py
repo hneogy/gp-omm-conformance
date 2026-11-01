@@ -7,7 +7,8 @@ refused with a reason and the valid ones loaded; a parser that validates no chec
 failed (owner decision 2); a whole-file refusal of a file cut mid-record passes, the complete records it gives up
 counted (owner decision 3). What a parser returns from an input is compared with what the same parser returns from
 the input's unedited file, the same records with no edit (D-175), so a parser that reads these records imprecisely
-everywhere is not failed for it here: the values check grades that in the records' own cases."""
+everywhere is not failed for it by the items that isolate the edit; each unedited file's own values item, held to its
+records' frozen values, fails it (D-299, D-342)."""
 import difflib
 import json
 import os
@@ -28,7 +29,7 @@ from tests.adapters.naive import Parser as Naive  # noqa: E402
 CASE = "corrupt-input"
 D = os.path.join(ROOT, "derived", "corrupt-input")
 FILES = ["c1-checksum-digit.tle", "c2-line-2-short.tle", "c3-letter-in-epoch.tle", "c4-line-2-missing.tle",
-         "c5-cut-last-row.csv", "c5-cut-closing-bracket.json"]
+         "c6-invalid-catalog-field.tle", "c5-cut-last-row.csv", "c5-cut-closing-bracket.json"]
 UNEDITED = ["unedited-sets.tle", "unedited-rows.csv", "unedited-array.json"]
 
 
@@ -97,7 +98,8 @@ class Inputs(unittest.TestCase):
     def test_each_tle_input_is_one_stated_edit_of_the_clean_rendering(self):
         clean = self.clean_tle()
         for name, want in (("c1-checksum-digit.tle", ("replace", 4, 1)), ("c2-line-2-short.tle", ("replace", 5, 1)),
-                           ("c3-letter-in-epoch.tle", ("replace", 4, 1)), ("c4-line-2-missing.tle", ("delete", 5, 1))):
+                           ("c3-letter-in-epoch.tle", ("replace", 4, 1)), ("c4-line-2-missing.tle", ("delete", 5, 1)),
+                           ("c6-invalid-catalog-field.tle", ("replace", 4, 2))):
             with self.subTest(name):
                 lines = text(name).split("\r\n")[:-1]
                 ops = [op for op in difflib.SequenceMatcher(a=clean, b=lines, autojunk=False).get_opcodes() if op[0] != "equal"]
@@ -112,19 +114,23 @@ class Inputs(unittest.TestCase):
         c3 = text("c3-letter-in-epoch.tle").split("\r\n")[4]
         self.assertEqual([(k, a, b) for k, (a, b) in enumerate(zip(clean[4], c3)) if a != b], [(25, "0", "O")])
         self.assertEqual(T.checksum(c3), int(c3[68]))                          # input 3: the checksum still holds
+        for k in (4, 5):                                                        # input 6 (D-360): the catalog field alone, on both lines
+            c6 = text("c6-invalid-catalog-field.tle").split("\r\n")[k]
+            self.assertEqual((c6[2:7], c6[:2] + c6[7:68]), ("I9999", clean[k][:2] + clean[k][7:68]))
+            self.assertEqual(T.checksum(c6), int(c6[68]))                      # its checksums recomputed, still holding
 
     def test_each_input_is_its_unedited_file_with_its_one_edit(self):
         # D-175: the comparison is only fair if the unedited file differs from each input by the input's edit alone
-        self.assertEqual(text("unedited-sets.tle"), "\r\n".join(self.clean_tle()) + "\r\n")  # inputs 1 to 4: see the test above
+        self.assertEqual(text("unedited-sets.tle"), "\r\n".join(self.clean_tle()) + "\r\n")  # inputs 1 to 4 and 6: see the test above
         rows, cut = text("unedited-rows.csv"), text("c5-cut-last-row.csv")
         self.assertTrue(rows.startswith(cut) and rows.endswith("\r\n") and len(rows) > len(cut))
         self.assertEqual(rows[len(cut):], "23," + rows.split("\r\n")[-2].rsplit(",", 1)[1] + "\r\n")  # the cut: the value's last two digits and the row's last field
         self.assertEqual(text("unedited-array.json"), text("c5-cut-closing-bracket.json") + "]\r\n")
         by = {u: v["for_inputs"] for u, v in EXPECTED["case_specific"]["unedited"].items()}
-        self.assertEqual(by, {"derived/corrupt-input/unedited-sets.tle": [1, 2, 3, 4], "derived/corrupt-input/unedited-rows.csv": [5],
+        self.assertEqual(by, {"derived/corrupt-input/unedited-sets.tle": [1, 2, 3, 4, 6], "derived/corrupt-input/unedited-rows.csv": [5],
                               "derived/corrupt-input/unedited-array.json": [5]})
         self.assertEqual({n: f["unedited"].rsplit("/", 1)[1] for n, f in EXPECTED["case_specific"]["files"].items()},
-                         dict(zip(FILES, ["unedited-sets.tle"] * 4 + ["unedited-rows.csv", "unedited-array.json"])))
+                         dict(zip(FILES, ["unedited-sets.tle"] * 5 + ["unedited-rows.csv", "unedited-array.json"])))
 
     def test_the_cut_files(self):
         csv_text = text("c5-cut-last-row.csv")
@@ -138,11 +144,15 @@ class Inputs(unittest.TestCase):
 
     def test_the_expected_values_are_those_of_the_record_without_the_edit(self):
         by = {(r["file"], r["norad_cat_id"]): r for r in EXPECTED["records"]}
-        self.assertEqual(len(EXPECTED["records"]), 18)
+        self.assertEqual(len(EXPECTED["records"]), 21)
         corrupt = by[("c3-letter-in-epoch.tle", 69999)]
         self.assertEqual((corrupt["role"], corrupt["expected"]["epoch"]), ("corrupt", "2026-07-08T17:02:16.167840"))
         self.assertEqual(by[("c1-checksum-digit.tle", 69999)]["if_read_as_unedited"], "report")
-        self.assertEqual({by[(f, 69999)]["if_read_as_unedited"] for f in FILES[1:5]}, {"fail"})
+        # named, not sliced: the sixth input moved the slice off c5's CSV (D-360's second reading, finding 5)
+        self.assertEqual({f: by[(f, 69999)]["if_read_as_unedited"] for f in ("c2-line-2-short.tle", "c3-letter-in-epoch.tle",
+                          "c4-line-2-missing.tle", "c6-invalid-catalog-field.tle", "c5-cut-last-row.csv")}, dict.fromkeys(
+                          ("c2-line-2-short.tle", "c3-letter-in-epoch.tle", "c4-line-2-missing.tle", "c6-invalid-catalog-field.tle",
+                           "c5-cut-last-row.csv"), "fail"))
         self.assertEqual(by[("c5-cut-last-row.csv", 69999)]["expected"]["mean_motion_dot"], "-0.00000023")
         self.assertEqual({r["role"] for r in EXPECTED["records"] if r["file"] == "c5-cut-closing-bracket.json"}, {"valid"})
 
@@ -164,6 +174,7 @@ class Control(unittest.TestCase):
             "c2-line-2-short.tle": {("catalog-number-is-integer", "pass"), ("corrupt-tle-line-short", "pass"), ("corrupt-input-neighbours-load", "pass")},
             "c3-letter-in-epoch.tle": {("catalog-number-is-integer", "pass"), ("corrupt-tle-letter-in-number", "pass"), ("corrupt-input-neighbours-load", "pass")},
             "c4-line-2-missing.tle": {("catalog-number-is-integer", "pass"), ("corrupt-tle-missing-line-2", "pass"), ("corrupt-input-neighbours-load", "pass")},
+            "c6-invalid-catalog-field.tle": {("catalog-number-is-integer", "pass"), ("corrupt-tle-invalid-catalog-field", "pass"), ("corrupt-input-neighbours-load", "pass")},
             "c5-cut-last-row.csv": {("corrupt-file-cut", "pass"), ("corrupt-input-neighbours-load", "info")},
             "c5-cut-closing-bracket.json": {("corrupt-file-cut", "pass"), ("corrupt-input-neighbours-load", "info")},
         }
@@ -232,7 +243,13 @@ class Rules(unittest.TestCase):
                     if l.startswith("1 ") and i + 1 < len(lines) and lines[i + 1].startswith("2 "):
                         # a C-style number reader: the epoch stops at the letter and the rest of the field reads as 0
                         l1 = l[:18] + l[18:32].split("O")[0].ljust(14, "0") + l[32:]
-                        recs.append(ref.parse_tle_lines(lines[i - 1], l1, lines[i + 1].ljust(69)))
+                        # and it takes the eccentricity's digits up to the first blank, where the reference reader,
+                        # strict on a file since D-336, refuses a blank in those seven columns
+                        l2 = lines[i + 1].ljust(69)
+                        l2 = l2[:26] + l2[26:33].split(" ")[0].ljust(7, "0") + l2[33:]
+                        # nor at the blanks between the fields, which the strict reader checks (D-336)
+                        l2 = "".join(" " if j in ref.TLE_SEPARATORS[2] else c for j, c in enumerate(l2))
+                        recs.append(ref.parse_tle_lines(lines[i - 1], l1, l2))
             elif fmt == "json":
                 recs, _ = ref.read_json_text(text if text.rstrip().endswith("]") else text + "]")
             else:
@@ -351,7 +368,10 @@ class Comparison(unittest.TestCase):
                 out.append(r)
             return out
 
-    def test_a_parser_that_reads_the_records_imprecisely_is_not_failed_for_it_here(self):
+    def test_a_parser_that_reads_the_records_imprecisely_fails_only_the_unedited_files_values(self):
+        """D-175: the corrupt items compare the parser with itself, so an imprecise reader is not failed for it there.
+        D-342 holds the unedited TLE file to its records' frozen values, as D-299 holds the CSV and JSON ones, so it
+        fails that file's values item, and nothing else."""
         from gpconf.runner import compare_value
         parser = self.Imprecise()
         iss = next(r for r in parser.parse(read(os.path.join(D, "unedited-sets.tle")), "tle") if r["norad_cat_id"] == 25544)
@@ -359,8 +379,9 @@ class Comparison(unittest.TestCase):
         self.assertEqual(compare_value("inclination", iss["inclination"], want["inclination"], "float")[0], "mismatch")  # the values check fails it
         self.assertNotIn("mean_motion_ddot", iss)
         r, control = run(parser), run(Reference())
-        self.assertEqual(r.status, "pass")
-        tle = lambda res: [(i.check, i.status, i.file) for i in res.items if i.file and i.file.endswith(".tle")]
+        self.assertEqual(r.status, "fail")
+        self.assertEqual(sorted({(i.check, os.path.basename(i.file)) for i in r.items if i.status == "fail"}), [("values", "unedited-sets.tle")])
+        tle = lambda res: [(i.check, i.status, i.file) for i in res.items if i.file and i.file.endswith(".tle") and i.check != "values"]
         self.assertEqual(tle(r), tle(control))
         for name in FILES[:4]:
             with self.subTest(name):
@@ -368,17 +389,19 @@ class Comparison(unittest.TestCase):
 
     def test_an_imprecise_omm_reader_fails_the_unedited_files_values(self):
         """D-299 (the red team's E15): the unedited CSV and JSON files are also held to the frozen values, the one
-        place an OMM value is graded without fetched data. That is a values item of its own on the unedited file;
-        the corrupt items still compare the parser with itself (D-175), and a reader of TLE alone is untouched."""
+        place an OMM value is graded without fetched data, and since D-342 the unedited TLE file too. That is a values
+        item of its own on each unedited file; the corrupt items still compare the parser with itself (D-175)."""
         class ImpreciseEverywhere(self.Imprecise):
             tle_only = False
         r = run(ImpreciseEverywhere())
         self.assertEqual(r.status, "fail")
         failing = sorted({(i.check, os.path.basename(i.file)) for i in r.items if i.status == "fail"})
-        self.assertEqual(failing, [("values", "unedited-array.json"), ("values", "unedited-rows.csv"), ("values", "v07-xml-ndm-reserialised.xml")])
+        self.assertEqual(failing, [("values", "unedited-array.json"), ("values", "unedited-rows.csv"), ("values", "unedited-sets.tle"),
+                                   ("values", "v07-xml-ndm-reserialised.xml")])
         graded = [i for i in run(Reference()).items if i.check == "values"]
         self.assertEqual(sorted((os.path.basename(i.file), i.status) for i in graded),
-                         [("unedited-array.json", "pass"), ("unedited-rows.csv", "pass"), ("v07-xml-ndm-reserialised.xml", "pass")])
+                         [("unedited-array.json", "pass"), ("unedited-rows.csv", "pass"), ("unedited-sets.tle", "pass"),
+                          ("v07-xml-ndm-reserialised.xml", "pass")])
 
     def test_a_neighbour_the_corrupt_input_changes_fails(self):
         from decimal import Decimal
@@ -402,7 +425,7 @@ class Comparison(unittest.TestCase):
         self.assertEqual(item(r, "c1-checksum-digit.tle", "corrupt-input-neighbours-load").status, "pass")  # nothing refused there
         self.assertEqual(item(r, "c3-letter-in-epoch.tle", "corrupt-tle-letter-in-number").counts["misidentified"], 1)
 
-    def test_a_parser_that_refuses_the_unedited_file_too_is_not_exercised(self):
+    def test_a_parser_that_refuses_the_unedited_file_too_leaves_its_inputs_not_exercised(self):
         class NoTle(Reference):
             def parse(self, raw, fmt):
                 if fmt == "tle":
@@ -414,6 +437,7 @@ class Comparison(unittest.TestCase):
                 self.assertEqual({s for _, s in items(r, name)}, {"not-exercised"})
                 self.assertIn("unedited-sets.tle cannot serve as one (the parser refused it as a whole (ValueError: cannot read this file))", item(r, name, "corrupt-input-neighbours-load").detail)
         self.assertEqual(items(r, "c5-cut-last-row.csv"), {("corrupt-file-cut", "pass"), ("corrupt-input-neighbours-load", "info")})
+        self.assertEqual(items(r, "unedited-sets.tle"), {("parse", "fail")})   # the raise on a valid file fails it (D-339)
 
     def test_a_record_the_parser_does_not_return_unedited_is_not_graded(self):
         class No69999(Reference):
@@ -430,12 +454,15 @@ class Comparison(unittest.TestCase):
 
     def test_a_record_the_parser_returns_from_the_unedited_file_too_is_not_blamed_on_the_edit(self):
         class Phantom(Reference):
-            """Returns one record no file holds, whatever it reads: not the edit's doing."""
+            """Returns one record no file holds, whatever it reads: not the edit's doing, though the unedited TLE file's
+            frozen values (D-342) fail it there."""
             def parse(self, raw, fmt):
                 out = super().parse(raw, fmt)
                 return out + [{**next(x for x in out if "_refused" not in x), "norad_cat_id": 99999}] if fmt == "tle" else out
         r = run(Phantom())
-        self.assertEqual(r.status, "pass", [(i.check, i.status, i.detail) for i in r.items if i.status == "fail"])
+        fails = [(i.check, os.path.basename(i.file), i.detail) for i in r.items if i.status == "fail"]
+        self.assertEqual([(c, f) for c, f, _ in fails], [("values", "unedited-sets.tle")], fails)
+        self.assertIn("99999", fails[0][2])
         self.assertEqual(item(r, "c2-line-2-short.tle", "corrupt-tle-line-short").counts["misidentified"], 0)
 
 
@@ -468,6 +495,56 @@ class ReaderHardening(unittest.TestCase):
                 with self.assertRaises(ValueError) as cm:
                     ref.read_csv_text(f"{header}\r\n{row}\r\n{bad}")
                 self.assertIn(f"CSV data row 2 has {n} fields and the header 17", str(cm.exception))
+
+
+class TheBuildCheckOfTheUneditedFiles(unittest.TestCase):
+    """D-342: when the case is built, each unedited file is checked against the frozen values of its inputs' records; a
+    record missing, extra, held twice or without a catalog number, a value that differs or is not there, and a file the
+    reference reader refuses are each listed as a problem that stops the build, never raised. The twin: the committed
+    files build with no problem."""
+
+    def build(self, path=None, change=None, refuse=False):
+        from unittest import mock
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        import make_expected as M
+        real = M.gpref.read_file
+
+        def read(p, *a, **k):
+            if path is None or os.path.abspath(p) != os.path.join(D, path):
+                return real(p, *a, **k)
+            if refuse:
+                raise ValueError("TLE line 2 is short")
+            text, recs, facts = real(p, *a, **k)
+            return text, change([dict(r) for r in recs]), facts
+        case = next(c for c in M.CASES if c["id"] == "corrupt-input")
+        before = len(M.PROBLEMS)
+        with mock.patch.object(M.gpref, "read_file", read):
+            M.build_corrupt_input(case, {}, [], [], {})
+        found = M.PROBLEMS[before:]
+        del M.PROBLEMS[before:]
+        return found
+
+    def test_the_committed_files_build_clean(self):
+        self.assertEqual(self.build(), [])
+
+    def test_every_disagreement_is_listed_never_raised(self):
+        drop = lambda recs: [r for r in recs if r["norad_cat_id"] != 69999]   # noqa: E731
+        extra = lambda recs: recs + [dict(recs[0], norad_cat_id=99999)]   # noqa: E731
+        twice = lambda recs: recs + [dict(recs[-1])]   # noqa: E731
+        no_id = lambda recs: [dict(r, norad_cat_id=None) if r["norad_cat_id"] == 25544 else r for r in recs]   # noqa: E731
+        no_value = lambda recs: [dict(r, inclination=None) if r["norad_cat_id"] == 25544 else r for r in recs]   # noqa: E731
+        moved = lambda recs: [dict(r, inclination="1") if r["norad_cat_id"] == 20453 else r for r in recs]   # noqa: E731
+        for name in ("unedited-sets.tle", "unedited-rows.csv", "unedited-array.json"):
+            for label, change, words in (("dropped", drop, "is not in it"), ("extra", extra, "each once"),
+                                         ("held twice", twice, "each once"), ("no catalog number", no_id, "each once"),
+                                         ("no value", no_value, "differs from the frozen values"),
+                                         ("a value moved", moved, "differs from the frozen values")):
+                with self.subTest(file=name, change=label):
+                    found = self.build(name, change)
+                    self.assertTrue(any(words in f for f in found), found)
+            with self.subTest(file=name, change="refused by the reader"):
+                found = self.build(name, refuse=True)
+                self.assertTrue(any("the reference reader refuses it (ValueError: TLE line 2 is short)" in f for f in found), found)
 
 
 if __name__ == "__main__":

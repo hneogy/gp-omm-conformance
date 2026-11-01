@@ -682,6 +682,11 @@
 "tle-values-match-omm-within-tle-precision",
 "iss-live",
 "pass"
+],
+[
+"tle-values-match-omm-within-tle-precision",
+"iss-live: iss.2le",
+"pass"
 ]
 ],
 "status": "pass-tolerance"
@@ -791,7 +796,7 @@
 [
 "mmdot-is-tle-field-value",
 "decaying",
-"pass"
+"pass-tolerance"
 ],
 [
 "sha256-matches-tested-snapshot",
@@ -869,6 +874,16 @@
 "corrupt-input": {
 "items": [
 [
+"values",
+"unedited-sets.tle",
+"pass-tolerance"
+],
+[
+"fields-not-returned",
+"unedited-sets.tle",
+"not-exercised"
+],
+[
 "catalog-number-is-integer",
 "c1-checksum-digit.tle",
 "pass"
@@ -926,6 +941,21 @@
 [
 "corrupt-input-neighbours-load",
 "c4-line-2-missing.tle",
+"pass"
+],
+[
+"catalog-number-is-integer",
+"c6-invalid-catalog-field.tle",
+"pass"
+],
+[
+"corrupt-tle-invalid-catalog-field",
+"c6-invalid-catalog-field.tle",
+"fail"
+],
+[
+"corrupt-input-neighbours-load",
+"c6-invalid-catalog-field.tle",
 "pass"
 ],
 [
@@ -1287,6 +1317,11 @@
 "tle-values-match-omm-within-tle-precision",
 "iss-first",
 "pass-tolerance"
+],
+[
+"tle-values-match-omm-within-tle-precision",
+"iss-first: iss-first.2le",
+"pass-tolerance"
 ]
 ],
 "status": "pass-tolerance"
@@ -1331,7 +1366,7 @@
 [
 "mmdot-is-tle-field-value",
 "iss-first.tle vs iss-first.csv",
-"pass"
+"pass-tolerance"
 ],
 [
 "mmdot-is-tle-field-value",
@@ -1351,7 +1386,7 @@
 [
 "mmdot-is-tle-field-value",
 "decaying.tle vs decaying.csv",
-"pass"
+"pass-tolerance"
 ],
 [
 "mmdot-is-tle-field-value",
@@ -1364,7 +1399,7 @@
 "pass"
 ]
 ],
-"status": "pass"
+"status": "pass-tolerance"
 },
 "nine-digit-supgp-launch-nominals": {
 "items": [
@@ -2038,5 +2073,5 @@ null,
 }
 },
 "library_version": "2.27",
-"recorded_with_gpconf": "0.7.0"
+"recorded_with_gpconf": "0.8.0"
 }

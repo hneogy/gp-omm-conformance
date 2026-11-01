@@ -55,8 +55,11 @@ class _Resp:
         self.status, self.reason, self.version, self._body = status, "OK", 11, body
         self.headers = email.message.Message()
 
-    def read(self):
-        return self._body
+    def read(self, amt=None):   # as http.client's: at most amt bytes when given, from where the last read ended (D-370)
+        if amt is None:
+            raise AssertionError("the fetch read an answer with no size: an unbounded read (D-370)")
+        part, self._body = self._body[:amt], self._body[amt:]
+        return part
 
     def __enter__(self):
         return self

@@ -4,8 +4,8 @@
 """
 tools/export_public.py -- copy the public subset of this repository into a fresh directory.
 
-Reads PUBLIC_ALLOWLIST.txt, refuses raw provider files and anything matching the Space-Track
-name guard, and writes EXPORT-MANIFEST.txt (path, bytes, SHA-256) into the destination. The
+Reads PUBLIC_ALLOWLIST.txt, refuses raw provider files, anything matching the Space-Track
+name guard and the files WITHHELD names with their reasons (D-367), and writes EXPORT-MANIFEST.txt (path, bytes, SHA-256) into the destination. The
 destination is meant to become a new repository (git init there); this repository's history
 is never pushed because it contains raw provider bytes (DECISIONS D-025).
 
@@ -30,6 +30,9 @@ SPACETRACK = re.compile(r"space[-_ .]?track", re.I)
 # by its exact bytes, and its provenance file. Anything else under recorded/ is refused.
 RECORDED = {"recorded/celestrak-no-gp-data-found.txt": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
             "recorded/celestrak-no-gp-data-found.provenance.json": None}
+# Files the allowlist matches that stay private, each with its reason (D-367): SM-26's adapters, contributed in issue #1
+# with no licence stated, until the owner confirms SM-26's permission; the tests that load them skip without them.
+WITHHELD = {"tests/adversarial/sm26.py": "SM-26's work, withheld until SM-26's permission is confirmed (D-367)"}
 
 
 def main():
@@ -59,6 +62,9 @@ def main():
                 continue
         if (SPACETRACK.search(os.path.basename(rel)) or SPACETRACK.search(rel)) and rel != "tools/verify_against_spacetrack.py":
             refused.append((rel, "matches the Space-Track name guard"))
+            continue
+        if rel in WITHHELD:
+            refused.append((rel, WITHHELD[rel]))
             continue
         if any(fnmatch.fnmatch(rel, g) for g in a.exclude):
             refused.append((rel, "excluded by --exclude"))

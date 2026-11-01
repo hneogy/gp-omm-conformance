@@ -1,5 +1,9 @@
 # Parser breakage catalogue
 
+*Note, 2026-11-01 (v0.8.0): this page is v0.7.0's, unchanged. Its counts are 0.7.0's runs; under 0.8.0, python-sgp4's
+`mean-motion-derivative-convention` passes within tolerance where it passed, and the `corrupt-input` case has a sixth
+input, the invalid catalog field I9999. The page is generated again in the next release (D-373).*
+
 What actually breaks when a parser written for five-digit TLEs meets today's data. Every entry
 below is a runner result (`python -m gpconf run`) against the corpus, not a hypothetical. Three
 parsers were run:

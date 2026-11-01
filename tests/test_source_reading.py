@@ -58,6 +58,11 @@ class LoadSourceTests(unittest.TestCase):
                     self.assertEqual([i.check for i in fails], ["reference-reader"])
                     self.assertIn("BOM", fails[0].detail)
                     continue
+                if name == "truncated.tle":  # since D-336 a line 1 with no line 2 after it is rejected outright, as a BOM is
+                    self.assertEqual(state, "parse-error")
+                    self.assertEqual([i.check for i in fails], ["reference-reader"])
+                    self.assertIn("pairs with nothing", fails[0].detail)
+                    continue
                 self.assertEqual(state, "unreadable")
                 self.assertEqual([i.check for i in fails], ["source-readable"], fails)
                 detail = fails[0].detail

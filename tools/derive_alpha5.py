@@ -22,6 +22,7 @@ import io
 import json
 import os
 import sys
+from decimal import Decimal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import tlerender as R  # noqa: E402
@@ -156,12 +157,14 @@ def synthetic_letters():
     """Two TLE sets per Alpha-5 letter, the lowest and the highest id the letter can carry (X0000 and X9999), for all
     24 letters, less the ids a real record of the corpus already holds: the parse path then reads the whole letter
     table and both ends of every letter's range, where the real derived files hold letters A and T only (D-286,
-    widened by D-300 after the red team's E11). The elements are the SARAMAGO first record's; only the catalog
-    number changes."""
+    widened by D-300 after the red team's E11). The elements are the SARAMAGO first record's, with the catalog number
+    and the mean anomaly changed: the mean anomaly steps by 7 degrees from one set to the next (46 sets, 0 to 315
+    degrees past the record's own, modulo 360), so each set's elements are its own and a record read under another
+    set's id fails on its values, where a reader whose letter table swapped two letters passed (D-372)."""
     from gpconf.tle import ALPHA5_LETTERS
     row, _ = _source_row()
     real = _real_ids()
-    rows = []
+    rows, mean_anomaly = [], {}
     for letter in ALPHA5_LETTERS:
         base = (ALPHA5_LETTERS.index(letter) + 10) * 10000
         for i in (base, base + 9999):
@@ -169,15 +172,20 @@ def synthetic_letters():
                 continue  # a real catalogued object's number is never given synthetic elements (D-016)
             r = dict(row)
             r["NORAD_CAT_ID"] = str(i)
+            ma = (Decimal(row["MEAN_ANOMALY"]) + 7 * len(rows)) % 360   # each set its own (D-372)
+            r["MEAN_ANOMALY"] = str(ma)
+            mean_anomaly[str(i)] = str(ma)
             rows.append(r)
     return _write_synthetic(
         "alpha5-synthetic-letters", rows,
-        "SYNTHETIC-DERIVED: the lowest and highest id of every Alpha-5 letter, rendered from one real CelesTrak record with the catalog number replaced; not served by any provider",
-        "All 24 Alpha-5 letters at both ends of their ranges (X0000 and X9999), less the two ids real records hold (100000, 270000): specification vectors as readable TLE sets",
-        "",
+        "SYNTHETIC-DERIVED: the lowest and highest id of every Alpha-5 letter, rendered from one real CelesTrak record with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set; not served by any provider",
+        "All 24 Alpha-5 letters at both ends of their ranges (X0000 and X9999), less the two ids real records hold (100000, 270000): specification vectors as readable TLE sets, each with its own mean anomaly (D-372)",
+        " and the mean anomaly stepped by 7 degrees from set to set (D-372)",
         ["the catalog numbers are specification vectors (X0000 and X9999 per letter), not catalogued objects",
+         "the mean anomaly steps by 7 degrees from one set to the next, so that each set's elements are its own (D-372)",
          "columns 3-7 of lines 1 and 2 hold an Alpha-5 code instead of five digits",
-         "the checksum is computed over the Alpha-5 line (letters count 0, minus signs count 1)"])
+         "the checksum is computed over the Alpha-5 line (letters count 0, minus signs count 1)"],
+        {"mean_anomaly_by_id": mean_anomaly})
 
 
 def synthetic_years():

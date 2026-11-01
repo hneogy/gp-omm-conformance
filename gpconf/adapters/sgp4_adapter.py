@@ -6,6 +6,7 @@ Exposes the library's behaviour as-is, including the failures documented in docs
 import io
 import json
 import math
+from typing import Any
 
 from gpconf.runner import Unsupported
 from gpconf import tle as tlemod
@@ -29,7 +30,7 @@ def _rec(s, name=None):
             "ephemeris_type": s.ephtype, "classification_type": s.classification, "element_set_no": s.elnum, "rev_at_epoch": s.revnum}
 
 
-DECLARATION = {"_adapter": {"refusals": True}}  # every record this adapter drops with an error is reported as a refusal (D-144)
+DECLARATION: dict[str, Any] = {"_adapter": {"refusals": True}}  # every record this adapter drops with an error is reported as a refusal (D-144)
 
 
 class Parser:

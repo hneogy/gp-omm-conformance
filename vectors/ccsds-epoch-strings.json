@@ -69,7 +69,11 @@
   {
    "text": "20260920T124237",
    "reason": "separators required"
+  },
+  {
+   "text": "2026-366T12:42:37",
+   "reason": "day of year 366 in a year of 365 days: 7.5.10's DDD is a day of that year"
   }
  ],
- "parser_hazard": "A parser hard-coded to '%Y-%m-%dT%H:%M:%S.%f' (for example python-sgp4's sgp4.omm.initialize) rejects five of the valid strings above."
+ "parser_hazard": "A parser hard-coded to '%Y-%m-%dT%H:%M:%S.%f' (for example python-sgp4's sgp4.omm.initialize) rejects six of the eight valid strings above: every one but the two calendar forms with a fraction and no Z (measured with python-sgp4 2.27, D-331)."
 }

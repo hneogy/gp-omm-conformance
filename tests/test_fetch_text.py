@@ -29,9 +29,13 @@ from gpconf import fetch  # noqa: E402
 # until then, read 3.1 MB while both timed fetches, at the 0.5.1 and the 0.6.0 release, downloaded 3.2 MB.
 # The timed fetch follows the upload, so the README carries the measurement of the release before the one it ships
 # in, and says which. Here: the fetch of 2026-10-04 at the 0.6.1 release, 46 requests in 2 min 11 s (D-256, D-258);
-# the 0.6.0 release's, which the README of 0.6.1 gives, was 3,200,451 bytes.
-MEASURED_BYTES = 3_191_362
-MEASURED_AT = "0.6.2"
+# the 0.6.0 release's, which the README of 0.6.1 gives, was 3,200,451 bytes. From 0.8.0, which asks for gzip (D-329),
+# the README gave 0.7.0's, a fetch that asked for no compression, and said it was uncompressed (D-368). At 0.8.0 the
+# owner's timed fetch with the candidate, which asks for gzip, downloaded MEASURED_BYTES and wrote MEASURED_WRITTEN;
+# the README gives both, and the written bytes are the ones held to the captures' sum (D-373).
+MEASURED_BYTES = 1_276_413
+MEASURED_WRITTEN = 3_162_546
+MEASURED_AT = "0.8.0"
 
 
 def read(rel):
@@ -89,13 +93,16 @@ class FetchingResponsibly(unittest.TestCase):
         entries, size, known = users_run()
         snapshot, mb = f"{size / 1e6:.1f} MB", f"{MEASURED_BYTES / 1e6:.1f} MB"
         self.assertEqual((len(entries), len(known)), (46, 4))
-        self.assertEqual((snapshot, mb), ("3.1 MB", "3.2 MB"))
+        self.assertEqual((snapshot, mb), ("3.1 MB", "1.3 MB"))
         # the measurement stands for this fetch list only: one that moved the captures' sum a twentieth away needs a new one
-        self.assertLess(abs(MEASURED_BYTES - size) / size, 0.05)
+        self.assertLess(abs(MEASURED_WRITTEN - size) / size, 0.05)
         self.assertIn(f"One run is {len(entries)} requests and {mb}, and none of them is expected to answer with an error.", self.section)
-        self.assertIn(f"The size is measured: the first-time fetch timed at the {MEASURED_AT} release downloaded {MEASURED_BYTES:,} bytes, where the "
+        self.assertIn(f"The size is measured: the first-time fetch timed at the {MEASURED_AT} release downloaded {MEASURED_BYTES:,} bytes, gzip-compressed, and wrote {MEASURED_WRITTEN:,}, where the "
                       f"corpus's own captures of the same files sum to {snapshot}; the live files change size.", self.section)
         self.assertIn("The fetch stops at the first one, with no exception (D-247).", self.section)
+        # the legacy SATCAT file's share was a ratio of uncompressed sizes, unmeasured for a gzip download (D-373)
+        self.assertIn("The legacy SATCAT file, 9.4 MB, is by far the largest piece of a full fetch, and it serves", self.section)
+        self.assertNotIn("three quarters of the download", self.section)
         self.assertIn("four TLE requests for objects numbered above 99999, which answer 404 with `No GP data found`. It no longer makes them", self.section)
         self.assertFalse([e["file"] for e in entries if e.get("expect_status")])      # no request of a user's run expects anything but a 200
         for line in self.readme.splitlines():

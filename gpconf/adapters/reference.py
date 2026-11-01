@@ -56,15 +56,21 @@ class Parser:
     def parse_catalog_id(self, text):
         import re
         s = text.strip()
-        if not re.fullmatch(r"\+?\d{1,9}", s):  # CCSDS: integer of up to nine digits; KVN allows a leading sign and zeros
+        if not re.fullmatch(r"\+?\d{1,9}", s, re.ASCII):  # ASCII digits (D-325); CCSDS: integer of up to nine digits; KVN allows a leading sign and zeros
             raise ValueError(f"not a NORAD_CAT_ID: {text!r}")
         return int(s)
 
     def parse_epoch(self, text):
         import re
-        m = re.fullmatch(r"(\d{4})-(?:(\d{2})-(\d{2})|(\d{3}))T(\d{2}):(\d{2}):(\d{2})(\.\d+)?Z?", text)
+        m = re.fullmatch(r"(\d{4})-(?:(\d{2})-(\d{2})|(\d{3}))T(\d{2}):(\d{2}):(\d{2})(\.\d+)?Z?", text, re.ASCII)
         if not m:
             raise ValueError(text)
+        if m.group(4):
+            # strptime's %j takes 366 in any year and returns the next year's 1 January (D-325); 001 to 365, or 366 in a leap year
+            year, doy = int(m.group(1)), int(m.group(4))
+            leap = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+            if not 1 <= doy <= (366 if leap else 365):
+                raise ValueError(f"day of year {doy} is outside {year}: {text!r}")
         s = text.rstrip("Z")
         frac = m.group(8) or ""
         base = s[: len(s) - len(frac)]
@@ -83,24 +89,27 @@ class Parser:
 
 def tle_sets(text):
     """The reference reader's pairing (read_tle_text), one set at a time, so that a set the strict reader rejects comes
-    back as a refusal with the reader's reason and the sets after it still load; a line 1 with no line 2 after it, or a
-    line 2 with no line 1 before it, is refused too, where read_tle_text passes over it (D-171). A valid file gives
-    exactly read_tle_text's records."""
-    lines = text.splitlines()
+    back as a refusal with the reader's reason and the sets after it still load; an element line that pairs with nothing
+    (a line 1 with no line 2 after it, a line 2 alone, an element line set in from column 1) is refused too, where
+    read_tle_text refuses the whole file (D-171, D-336). A valid file gives exactly read_tle_text's records."""
+    lines = ref.tle_lines(text)   # the reader's lines (D-336)
     out, i = [], 0
     while i < len(lines):
         line = lines[i]
-        if line.startswith("1 ") and i + 1 < len(lines) and lines[i + 1].startswith("2 "):
-            l0 = lines[i - 1] if i > 0 and lines[i - 1][:2] not in ("1 ", "2 ") else None
+        if ref._pairs_at(lines, i):
+            l0 = lines[i - 1] if i > 0 and ref.element_line(lines[i - 1]) is None else None
             try:
                 out.append(ref.parse_tle_lines(l0, line, lines[i + 1]))
             except ValueError as e:
                 out.append({"_refused": f"ValueError: {e}", "_field": line[2:7], "_input": line[:80]})
             i += 2
             continue
-        if line.startswith("1 "):
-            out.append({"_refused": "a line 1 with no line 2 after it", "_field": line[2:7], "_input": line[:80]})
-        elif line.startswith("2 "):
-            out.append({"_refused": "a line 2 with no line 1 before it", "_field": line[2:7], "_input": line[:80]})
+        kind = ref.element_line(line)
+        if kind is None and not ref.TLE_LINE.fullmatch(line) and not ref._pairs_at(lines, i + 1):
+            out.append({"_refused": "a line that is not printable ASCII", "_field": None, "_input": line[:80]})
+        if kind == "1":
+            out.append({"_refused": "a line 1 with no line 2 after it", "_field": line.lstrip()[2:7], "_input": line[:80]})
+        elif kind == "2":
+            out.append({"_refused": "a line 2 with no line 1 before it", "_field": line.lstrip()[2:7], "_input": line[:80]})
         i += 1
     return out

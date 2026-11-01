@@ -1,6 +1,6 @@
-# Corpus manifest (0.7.0)
+# Corpus manifest (0.8.0)
 
-Generated 2026-10-15T00:13:26Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-10-29T01:39:43Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No provider data is shipped, and one provider response is: CelesTrak's 16-byte answer `No GP data found`, in `recorded/` with its provenance, which holds no orbital data (D-247, a named exception to D-023). Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped), and writes the recorded answer where it used to request it.
 
@@ -23,7 +23,7 @@ No provider data is shipped, and one provider response is: CelesTrak's 16-byte a
 | 15 | `alpha5-tle-derived` | derived-tle | 750 | 6/0 | 3 |
 | 16 | `kvn-syntax-variants` | derived-kvn | 6 | 6/0 | 2 |
 | 17 | `tle-writer-alpha5` | writer | 756 | 11/2 | 4 |
-| 18 | `corrupt-input` | corrupt-input | 18 | 10/0 | 5 |
+| 18 | `corrupt-input` | corrupt-input | 21 | 11/0 | 6 |
 
 The records column sums the record counts of a case's source files: `analyst-objects` counts the 565 group records plus the two single-object first fetches (567).
 
@@ -103,7 +103,7 @@ Tests: supgp-extra-fields, classification-c
 Coverage gaps:
 
 - perishable: this post-deployment file is replaced after cataloguing, so the five files are the corpus's own capture of that launch window, no fetch requests them, and from a fetch the case is not-available: only the maintainer's copy can run it (D-229)
-- the meaning of the 72000-series ids (the 70000-79999 block) is described only by a secondary source (RESEARCH.md §1); primary sources cover only the 80000-89999 analyst range and the 69999 end of the legacy range
+- what the rest of the 70000-79999 block holds, beside the 72000-series placeholders (confirmed in correspondence with CelesTrak, October 2026), is described by no primary source (RESEARCH.md §1)
 - the 72000-series placeholders raise the same identity-over-time question as the nine-digit nominals, stated as an open question in that case's gaps: 72000 and 72001 share their OBJECT_IDs, 2026-219A and 2026-219B, with two of the per-satellite nominals [tested]
 
 ## 8. `bstar-and-derivative-forms`
@@ -216,14 +216,15 @@ Coverage gaps:
 
 ## 18. `corrupt-input`
 
-Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, a file cut mid-record
+Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, an invalid catalog field, a file cut mid-record
 
 Tests: corrupt-input, fail-closed, resynchronisation
 
 Coverage gaps:
 
-- the shifted CSV column (the plan's input 6) is held, not included (owner decision 4, D-171)
-- one edit per input, on one record: a parser is characterised only for what is edited here (line 1's checksum digit, line 2's length, a letter in the epoch field, a missing line 2, the end of a CSV or JSON file); a letter in another numeric column, a wrong checksum on line 2 or a line cut elsewhere is not exercised
+- the shifted CSV column, which the v0.4.0 plan numbered input 6, is held, not included (owner decision 4, D-171); the input numbered 6 in the files is D-360's invalid catalog field
+- a blank or empty catalog field in a TLE file is not an input: the Alpha-5 decode vectors hold both (vectors/alpha5.json decode_invalid, D-360)
+- one edit per input, on one record: a parser is characterised only for what is edited here (line 1's checksum digit, line 2's length, a letter in the epoch field, a missing line 2, the catalog field, the end of a CSV or JSON file); a letter in another numeric column, a wrong checksum on line 2 or a line cut elsewhere is not exercised
 - no corrupt KVN, XML or 2LE input
 - a line cut short at its end, which loses only the checksum digit and leaves every value readable, is not an input: a parser that accepts it reads the right values, and accepting a malformed line whose values survive is what the wrong checksum digit already shows (D-171)
 - any non-empty reason counts as a refusal's reason; whether it names the right defect is not checked
@@ -232,10 +233,10 @@ Coverage gaps:
 
 - **omm-formats-agree** — For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them.
 - **tle-values-match-omm-within-tle-precision** — The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution.
-- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0).
+- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (ASCII digits count their value, '-' counts 1, everything else 0); a line a writer returns must also be ASCII throughout (D-325).
 - **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 - **tle-catalog-field-decodes** — Columns 3-7 of TLE lines 1 and 2 decode to the same integer (five digits, or Alpha-5 letter + four digits).
-- **ccsds-epoch-strings** — parse_epoch accepts every CCSDS 502.0-B-3 7.5.10 epoch form in vectors/ccsds-epoch-strings.json (calendar and day-of-year, with or without a fraction and a Z, second 60) and returns the instant each denotes (within 2 us; a leap second may read as 23:59:59 or as the next midnight), and rejects the five invalid forms.
+- **ccsds-epoch-strings** — parse_epoch accepts every CCSDS 502.0-B-3 7.5.10 epoch form in vectors/ccsds-epoch-strings.json (calendar and day-of-year, with or without a fraction and a Z, second 60) and returns the instant each denotes (within 2 us; a leap second may read as 23:59:59 or as the next midnight), and rejects the six invalid forms.
 - **two-digit-year-pivot** — TLE epoch years 57-99 map to 1957-1999 and 00-56 to 2000-2056; the resulting ISO epoch equals the OMM EPOCH string.
 - **object-id-may-be-empty** — OBJECT_ID (and in principle OBJECT_NAME) can be empty; parsers must not fail, and must not invent a value.
 - **object-name-unknown-literal** — OBJECT_NAME may be the literal UNKNOWN (CCSDS-recommended) rather than empty.
@@ -253,7 +254,7 @@ Coverage gaps:
 - **mmdot-is-tle-field-value** — OMM MEAN_MOTION_DOT equals the TLE first-derivative field as printed (the TLE 'ndot/2' convention); MEAN_MOTION_DDOT likewise equals the TLE second-derivative field.
 - **bstar-implied-decimal-exponent** — TLE BSTAR and second-derivative fields are +/-NNNNN+/-E with an implied leading decimal point: ' 15975-3' is 0.15975e-3; zero is written ' 00000+0'.
 - **negative-bstar-and-ndot** — BSTAR and the first derivative can be negative; parsers must keep the sign.
-- **alpha5-decode** — An Alpha-5 catalog field decodes as (letter value)*10000 + digits with A=10 ... Z=33 and I, O unused; 'I', 'O' and lowercase are invalid.
+- **alpha5-decode** — An Alpha-5 catalog field decodes as (letter value)*10000 + digits with A=10 ... Z=33 and I, O unused; 'I', 'O', lowercase, a blank and an empty field are invalid (D-360), and so is a field whose last four characters are not all digits: a letter, a sign, a point or a blank after the first character (D-369), and so is one whose digits are not ASCII, or with an underscore or a plus sign in it (D-370).
 - **alpha5-encode** — Integers 100000-339999 encode to the Alpha-5 table; below 100000 encode as five digits with leading zeros; above 339999 cannot be encoded.
 - **satcat-legacy-below-70000** — The legacy fixed-width SATCAT contains only NORAD ids below 70000; the CSV/JSON SATCAT contains ids on both sides.
 - **kvn-syntax-tolerance** — KVN parsers accept blank lines, COMMENT lines at allowed positions, arbitrary whitespace around '=', bracketed units, day-of-year epochs, an optional trailing Z, signed integers, lowercase 'e' exponents, LF or CRLF endings.
@@ -270,8 +271,9 @@ Coverage gaps:
 - **corrupt-tle-line-short** — A TLE set whose line 2 has lost one character mid-line (a digit of the eccentricity), so that it is 68 characters and every column after the cut has moved one to the left, is refused with a reason. A record read from it fails as misidentified, since its values are not the set's, and so does a silent drop.
 - **corrupt-tle-letter-in-number** — A TLE set with the letter O in place of a 0 in line 1's epoch field is refused with a reason, not read as a record with a wrong epoch and not dropped silently. The line's checksum is still valid, since a letter counts 0 as the digit it replaced did, so the checksum cannot catch it.
 - **corrupt-tle-missing-line-2** — A TLE set whose line 1 is followed directly by the next set's name line: the orphan line 1 is refused with a reason. Passing over it without a word counts as dropped, and pairing it with the lines after it builds a record from garbage.
+- **corrupt-tle-invalid-catalog-field** — A TLE set whose catalog field is an invalid Alpha-5 field, I9999 on both lines (the letter I is never used in Alpha-5), both checksums valid, is refused with a reason (one whose _field is the invalid field, or whose _input quotes it, is credited, D-282, D-360). A record read from it fails: under an id the file does not hold (a decoder that maps letters by their code without skipping I reads 189999), it is the corrupt record dropped and a record the file does not hold, built from garbage; under 69999, the invalid field read as a catalog number; a silent drop fails too (D-360).
 - **corrupt-file-cut** — A file cut mid-record, as a CSV that ends inside its last row and as a JSON array missing its closing bracket: the complete records load and the cut is reported with a reason, or the file is refused as a whole with a reason, which is fail-closed; the complete records a whole-file refusal gives up are counted, not failed (owner decision, D-171). Loading the complete records while saying nothing of the cut is silent partial loading and fails, as does a record read from the cut row.
-- **corrupt-input-neighbours-load** — The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded here, since the values check grades it on the same records in their own cases (D-175). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed.
+- **corrupt-input-neighbours-load** — The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded by this item, since the values check grades it on the same records in their own cases and on the unedited files here (D-175, D-299, D-342). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed.
 
 ## Ambiguities
 

@@ -29,13 +29,18 @@ reasoning is in `DECISIONS.md`, D-095 to D-101.
   the lines on stdout. Two exit-code conventions are in play and they are different: your writer
   command's exit code says what happened to one record (0 written, 3 writing unsupported, so the case
   is skipped, any other value a refusal); `gpconf`'s own exit code, for `run` and `check-tle` alike,
-  is 0 when nothing failed and 1 when anything did.
+  is 0 when nothing failed, 1 when anything did, and 2 when nothing could run or the `--json` report could not be
+  written; `check-tle` exits 3 when nothing failed but a record was not compared (D-370).
 - A file a tool wrote: `python3 -m gpconf check-tle FILE... [--against RECORDS]`. Same checks (length,
   checksum, catalog field, column layout), applied to every `1 `/`2 ` line pair in the file whatever its
   length; name lines, `#` comment lines and LF or CRLF endings are accepted; an element line without its
-  partner, an indented line and a byte-order mark are reported as failures, not skipped; `--against`
+  partner, an indented line and a byte-order mark are reported as failures, not skipped; trailing whitespace on a
+  written element line (an 80-column card image's blanks, say) is taken off and noted, which file line and which
+  columns, as information that changes no status and no exit code (D-338); `--against`
   supplies the source records (CSV, JSON, XML, KVN or TLE, with the epoch in the calendar or the
-  day-of-year form) for the round trip. A written record whose catalog number has no match in those records is a failure, not a
+  day-of-year form) for the round trip; a records file the reference reader rejects (anything outside the format, read as
+  strictly as a parser's answer, D-336; bytes that are not UTF-8; an extension it does not know), or that is missing, stops the check with exit 2, naming the file and what is wrong,
+  since it is no reference to check against. A written record whose catalog number has no match in those records is a failure, not a
   note: the line is about some other object, or about none. When the number is `00000` or `99999` the detail
   names the likely cause on the rffit path (an `-i` lookup that found no elements leaves rffit's orbit
   zero-initialised, and 99999 is its default). `gpconf` exits 1 on any failing record or when no record

@@ -21,6 +21,7 @@ sys.path.insert(0, ROOT)
 
 from gpconf.runner import Runner  # noqa: E402
 from gpconf.adapters.reference import Parser as Reference  # noqa: E402
+from tests.crashwatch import watched  # noqa: E402
 
 NO_DATA = ["alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "tle-writer-alpha5", "corrupt-input"]
 EMPTY = tempfile.mkdtemp(prefix="gpconf-redteam-empty-")
@@ -70,11 +71,12 @@ class EscapesThatAreClosed(unittest.TestCase):
     def test_e7_unrelated_refusal(self):                        # D-282
         self.assertEqual(failing(run(adapter("e07", "Win"))), ["corrupt-input"])
 
-    def test_e8_a_consistent_drop_cannot_read_pass(self):       # D-294
+    def test_e8_a_consistent_drop_cannot_read_pass(self):       # D-294, D-342
         r = run(adapter("e08", "Win"))
-        self.assertEqual(failing(r), [])                         # nothing can be measured, so nothing fails
-        self.assertEqual(r["corrupt-input"].status, "not-exercised")
-        self.assertEqual(len(r["corrupt-input"].voided_by_parser()), 4)
+        self.assertEqual(failing(r), ["corrupt-input"])          # the unedited TLE file's frozen values catch the drop (D-342)
+        values = [i for i in r["corrupt-input"].items if i.check == "values" and (i.file or "").endswith("unedited-sets.tle")]
+        self.assertEqual([i.status for i in values], ["fail"])
+        self.assertEqual(len(r["corrupt-input"].voided_by_parser()), 5)   # the inputs it leaves ungraded are still named (five with D-360's sixth input)
         self.assertEqual(r["corrupt-input"].as_dict()["voided_by_parser"], r["corrupt-input"].voided_by_parser())
         for name in ("Empty", "RefuseSome"):                     # the report's two wider cases
             self.assertNotEqual(run(adapter("e00", name))["corrupt-input"].status, "pass", name)
@@ -98,7 +100,7 @@ class EscapesThatAreClosed(unittest.TestCase):
         with open(os.path.join(d, "exits_on_import.py"), "w", encoding="utf-8") as f:
             f.write("import sys\nsys.exit(0)\n")
         p = subprocess.run([sys.executable, "-m", "gpconf", "run", "--adapter", "exits_on_import:Parser", "--root", ROOT, "--data", EMPTY],
-                           cwd=d, env=dict(os.environ, PYTHONPATH=ROOT), capture_output=True, text=True)
+                           cwd=d, env=watched(dict(os.environ, PYTHONPATH=ROOT)), capture_output=True, text=True)
         self.assertEqual(p.returncode, 2, p.stdout[-200:] + p.stderr[-200:])
         self.assertIn("exited while loading", p.stderr)
 
@@ -196,8 +198,8 @@ class Twins(unittest.TestCase):
                 self.assertTrue(failing(run(adapter(m, "Twin"))), m)
 
     def test_the_two_adapters_with_no_escape_fail(self):
-        for name in ("Empty", "RefuseSome"):
-            self.assertEqual(failing(run(adapter("e00", name))), ["alpha5-tle-derived"], name)
+        for name in ("Empty", "RefuseSome"):   # corrupt-input since D-342: no TLE record, or a valid one refused, from the unedited file
+            self.assertEqual(failing(run(adapter("e00", name))), ["alpha5-tle-derived", "corrupt-input"], name)
 
 
 class FalseFailsOnCorrectParsers(unittest.TestCase):

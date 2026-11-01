@@ -380,6 +380,46 @@
   {
    "field": "1A000",
    "reason": "letter only in the first position"
+  },
+  {
+   "field": "     ",
+   "reason": "a blank field is no catalog number; a decoder that reads it as 0 names an object that is not there (D-360)"
+  },
+  {
+   "field": "",
+   "reason": "an empty field is no catalog number (D-360)"
+  },
+  {
+   "field": "A12B4",
+   "reason": "only the first character may be a letter: a decoder must read the whole field, not its first two characters (D-369)"
+  },
+  {
+   "field": "A1-34",
+   "reason": "a sign inside the field: the four characters after the letter are digits (D-369)"
+  },
+  {
+   "field": "A12.4",
+   "reason": "a decimal point inside the field: the four characters after the letter are digits (D-369)"
+  },
+  {
+   "field": "A1 34",
+   "reason": "a blank inside the field: the four characters after the letter are digits (D-369)"
+  },
+  {
+   "field": "1234A",
+   "reason": "a letter only in the first position, never the last (D-369)"
+  },
+  {
+   "field": "A１２３４",
+   "reason": "full-width digits are not the digits 0 to 9: the four characters after the letter are ASCII digits (D-370)"
+  },
+  {
+   "field": "A1_23",
+   "reason": "an underscore inside the field, which int() reads past (D-370)"
+  },
+  {
+   "field": "A+123",
+   "reason": "a sign inside the field, which int() reads past (D-370)"
   }
  ],
  "encode_unrepresentable": [

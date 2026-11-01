@@ -25,15 +25,21 @@ jobs:
         run: python -m pip install --quiet mypy==2.4.0 hypothesis==6.169.0
       # With Hypothesis installed the suite includes tests/test_properties.py at 100 examples. Hypothesis needs Python
       # 3.11 or later, so on 3.9 those tests are skipped, each by name; on 3.12 GPCONF_REQUIRE_HYPOTHESIS makes its
-      # absence an error, and the step after the suite checks that the eighteen properties ran (D-322).
+      # absence an error, and the step after the suite checks that the twenty-five properties ran (D-322).
       - run: python -m unittest discover -s tests -t . -v
         env:
           GPCONF_REQUIRE_HYPOTHESIS: ${{ matrix.python-version == '3.12' && '1' || '' }}
       - name: The property tests ran, and none was skipped (D-322)
         if: matrix.python-version == '3.12'
-        run: python tools/ran_not_skipped.py tests.test_properties 19
+        run: python tools/ran_not_skipped.py tests.test_properties 26
         env:
           GPCONF_REQUIRE_HYPOTHESIS: "1"
+      - name: The synthetic two-file set's routes and the publishing step's tests ran, and none was skipped (D-362, D-361)
+        if: matrix.python-version == '3.12'
+        run: |
+          python tools/ran_not_skipped.py tests.adversarial.test_hardening.AHalfFetchedSetBlamesNoParserOnASyntheticSet 4
+          python tools/ran_not_skipped.py tests.adversarial.test_hardening.PaddingInTheOmmFileOnlyOnASyntheticSet 1
+          python tools/ran_not_skipped.py tests.test_release_hashes.ThePublishingStep 4
       - run: python -m gpconf run --preset reference --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 --case corrupt-input
       - run: python -m gpconf run --preset naive --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 --case corrupt-input || test $? -eq 1
       - name: Type check at mypy's default settings (D-320); the stricter check is a ratchet in nightly.yml

@@ -115,7 +115,7 @@ class WhatTheReviewOfTheRuleFound(unittest.TestCase):
         r = run(DupEdited(), ["corrupt-input"])["corrupt-input"]
         self.assertEqual(r.status, "fail")
         fails = [i for i in r.items if i.status == "fail" and i.check == "corrupt-input-neighbours-load"]
-        self.assertEqual(len(fails), 3)                                            # the three files the reference refuses a record of
+        self.assertEqual(len(fails), 4)                                            # the four files the reference refuses a record of (D-360's sixth input the fourth)
         for i in fails:
             self.assertIn("returned 2 times where the input holds it once (D-311)", i.detail)
             self.assertNotIn("changed by the corrupt input", i.detail)            # it is not the edit's doing
@@ -171,11 +171,11 @@ class ByDesignAndSaidSo(unittest.TestCase):
         self.assertEqual(info.status, "info")
         self.assertIn("zeroed", info.detail)
 
-    def test_f7_a_record_dropped_everywhere_voids_the_case_and_never_passes_it(self):   # D-175, D-294
+    def test_f7_a_record_dropped_everywhere_never_passes_the_case(self):   # D-175, D-294, D-342
         r = run(adapter("win_f7_corrupt_void"))
-        self.assertEqual(failing(r), [])
-        self.assertEqual(r["corrupt-input"].status, "not-exercised")
-        self.assertEqual(annotation_totals(list(r.values()))["cases_graded"], 4)
+        self.assertEqual(failing(r), ["corrupt-input"])          # the unedited TLE file's frozen values catch the drop (D-342)
+        self.assertEqual(r["corrupt-input"].status, "fail")
+        self.assertEqual(annotation_totals(list(r.values()))["cases_graded"], 5)   # corrupt-input graded, where it was voided
 
     def test_a_clean_run_carries_no_annotation(self):
         r = run(Reference())
@@ -215,7 +215,8 @@ class TheRunSaysHowMuchItGraded(unittest.TestCase):          # D-312
 class TwinsAndGuardsStillFail(unittest.TestCase):
     TWINS = {"twin_f1_dup_disagree": 3, "twin_f2_wrong_objid": 3, "twin_f3_xml_wrong": 1, "twin_f4_writer_mix": 1,
              "twin_f5_encode_wrong": 1, "twin_f6_writer_primary": 1, "twin_f7_corrupt_drop": 1}
-    GUARDS = {"guard_empty": 1, "guard_epochtext": 1, "guard_exit": 2, "guard_f3_partial_unsup": 1, "guard_intfloat": 3}
+    GUARDS = {"guard_empty": 2, "guard_epochtext": 1,   # guard_empty: 1 in the report; 2 since D-342 (the unedited TLE file's values)
+              "guard_exit": 2, "guard_f3_partial_unsup": 1, "guard_intfloat": 3}
 
     def test_every_twin_fails_as_the_report_has_it(self):
         for m, n in self.TWINS.items():

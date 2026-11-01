@@ -22,6 +22,7 @@ sys.path.insert(0, ROOT)
 from gpconf import __main__ as cli  # noqa: E402
 from gpconf.runner import CASE_STATUSES, status_totals  # noqa: E402
 from tests.test_action import run_step  # noqa: E402
+from tests.crashwatch import watched  # noqa: E402
 
 OFFLINE_CASES = ["alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "tle-writer-alpha5", "corrupt-input"]
 
@@ -47,7 +48,7 @@ def run(preset, *args):
         empty = os.path.join(tmp, "data")
         os.mkdir(empty)
         p = subprocess.run([sys.executable, "-m", "gpconf", "run", "--preset", preset, "--root", ROOT, "--data", empty, "--json", report, *args],
-                           cwd=tmp, capture_output=True, text=True, timeout=300, env=dict(os.environ, PYTHONPATH=ROOT))
+                           cwd=tmp, capture_output=True, text=True, timeout=300, env=watched(dict(os.environ, PYTHONPATH=ROOT)))
         with open(report, encoding="utf-8") as f:
             return p.returncode, p.stdout, json.load(f)
 

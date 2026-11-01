@@ -1,0 +1,197 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
+name: publish
+# Trusted Publishing (D-361). On a pushed tag v*: build the sdist and the wheel from the tag the way the maintainer's
+# local build does (tools/stage_package.py, the pinned toolchain, SOURCE_DATE_EPOCH the tagged commit's time; D-203,
+# D-259); check both, byte for byte, against the SHA-256 the maintainer's build wrote into the annotated tag's message
+# (tools/release_hashes.py); and only then publish those two files to PyPI by OIDC, with PEP 740 attestations, from the
+# environment `pypi`, whose deployments the maintainer approves. No configured secret or stored token is used.
+# By hand (workflow_dispatch, run on a tag): the same build and checks, published to TestPyPI only, as a rehearsal.
+#
+# The job that publishes runs no build tool, and its own steps install nothing and check nothing out: it fetches the
+# tag itself and checks the downloaded files against the tag's message with the tag's own check, so nothing that ran in
+# the build job (its toolchain comes from PyPI) can change what it publishes. It also stops, saying so, if the tag is
+# no longer the tag object the build job read (before setup-python and the toolchain ran) or, on a push, the one the
+# push event names. Who may write a v* tag is GitHub's to enforce, not this file's. The publish action then runs its
+# own pinned definition and container.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+permissions: {}   # nothing at the top: each job names what it needs
+defaults:
+  run:
+    shell: bash   # -eo pipefail: a failing command in a pipe fails the step
+
+jobs:
+  build:
+    name: Build from the tag, check against the maintainer's build
+    # Only a tag, pushed or picked by hand; a branch never builds a release.
+    if: github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      tag-object: ${{ steps.tag.outputs.object }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5.1.0, pinned by commit (D-269)
+        with:
+          path: src
+          fetch-depth: 0   # main's history, for the check that the tagged commit is on it
+          persist-credentials: false
+      - name: The tag is annotated, names this commit, and the commit is on main (before setup-python and the toolchain)
+        id: tag
+        run: |
+          cd src
+          # actions/checkout may leave the tag as a lightweight ref to the commit; fetch the tag object itself.
+          git fetch --no-tags --force origin "+refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME" \
+            "+refs/heads/main:refs/remotes/origin/main"
+          if [ "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" != tag ]; then
+            echo "::error::$GITHUB_REF_NAME is not an annotated tag: the maintainer's SHA-256 travel in its message"; exit 1
+          fi
+          # GITHUB_SHA is peeled with ^{commit}, so the comparison holds whether it names the commit or the tag object.
+          head=$(git rev-parse HEAD)
+          if [ "$(git rev-parse "$GITHUB_SHA^{commit}")" != "$head" ] || [ "$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")" != "$head" ]; then
+            echo "::error::$GITHUB_REF_NAME does not name the commit this run checked out, $GITHUB_SHA"; exit 1
+          fi
+          if ! git merge-base --is-ancestor "$head" refs/remotes/origin/main; then
+            echo "::error::$GITHUB_REF_NAME names $head, which is not on main"; exit 1
+          fi
+          object=$(git rev-parse "refs/tags/$GITHUB_REF_NAME")
+          git for-each-ref --format='%(contents)' "refs/tags/$GITHUB_REF_NAME" > "$RUNNER_TEMP/tag-message.txt"
+          echo "object=$object" >> "$GITHUB_OUTPUT"
+          echo "tag $GITHUB_REF_NAME, object $object, commit $head; its message:"
+          cat "$RUNNER_TEMP/tag-message.txt"
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6.3.0, pinned by commit (D-269)
+        with:
+          python-version: "3.14.6"
+      - name: The pinned toolchain, the maintainer's (D-203, D-259)
+        run: |
+          python -m pip install --quiet build==1.6.1 setuptools==84.0.0 packaging==26.3 pyproject_hooks==1.3.3
+          python - <<'PY'
+          import platform, sys, zlib
+          import build, packaging, pyproject_hooks, setuptools
+          print("python", sys.version)
+          print("build", build.__version__, "| setuptools", setuptools.__version__, "| packaging", packaging.__version__,
+                "| pyproject_hooks", pyproject_hooks.__version__)
+          print("zlib runtime", zlib.ZLIB_RUNTIME_VERSION, "| compiled against", zlib.ZLIB_VERSION)
+          print(platform.platform())
+          PY
+      - name: The archive of the tag, and the tagged commit's time as SOURCE_DATE_EPOCH
+        run: |
+          git -C src log -1 --format='commit %H%ncommitter time %ct (%cI)'
+          echo "SOURCE_DATE_EPOCH=$(git -C src log -1 --format=%ct)" >> "$GITHUB_ENV"
+          mkdir export
+          git -C src archive HEAD | tar -x -C export
+      - name: Build, and audit both files against the export's manifest
+        run: python export/tools/stage_package.py --export export --out stage --build dist --source-date-epoch "$SOURCE_DATE_EPOCH"
+      - name: Both files are the maintainer's, byte for byte; anything else stops here
+        id: check
+        run: |
+          echo "Built with SOURCE_DATE_EPOCH $SOURCE_DATE_EPOCH." >> "$GITHUB_STEP_SUMMARY"
+          python -I export/tools/release_hashes.py check --dist dist --pyproject export/pyproject.toml --tag "$GITHUB_REF_NAME" \
+            --message "$RUNNER_TEMP/tag-message.txt" --github-output "$GITHUB_OUTPUT" --summary "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7.0.2, pinned by commit (D-269)
+        with:
+          name: dist
+          path: |
+            dist/${{ steps.check.outputs.wheel }}
+            dist/${{ steps.check.outputs.sdist }}
+          if-no-files-found: error
+      - name: When the check fails or refuses, keep the runner's files to find what differs (no job downloads them)
+        if: failure() && steps.check.outcome == 'failure'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7.0.2, pinned by commit (D-269)
+        with:
+          name: runner-build-not-published
+          path: dist/
+          retention-days: 14
+
+  pypi:
+    name: Publish to PyPI
+    needs: build
+    if: github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi   # the maintainer approves each deployment; deployments only from tags v*
+      url: https://pypi.org/project/gpconf/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write   # Trusted Publishing and the attestations' signatures; nothing else
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333   # v8.0.2, pinned by commit (D-269)
+        with:
+          name: dist
+          path: dist
+      - name: The files about to be published are the maintainer's, by the tag's own check of the tag's own message
+        env:
+          TAG_OBJECT: ${{ needs.build.outputs.tag-object }}
+          EVENT_AFTER: ${{ github.event.after }}
+        run: |
+          stop() { echo "::error::$1"; exit 1; }
+          git init --quiet tag
+          git -C tag fetch --quiet --no-tags --depth=1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            "+refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME" || stop "cannot fetch the tag $GITHUB_REF_NAME"
+          [ "$(git -C tag cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag ] || stop "$GITHUB_REF_NAME is no longer an annotated tag"
+          object=$(git -C tag rev-parse "refs/tags/$GITHUB_REF_NAME")
+          commit=$(git -C tag rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+          echo "tag $GITHUB_REF_NAME: object $object, commit $commit; the build job read $TAG_OBJECT; github.event.after ${EVENT_AFTER:-(none: run by hand)}"
+          [ -n "$TAG_OBJECT" ] && [ "$object" = "$TAG_OBJECT" ] || stop "$GITHUB_REF_NAME is now $object, not the tag object $TAG_OBJECT the build job checked"
+          [ "$commit" = "$(git -C tag rev-parse "$GITHUB_SHA^{commit}")" ] || stop "$GITHUB_REF_NAME names $commit, not this run's commit"
+          # On a push, the event names what was pushed: the tag object [inferred] or, if GitHub peels it, the commit.
+          [ -z "$EVENT_AFTER" ] || [ "$EVENT_AFTER" = "$object" ] || [ "$EVENT_AFTER" = "$commit" ] \
+            || stop "$GITHUB_REF_NAME is $object, not what was pushed ($EVENT_AFTER)"
+          git -C tag for-each-ref --format='%(contents)' "refs/tags/$GITHUB_REF_NAME" > "$RUNNER_TEMP/tag-message.txt"
+          git -C tag show "$commit:tools/release_hashes.py" > "$RUNNER_TEMP/release_hashes.py"
+          git -C tag show "$commit:pyproject.toml" > "$RUNNER_TEMP/pyproject.toml"
+          python3 -I "$RUNNER_TEMP/release_hashes.py" check --dist dist --pyproject "$RUNNER_TEMP/pyproject.toml" \
+            --tag "$GITHUB_REF_NAME" --message "$RUNNER_TEMP/tag-message.txt" --summary "$GITHUB_STEP_SUMMARY"
+          rm -rf tag
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33   # v1.14.2, pinned by commit (D-269)
+        with:
+          attestations: true
+          print-hash: true
+
+  testpypi:
+    name: Rehearse on TestPyPI
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/gpconf/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write   # Trusted Publishing and the attestations' signatures; nothing else
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333   # v8.0.2, pinned by commit (D-269)
+        with:
+          name: dist
+          path: dist
+      - name: The files about to be published are the maintainer's, by the tag's own check of the tag's own message
+        env:
+          TAG_OBJECT: ${{ needs.build.outputs.tag-object }}
+          EVENT_AFTER: ${{ github.event.after }}
+        run: |
+          stop() { echo "::error::$1"; exit 1; }
+          git init --quiet tag
+          git -C tag fetch --quiet --no-tags --depth=1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            "+refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME" || stop "cannot fetch the tag $GITHUB_REF_NAME"
+          [ "$(git -C tag cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag ] || stop "$GITHUB_REF_NAME is no longer an annotated tag"
+          object=$(git -C tag rev-parse "refs/tags/$GITHUB_REF_NAME")
+          commit=$(git -C tag rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+          echo "tag $GITHUB_REF_NAME: object $object, commit $commit; the build job read $TAG_OBJECT; github.event.after ${EVENT_AFTER:-(none: run by hand)}"
+          [ -n "$TAG_OBJECT" ] && [ "$object" = "$TAG_OBJECT" ] || stop "$GITHUB_REF_NAME is now $object, not the tag object $TAG_OBJECT the build job checked"
+          [ "$commit" = "$(git -C tag rev-parse "$GITHUB_SHA^{commit}")" ] || stop "$GITHUB_REF_NAME names $commit, not this run's commit"
+          # On a push, the event names what was pushed: the tag object [inferred] or, if GitHub peels it, the commit.
+          [ -z "$EVENT_AFTER" ] || [ "$EVENT_AFTER" = "$object" ] || [ "$EVENT_AFTER" = "$commit" ] \
+            || stop "$GITHUB_REF_NAME is $object, not what was pushed ($EVENT_AFTER)"
+          git -C tag for-each-ref --format='%(contents)' "refs/tags/$GITHUB_REF_NAME" > "$RUNNER_TEMP/tag-message.txt"
+          git -C tag show "$commit:tools/release_hashes.py" > "$RUNNER_TEMP/release_hashes.py"
+          git -C tag show "$commit:pyproject.toml" > "$RUNNER_TEMP/pyproject.toml"
+          python3 -I "$RUNNER_TEMP/release_hashes.py" check --dist dist --pyproject "$RUNNER_TEMP/pyproject.toml" \
+            --tag "$GITHUB_REF_NAME" --message "$RUNNER_TEMP/tag-message.txt" --summary "$GITHUB_STEP_SUMMARY"
+          rm -rf tag
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33   # v1.14.2, pinned by commit (D-269)
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          attestations: true
+          print-hash: true

@@ -30,6 +30,7 @@ sys.path.insert(0, ROOT)
 
 from gpconf import presets  # noqa: E402
 from gpconf.__main__ import main as gpconf_main  # noqa: E402
+from tests.crashwatch import watched  # noqa: E402
 from gpconf.runner import CommandParser, Runner, Unsupported  # noqa: E402
 
 NODE = shutil.which("node")
@@ -111,7 +112,7 @@ class SetupErrors(unittest.TestCase):
                     self.assertIn(f"npm install {package}", msg)
                     self.assertIn(f"Nothing was run; this says nothing about {package}.", msg)
             p = subprocess.run([sys.executable, "-m", "gpconf", "run", "--preset", "tle.js", "--root", ROOT, "--case", "alpha5-tle-derived"],
-                               cwd=tmp, capture_output=True, text=True, timeout=120, env=dict(os.environ, PYTHONPATH=ROOT))
+                               cwd=tmp, capture_output=True, text=True, timeout=120, env=watched(dict(os.environ, PYTHONPATH=ROOT)))
             self.assertEqual(p.returncode, 2, p.stdout + p.stderr)
             self.assertNotRegex(p.stdout, r"\d+ cases?: ")  # no count line: nothing ran
 

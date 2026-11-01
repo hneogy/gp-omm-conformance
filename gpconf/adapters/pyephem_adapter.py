@@ -11,6 +11,7 @@ adapter hands it each line 1 with whatever line follows, and PyEphem, not the ad
 line 2 after it (D-183). Moved into the package from the one-off run's harness (D-151).
 """
 import math
+from typing import Any
 
 try:
     import ephem
@@ -19,7 +20,7 @@ except ImportError as e:  # pragma: no cover
 
 from gpconf.runner import Unsupported
 
-DECLARATION = {"_adapter": {"refusals": True}}  # every element set readtle() refuses is reported as a refusal (D-144)
+DECLARATION: dict[str, Any] = {"_adapter": {"refusals": True}}  # every element set readtle() refuses is reported as a refusal (D-144)
 
 
 def _rec(s, name):

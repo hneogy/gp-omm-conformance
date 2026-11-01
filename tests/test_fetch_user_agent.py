@@ -45,8 +45,11 @@ class _Resp:
         self.status, self.reason, self.version, self._body = 200, "OK", 11, body
         self.headers = email.message.Message()
 
-    def read(self):
-        return self._body
+    def read(self, amt=None):   # as http.client's: at most amt bytes when given, from where the last read ended (D-370)
+        if amt is None:
+            raise AssertionError("the fetch read an answer with no size: an unbounded read (D-370)")
+        part, self._body = self._body[:amt], self._body[amt:]
+        return part
 
     def __enter__(self):
         return self
@@ -141,10 +144,11 @@ class TheReadme(unittest.TestCase):
 
     def test_it_gives_one_size_for_a_users_fetch(self):
         # the quick start says it twice and "Fetching responsibly" once; up to 0.6.0 all three gave the size computed from
-        # the corpus's own captures, 3.1 MB, where both timed first-time fetches measured 3.2 MB (D-235, D-250, D-252)
+        # the corpus's own captures, 3.1 MB, where both timed first-time fetches measured 3.2 MB (D-235, D-250, D-252); from
+        # 0.8.0, which asks for gzip, the size downloaded, 1.3 MB at the 0.8.0 release (D-373)
         sizes = re.findall(r"46 requests(?:,| and) (\d+\.\d) MB", self.readme)
         self.assertEqual(len(sizes), 3, sizes)
-        self.assertEqual(set(sizes), {"3.2"})
+        self.assertEqual(set(sizes), {"1.3"})
 
 
 if __name__ == "__main__":

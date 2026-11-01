@@ -20,7 +20,7 @@ Derived, not provider output: real CelesTrak OMM records rendered into TLE layou
 ## Checks
 
 - **tle-catalog-field-decodes** — Columns 3-7 of TLE lines 1 and 2 decode to the same integer (five digits, or Alpha-5 letter + four digits).
-- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0).
+- **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (ASCII digits count their value, '-' counts 1, everything else 0); a line a writer returns must also be ASCII throughout (D-325).
 - **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 
 ## Coverage
@@ -28,7 +28,7 @@ Derived, not provider output: real CelesTrak OMM records rendered into TLE layou
 Provides:
 
 - 604 Alpha-5 TLE sets derived from real records, each a name line, line 1 and line 2 (1,208 element lines, 1,812 lines in the four files): 257 with letter A (ids 100000-100789), 347 with letter T (ids 270000-270449)
-- 46 synthetic-derived TLE sets, the lowest and highest id of each of the 24 Alpha-5 letters less the two ids real records hold (100000, 270000): SARAMAGO's first-record elements rendered with the catalog number replaced, each id a specification vector, not a catalogued object (D-096, D-125, D-286, D-300)
+- 46 synthetic-derived TLE sets, the lowest and highest id of each of the 24 Alpha-5 letters less the two ids real records hold (100000, 270000): SARAMAGO's first-record elements rendered with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set, so each set's elements are its own, each id a specification vector, not a catalogued object (D-096, D-125, D-286, D-300, D-372)
 - 100 synthetic-derived TLE sets, one per two-digit epoch year 00-99 (ids 330100-330199), the same elements with the epoch's year replaced: a reader's pivot is graded on data wherever it sits (D-300)
 
 Gaps (stated explicitly for this case):
@@ -55,7 +55,7 @@ Every file of this case ships with the repository; nothing is fetched.
 | `derived/alpha5-tle/alpha5-T-270449-analyst-first.tle` | stable | none: derived file shipped with the repository | 168 | generated 2026-09-21T01:01:34Z | `74a8c9e508c0b062…` |
 | `derived/alpha5-tle/alpha5-A-last-30-days-snapshot.tle` | stable | none: derived file shipped with the repository | 43008 | generated 2026-09-21T01:01:34Z | `72e2845cdb484932…` |
 | `derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle` | stable | none: derived file shipped with the repository | 58128 | generated 2026-09-21T01:01:34Z | `f4868060a6ab61d3…` |
-| `derived/alpha5-tle/alpha5-synthetic-letters.tle` | stable | none: derived file shipped with the repository | 7728 | generated 2026-10-10T02:16:22Z | `cfca1468f2d79981…` |
+| `derived/alpha5-tle/alpha5-synthetic-letters.tle` | stable | none: derived file shipped with the repository | 7728 | generated 2026-10-29T01:39:43Z | `1592e5efd9f1178e…` |
 | `derived/alpha5-tle/alpha5-synthetic-epoch-years.tle` | stable | none: derived file shipped with the repository | 16800 | generated 2026-10-10T02:16:22Z | `de427c200042f372…` |
 
 Expected values: `fixtures/alpha5-tle-derived/expected.json` (schema_version 1.0).

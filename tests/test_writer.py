@@ -123,6 +123,37 @@ class PositiveExponentVectorTests(unittest.TestCase):
         self.assertEqual(r.status, "pass", [(i.check, i.detail) for i in r.items if i.status == "fail"])
 
 
+class ExponentFieldErrors(unittest.TestCase):
+    """W5 (D-350): a value no TLE exponent field can hold raises ValueError naming it, in both mantissa modes; before, a
+    NaN raised InvalidOperation, an infinity TypeError and a Decimal handed in AttributeError."""
+
+    def test_a_value_that_is_not_a_finite_decimal_is_named(self):
+        from decimal import Decimal
+        for v in ("NaN", "sNaN", "Infinity", "-Infinity", "abc", Decimal("NaN"), Decimal("-Infinity")):
+            for mode in ("truncate", "round"):
+                with self.subTest(value=v, mode=mode):
+                    with self.assertRaises(ValueError) as e:
+                        T.exp_field(v, mode)
+                    self.assertIn(repr(v), str(e.exception))
+
+    def test_the_twins_finite_values_as_text_read_as_before(self):
+        for v, want in ((None, " 00000+0"), ("", " 00000+0"), ("  ", " 00000+0"), ("0", " 00000+0"), ("-.00011606", "-11606-3"),
+                        ("1.2345", " 12345+1")):
+            with self.subTest(value=v):
+                self.assertEqual(T.exp_field(v, "truncate"), want)
+
+    def test_a_decimal_is_read_as_its_text(self):
+        from decimal import Decimal
+        self.assertEqual(T.exp_field(Decimal("1.2345"), "round"), T.exp_field("1.2345", "round"))
+
+    def test_the_reference_writer_refuses_a_nan_bstar_with_the_value_named(self):
+        rec = next(r for r in load_expected()["records"] if r["norad_cat_id"] == 99999)["canonical"]
+        fields = dict(T.omm_fields_from_record(rec), BSTAR="NaN")
+        with self.assertRaises(ValueError) as e:
+            T.render(fields)
+        self.assertIn("'NaN'", str(e.exception))
+
+
 class ReferenceWriterTests(unittest.TestCase):
     def test_passes_every_check_exactly(self):
         r = run_case(Reference())

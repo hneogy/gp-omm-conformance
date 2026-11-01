@@ -80,6 +80,11 @@ def check_lines(l1, l2):
     for name, l in (("line 1", l1), ("line 2", l2)):
         if len(l) != 69:
             problems.append(f"{name} is {qty(len(l), 'character')}, not 69")
+        elif not l.isascii():
+            # a TLE line is ASCII (D-325): a digit of another script read as the digit it stands for in the layout and the
+            # round trip, so a writer that put one in an element field and recomputed its checksum passed the case
+            bad = next((i, c) for i, c in enumerate(l) if not c.isascii())
+            problems.append(f"{name} column {bad[0] + 1} holds {bad[1]!r}, which is not ASCII")
         elif l[68] != str(T.checksum(l)):
             problems.append(f"{name} checksum {l[68]!r}, computed {T.checksum(l)}")
     if l1[:2] != "1 " or l2[:2] != "2 ":
@@ -106,7 +111,7 @@ def _iso(v):
     if isinstance(v, dt.datetime):
         if v.tzinfo is not None:
             v = v.astimezone(dt.timezone.utc).replace(tzinfo=None)
-        return v.strftime("%Y-%m-%dT%H:%M:%S.%f")
+        return T.epoch_text(v)
     return T.iso_epoch(v)  # a source record may carry the day-of-year form (legal; the KVN case declares it) (D-119)
 
 
@@ -140,7 +145,7 @@ def check_layout(l1, l2):
     for n, line in ((1, l1), (2, l2)):
         for a, b, name, pat in LAYOUT[n]:
             sub = line[a:b]
-            if not re.fullmatch(pat, sub):
+            if not re.fullmatch(pat, sub, re.ASCII):   # \d is an ASCII digit here, as everywhere a line is read (D-325)
                 problems.append(f"line {n} columns {a + 1}-{b} ({name}): {sub!r}")
     return problems
 
@@ -173,7 +178,7 @@ def _classify(written, exact, q):
 def round_trip(l0, l1, l2, record):
     """Read the written lines back with the reference reader and compare the element fields with the record.
     -> (mismatches: list[str], conventions: {field: 'exact'|'quantised'|'truncate'|'round'})."""
-    got = ref.parse_tle_lines(l0, l1, l2)
+    got = ref.parse_tle_lines(l0, l1, l2, written=True)
     mismatches, conventions = [], {}
     for f in ELEMENT_FIELDS:
         want = record.get(f)
@@ -198,7 +203,7 @@ def round_trip(l0, l1, l2, record):
 def secondary_fields(l0, l1, l2, record):
     """How the writer treated the fields a fitting tool may legitimately regenerate. -> {field: status,
     'zero_ddot_sign': '+'|'-'|None}. Statuses: preserved | zeroed | dropped | cut-to-24 | changed."""
-    got = ref.parse_tle_lines(l0, l1, l2)
+    got = ref.parse_tle_lines(l0, l1, l2, written=True)
     out = {}
     for f in ("mean_motion_dot", "mean_motion_ddot"):
         w = Decimal(str(record.get(f) or 0))
@@ -226,7 +231,7 @@ def secondary_fields(l0, l1, l2, record):
 
 def provider_field_matches(l1, l2, reference_fields):
     """Which written fields are byte-identical to the provider's (or the derived) rendering -> {field: bool}."""
-    got = ref.parse_tle_lines(None, l1, l2)["tle"]
+    got = ref.parse_tle_lines(None, l1, l2, written=True)["tle"]
     return {k: got.get(k) == v for k, v in reference_fields.items() if k in PROVIDER_FIELDS}
 
 
@@ -241,15 +246,19 @@ def _kind(line):
 
 
 def scan_lines(text):
-    """TLE text -> (records, strays). records: [(line0 or None, line1, line2, line number of line 1, pre-problems)];
+    """TLE text -> (records, strays). records: [(line0 or None, line1, line2, line number of line 1, pre-problems,
+    pre-notes)];
     strays: [(line number, line, problem)] for element lines that pair with nothing. A '1 ' line followed by a '2 '
     line is a record whatever their lengths (a 70-character line must be reported, not skipped); the preceding line
     is the name unless it is another element line, blank, or a '#' comment such as rffit's trailer. An indented
     element pair is checked with the indentation removed and the indentation reported; a byte-order mark is reported
     on the first record. Trailing whitespace and line endings are removed; nothing else is changed (D-119: none of
-    these used to be reported)."""
+    these used to be reported). Trailing whitespace on an element line is reported as a note, which lines and which
+    columns, never as a failure: a card image's blanks past column 69 are no fault of the values (D-338, the owner's
+    ruling), but no TLE line carries them."""
     bom = text.startswith("\ufeff")
-    lines = [l.rstrip() for l in (text[1:] if bom else text).splitlines()]
+    raw = (text[1:] if bom else text).splitlines()
+    lines = [l.rstrip() for l in raw]
     records, strays, i = [], [], 0
     bom_note = "the file starts with a UTF-8 byte-order mark (BOM, three bytes before the first line); TLE readers expect none"
     while i < len(lines):
@@ -259,13 +268,21 @@ def scan_lines(text):
             if bom:
                 pre.append(bom_note)
                 bom = False
-            for n, l in ((i + 1, lines[i]), (i + 2, lines[i + 1])):
+            notes = []
+            for n, set_line, l in ((i + 1, 1, lines[i]), (i + 2, 2, lines[i + 1])):
                 ind = len(l) - len(l.lstrip())
                 if ind:
                     pre.append(f"line {n} is indented by {qty(ind, 'space or tab', 'spaces or tabs')}; a TLE line starts at column 1")
+                tail = raw[n - 1][len(l):]
+                if tail:   # an element line only: CelesTrak pads its names to 24 columns, so a name's blanks say nothing
+                    what = qty(len(tail), "trailing blank") if not tail.strip(" ") else qty(len(tail), "trailing whitespace character")
+                    cols = f"column {len(l) + 1}" if len(tail) == 1 else f"columns {len(l) + 1} to {len(raw[n - 1])}"
+                    card = not tail.strip(" ") and len(l.lstrip()) == 69 and len(raw[n - 1]) <= 80
+                    notes.append(f"file line {n} (the set's line {set_line}) carries {what} ({cols}), taken off before the checks; "
+                                 "no TLE line carries any" + (" (an 80-column card image's padding, perhaps)" if card else ""))
             prev = lines[i - 1] if i > 0 else ""
             l0 = prev if prev.strip() and _kind(prev) is None and not prev.startswith("#") else None
-            records.append((l0, lines[i].lstrip(), lines[i + 1].lstrip(), i + 1, pre))
+            records.append((l0, lines[i].lstrip(), lines[i + 1].lstrip(), i + 1, pre, notes))
             i += 2
         elif k == "1":
             strays.append((i + 1, lines[i], "a line 1 with no line 2 following it; the record cannot be checked"))
@@ -282,11 +299,12 @@ def scan_lines(text):
 
 def extract_records(text):
     """TLE text -> [(line0 or None, line1, line2, line number of line 1)] (the records scan_lines finds)."""
-    return [(l0, l1, l2, n) for l0, l1, l2, n, _ in scan_lines(text)[0]]
+    return [(l0, l1, l2, n) for l0, l1, l2, n, _, _ in scan_lines(text)[0]]
 
 
 def check_record(l0, l1, l2, against=None):
-    """One written record -> dict with status ('pass' | 'fail'), catalog_field, norad_cat_id (None when the field
+    """One written record -> dict with status ('pass' | 'fail' | 'not compared', the last where the source holds the
+    record's id more than once, D-370), catalog_field, norad_cat_id (None when the field
     is invalid), problems (format failures, and round-trip mismatches when `against` is given), notes, and, when
     `against` supplies the source record, round_trip and secondary_fields. `against` maps id -> source record."""
     r = {"name": (l0 or "").strip() or None, "catalog_field": l1[2:7], "norad_cat_id": None, "problems": [], "notes": []}
@@ -294,6 +312,7 @@ def check_record(l0, l1, l2, against=None):
     m = WIDE_NUMBER.match(l1)
     if m:
         n = int(m.group(1))
+        r["written_id"] = n   # written, in a form the format does not allow: the record fails, the id is not lost (D-369)
         r["problems"].append(f"{len(m.group(1))}-digit catalog number {n} written from column 3: "
                              + (f"the field must be the Alpha-5 form {T.to_alpha5(n)!r}" if representable(n)
                                 else "the TLE format cannot carry it; the correct output is a refusal (use an OMM format)"))
@@ -310,7 +329,7 @@ def check_record(l0, l1, l2, against=None):
         r["problems"] += check_layout(l1, l2)  # a shifted field with a recomputed checksum has the right length and checksum (D-119)
     if len(l1) == 69 and len(l2) == 69 and r["norad_cat_id"] is not None and not r["problems"]:
         try:
-            rec = ref.parse_tle_lines(l0, l1, l2)
+            rec = ref.parse_tle_lines(l0, l1, l2, written=True)
         except Exception as e:
             r["problems"].append(f"reference reader raised {type(e).__name__}: {e}")
             rec = None
@@ -330,6 +349,12 @@ def check_record(l0, l1, l2, against=None):
                     elif r["norad_cat_id"] == 99999:
                         why = " (likely cause: 99999 is rffit's default catalog number)"
                     r["problems"].append(f"no source record with id {r['norad_cat_id']} in the --against file{why}; the round trip cannot be checked")
+                elif getattr(against, "held", {}).get(r["norad_cat_id"], 1) > 1:
+                    # a source that holds an id more than once (a history) cannot yet say which of its records this
+                    # copy was written from: not compared rather than failed against the wrong one (the owner's
+                    # ruling on D-369's reading; per-epoch pairing comes in 0.8.1)
+                    r["notes"].append(f"not compared: source holds {against.held[r['norad_cat_id']]} copies (per-epoch pairing comes in 0.8.1)")
+                    r["not_compared"] = True
                 else:
                     try:
                         mism, conv = round_trip(l0, l1, l2, src)
@@ -338,7 +363,9 @@ def check_record(l0, l1, l2, against=None):
                         r["secondary_fields"] = secondary_fields(l0, l1, l2, src)
                     except Exception as e:  # a source value the corpus cannot read is a problem on the record, not a crash (D-119)
                         r["problems"].append(f"round trip could not be checked: {type(e).__name__}: {e}")
-    r["status"] = "fail" if r["problems"] else "pass"
+    # a record whose round trip was not made is neither a pass nor a fail: its status says so (D-370; the second
+    # blind review's F1: it read [pass], and the run exited 0, for wrong values written under such an id)
+    r["status"] = "fail" if r["problems"] else ("not compared" if r.get("not_compared") else "pass")
     return r
 
 
@@ -347,8 +374,9 @@ def check_file(text, against=None):
     line that pairs with nothing ('unpaired': True); [] when the text holds no element line at all."""
     records, strays = scan_lines(text)
     out = []
-    for l0, l1, l2, n, pre in records:
+    for l0, l1, l2, n, pre, notes in records:
         r = dict(check_record(l0, l1, l2, against), line_number=n)
+        r["notes"] = notes + r["notes"]   # information, never a failure: the exit code is as before (D-338)
         if pre:
             r["problems"] = pre + r["problems"]
             r["status"] = "fail"
@@ -359,8 +387,46 @@ def check_file(text, against=None):
     return sorted(out, key=lambda r: r["line_number"])
 
 
+class Against(dict):
+    """{norad_cat_id: record} for the round trip, and `held`, how many of the source's records carry each id, so that a
+    source record no file wrote, or an id written more often than the source holds it, is seen (D-369)."""
+
+    held: dict
+    without_id: int
+
+
 def load_against(path):
     """Source records for --against, in any format the reference reader knows (csv, json, xml, kvn, tle, 2le)
-    -> {norad_cat_id: record}."""
+    -> Against, {norad_cat_id: record} with each id's count of source records in `held`, and in `without_id` the
+    source records that carry no catalog number, which no written record can be held to. For an id the source holds
+    more than once no round trip is made: the record is noted "not compared" (D-369; per-epoch pairing comes in 0.8.1)."""
     _, recs, _ = ref.read_file(path)
-    return {r["norad_cat_id"]: r for r in recs}
+    out = Against((r["norad_cat_id"], r) for r in recs if r["norad_cat_id"] is not None)
+    out.held, out.without_id = {}, 0
+    for r in recs:
+        if r["norad_cat_id"] is None:
+            out.without_id += 1
+        else:
+            out.held[r["norad_cat_id"]] = out.held.get(r["norad_cat_id"], 0) + 1
+    return out
+
+
+def source_coverage(results, against):
+    """The written records of every file checked, against the source records (D-369; the red team's finding 1 on the
+    0.8.0 candidate): `not_written`, (id, written, held) where the files wrote an id the format can carry fewer times
+    than the source holds it, none at all included, a failure; `written_more`, (id, written, held) where they wrote it
+    more often, a failure; and `refusal_correct`, ids no file wrote that the TLE format cannot carry, for which a
+    refusal was the correct output, information; and `not_compared`, (id, held) for an id the source holds more than
+    once and a file wrote, whose round trip is not made (information; per-epoch pairing comes in 0.8.1). A record written in a form the format does not allow (a six-digit
+    number from column 3) fails on its own and counts as written (`written_id`). The secondary fields stay information
+    (D-095)."""
+    written = {}
+    for r in results:
+        k = r.get("norad_cat_id") if r.get("norad_cat_id") is not None else r.get("written_id")
+        if not r.get("unpaired") and k is not None:
+            written[k] = written.get(k, 0) + 1
+    held = getattr(against, "held", None) or {k: 1 for k in against if k is not None}
+    return {"not_compared": [(k, h) for k, h in sorted(held.items()) if h > 1 and k in written],
+            "not_written": [(k, written.get(k, 0), h) for k, h in sorted(held.items()) if representable(k) and written.get(k, 0) < h],
+            "refusal_correct": [k for k in sorted(held) if not representable(k) and k not in written],
+            "written_more": [(k, n, held[k]) for k, n in sorted(written.items()) if k in held and n > held[k]]}

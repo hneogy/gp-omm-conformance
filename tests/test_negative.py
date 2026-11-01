@@ -145,9 +145,13 @@ class CommandParserParse(unittest.TestCase):
         self.assertEqual(str(cm.exception), "exit 1: boom: cannot read")  # the line ending left out (D-177)
 
     def test_a_json_object_instead_of_an_array_is_named(self):
-        with self.assertRaises(RuntimeError) as cm:
-            CommandParser(self.cmd("obj")).parse(b"", "csv")
-        self.assertIn("array", str(cm.exception))
+        # D-334: the command's answer is judged where a Python adapter's is, so the file fails as `parse` in the same
+        # words, and the corrupt-input case's comparison file fails too instead of being set aside
+        self.assertIsInstance(CommandParser(self.cmd("obj")).parse(b"", "csv"), dict)
+        r = Runner(CommandParser(self.cmd("obj")), root=ROOT).run(case_ids=[DERIVED])[0]
+        fails = [i for i in r.items if i.check == "parse" and i.status == "fail"]
+        self.assertTrue(fails)
+        self.assertTrue(all("the parser returned a value the runner cannot read: the answer is dict, not a list of records" in i.detail for i in fails))
 
     def test_output_that_is_not_json_is_named(self):
         with self.assertRaises(RuntimeError) as cm:

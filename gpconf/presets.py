@@ -19,8 +19,9 @@ import json
 import os
 import shutil
 import subprocess
+from typing import Any
 
-PRESETS = {
+PRESETS: dict[str, dict[str, Any]] = {
     "reference": {
         "module": "gpconf.adapters.reference",
         "library": None,

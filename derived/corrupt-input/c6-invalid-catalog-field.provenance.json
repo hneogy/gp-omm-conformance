@@ -1,0 +1,75 @@
+{
+  "file": "derived/corrupt-input/c6-invalid-catalog-field.tle",
+  "provenance": "synthetic-derived",
+  "label": "SYNTHETIC-DERIVED: real records frozen in this corpus, rendered by the corpus, with one stated edit; served by no provider",
+  "input": 6,
+  "check": "corrupt-tle-invalid-catalog-field",
+  "description": "A set whose catalog field is an invalid Alpha-5 field on both lines, between two valid sets.",
+  "rendering": {
+    "renderer": "gpconf/tle.py render",
+    "settings": {
+      "mantissa_mode": "round",
+      "ecc_mode": "truncate"
+    },
+    "checked_against": "each record's frozen TLE field substrings (by_format.tle.fields in its expected.json): equal",
+    "note": "for these five-digit records the renderer reproduces CelesTrak's own lines (tools/validate_render.py, 304 of 304 records)"
+  },
+  "records": [
+    {
+      "position": 1,
+      "role": "valid",
+      "norad_cat_id": 25544,
+      "values_from": "fixtures/epoch-year-19xx/expected.json",
+      "set": "iss-first",
+      "tier": "stable",
+      "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+      "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5"
+    },
+    {
+      "position": 2,
+      "role": "corrupt",
+      "norad_cat_id": 69999,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "gp-69999-first",
+      "tier": "stable",
+      "source_file": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+      "source_sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+      "edit": {
+        "lines": [
+          1,
+          2
+        ],
+        "columns": "3-7",
+        "was": "69999",
+        "now": "I9999",
+        "checksums": {
+          "line 1": [
+            "6",
+            "0"
+          ],
+          "line 2": [
+            "8",
+            "2"
+          ]
+        },
+        "statement": "the catalog field (columns 3 to 7) of both lines changed from '69999' to 'I9999', an invalid Alpha-5 field (the letter I is never used), both checksums recomputed (6 to 0 and 8 to 2) so that the field is the only defect"
+      }
+    },
+    {
+      "position": 3,
+      "role": "valid",
+      "norad_cat_id": 20453,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "decaying",
+      "tier": "live",
+      "source_file": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+      "source_sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79"
+    }
+  ],
+  "owner_approval": "owner approval 2026-10-23 of a sixth input, an invalid catalog field (I9999 or blank), beside D-171's five; synthetic-derived provenance under the D-096 precedent; DECISIONS D-360",
+  "generator": "tools/derive_corrupt_inputs.py",
+  "generated_at": "2026-10-26T11:16:07Z",
+  "line_endings": "CRLF",
+  "bytes": 504,
+  "output_sha256": "1856366d8a40fc011904aa442562c0ff1fd366070f4b969f2b53b98cefd1c54a"
+}

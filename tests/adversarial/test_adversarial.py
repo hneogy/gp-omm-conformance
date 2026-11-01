@@ -7,6 +7,7 @@ D-284 rules for them); every twin and control must fail; the reference adapter s
 checks skip in a public clone, where the raw fixtures are absent, like the rest of the suite.
 
 Run: python -m unittest tests.adversarial.test_adversarial"""
+import json
 import os
 import sys
 import unittest
@@ -16,13 +17,28 @@ sys.path.insert(0, ROOT)
 
 from gpconf.runner import Runner  # noqa: E402
 from gpconf.adapters.reference import Parser as Reference  # noqa: E402
-from tests.adversarial import sm26, sweep  # noqa: E402
+from tests.adversarial import sweep  # noqa: E402
+if os.path.exists(os.path.join(ROOT, "tests", "adversarial", "sm26.py")):
+    from tests.adversarial import sm26  # noqa: E402
+else:   # withheld from the public export until SM-26's permission is confirmed (D-367); present, it must load
+    sm26 = None
+NO_SM26 = "SM-26's adapters are not in the public export (D-367)"
 
 NO_DATA = ["alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "tle-writer-alpha5", "corrupt-input"]
 
 
 def raw_present():
     return os.path.exists(os.path.join(ROOT, "fixtures", "analyst-objects", "raw", "analyst.csv"))
+
+
+def case_files_present(case):
+    """Every provider file the case reads (its expected.json's sources) is on disk. A private clone tracks some raw
+    files and ignores others (the launch-window captures), so one tracked file says nothing about another case's: the
+    N5 tests read supgp-celestrak-classification-c, whose five files are ignored, and failed in the private repository's
+    CI behind raw_present()'s tracked analyst.csv (lane C, 2026-10-24)."""
+    with open(os.path.join(ROOT, "fixtures", case, "expected.json"), encoding="utf-8") as f:
+        sources = json.load(f)["sources"]
+    return all(os.path.exists(os.path.join(ROOT, *p.split("/"))) for p in sources)
 
 
 def run(parser, cases=NO_DATA):
@@ -40,22 +56,28 @@ def gap_items(results):
 class Suspects(unittest.TestCase):
     """The adapters that passed with zero fails on gpconf 0.6.1 (SM-26's run and the corpus's reproduction)."""
 
+    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s1_writer_dodge_fails_the_writer_case(self):
         self.assertIn("tle-writer-alpha5", failing(run(sm26.S1WriterDodge())))          # D-280
 
+    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s2_file_dodge_fails_where_it_read_the_format(self):
         self.assertEqual(failing(run(sm26.S2FileDodge())), ["alpha5-tle-derived", "corrupt-input"])   # D-280
 
+    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s3_duplicate_tail_fails(self):
         self.assertEqual(failing(run(sm26.S3DuplicateTail())), ["alpha5-tle-derived", "corrupt-input", "kvn-syntax-variants"])   # D-281; corrupt-input since D-299 grades its unedited OMM files
 
+    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s4_split_decoder_fails_on_the_synthetic_letters(self):
         self.assertIn("alpha5-tle-derived", failing(run(sm26.S4SplitDecoder())))        # D-286
 
+    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s5_non_integer_ids_fail(self):
         for a in (sm26.S5FloatIds(), sm26.S5StrIds()):
             self.assertIn("alpha5-tle-derived", failing(run(a)))                        # D-283
 
+    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s6_stray_refusal_fails(self):
         self.assertEqual(failing(run(sm26.S6StrayRefusal())), ["corrupt-input"])        # D-282
 
@@ -77,8 +99,8 @@ class Suspects(unittest.TestCase):
         self.assertEqual(failing(results), ["tle-omits-six-digit-objects"])             # D-280, run-wide
 
     def test_n5_class_key_drop_shows_the_gap(self):
-        if not raw_present():
-            self.skipTest("provider files absent (public clone)")
+        if not case_files_present("supgp-celestrak-classification-c"):
+            self.skipTest("the case's provider files absent (a public clone, or a private one without the ignored captures)")
         results = run(sweep.N5ClassKeyDrop(), ["supgp-celestrak-classification-c"])
         self.assertEqual(failing(results), [])
         self.assertTrue(gap_items(results), "the dropped field must be a visible gap (D-284)")
@@ -98,19 +120,24 @@ class TwinsAndControls(unittest.TestCase):
     """The same bugs without their hatches, and the ordinary bugs: all fail, before the fixes and after."""
 
     def test_every_twin_fails(self):
-        for a in (sm26.S1WriterDodgeTwin, sm26.S2FileDodgeTwin, sm26.S3DuplicateHead, sm26.S4SplitDecoderTwin,
-                  sm26.S5FloatIdsHook, sm26.S6SilentDrop, sweep.N1ElsetKeyDropTwin, sweep.N3WriterPartwayTwin):
+        sm26_twins = (sm26.S1WriterDodgeTwin, sm26.S2FileDodgeTwin, sm26.S3DuplicateHead, sm26.S4SplitDecoderTwin,
+                      sm26.S5FloatIdsHook, sm26.S6SilentDrop) if sm26 else ()   # the corpus's own run without them (D-367)
+        if sm26 is None:
+            with self.subTest("SM-26's twins"):
+                self.skipTest(NO_SM26)
+        for a in sm26_twins + (sweep.N1ElsetKeyDropTwin, sweep.N3WriterPartwayTwin):
             with self.subTest(a.__name__):
                 self.assertTrue(failing(run(a())), a.__name__)
 
+    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_every_control_fails(self):
         for a in (sm26.C1NoIOSkip, sm26.C2OffByOne, sm26.C3Pivot58, sm26.C4NanId, sm26.C5Crash, sm26.C6Lenient, sm26.C7PlausibleWrong):
             with self.subTest(a.__name__):
                 self.assertTrue(failing(run(a())), a.__name__)
 
     def test_n5_twin_fails(self):
-        if not raw_present():
-            self.skipTest("provider files absent (public clone)")
+        if not case_files_present("supgp-celestrak-classification-c"):
+            self.skipTest("the case's provider files absent (a public clone, or a private one without the ignored captures)")
         self.assertEqual(failing(run(sweep.N5ClassKeyDropTwin(), ["supgp-celestrak-classification-c"])), ["supgp-celestrak-classification-c"])
 
 

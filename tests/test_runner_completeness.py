@@ -150,6 +150,24 @@ class ReportAndCatalogue(unittest.TestCase):
         self.assertIn("satellite number cannot exceed 339999", md)   # a structural detail stays readable
 
 
+    NOTICE = ("; the input holds 1 id more than once with records that differ (e.g. id 25544, 2 records): each copy "
+              "returned is compared with the input's record it matches (D-343)")
+    LONG = "1 compared vs frozen expected values; " + "; ".join(f"id 25544: mean_anomaly = {k}, expected 1" for k in range(40))
+
+    def test_the_catalogue_cut_keeps_the_repeated_id_notice(self):
+        """A long values detail is cut at 600 characters, its closing notice that the input holds an id more than once
+        kept whole after the cut (D-350, the hardening review's T5)."""
+        self.assertEqual(make_failures.cut(self.LONG + self.NOTICE), self.LONG[:600 - len(self.NOTICE)] + " …" + self.NOTICE)
+
+    def test_the_twins_any_other_detail_is_cut_as_before(self):
+        """A detail with no closing notice, or with the notice's words elsewhere than at its end, is cut at 600 as
+        before; a short one is left whole (D-350's reading)."""
+        self.assertEqual(make_failures.cut(self.LONG), self.LONG[:600] + " …")
+        middle = "x" + self.NOTICE + self.LONG
+        self.assertEqual(make_failures.cut(middle), middle[:600] + " …")
+        self.assertEqual(make_failures.cut("short" + self.NOTICE), "short" + self.NOTICE)
+
+
 class Rendering(unittest.TestCase):
     def test_ndot_field_rounds_half_up_like_the_provider(self):
         self.assertEqual(T.ndot_field("0.000000125"), " .00000013")

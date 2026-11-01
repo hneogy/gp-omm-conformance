@@ -1,8 +1,8 @@
 {
  "case": "corrupt-input",
- "title": "Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, a file cut mid-record",
+ "title": "Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, an invalid catalog field, a file cut mid-record",
  "schema_version": "1.0",
- "generated_at": "2026-10-10T02:31:38Z",
+ "generated_at": "2026-10-26T20:48:06Z",
  "generator": "tools/make_expected.py",
  "kind": "corrupt-input",
  "sources": {
@@ -54,6 +54,18 @@
    "record_count": 3,
    "provenance_file": "derived/corrupt-input/c4-line-2-missing.provenance.json"
   },
+  "derived/corrupt-input/c6-invalid-catalog-field.tle": {
+   "tier": "stable",
+   "format": "tle",
+   "url": null,
+   "retrieved_at": "2026-10-26T11:16:07Z",
+   "http_status": null,
+   "bytes": 504,
+   "sha256": "1856366d8a40fc011904aa442562c0ff1fd366070f4b969f2b53b98cefd1c54a",
+   "provenance": "synthetic-derived",
+   "record_count": 3,
+   "provenance_file": "derived/corrupt-input/c6-invalid-catalog-field.provenance.json"
+  },
   "derived/corrupt-input/c5-cut-last-row.csv": {
    "tier": "stable",
    "format": "csv",
@@ -82,7 +94,7 @@
    "tier": "stable",
    "format": "tle",
    "url": null,
-   "retrieved_at": "2026-09-27T15:12:19Z",
+   "retrieved_at": "2026-10-26T11:16:07Z",
    "http_status": null,
    "bytes": 504,
    "sha256": "6d53b5f62556841e73b55c3a969d230f31510c5fbb45f145b468a2e429b204d6",
@@ -530,6 +542,106 @@
   },
   {
    "norad_cat_id": 25544,
+   "file": "c6-invalid-catalog-field.tle",
+   "position": 1,
+   "role": "valid",
+   "tier": "stable",
+   "provenance": "derived",
+   "values_from": "fixtures/epoch-year-19xx/expected.json",
+   "set": "iss-first",
+   "origin_tier": "stable",
+   "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+   "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+   "expected": {
+    "norad_cat_id": 25544,
+    "object_name": "ISS (ZARYA)",
+    "object_id": "1998-067A",
+    "epoch": "1998-11-20T06:49:59.999808",
+    "mean_motion": "16.05064833",
+    "eccentricity": "0.0125362",
+    "inclination": "51.5908",
+    "ra_of_asc_node": "168.3788",
+    "arg_of_pericenter": "86.4185",
+    "mean_anomaly": "359.7454",
+    "bstar": "0",
+    "mean_motion_dot": "-0.00003657",
+    "mean_motion_ddot": "0.000011563",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 1,
+    "rev_at_epoch": 0
+   }
+  },
+  {
+   "norad_cat_id": 69999,
+   "file": "c6-invalid-catalog-field.tle",
+   "position": 2,
+   "role": "corrupt",
+   "tier": "stable",
+   "provenance": "synthetic-derived",
+   "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+   "set": "gp-69999-first",
+   "origin_tier": "stable",
+   "source_file": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+   "source_sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+   "expected": {
+    "norad_cat_id": 69999,
+    "object_name": "VANGUARD DEB",
+    "object_id": "1958-002D",
+    "epoch": "2026-07-08T17:02:16.167840",
+    "mean_motion": "11.62373363",
+    "eccentricity": "0.1487004",
+    "inclination": "34.2417",
+    "ra_of_asc_node": "341.8745",
+    "arg_of_pericenter": "19.9191",
+    "mean_anomaly": "345.3718",
+    "bstar": "-0.0000070517",
+    "mean_motion_dot": "-0.00000023",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 18930
+   },
+   "edit": "the catalog field (columns 3 to 7) of both lines changed from '69999' to 'I9999', an invalid Alpha-5 field (the letter I is never used), both checksums recomputed (6 to 0 and 8 to 2) so that the field is the only defect",
+   "expected_behaviour": "refuse",
+   "if_read_as_unedited": "fail",
+   "read_as_unedited_means": "read the invalid catalog field as a catalog number (D-360)"
+  },
+  {
+   "norad_cat_id": 20453,
+   "file": "c6-invalid-catalog-field.tle",
+   "position": 3,
+   "role": "valid",
+   "tier": "stable",
+   "provenance": "derived",
+   "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+   "set": "decaying",
+   "origin_tier": "live",
+   "source_file": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+   "source_sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79",
+   "expected": {
+    "norad_cat_id": 20453,
+    "object_name": "DELTA 2 R/B(1)",
+    "object_id": "1990-008B",
+    "epoch": "2026-09-20T13:39:33.839424",
+    "mean_motion": "15.96788691",
+    "eccentricity": "0.0022512",
+    "inclination": "35.5934",
+    "ra_of_asc_node": "307.3932",
+    "arg_of_pericenter": "310.369",
+    "mean_anomaly": "49.5094",
+    "bstar": "0.00075989",
+    "mean_motion_dot": "0.00350177",
+    "mean_motion_ddot": "0.000049935",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 95679
+   }
+  },
+  {
+   "norad_cat_id": 25544,
    "file": "c5-cut-last-row.csv",
    "position": 1,
    "role": "valid",
@@ -743,12 +855,16 @@
    "description": "A TLE set whose line 1 is followed directly by the next set's name line: the orphan line 1 is refused with a reason. Passing over it without a word counts as dropped, and pairing it with the lines after it builds a record from garbage."
   },
   {
+   "id": "corrupt-tle-invalid-catalog-field",
+   "description": "A TLE set whose catalog field is an invalid Alpha-5 field, I9999 on both lines (the letter I is never used in Alpha-5), both checksums valid, is refused with a reason (one whose _field is the invalid field, or whose _input quotes it, is credited, D-282, D-360). A record read from it fails: under an id the file does not hold (a decoder that maps letters by their code without skipping I reads 189999), it is the corrupt record dropped and a record the file does not hold, built from garbage; under 69999, the invalid field read as a catalog number; a silent drop fails too (D-360)."
+  },
+  {
    "id": "corrupt-file-cut",
    "description": "A file cut mid-record, as a CSV that ends inside its last row and as a JSON array missing its closing bracket: the complete records load and the cut is reported with a reason, or the file is refused as a whole with a reason, which is fail-closed; the complete records a whole-file refusal gives up are counted, not failed (owner decision, D-171). Loading the complete records while saying nothing of the cut is silent partial loading and fails, as does a record read from the cut row."
   },
   {
    "id": "corrupt-input-neighbours-load",
-   "description": "The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded here, since the values check grades it on the same records in their own cases (D-175). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed."
+   "description": "The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded by this item, since the values check grades it on the same records in their own cases and on the unedited files here (D-175, D-299, D-342). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed."
   },
   {
    "id": "catalog-number-is-integer",
@@ -762,15 +878,16 @@
  ],
  "coverage": {
   "provides": [
-   "five corrupt inputs, each one stated edit of 69999's first record (a stable-tier record): line 1's checksum digit changed from 6 to 1; line 2 one character short, the eccentricity's fourth digit (column 30) lost so that every column after it moves left; the letter O for the 0 in column 26 of line 1, inside the epoch field, the checksum still valid; line 1 with no line 2 after it; the file cut mid-record, as a CSV that ends inside its last row's MEAN_MOTION_DOT value and as a JSON array whose closing bracket is missing",
+   "six corrupt inputs, each one stated edit of 69999's first record (a stable-tier record): line 1's checksum digit changed from 6 to 1; line 2 one character short, the eccentricity's fourth digit (column 30) lost so that every column after it moves left; the letter O for the 0 in column 26 of line 1, inside the epoch field, the checksum still valid; line 1 with no line 2 after it; the catalog field I9999, an invalid Alpha-5 field, on both lines, both checksums recomputed (D-360); the file cut mid-record, as a CSV that ends inside its last row's MEAN_MOTION_DOT value and as a JSON array whose closing bracket is missing",
    "each TLE input between two valid sets, 25544's first record before it and 20453 from the decaying snapshot after it, so that the counts on the neighbours measure whether a parser picks up again; the CSV holds the same two records before the cut row, the JSON all three records complete",
    "no provider file: every record rendered by the corpus from values frozen in this corpus's public expected.json files, a public clone rebuilding the same bytes",
-   "three unedited files, the inputs' records with no edit (one TLE file for inputs 1 to 4, the CSV with its last row whole, the JSON array closed), against which every record a parser returns from an input is compared (D-175)",
-   "OMM values graded without fetched data (D-299): the unedited CSV and JSON files are also held to the frozen expected values, and one derived XML file, the ISS first record re-serialised (derived/kvn-variants/v07-xml-ndm-reserialised.xml), is graded for its values; the records carry negative drag terms"
+   "three unedited files, the inputs' records with no edit (one TLE file for inputs 1 to 4 and 6, the CSV with its last row whole, the JSON array closed), against which every record a parser returns from an input is compared (D-175)",
+   "values graded without fetched data: the unedited CSV and JSON files are also held to the frozen expected values (D-299), and so is the unedited TLE file (D-342), and one derived XML file, the ISS first record re-serialised (derived/kvn-variants/v07-xml-ndm-reserialised.xml), is graded for its values; the records carry negative drag terms"
   ],
   "gaps": [
-   "the shifted CSV column (the plan's input 6) is held, not included (owner decision 4, D-171)",
-   "one edit per input, on one record: a parser is characterised only for what is edited here (line 1's checksum digit, line 2's length, a letter in the epoch field, a missing line 2, the end of a CSV or JSON file); a letter in another numeric column, a wrong checksum on line 2 or a line cut elsewhere is not exercised",
+   "the shifted CSV column, which the v0.4.0 plan numbered input 6, is held, not included (owner decision 4, D-171); the input numbered 6 in the files is D-360's invalid catalog field",
+   "a blank or empty catalog field in a TLE file is not an input: the Alpha-5 decode vectors hold both (vectors/alpha5.json decode_invalid, D-360)",
+   "one edit per input, on one record: a parser is characterised only for what is edited here (line 1's checksum digit, line 2's length, a letter in the epoch field, a missing line 2, the catalog field, the end of a CSV or JSON file); a letter in another numeric column, a wrong checksum on line 2 or a line cut elsewhere is not exercised",
    "no corrupt KVN, XML or 2LE input",
    "a line cut short at its end, which loses only the checksum digit and leaves every value readable, is not an input: a parser that accepts it reads the right values, and accepting a malformed line whose values survive is what the wrong checksum digit already shows (D-171)",
    "any non-empty reason counts as a refusal's reason; whether it names the right defect is not checked"
@@ -778,7 +895,7 @@
  },
  "ambiguities": [],
  "notes": [
-  "6 files, 18 records (5 corrupt); synthetic-derived under the D-096 precedent, owner approval 2026-09-27 (D-171)."
+  "7 files, 21 records (6 corrupt); synthetic-derived under the D-096 precedent, owner approval 2026-09-27 (D-171) and, for the sixth input, 2026-10-23 (D-360)."
  ],
  "sets": {},
  "case_specific": {
@@ -823,6 +940,16 @@
     "edit": "line 2 removed: the set's name line and line 1 are followed directly by the next set's name line",
     "corrupt_norad_cat_id": 69999
    },
+   "c6-invalid-catalog-field.tle": {
+    "input": 6,
+    "check": "corrupt-tle-invalid-catalog-field",
+    "description": "A set whose catalog field is an invalid Alpha-5 field on both lines, between two valid sets.",
+    "format": "tle",
+    "provenance_file": "derived/corrupt-input/c6-invalid-catalog-field.provenance.json",
+    "unedited": "derived/corrupt-input/unedited-sets.tle",
+    "edit": "the catalog field (columns 3 to 7) of both lines changed from '69999' to 'I9999', an invalid Alpha-5 field (the letter I is never used), both checksums recomputed (6 to 0 and 8 to 2) so that the field is the only defect",
+    "corrupt_norad_cat_id": 69999
+   },
    "c5-cut-last-row.csv": {
     "input": 5,
     "check": "corrupt-file-cut",
@@ -850,7 +977,8 @@
      1,
      2,
      3,
-     4
+     4,
+     6
     ],
     "norad_cat_ids": [
      25544,
@@ -893,7 +1021,7 @@
     "values_like": "c5-cut-last-row.csv"
    }
   },
-  "outcomes": "Per record: loaded (returned with its id and exactly the values the same parser returns for it from the input's unedited file), misidentified (returned with other values, or with an id the file does not hold: built from garbage), refused (with a reason, through the refusal channel, or with the file when the parser raises on it) and dropped (none of these). A corrupt record must be refused; a valid one must load. A record the parser does not return from the unedited file either is left out of the grading, and an input whose unedited file the parser refuses as a whole is not exercised: nothing then isolates the edit (D-175). The expected values below are the records' own, for reference; the runner does not grade against them here, since the values check grades them in the records' own cases.",
+  "outcomes": "Per record: loaded (returned with its id and exactly the values the same parser returns for it from the input's unedited file), misidentified (returned with other values, or with an id the file does not hold: built from garbage), refused (with a reason, through the refusal channel, or with the file when the parser raises on it) and dropped (none of these). A corrupt record must be refused; a valid one must load. A record the parser does not return from the unedited file either is left out of the grading, and an input whose unedited file the parser refuses as a whole is not exercised: nothing then isolates the edit (D-175); each unedited file is also held to its records' frozen values, so a record missing from it fails there (D-299, D-342); a raise on the unedited file, a valid file of its format, fails that file as `parse` (D-339). The expected values below are the records' own: the items that isolate the edit do not grade against them, and each unedited file's values item does (D-299, D-342).",
   "decisions": {
    "checksum": "a parser that validates no checksum is reported, not failed (owner decision 2)",
    "cut_file": "a whole-file refusal of a cut file passes; the complete records it gives up are counted (owner decision 3)",

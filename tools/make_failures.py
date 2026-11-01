@@ -5,6 +5,7 @@
 JSON reports: tools/_out/report-naive.json, report-sgp4.json and report-reference.json."""
 import json
 import os
+import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -51,6 +52,25 @@ VALUE_CHECKS = {"values", "omm-formats-agree", "tle-values-match-omm-within-tle-
                 "tle-writer-round-trip", "leading-dot-decimals", "bstar-implied-decimal-exponent", "negative-bstar-and-ndot"}
 
 
+# the sentence the values item closes with where the input holds an id more than once (D-343), matched whole at the end
+NOTICE = re.compile(r"; the input holds \d+ ids? more than once with records that differ \(e\.g\. id [^()]*, \d+ records\): "
+                    r"each copy returned is compared with the input's record it matches \(D-343\)$")
+
+
+def cut(detail, n=600):
+    """A detail cut at n characters, its closing notice kept (2i, D-350; the hardening review's T5): where the input
+    holds an id more than once the values item says so after its list, and a plain cut at 600 dropped the sentence that
+    says which records the failure may be the input's, not the parser's. The notice is kept only where it closes the
+    detail in its own words and takes less than half of n; any other detail is cut as before."""
+    if len(detail) <= n:
+        return detail
+    m = NOTICE.search(detail)
+    keep = m.group(0) if m else ""
+    if not keep or len(keep) >= n // 2:
+        return detail[:n] + " …"
+    return detail[:n - len(keep)] + " …" + keep
+
+
 def render(reps, generated_at):
     """The catalogue text from the three reports (any may be None). Failing details of value-carrying checks on
     SupGP-sourced files are withheld (D-049); structural details stay readable (D-118)."""
@@ -89,7 +109,7 @@ def render(reps, generated_at):
             md += [f"### `{r['case']}`", "", f"{qty(len(fails), 'failing item')}" + (f", shown as {qty(len(groups), 'bullet')}: {collapsed} carried a detail identical to one shown" if collapsed else "") + ".", ""]
             for (check, _), items in groups.items():
                 i = items[0]
-                detail = i["detail"][:600] + (" …" if len(i["detail"]) > 600 else "")
+                detail = cut(i["detail"])
                 if check in VALUE_CHECKS and (r["case"] in SUPGP_CASES or is_supgp_source(i["file"])):
                     detail = ("mismatch (details withheld: SupGP-derived values are not published, D-049; run the case on your own fetch, "
                               f"`python -m gpconf run --adapter <yours> --case {r['case']} --json out.json`, and the report shows them)")
@@ -102,10 +122,10 @@ def render(reps, generated_at):
                     md.append("- passed: " + "; ".join(f"**{i['check']}** ({i['detail'][:220]}{' …' if len(i['detail']) > 220 else ''})" for i in passed))
             md.append("")
     md += ["## How to read this", "",
-           "- `parse` failures mean the parser raised on real provider bytes; the detail carries the exception.",
+           "- `parse` failures mean the parser raised on real provider bytes, or returned a value the runner cannot read; the detail says which.",
            "- `values` failures list the first mismatching fields against the frozen expected values (snapshot) or the reference reader (live).",
            "- `not-exercised` means the data needed for that check was not present in the fetched snapshot (for example no nine-digit ids outside the days after a launch), or that the check involves no parser at all (the SATCAT data check, the same for every parser).",
-           "- Each case entry opens with its failing-item count; items whose first 80 characters of detail are identical are collapsed into one bullet that names the files it stands for, so the count can exceed the bullets. A detail ending in … was cut at 600 characters; the JSON report (`--json`) holds the full text.",
+           "- Each case entry opens with its failing-item count; items whose first 80 characters of detail are identical are collapsed into one bullet that names the files it stands for, so the count can exceed the bullets. A detail cut at 600 characters shows … where it was cut, and a closing sentence saying the input holds an id more than once is kept whole after it; the JSON report (`--json`) holds the full text.",
            "- For the writer case (`tle-writer-alpha5`) each adapter's entry also lists the checks it passed, with their record counts, so a failure confined to the three synthetic refusal inputs (340000, 799501621, -1: numbers the TLE field cannot carry, for which a refusal is the correct output) cannot be read as a failure on real records.",
            "- Re-run for your own parser: `python -m gpconf run --adapter your.module:Parser` (see README)."]
     return "\n".join(md) + "\n"

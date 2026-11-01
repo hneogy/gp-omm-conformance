@@ -156,12 +156,21 @@ class DayOfYearSourceEpoch(_Files):
         rc, out, rep = self.cli(self.write("w.tle", f"{self.l0}\n{self.l1}\n{self.l2}\n"), "--against", src)
         self.assertEqual(rc, 0, out)
 
-    def test_an_unreadable_source_epoch_is_a_problem_not_a_crash(self):
+    def test_an_unreadable_source_epoch_stops_check_tle_in_words_not_a_traceback(self):
+        """D-336: the reference reader rejects a source file whose EPOCH is no epoch, as it rejects any file outside the
+        format, so the round trip has no reference; check-tle says which file and why and exits 2. Before D-336 the
+        file was read and each record failed its round trip, the D-119 behaviour; before D-119 it was a traceback."""
         src = self.write("source.csv", csv_source(self.rec, EPOCH="yesterday"))
-        against = W.load_against(src)
-        res = W.check_file(f"{self.l0}\n{self.l1}\n{self.l2}\n", against)
-        self.assertEqual(res[0]["status"], "fail")
-        self.assertTrue(any("round trip" in p and "yesterday" in p for p in res[0]["problems"]), res[0]["problems"])
+        with self.assertRaises(ValueError) as cm:
+            W.load_against(src)
+        self.assertIn("EPOCH", str(cm.exception))
+        self.assertIn("yesterday", str(cm.exception))
+        err = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            rc = gpconf_main(["check-tle", self.write("w.tle", f"{self.l0}\n{self.l1}\n{self.l2}\n"), "--against", src])
+        self.assertEqual(rc, 2)
+        self.assertIn("cannot be read", err.getvalue())
+        self.assertIn("yesterday", err.getvalue())
 
     def test_the_renderer_and_the_normaliser_accept_the_day_of_year_form(self):
         self.assertEqual(T.epoch_field("1998-324T06:49:59.999808Z"), T.epoch_field("1998-11-20T06:49:59.999808"))

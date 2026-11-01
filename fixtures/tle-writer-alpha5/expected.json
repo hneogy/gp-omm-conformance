@@ -2,7 +2,7 @@
  "case": "tle-writer-alpha5",
  "title": "Writing TLEs across the five-digit boundary: Alpha-5 catalog field, valid lines, refusal of numbers the format cannot carry, round trip",
  "schema_version": "1.0",
- "generated_at": "2026-10-11T12:32:59Z",
+ "generated_at": "2026-10-29T01:39:43Z",
  "generator": "tools/make_expected.py",
  "kind": "writer",
  "sources": {
@@ -70,10 +70,10 @@
    "tier": "stable",
    "format": "tle",
    "url": null,
-   "retrieved_at": "2026-10-10T02:16:22Z",
+   "retrieved_at": "2026-10-29T01:39:43Z",
    "http_status": null,
    "bytes": 7728,
-   "sha256": "cfca1468f2d79981d88645282c5902bd6e893ce9fc8d99983d86b71ba61a3d4e",
+   "sha256": "1592e5efd9f1178e7cf467dcffa0d1d46f3a61dd2a0fc039dfb2ac1b0b9b0bee",
    "provenance": "synthetic-derived",
    "record_count": 46,
    "provenance_file": "derived/alpha5-tle/alpha5-synthetic-letters.provenance.json"
@@ -26732,7 +26732,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -26755,7 +26755,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "96.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -26778,7 +26778,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -26801,7 +26801,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "103.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -26824,7 +26824,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -26847,7 +26847,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "110.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -26870,7 +26870,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -26893,7 +26893,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "117.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -26916,7 +26916,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -26939,7 +26939,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "124.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -26962,7 +26962,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -26985,7 +26985,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "131.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27008,7 +27008,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27031,7 +27031,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "138.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27054,7 +27054,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27077,7 +27077,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "145.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27100,7 +27100,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27123,7 +27123,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "152.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27146,7 +27146,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27169,7 +27169,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "159.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27192,7 +27192,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27215,7 +27215,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "166.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27238,7 +27238,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27261,7 +27261,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "173.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27284,7 +27284,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27307,7 +27307,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "180.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27330,7 +27330,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27353,7 +27353,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "187.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27376,7 +27376,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27399,7 +27399,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "194.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27422,7 +27422,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27445,7 +27445,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "201.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27468,7 +27468,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27491,7 +27491,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "208.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27514,7 +27514,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27537,7 +27537,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "215.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27560,7 +27560,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27583,7 +27583,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "222.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27606,7 +27606,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27629,7 +27629,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "229.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27652,7 +27652,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27675,7 +27675,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "236.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27698,7 +27698,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27721,7 +27721,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "243.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27744,7 +27744,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27767,7 +27767,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "250.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27790,7 +27790,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27813,7 +27813,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "257.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27836,7 +27836,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27859,7 +27859,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "264.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27882,7 +27882,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27905,7 +27905,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "271.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27928,7 +27928,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27951,7 +27951,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "278.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -27974,7 +27974,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -27997,7 +27997,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "285.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28020,7 +28020,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28043,7 +28043,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "292.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28066,7 +28066,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28089,7 +28089,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "299.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28112,7 +28112,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28135,7 +28135,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "306.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28158,7 +28158,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28181,7 +28181,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "313.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28204,7 +28204,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28227,7 +28227,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "320.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28250,7 +28250,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28273,7 +28273,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "327.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28296,7 +28296,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28319,7 +28319,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "334.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28342,7 +28342,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28365,7 +28365,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "341.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28388,7 +28388,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28411,7 +28411,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "348.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28434,7 +28434,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28457,7 +28457,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "355.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28480,7 +28480,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28503,7 +28503,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "2.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28526,7 +28526,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28549,7 +28549,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "9.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28572,7 +28572,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28595,7 +28595,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "16.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28618,7 +28618,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28641,7 +28641,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "23.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28664,7 +28664,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28687,7 +28687,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "30.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28710,7 +28710,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28733,7 +28733,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "37.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28756,7 +28756,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -28779,7 +28779,7 @@
     "inclination": "97.4593",
     "ra_of_asc_node": "154.097",
     "arg_of_pericenter": "270.5113",
-    "mean_anomaly": "89.5482",
+    "mean_anomaly": "44.5482",
     "bstar": "0.00022159168",
     "mean_motion_dot": "0.0000477",
     "mean_motion_ddot": "0",
@@ -28802,7 +28802,7 @@
     "ecc_field": "0005590",
     "rev_field": " 1591"
    },
-   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set (D-372); each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
    "synthetic_source_norad_cat_id": 100000
   },
   {
@@ -33724,7 +33724,7 @@
  "checks": [
   {
    "id": "tle-checksums-valid",
-   "description": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (digits count their value, '-' counts 1, everything else 0)."
+   "description": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (ASCII digits count their value, '-' counts 1, everything else 0); a line a writer returns must also be ASCII throughout (D-325)."
   },
   {
    "id": "tle-writer-catalog-field",

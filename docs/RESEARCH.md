@@ -40,6 +40,13 @@ denoted by a satellite number from 80,000-89,999" and CelesTrak refers to "the c
 analyst sat range (80000-series)". Wikipedia's table (secondary) lists 70000–79999 as
 "Expected post-launch orbits". The 90000 block is not described in any primary source I read.
 
+[Added 2026-10-17, on the owner's instruction of 2026-10-16 (D-340).] What the corpus now states of this block: the
+regular GP data holds only analyst objects in it, 80000-89999, and CelesTrak's pre-launch supplemental data uses
+placeholder numbers such as 72000 and 72001 for a launch stack, which are not catalogued objects, and that may change
+for future launches (confirmed in correspondence with CelesTrak, October 2026). The corpus's own GP captures agree: no
+id in the block but the 219 analysts 81011-89494 (docs/INVENTORY.md). The paragraph above stays as the research
+record.
+
 Saramago details from a **secondary** source (KeepTrack deep-dive,
 https://keeptrack.space/deep-dive/satellite-100000-saramago): Portuguese CubeSat,
 international designator 2026-067CY, launched 2026-03-30 on a Falcon 9 rideshare from
