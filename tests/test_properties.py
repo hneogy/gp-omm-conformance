@@ -680,10 +680,27 @@ class SharedDeepThroughEveryRoute(unittest.TestCase):                           
             assume(shape == "tuple")   # a key must be hashable
         x = _bomb(shape, levels, wrap)
         adapter, cases = _routed(route, x, holder if route == "held by an object" else raise_kind)
+        # The budget is the runner's: the adapter's own work is timed apart and left out. Building a record with x as
+        # a key hashes x, and before Python 3.14 a tuple's hash is not kept, so on 3.9 to 3.13 the adapter alone took
+        # 0.2 s a record and, on CI's 3.12, 3.84 s in all, past the budget, with gpconf at about 0.025 s (D-379).
+        spent = [0.0]
+
+        def timed(name):
+            def call(self, *args, **kwargs):
+                t = time.monotonic()
+                try:
+                    return getattr(super(Timed, self), name)(*args, **kwargs)
+                finally:
+                    spent[0] += time.monotonic() - t
+            return call
+        hooks = [h for h in ("parse", "write_tle", "alpha5_decode", "alpha5_encode", "two_digit_year", "parse_epoch",
+                             "parse_catalog_id") if callable(getattr(type(adapter), h, None))]
+        Timed = type("Timed", (type(adapter),), {h: timed(h) for h in hooks})
+        adapter = Timed()
         start = time.monotonic()
         results = run(adapter, cases=cases)
-        elapsed = time.monotonic() - start
-        self.assertLess(elapsed, 3.0 if cases != ["tle-writer-alpha5"] else 20.0, (route, shape, levels, wrap))
+        elapsed = time.monotonic() - start - spent[0]
+        self.assertLess(elapsed, 3.0 if cases != ["tle-writer-alpha5"] else 20.0, (route, shape, levels, wrap, spent[0]))
         self.assertIn(cases[0], results)
         details = [i.detail or "" for r in results.values() for i in r.items]
         self.assertFalse([d for d in details if "internal error" in d], (route, shape, levels, wrap))
