@@ -40,8 +40,15 @@ NO_DATA = ["alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants
 EMPTY = tempfile.mkdtemp(prefix="gpconf-own-s-empty-")
 
 
+def setUpModule():
+    # made again where a test order that splits this module ran tearDownModule before (the mutation run's first pass
+    # does; D-379)
+    os.makedirs(EMPTY, exist_ok=True)
+
+
 def tearDownModule():
-    os.rmdir(EMPTY)   # the empty data folder, made at import: removed, not left one a run (D-371's reading)
+    if os.path.isdir(EMPTY):   # the empty data folder, made at import: removed, not left one a run (D-371's reading)
+        os.rmdir(EMPTY)
 CARRY_IDS = ["alpha5-tle-derived", "corrupt-input", "kvn-syntax-variants"]   # the no-data cases that yield records
 
 ALPHA5 = "ABCDEFGHJKLMNPQRSTUVWXYZ"   # A = 10 ... Z = 33, I and O skipped
