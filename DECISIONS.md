@@ -2287,3 +2287,189 @@ The item is on `docs/handoff/todo-0.9.1.md`. Not done tonight.
   - the changelog's 0.9.0 section ends its mutation paragraph with the version DOI and the concept DOI.
 - **Checks:** the 14 test modules that read the README, `CITATION.cff` or the versions pass, 192 tests OK (6
   skipped). The export, its name check, the deletion list and the outgoing-range scan follow before the push.
+
+**D-556 (2026-11-14) — The generated full upstream table and its check against GitHub, written and tested offline on the local branch `upstream-table` (the owner's order, relayed by the Coordinator: write it and commit locally, light local tests only, push nothing; not yet run against GitHub).**
+
+- **`tools/upstream_table.py`** reads the ledger's section 3 only: its four groups, one bullet per finding. It never
+  reads section 5, the unreported findings (D-134), nor the notes under "Per library".
+  - Each row gives the library, what gpconf found, the status (merged / released / open / declined / closed), the
+    proof link, the release link if shipped, and the date, saying what kind of date it is (merged / reported /
+    closed).
+  - The proof link is the merged pull request; else the maintainer's fixing commit (an issue's closing commit, from
+    GitHub); for an open item, the issue.
+  - The heading counts must equal the bullets, or it stops.
+  - What the ledger leaves out (an open issue's report date, a release's link, a commit-proved fix's date) comes from
+    the recorded GitHub facts, `docs/upstream/github-facts.json`. A row still missing a proof or a date is named as a
+    gap, and the tool exits 1.
+  - It writes `docs/upstream/table.json`, renders the markdown table, and injects it between markers in the README
+    and `docs/LIBRARIES.md`.
+- **`tools/check_upstream_table.py`** requires that:
+  - every link resolves;
+  - a merged or released row's proof is a merged pull request or an existing commit;
+  - a released row has a release or tag that exists;
+  - an open row's issue is open, and a declined or closed row's issue is closed;
+  - dates agree, a day either way for time zones.
+
+  Any mismatch exits 1. It reads the GitHub API live, with `GITHUB_TOKEN` if set, or a recorded file of answers for
+  tests. `--record` writes the facts file.
+- **`.github/workflows/upstream-table.yml`** runs the check on a change to the table or its files, weekly and by hand,
+  read-only. Both new files are on the allowlist.
+- **Tests:** `tests/test_upstream_table.py`, 16 tests on a synthetic ledger and recorded answers, all offline. Each
+  kind of mismatch is planted once, and the real ledger is checked to parse to its own counts in a private run.
+  16 OK, 1 skipped (the README check, which waits for the committed table).
+- **The real ledger.** It parses to 38 rows (10 / 12 / 13 / 3, matching its headings). With no facts recorded yet,
+  31 rows have gaps: report dates for the open items, release links, two fixes with no PR (proof from the closing
+  commit), and dates for the maintainers' fixes. They fill from one `--record` run against GitHub, about 120 API
+  reads.
+- **Not done:** the `--record` run (GitHub reads), `table.json`, the README and `docs/LIBRARIES.md` edits (markers
+  and table), the export and suite gates. These wait for the owner's word, after the GPKit release, when the lock is
+  free. Nothing is pushed, the backup included.
+
+**D-557 (2026-11-14) — The upstream table measured against GitHub: 36 of 38 rows verify; two ledger facts are stale or missing, for the owner (read-only GitHub reads on the owner's word, relayed and recorded in RULINGS.md at 22:32; nothing pushed, the ledger not edited).**
+
+- **The runs.** One record run, then a check, with a 0.5 s pause between requests and a stop if the rate limit runs
+  low. Of 5,000 API reads, 4,543 are left. The facts are in `docs/upstream/github-facts.json`, the table in
+  `docs/upstream/table.json`. Both are on this local branch, and both hold none of the private names.
+- **The check gains two rules:**
+  - an issue closed by hand takes as its fixing commit the last commit that referenced it before the close;
+  - a row marked merged fails if the project's latest release (or newest tag) already holds the merge commit.
+
+  Both are tested; 18 tests pass, offline.
+- **Two mismatches remain, and both are ledger facts for the owner:**
+  1. **SGPKit (swift-sgp4) #4** has no proof link. The issue was closed by hand when 4.1.0 was published
+     (2026-10-11T04:30Z), and no commit references it. 4.1.0 holds one code commit, a416eea ("upgrade vendored sgp4
+     to v3.0", 2026-10-11T04:15:39Z), and its release note describes the fix (Alpha-5 TLEs now propagate). It is the
+     likely fixing commit [inferred]; the ledger would name it.
+  2. **SGPKit (swift-sgp4) #16/#17** is not "merged, not yet released" any more. 4.5.0, published
+     2026-11-14T20:03:11Z, holds PR #17's merge commit 3c5be10 (GitHub's compare: 4.5.0 ahead by 5, behind by 0),
+     and its notes name `decodeValidSets` (#16). The ledger's 2026-11-14 touch says "not in a tagged release: latest
+     4.4.0".
+- **akhenakh/sgp4 #16's proof** is now commit 44978c8. It referenced the issue at 2026-11-10T19:25:24Z, and the
+  maintainer closed the issue at 19:31:49Z.
+- **The owner's question on python-sgp4 PR #172.** No release carries it. It was merged 2026-09-24T12:58:27Z (merge
+  commit 8126f77), and sgp4's newest release on PyPI is 2.27, uploaded 2026-07-03. The project's GitHub tags stop at
+  v2.14 (2020) and it has no GitHub releases, so the check cannot see its PyPI releases. The README's "no release
+  carries it yet" stands, and nothing needs fixing.
+- **Not done:** the README and `docs/LIBRARIES.md` markers and table, until the two ledger facts are settled, and the
+  gates and any push.
+
+**D-558 (2026-11-14) — The owner's rulings on the two ledger facts; the table checks clean against GitHub (38 of 38); the README and `docs/LIBRARIES.md` carry the full table (the owner's rulings; local and the private backup only, nothing public).**
+
+- **The rulings, the owner's words:**
+  1. swift-sgp4 #4: the proof link is the 4.1.0 release notes, the primary source for the fix. Commit a416eea is
+     shown beside it, clearly labelled "likely fixing commit (inferred: only code change in 4.1.0, no commit
+     references #4)", and is never presented as confirmed. A new check rule: an inferred link must carry the
+     inferred label.
+  2. swift-sgp4 #16/#17 moves to released in 4.5.0 (2026-11-14), linking the release. The ledger and the private
+     Basilisk note are updated to match.
+- **The ledger.**
+  - Section 3's #4 bullet gains the release link, `proof: [4.1.0 release notes]`, and the inferred commit with its
+    label.
+  - The #16/#17 bullet and §2's #17 row say released in 4.5.0, with the release linked.
+  - A dated touch line supersedes the earlier "not in a tagged release: latest 4.4.0".
+- **The Basilisk note.** The applied patch, `~/Developer/basilisk-audit/patches/upstream-ledger-swift-sgp4-16-merged.patch`,
+  is left as it was, as a record. Beside it, `upstream-ledger-swift-sgp4-16-RELEASED-4.5.0.NOTE.md` states the
+  correction with its evidence.
+- **The tools.**
+  - The ledger may now name a proof (`proof: [...](...)`) and an inferred link (`likely ... (inferred: why):
+    [...](...)`). An inferred link is never taken as the proof.
+  - A fix whose given proof is its release notes is dated by the release.
+  - The check passes a release proof only when the ledger gave it, and fails an inferred link whose label does not
+    say "inferred".
+  - The rendered proof cell shows the inferred link after the proof, with its label.
+  - 23 tests on the tools, all offline.
+- **Against GitHub.** After a fresh record, the check reads 38 rows, 0 gaps and 0 mismatches. About 650 API reads were
+  used tonight, and 4,352 of 5,000 are left.
+- **The README.** The highlights table and its paragraph are replaced:
+  - a paragraph saying the table is the full list, how it is made and checked, what counts as proof, and that a
+    link the record can only infer says so;
+  - the generated table between markers, with a summary line ("38 findings: 10 fixed by this project's pull
+    requests, 12 by maintainers and contributors after my report, 13 still open, 3 that ended another way").
+
+  The old table's own rule, "a fix is listed when it followed a report made from the corpus's results", and with it
+  the exclusion of probe-found astroz #102, are dropped for D-552's "every reported finding". That changes an earlier
+  ruling and is put to the owner. `tests/test_brand.py`'s three README-table tests now check the generated table: the
+  README carries exactly it, every row of the record is there, the old table's links are kept, python-sgp4 #172 is
+  "merged, not yet released", and the dated sentence moves with each release.
+- **`docs/LIBRARIES.md`.**
+  - Four stale rows are corrected to the ledger: SGP.NET released in v1.6.1; swift-sgp4 #16 released in 4.5.0;
+    Basilisk #1673 fixed by the maintainer's #1675 and #1676 by this project's #1677, both merged, not yet released;
+    satkit #286 fixed by the maintainer's #287, released in v0.24.3.
+  - A new section, "Every finding reported upstream", carries the same generated table.
+- **Checks:** `tests.test_brand`, `tests.test_upstream_table` and `tests.test_adapters_doc` pass, 41 OK. No name in
+  either file. Light tests only: no whole suite and no lock job, while GPKit's release runs.
+
+**D-559 (2026-11-14) — The table's summary line in one voice: "after this project's report", not "after my report" (a correction to D-558's rendering; text only).**
+
+D-558 changed "my pull requests" to "this project's pull requests" in the generated summary line but left "after my
+report", and D-558 quotes the line as it then read. The README and `docs/LIBRARIES.md` speak of "this project" in the
+third person, so the line now reads "… 12 by maintainers and contributors after this project's report …". The tests
+pass, and neither file says "my report" or "my pull" any more.
+
+**D-560 (2026-11-14) — The owner's answers on the full upstream table: the full-list rule replaces the old one; a "Finding" column with involvement notes; the ledger's public text shortened, with private notes never rendered; two exact statuses with check rules (the owner's rulings; local and the private backup only).**
+
+- **The rulings, the owner's words:**
+  1. Confirmed: the full-list rule (D-552) replaces the old "followed a corpus report" rule. The `tests/test_brand.py`
+     updates stay.
+  2. The column is renamed "Finding". An involvement note goes in those rows: SGP.NET #35/#47 "reproduced and fix
+     verified with gpconf"; python-sgp4 #169 "reported by another user; gpconf tested the fix". The table must never
+     claim gpconf found something it didn't.
+  3. Both ledger texts are shortened in the ledger's public text, third person, and the long detail moves to a
+     private notes field the generator never renders.
+  4. SatDump is not "declined" (that would be false). Its status is "closed (maintainers said planned)", added as an
+     allowed status with a check rule. satvis: "merged; the project has no releases".
+- **The ledger (section 3).**
+  - A bullet may end with "Private notes: …". The generator cuts it off before reading anything, so it never
+    reaches `table.json` or the page; a test checks this.
+  - The SGP.NET #48 and python-sgp4 #169 texts are shortened and in the third person. SatDump now says "closed by the
+    reporter", with the new status. satvis carries "status: merged; the project has no releases".
+  - A dated touch line records it.
+- **The tools.**
+  - `involvement: …` is split from the finding and rendered after it in brackets.
+  - The allowed statuses are released, merged (not yet released), merged with the project having no releases, open,
+    declined, and closed (maintainers said planned). A close that says no reason is "unclassified", a gap in `rows`
+    and a mismatch in the check.
+  - New check rules:
+    - an unknown status fails;
+    - a row with an involvement note may not say "found by gpconf", and an involvement note may not claim a find;
+    - "merged; the project has no releases" needs a merged pull request and a project with no releases on GitHub;
+    - "closed (maintainers said planned)" needs the issue closed.
+  - 29 tests, offline.
+- **Against GitHub:** after a fresh record, 38 rows, 0 gaps, 0 mismatches. None of the private-notes text and none
+  of the private names is in `table.json`, the README or `docs/LIBRARIES.md`. `tests.test_upstream_table`,
+  `tests.test_brand` and `tests.test_adapters_doc` pass. Light tests only.
+- **The red "Failed" step the owner asked about** is the scheduled nightly on public main.
+  - It failed every day from 2026-11-02 to 2026-11-14, on baa631d and then on 6cbec12.
+  - Its last failure (run 43585212412, 6cbec12, 2026-11-14T10:25Z) is the type-check ratchet: mypy 2.4.0 (pinned)
+    counted 48 errors against that tree's ceiling of 47.
+  - That is the drift D-470 found on the private side and mended for 0.9.0: 63 errors to 45, with the ceiling
+    lowered to 45. Public main kept the older tree until B2.
+  - The earlier failures on baa631d are 0.8.0's nightly time budget (D-375, mended in D-379).
+  - Since the release, every run is green:
+    - the tag's nightly on 0ac32ee (43670320450): the ratchet at 45 against 45;
+    - CI on 0ac32ee and on 4644ae8;
+    - publish.
+
+    The next scheduled nightly on main runs on 4644ae8, whose code is 0ac32ee's.
+  - No CI step of tonight's release failed.
+
+**D-566 (2026-11-15) — The upstream table's first gate failed, 2 of 1,599 in the private suite and 1 in the export's: a README link my edit dropped (mended), and a timing test under load I added myself (passed alone three times). The gates run again in full (branch upstream-table).**
+
+- **The run.** One lock job on 64419a8, from 00:03:46.
+  - The private tree's whole suite: 1,599 tests, 2 failures, 25 skipped, 0 unexpected crash reports.
+  - The export: 510 files, Vallado's two refused, and the private names file not exported.
+  - The export's whole suite: 1,597 tests, 1 failure, 68 skipped, 0 unexpected crash reports.
+- **Failure 1, in both suites,** `test_stage_package::test_the_staged_readme_is_the_pypi_copy_and_the_repository_keeps_its_own`.
+  The README's relative links no longer included `docs/LIBRARIES.md`. D-558 replaced the old paragraph, which held
+  that link, and the new one did not. A real defect: the README lost its pointer to the page.
+  - **Mended:** the paragraph now ends "The same table, with each library's published runs, is in
+    [`docs/LIBRARIES.md`](docs/LIBRARIES.md)."
+  - `tests.test_stage_package`, `tests.test_brand` and `tests.test_upstream_table` pass.
+- **Failure 2, private suite only,** `test_propagation_declaration::test_a_propagate_call_past_the_budget_is_a_crash_not_a_refusal`.
+  The TLE twin's propagate call came out "fail" under the per-call budget (D-341).
+  - During the gate, the same session ran two wide test batches outside the lock (504 and 648 tests, about 5 minutes
+    each), which loaded the machine. The test passed in the export's suite, and it passed alone, through the lock,
+    three times out of three.
+  - **Judged a timing failure caused by that load** [inferred from those four passes]. The lesson is a memory note: no
+    wide runs while a gate holds the lock.
+- **Next:** the gates again on this commit, in full, with nothing else of this session's running beside them.

@@ -1,0 +1,33 @@
+# The upstream table (D-552, D-553): every link in docs/upstream/table.json must resolve and every row's status must
+# match GitHub (a "merged" pull request really merged, an "open" issue really open). Any mismatch fails the run. It
+# reads the GitHub API only, with the job's read-only token; it writes nothing. It runs when the table, its tools or
+# the files that carry it change, once a week (an issue can close or a fix ship in between), and by hand.
+name: upstream table
+on:
+  push:
+    branches: [main]
+    paths: ["docs/upstream/table.json", "tools/upstream_table.py", "tools/check_upstream_table.py", "README.md", "docs/LIBRARIES.md", ".github/workflows/upstream-table.yml"]
+  pull_request:
+    paths: ["docs/upstream/table.json", "tools/upstream_table.py", "tools/check_upstream_table.py", "README.md", "docs/LIBRARIES.md", ".github/workflows/upstream-table.yml"]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5, pinned by commit (D-269)
+        with:
+          persist-credentials: false   # no step pushes or fetches; the token is not left in .git/config (D-379)
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6, pinned by commit (D-269)
+        with:
+          python-version: "3.12"
+      - name: The committed table is the one the files carry
+        run: python -m unittest tests.test_upstream_table
+      - name: Every link resolves and every status matches GitHub
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/check_upstream_table.py --table docs/upstream/table.json
