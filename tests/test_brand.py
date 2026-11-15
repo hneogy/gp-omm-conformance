@@ -62,7 +62,7 @@ class TheReadme(unittest.TestCase):
     def test_the_first_screen_is_headline_then_sentence_then_install_then_fixes(self):
         self.assertEqual(self.raw.splitlines()[0], "# " + self.b["headline"])
         order = [self.text.index(self.b["headline"]), self.text.index(self.b["written"]), self.text.index("pip install gpconf"),
-                 self.text.index("Fixes merged or acted on upstream"), self.text.index("## What gpconf is"), self.text.index("Status: version")]
+                 self.text.index("Every finding reported upstream"), self.text.index("## What gpconf is"), self.text.index("Status: version")]
         self.assertEqual(order, sorted(order))
 
     def test_the_line_under_the_headline_says_where_the_five_digit_range_ended(self):
@@ -81,25 +81,28 @@ class TheReadme(unittest.TestCase):
             self.assertIn(kept, flat(self.raw))
 
     def test_the_fixes_table_links_each_fix(self):
-        table = self.raw.split("Fixes merged or acted on upstream")[1].split("## What gpconf is")[0]
+        """D-552, D-553 (the owner's rule, 14 Nov): the table is the full list of every reported finding, generated from
+        docs/upstream/table.json and checked against GitHub by tools/check_upstream_table.py. Here, offline: the README
+        carries exactly the generated table, every row of the record is in it, and the links the old highlights table
+        gave are still there."""
+        import json, sys
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        import upstream_table as ut
+        record = json.loads(read("docs", "upstream", "table.json"))
+        table = self.raw.split(ut.BEGIN)[1].split(ut.END)[0]
+        self.assertEqual(table, "\n" + ut.render(record))
+        rows = [line for line in table.splitlines() if line.startswith("| ") and not line.startswith("| library")]
+        self.assertEqual(len(rows), record["summary"]["total"])
+        self.assertEqual(record["summary"]["total"], sum(record["summary"][g] for g in ("my-pr", "maintainer", "open", "other")))
         for url in ("https://github.com/brandon-rhodes/python-sgp4/pull/172", "https://github.com/shashwatak/satellite-js/pull/186",
-                    "https://github.com/shashwatak/satellite-js/pull/187", "https://github.com/ATTron/astroz/issues/97",
-                    "https://github.com/ATTron/astroz/issues/98", "https://github.com/ATTron/astroz/pull/99",
-                    "https://github.com/dnwrnr/sgp4/pull/42#issuecomment-5824123874", "https://github.com/dnwrnr/sgp4/pull/46",
-                    "https://github.com/csete/gpredict/pull/428", "https://github.com/csete/gpredict/pull/430",
-                    "https://github.com/bilawalsidhu/gods-eye-view/pull/936", "https://github.com/bilawalsidhu/gods-eye-view/pull/767"):
+                    "https://github.com/shashwatak/satellite-js/pull/187", "https://github.com/ATTron/astroz/pull/99",
+                    "https://github.com/dnwrnr/sgp4/pull/46", "https://github.com/csete/gpredict/pull/428",
+                    "https://github.com/csete/gpredict/pull/430", "https://github.com/bilawalsidhu/gods-eye-view/pull/936",
+                    "https://github.com/bilawalsidhu/gods-eye-view/pull/767", "https://github.com/davidcalhoun/tle.js/pull/64"):
             self.assertIn(url, table)
-        rows = [line for line in table.splitlines() if line.startswith("| ") and not line.startswith("| library") and not line.startswith("|---")]
-        self.assertEqual([r.split(" | ")[0] for r in rows], ["| python-sgp4", "| satellite.js", "| astroz", "| libsgp4", "| Gpredict", "| gods-eye-view", "| tle.js"])   # D-460: tle.js #64   # Gpredict joined with PR #428, merged 2026-10-08 (D-267, D-269); gods-eye-view at 0.8.0's freeze (D-368)
-        # one rule (owner): a fix is listed when it followed a corpus report and answered it. astroz #102 came from probes,
-        # not from a corpus case (site S-051), and SatDump #1221 and CelesTrak #172 have no fix yet.
-        self.assertIn("A fix is listed when it followed a report made from the corpus's results and answered it", flat(table))
-        for absent in ("astroz/issues/102", "astroz/pull/104", "SatDump", "CelesTrak/fundamentals"):
-            self.assertNotIn(absent, table)
-        # the cells that expire with a release (the site's HANDOFF.md, "Expiring claims", names them and the check)
-        self.assertEqual(table.count("no release carries it yet") + table.count("no release carries them yet"), 1)   # python-sgp4 (D-269); gods-eye-view's released in v0.3.0 (D-373), Gpredict's in v2.7 (D-460), satellite.js's in 7.2.0 (D-538, D-540)
-        self.assertIn("both released in v0.3.0 on 2026-10-28", table)
-        self.assertIn("all three released in 7.2.0 on 2026-11-11", table)
+        sgp4 = [r for r in rows if r.startswith("| python-sgp4 | an empty `OBJECT_ID`")]
+        self.assertEqual(len(sgp4), 1)
+        self.assertIn("merged, not yet released", sgp4[0])   # PyPI's newest sgp4 is 2.27, before the merge (D-557)
 
     def test_the_table_s_date_moves_with_each_release(self):
         """"No release carries it yet" is true until python-sgp4, satellite.js, Gpredict or gods-eye-view publishes one,
@@ -107,7 +110,7 @@ class TheReadme(unittest.TestCase):
         not be older than the release date in CITATION.cff. Preparing a release moves that date, this fails, and the
         cells are checked against PyPI and npm before the table's date is moved after it (the check is in the site's
         HANDOFF.md, "Expiring claims")."""
-        as_of = re.search(r"Fixes merged or acted on upstream, as of (\d{4}-\d{2}-\d{2})\.", self.raw).group(1)
+        as_of = re.search(r"Every finding reported upstream, as of (\d{4}-\d{2}-\d{2}),", self.raw).group(1)
         released = re.search(r'^date-released: "(\d{4}-\d{2}-\d{2})"$', read("CITATION.cff"), re.M).group(1)
         self.assertGreaterEqual(as_of, released, "the README's table of upstream fixes is older than this release: check its "
                                 "'no release carries it yet' cells against PyPI (sgp4) and npm (satellite.js), then move its date")
