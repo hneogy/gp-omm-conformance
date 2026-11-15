@@ -2130,3 +2130,160 @@ that must match and cases that must not; "egypt" and "co-author trailer" are amo
 
 Generic words ("assistant", "agent", "llm") stay out of the check, by the owner's ruling in D-547. `tests.test_export`
 and `tests.test_brand` pass, 33 OK.
+
+**D-549 (2026-11-14) — B2 done: 0.9.0's source on public main as 0ac32ee, and B3's local builds equal (the owner's word for B2; public push).**
+
+- **B1 on a283888's export.** 1,568 tests OK, 67 skipped:
+  - 64 skips are tests that need Vallado's withheld files;
+  - 3 skips are the private-names tests, which skip in the public tree by design and ran in the private run.
+
+  0 unexpected crash reports. The sweep record is `docs/handoff/release-sitting-0.9.0/SWEEP-2.md`: names 0.
+- **B2.** The owner's words: B2 approved; mirror, commit as him with no trailer, run the same scans, and push only if
+  everything matches the scratch preview exactly.
+  - The real clone's commit has the preview's tree (f155769b9f080d5fc3ef780f452ac9610bad0790).
+  - The scans on it match the preview: one commit, the owner as author and committer, no trailer; names in the
+    tree, in added lines and in paths 0; the full sweep's output identical by hash; deletions the maintainer's decision policy only.
+  - Pushed 6cbec12..0ac32ee. CI run 43668519135 started on the push.
+- **B3, local.**
+  - Two builds of 0ac32ee (SOURCE_DATE_EPOCH 1794710109) are equal. Wheel
+    fc38255d8f70df02bb8e16bd9d0dbd90a5fddc5d38839bf23571e4314f5c5ab5, sdist
+    0055fffd8ba838d72b37bcf0274f2dbbbcfac1dc40a09a79d77d9623f563b602.
+  - Audit: 0 problems. `twine check` passed.
+  - The wheel's 169 files match the a283888 candidate's.
+  - The tag message is written. The GitHub reproducible build waits for the owner's word.
+
+**D-550 (2026-11-14) — B3 done: the GitHub reproducible build reads MATCH, public CI on 0ac32ee is green, and B4's read-only checks pass (the owner's word for the GitHub run; B4's tag waits for his word).**
+
+- **Reproducible build.** Run 43669029080 in `hneogy/gpconf-action-test` built 0ac32ee on Ubuntu 24.04 with the pinned
+  toolchain. It checked commit time 1794710109. WHEEL: MATCH (fc38255d…5ab5), SDIST: MATCH (0055fffd…b602).
+  - The workflow there was still set up for v0.7.0 and compared against PyPI. It now builds 0ac32ee and compares
+    against the maintainer's build, and nothing else changed.
+  - The change went on the branch `repro-0.9.0-0ac32ee`, and only this workflow was dispatched. A push to that
+    repository's main would also have started its Action test, an extra run without the owner's word. The branch
+    push started nothing.
+- **Public CI.** Run 43668519135 on 0ac32ee is green: offline 3.9, offline 3.12 and Windows.
+- **B4's settings, read on GitHub.**
+  - The `pypi` and `testpypi` environments each require the owner's review, and each allows tags `v*` only.
+  - The `release tags` ruleset is active on `refs/tags/v*`, covering creation, update, deletion and non-fast-forward.
+    Its bypass is the admin role, as before.
+  - The owner still confirms these in Settings, per B4.
+- **G-claims, against public main 0ac32ee and the private records:**
+  - 21 cases in `fixtures/`, three of them propagation cases;
+  - eight template languages;
+  - the exit 2 when no case is graded is in `gpconf/__main__.py`;
+  - the mutation figures from the split doc and `mustfix-killcheck.jsonl`, with 206 of 206 killed:
+    879 + 2,533 = 3,412 at 74.2%, and 673 + 2,739 at 80.3%;
+  - the ledger's 38 findings: 10 fixed by the owner's pull requests and 12 by maintainers and contributors, so 22
+    merged, in 20 libraries.
+
+**D-551 (2026-11-14) — gpconf 0.9.0 is on PyPI, published with the TestPyPI rehearsal (B5) skipped. B5's checks were then made against PyPI itself, and passed (the owner's words; read-only checks and one install in a scratch venv).**
+
+- **What happened, as the owner told it.** He approved the `pypi` deployment of publish run 43670320500 directly in
+  GitHub, so the TestPyPI rehearsal (B5) never ran. Its "Rehearse on TestPyPI" job shows skipped, because it runs only
+  when publish is started by hand. The build job matched the tag's hashes, and "Publish to PyPI" finished with
+  success. This is the first release since the rehearsal was added (0.8.0) that went to PyPI without it. Nothing on
+  TestPyPI holds 0.9.0.
+- **B5's checks, made against PyPI:**
+  - **Hashes.** PyPI's JSON gives wheel fc38255d8f70df02bb8e16bd9d0dbd90a5fddc5d38839bf23571e4314f5c5ab5 (840,524
+    bytes) and sdist 0055fffd8ba838d72b37bcf0274f2dbbbcfac1dc40a09a79d77d9623f563b602 (752,427 bytes), uploaded
+    03:01:48Z and 03:01:50Z. Both equal the tag message and the maintainer's build.
+  - **Attestations** (PyPI's integrity API, one PEP 740 bundle per file):
+    - the publisher is GitHub `hneogy/gp-omm-conformance`, `publish.yml`, environment `pypi`;
+    - each statement's subject is its file with that file's SHA-256, under the predicate
+      `https://docs.pypi.org/attestations/publish/v1`;
+    - each signing certificate names `.github/workflows/publish.yml@refs/tags/v0.9.0`, run 43670320500, issued
+      through GitHub's token service.
+
+    This was read, not verified cryptographically by a separate tool: none is installed here, and nothing was
+    installed for it. PyPI verifies each attestation on upload.
+  - **Clean install.** A fresh venv (`/opt/homebrew/bin/python3 -m venv`) took `gpconf==0.9.0` from PyPI with
+    `--require-hashes` (the wheel's hash), `--only-binary :all:`, no cache and no compile.
+    - `gpconf run --preset reference` on an empty data folder exited 0: 21 cases, 5 pass exactly, 0 fail, 3 skip,
+      11 need fetched data, 1 not available, 1 not exercised; "5 of 21 cases graded offline".
+    - No `.pyc` was written for gpconf. The venv's own pip, laid down by `ensurepip`, carries its compiled files, as
+      every venv here does.
+- **The tag's other runs:** the nightly 43670320450 started at 03:00:06Z with the tag; CI 43670320448 on the tag is
+  listed in the B7 report.
+- **B7 prepared, not posted.** `~/Developer/gpconf-scratch/release-0.9.0/b7/release-body.md` is §8's text with the
+  adoption slot filled from GitHub, read 03:04Z: 0 stars, 2 forks, and 0 public workflows using the Action (code
+  search finds only the private `gpconf-action-test`). "gpconf" links to the repository.
+  - G-attr: the text holds no name.
+  - G-claims passes, except one point for the owner: the text says "The record is at gpconf.neogy.dev/upstream",
+    and the site's main (f2bd936) still shows 37 findings and 18 fixes. The site's 38 and 22 come with D1, after
+    B7.
+
+**D-552 (2026-11-14) — The upstream table is the full list of every reported finding (the owner's standing rule, relayed by the Coordinator and recorded in `~/Developer/coordination/RULINGS.md` at 14 Nov 22:08 as the owner's direct words; planned for 0.9.1, and 0.9.0's text untouched).**
+
+The rule, as recorded there:
+- The upstream table in the README (and so on PyPI), on the site's upstream page and in `docs/LIBRARIES.md` is the
+  full list of every reported finding, not highlights.
+- Each row gives:
+  - the library;
+  - what gpconf found;
+  - the status (merged / released / open / declined);
+  - a proof link to the most direct evidence: the merged PR; else the maintainer's fixing commit; for an open item,
+    the issue or our comment;
+  - the release link, if shipped;
+  - the date.
+- Unreported findings stay out (D-134).
+
+For 0.9.1:
+- the table is generated from the upstream ledger, the single source of truth;
+- a CI check confirms that every link resolves and every status matches GitHub, and any mismatch fails the build;
+- the site uses the same generated table.
+
+The item is on `docs/handoff/todo-0.9.1.md`. Not done tonight.
+
+**D-553 (2026-11-14) — An addition to D-552: the full upstream table goes to GitHub first, without waiting for 0.9.1 (the owner's words, relayed by the Coordinator and recorded in `~/Developer/coordination/RULINGS.md` at 14 Nov 22:09 as the owner's direct words; planning only).**
+
+- The GitHub README is the same file, so D-552 covers it.
+- Ship to GitHub first. As soon as the generated full table and its link and status check pass, the README update is
+  pushed to public main. That needs the owner's word for the push and the usual gates: the suite, G-attr, G-private
+  and the scan. Then the GP sites session updates the site.
+- This does not wait for 0.9.1. PyPI's copy of the README follows when 0.9.1 is released.
+- Timing (the Coordinator's note): start after both of tonight's releases are pushed, since until then the lock runs
+  only release jobs. 0.9.0's text and tag never move. Writing the generator before then is fine if it does not touch
+  the release branch. GitHub reads for the status check follow the usual network rules.
+- The item now leads `docs/handoff/todo-0.9.1.md`, ahead of the grader fixes.
+
+**D-554 (2026-11-14) — B7 done: the GitHub release v0.9.0, "v0.9.0 — SGP4 propagation tested", is published and marked Latest, with PyPI's wheel and sdist attached (the owner's word; public).**
+
+- **The owner's answers.**
+  - Point the record line at `docs/LIBRARIES.md` pinned to the tag, not at the site.
+  - Drop the adoption line.
+  - The title as above.
+  - Show the complete text, with G-attr and G-claims, before publishing.
+- **G-claims on that text failed on one point.** `docs/LIBRARIES.md` at v0.9.0 is stale against the ledger:
+  - SGP.NET #47 is listed as "not yet released", but was released in v1.6.1;
+  - satkit #286 is listed as "open", but was fixed in v0.24.3 (D-499);
+  - Basilisk #1673 is listed as "in review", but is fixed;
+  - Basilisk #1676/#1677 is not listed.
+
+  So the pinned page contradicted the text's "22 fixes merged". The owner chose option 1: remove only that sentence and
+  keep the counts sentence as written.
+- **The diff of the text** against the version shown to him is that one sentence. The published body equals it, apart
+  from a trailing newline GitHub adds.
+- **G-attr:** no names, no attribution.
+- **Assets.** The wheel and sdist were downloaded from PyPI and checked against the tag's hashes before upload. They
+  are byte-identical to the maintainer's build, and GitHub's asset digests read fc38255d…5ab5 and 0055fffd…b602.
+- **The release.** https://github.com/hneogy/gp-omm-conformance/releases/tag/v0.9.0, not a draft or prerelease. The
+  releases API's latest is v0.9.0.
+- **Follow-ups for right after tonight, first on the list** (the owner's words, now leading
+  `docs/handoff/todo-0.9.1.md`):
+  1. the generated full upstream table with proof links (D-553), which also refreshes `docs/LIBRARIES.md` on main;
+  2. once it is on main, an edit of the v0.9.0 release adding a link to that table, pinned to its commit.
+
+**D-555 (2026-11-14) — B8: v0.9.0's version DOI, 10.5281/zenodo.24238053, in `CITATION.cff`, the README and the changelog (the owner's word; text only; the public push on his go).**
+
+- **The Zenodo record**, read on zenodo.org's API on the owner's word: record 24238053, created
+  2026-11-15T03:14:46Z by the GitHub release, version v0.9.0. It is published, its only creator is the owner, its
+  licence is Apache-2.0, and it holds one file, the tag's archive. Its related identifier is the tree at v0.9.0. The
+  concept DOI stays 10.5281/zenodo.22867654.
+- **Its description** is the corpus's existing one. It carries the AI-assistance disclosure ("Built with AI
+  assistance under human direction; …"), and the owner's words are to leave it.
+- **The edits**, made as for 0.8.0 (D-375):
+  - `CITATION.cff` gains the v0.9.0 version DOI identifier;
+  - the README's DOI paragraph names v0.9.0 as this release's and moves v0.8.0 to the earlier ones;
+  - the changelog's 0.9.0 section ends its mutation paragraph with the version DOI and the concept DOI.
+- **Checks:** the 14 test modules that read the README, `CITATION.cff` or the versions pass, 192 tests OK (6
+  skipped). The export, its name check, the deletion list and the outgoing-range scan follow before the push.

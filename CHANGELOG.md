@@ -11,7 +11,8 @@ before 1.0 and major from 1.0).
 Mutation testing of the grading code before the release: the full run killed 74.2% of 3,412 mutants (879
 survived). Tests were then added for the 206 survivors that could grade a correct parser wrong, pass a wrong one, or
 report wrong words or numbers; each of them, run against the tests written for it (a kill there is a kill by the whole
-suite), is killed, which makes 80.3% (D-534, D-536). A full re-run is planned for 0.9.1.
+suite), is killed, which makes 80.3% (D-534, D-536). A full re-run is planned for 0.9.1. Version DOI
+10.5281/zenodo.24238053 (Zenodo record 24238053); the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
 
 ### Changes that can move your result
 
