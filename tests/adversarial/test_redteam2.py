@@ -115,11 +115,12 @@ class WhatTheReviewOfTheRuleFound(unittest.TestCase):
         r = run(DupEdited(), ["corrupt-input"])["corrupt-input"]
         self.assertEqual(r.status, "fail")
         fails = [i for i in r.items if i.status == "fail" and i.check == "corrupt-input-neighbours-load"]
-        self.assertEqual(len(fails), 4)                                            # the four files the reference refuses a record of (D-360's sixth input the fourth)
+        self.assertEqual(len(fails), 9)                                            # the nine files the reference refuses a record of (D-360's sixth input, D-391's seventh and eighth, D-394's three layouts)
         for i in fails:
             self.assertIn("returned 2 times where the input holds it once (D-311)", i.detail)
             self.assertNotIn("changed by the corrupt input", i.detail)            # it is not the edit's doing
-            self.assertIn("2 of 2 valid sets", i.detail)                           # the sets still loaded
+            n = 4 if "second-of-five" in i.file else 2                             # D-394's five-set input has four neighbours
+            self.assertIn(f"{n} of {n} valid sets", i.detail)                      # the sets still loaded
         loaded = {i.file: i.counts["loaded"] for i in once.items if i.counts}
         self.assertEqual({i.file: i.counts["loaded"] for i in r.items if i.counts}, loaded)   # no count of outcomes moves
 
@@ -142,8 +143,8 @@ class ByDesignAndSaidSo(unittest.TestCase):
         r = run(adapter("win_f2_omit_objid"))
         self.assertEqual(failing(r), [])
         self.assertEqual(r["alpha5-tle-derived"].status, "pass")                      # the status is untouched
-        self.assertEqual(r["alpha5-tle-derived"].status_text(), "pass (5 field gaps)")
-        self.assertEqual(r["alpha5-tle-derived"].as_dict()["annotations"], {"items_skipped": 0, "field_gaps": 5})
+        self.assertEqual(r["alpha5-tle-derived"].status_text(), "pass (7 field gaps)")   # D-384's day-366 file adds one, D-404's classification file one
+        self.assertEqual(r["alpha5-tle-derived"].as_dict()["annotations"], {"items_skipped": 0, "field_gaps": 7})
         self.assertIn("field gap", inside_line(list(r.values())))
 
     def test_f3_a_format_answered_unsupported_shows_in_the_status(self):
@@ -187,7 +188,7 @@ class ByDesignAndSaidSo(unittest.TestCase):
 class TheRunSaysHowMuchItGraded(unittest.TestCase):          # D-312
     def test_five_of_eighteen_offline(self):
         results = Runner(Reference(), root=ROOT, data=EMPTY, fetch_hints=False).run()
-        self.assertEqual(graded_line(results), "5 of 18 cases graded offline; not a full conformance result.")
+        self.assertEqual(graded_line(results), "5 of 21 cases graded offline; not a full conformance result.")
 
     def test_a_folder_with_only_the_satcat_files_is_not_offline(self):
         """The data check's items are information, so nothing in them says a provider file was read; the case's
@@ -203,7 +204,7 @@ class TheRunSaysHowMuchItGraded(unittest.TestCase):          # D-312
             for n in names:
                 shutil.copy(os.path.join(raw, n), os.path.join(data, "fixtures", "satcat-70000-cutoff", "raw", n))
             results = Runner(Reference(), root=ROOT, data=data, fetch_hints=False).run()
-            self.assertEqual(graded_line(results), "5 of 18 cases graded; 11 need fetched data: not a full conformance result.")
+            self.assertEqual(graded_line(results), "5 of 21 cases graded; 11 need fetched data: not a full conformance result.")
         finally:
             shutil.rmtree(data, ignore_errors=True)
 

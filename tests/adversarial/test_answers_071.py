@@ -16,6 +16,8 @@ import subprocess
 import sys
 import unittest
 
+from tests.timebudget import budget  # noqa: E402  (D-468)
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 
@@ -79,7 +81,7 @@ class AnAnswerThatIsNotAListOfRecordsFailsInItsOwnWords(unittest.TestCase):
 
 
 UNEDITED = {open(os.path.join(ROOT, "derived", "corrupt-input", n), "rb").read()
-            for n in ("unedited-sets.tle", "unedited-rows.csv", "unedited-array.json")}
+            for n in ("unedited-sets.tle", "unedited-first.tle", "unedited-last.tle", "unedited-five.tle", "unedited-rows.csv", "unedited-array.json")}
 
 
 class Dropper(Reference):
@@ -1129,7 +1131,7 @@ class TheBoundarysSecondReading(unittest.TestCase):
             x = D(v=x)
         start = time.monotonic()
         self.assertEqual(type(_plain.value(x)), dict)
-        self.assertLess(time.monotonic() - start, 1.0)
+        self.assertLess(time.monotonic() - start, budget(1.0))
 
 
 class TheBoundarysThirdReading(unittest.TestCase):
@@ -1480,7 +1482,7 @@ class TheBoundarysFourthReading(unittest.TestCase):
             with self.subTest(adapter=cls.__name__):
                 start = time.monotonic()
                 self.assertEqual(failing(run(cls())), [])
-                self.assertLess(time.monotonic() - start, 60)
+                self.assertLess(time.monotonic() - start, budget(60))
 
         class InItsOwnField(Reference):                                          # twin: itself where a value goes
             def parse(self, raw, fmt):
@@ -1640,7 +1642,7 @@ class TheBoundarysFifthReading(unittest.TestCase):
             with self.subTest(under_an_unknown_key=name):
                 start = time.monotonic()
                 self.assertEqual(failing(run(every_record(lambda r, held=held: dict(r, _shared=held), only=lambda r: "_refused" not in r))), [])
-                self.assertLess(time.monotonic() - start, 60)
+                self.assertLess(time.monotonic() - start, budget(60))
         r = run(with_field("object_name", lambda v: x))                          # twin: the same list where text goes fails
         self.assertTrue(failing(r))
         r = run(with_field("object_name", lambda v: collections.deque([x, x])))  # and so does the deque
@@ -1684,7 +1686,7 @@ class TheBoundarysSixthReading(unittest.TestCase):
         from the corrupt-input case's exact comparison with the unedited file. The twin: nothing changed, nothing
         flagged."""
         unedited = set()
-        for n in ("unedited-sets.tle", "unedited-rows.csv", "unedited-array.json"):
+        for n in ("unedited-sets.tle", "unedited-first.tle", "unedited-last.tle", "unedited-five.tle", "unedited-rows.csv", "unedited-array.json"):
             with open(os.path.join(ROOT, "derived", "corrupt-input", n), "rb") as f:
                 unedited.add(f.read())
 
@@ -1729,12 +1731,12 @@ class TheBoundarysSixthReading(unittest.TestCase):
             with self.subTest(field=field):
                 start = time.monotonic()
                 r = run(with_field(field, lambda v: x), cases=["kvn-syntax-variants"])
-                self.assertLess(time.monotonic() - start, 60)
+                self.assertLess(time.monotonic() - start, budget(60))
                 self.assertTrue(failing(r))
                 self.assertFalse([i for i in fails(r) if "internal error" in i.detail or "parser raised" in i.detail])
         start = time.monotonic()
         r = run(every_record(lambda r: dict(r, _input=x), only=lambda r: "_refused" in r), cases=["corrupt-input"])
-        self.assertLess(time.monotonic() - start, 60)
+        self.assertLess(time.monotonic() - start, budget(60))
         self.assertFalse([i for i in fails(r) if "internal error" in i.detail or "parser raised" in i.detail])
 
     def test_faces_that_copy_a_shared_list_are_compared_quickly(self):
@@ -1753,7 +1755,7 @@ class TheBoundarysSixthReading(unittest.TestCase):
                 return list(v) if type(v) is list else v
         start = time.monotonic()
         out = _plain.answer([Copies({"norad_cat_id": i, "_shared": [big]}) for i in range(10)])
-        self.assertLess(time.monotonic() - start, 10)
+        self.assertLess(time.monotonic() - start, budget(10))
         self.assertTrue(all(type(r) is dict for r in out))
 
         class Lies(dict):
@@ -1780,12 +1782,12 @@ class TheBoundarysSeventhReading(unittest.TestCase):
         meta = {f"k{i}": big for i in range(3000)}
         start = time.monotonic()
         self.assertEqual(failing(run(every_record(lambda r: dict(r, _meta=meta), only=lambda r: "_refused" not in r), cases=["kvn-syntax-variants"])), [])
-        self.assertLess(time.monotonic() - start, 30)
+        self.assertLess(time.monotonic() - start, budget(30))
         self.assertEqual(failing(run(with_field("object_name", lambda v: big), cases=["kvn-syntax-variants"])), ["kvn-syntax-variants"])
         s = "x" * 100_000
         start = time.monotonic()
         rec = _plain.answer([{"norad_cat_id": 1, "_wide": [s] * 99_999}])[0]
-        self.assertLess(time.monotonic() - start, 10)
+        self.assertLess(time.monotonic() - start, budget(10))
         self.assertLessEqual(len(rec["_wide"]), _plain.FIELD_TEXT + 100)
         other = _plain.answer([{"norad_cat_id": 1, "_wide": [s] * 99_998 + ["y"]}])[0]
         self.assertNotEqual(rec["_wide"], other["_wide"])                         # twin: another content, another text
@@ -1807,7 +1809,7 @@ class TheBoundarysSeventhReading(unittest.TestCase):
             with self.subTest(answer=name):
                 start = time.monotonic()
                 self.assertEqual(failing(run(writer(shape), cases=["tle-writer-alpha5"])), ["tle-writer-alpha5"])
-                self.assertLess(time.monotonic() - start, 60)
+                self.assertLess(time.monotonic() - start, budget(60))
 
     def test_an_integer_python_will_not_write_fails_in_words_wherever_it_is(self):
         """Finding 3, a crash older than the mend: such an integer as the catalog number or a counter ended the case as
@@ -1862,7 +1864,7 @@ class TheBoundarysSeventhReading(unittest.TestCase):
             return R()
         start = time.monotonic()
         r = run(raising(x), cases=["kvn-syntax-variants"])
-        self.assertLess(time.monotonic() - start, 30)
+        self.assertLess(time.monotonic() - start, budget(30))
         self.assertTrue(failing(r))
         r = run(raising("bad line"), cases=["kvn-syntax-variants"])
         self.assertTrue(any("parser raised ValueError: bad line" in i.detail for i in fails(r)), [i.detail[:80] for i in fails(r)][:2])
@@ -1884,7 +1886,7 @@ class TheBoundarysEighthReading(unittest.TestCase):
             with self.subTest(field=field):
                 start = time.monotonic()
                 r = run(with_field(field, lambda v: Decimal("1E+5000")))
-                self.assertLess(time.monotonic() - start, 30)
+                self.assertLess(time.monotonic() - start, budget(30))
                 self.assertEqual(failing(r), THREE)
                 self.assertFalse([i for i in fails(r) if "internal error" in i.detail])
         self.assertEqual(failing(run(with_field("element_set_no", lambda v: Decimal(v + 1)))), THREE)
@@ -1901,7 +1903,7 @@ class TheBoundarysEighthReading(unittest.TestCase):
                 start = time.monotonic()
                 self.assertEqual(failing(run(every_record(lambda r, key=key: dict(r, **{key: {"refusals": True, "notes": x}}),
                                                           only=lambda r: "_refused" not in r), cases=["kvn-syntax-variants"])), [])
-                self.assertLess(time.monotonic() - start, 30)
+                self.assertLess(time.monotonic() - start, budget(30))
 
     def test_long_leaves_and_many_holders_cost_what_they_are(self):
         """Findings 3 and 4, hangs: a long text, bytes or Decimal was written or digested once per container holding it,
@@ -1925,7 +1927,7 @@ class TheBoundarysEighthReading(unittest.TestCase):
                 out = _plain.answer(recs)
                 for r in out:
                     norm_record(r)
-                self.assertLess(time.monotonic() - start, 30)
+                self.assertLess(time.monotonic() - start, budget(30))
                 self.assertTrue(all(type(r) is dict for r in out))
         self.assertEqual(_plain.answer([{"norad_cat_id": 1, "_src": text}])[0]["_src"], text)   # twin: a text as itself
 
@@ -1934,7 +1936,7 @@ class TheBoundarysEighthReading(unittest.TestCase):
         text that spells the same, so a parser that answered [v] on the unedited file and "[v]" on the edited ones had
         the change hidden from the corrupt-input case's exact comparison. The twin: the same on both reads alike."""
         unedited = set()
-        for n in ("unedited-sets.tle", "unedited-rows.csv", "unedited-array.json"):
+        for n in ("unedited-sets.tle", "unedited-first.tle", "unedited-last.tle", "unedited-five.tle", "unedited-rows.csv", "unedited-array.json"):
             with open(os.path.join(ROOT, "derived", "corrupt-input", n), "rb") as f:
                 unedited.add(f.read())
 
@@ -1980,7 +1982,7 @@ class TheBoundarysEighthReading(unittest.TestCase):
             raise ValueError(x)
         start = time.monotonic()
         r = run(raising(shared_list), cases=["kvn-syntax-variants"])   # the twin the docstring names
-        self.assertLess(time.monotonic() - start, 30)
+        self.assertLess(time.monotonic() - start, budget(30))
         self.assertTrue(any(i.detail.startswith("parser raised ValueError: [[") for i in fails(r)), [i.detail[:120] for i in fails(r)][:2])
 
     def test_the_digit_limit_is_pythons_own(self):
@@ -2018,7 +2020,7 @@ class TheBoundarysEighthReading(unittest.TestCase):
                     r["_peers"] = kind(dict(x) for x in recs)
                 start = time.monotonic()
                 out = _plain.answer(recs)
-                self.assertLess(time.monotonic() - start, 30)
+                self.assertLess(time.monotonic() - start, budget(30))
                 self.assertEqual(len(out), 120)
                 self.assertTrue(all(type(r) is dict for r in out))
 
@@ -2066,7 +2068,7 @@ class TheBoundarysNinthReading(unittest.TestCase):
             with self.subTest(label=label):
                 start = time.monotonic()
                 words = _words(run(_raising(make), cases=["kvn-syntax-variants"]))
-                self.assertLess(time.monotonic() - start, 30)
+                self.assertLess(time.monotonic() - start, budget(30))
                 self.assertTrue(any(w.startswith("parser raised ValueError: ") and "could not be read" not in w for w in words),
                                 words[:2])
         words = _words(run(_raising(lambda: ValueError([1, [2, "three"]], {"k": 4.5})), cases=["kvn-syntax-variants"]))
@@ -2086,7 +2088,7 @@ class TheBoundarysNinthReading(unittest.TestCase):
                     sys.set_int_max_str_digits(limit)
                     start = time.monotonic()
                     self.assertEqual(failing(run(Reference())), [])
-                    self.assertLess(time.monotonic() - start, 60)
+                    self.assertLess(time.monotonic() - start, budget(60))
         finally:
             sys.set_int_max_str_digits(old)
         self.assertEqual(failing(run(Reference())), [])
@@ -2136,7 +2138,7 @@ class TheBoundarysNinthReading(unittest.TestCase):
                 elapsed = time.monotonic() - start
                 peak = tracemalloc.get_traced_memory()[1]
                 tracemalloc.stop()
-                self.assertLess(elapsed, 5 if label == "Decimal" else 30)
+                self.assertLess(elapsed, budget(5 if label == "Decimal" else 30))
                 self.assertLess(peak, 60_000_000, f"{peak:,} bytes")   # one copy kept, not four hundred
                 self.assertTrue(all(type(r) is dict for r in out))
         for label, leaf in (("bytes", b"q" * 1_000_000), ("Decimal", Decimal("8" * 1_000_000)), ("str (twin)", "s" * 1_000_000)):
@@ -2148,7 +2150,7 @@ class TheBoundarysNinthReading(unittest.TestCase):
                 elapsed = time.monotonic() - start
                 peak = tracemalloc.get_traced_memory()[1]
                 tracemalloc.stop()
-                self.assertLess(elapsed, 1)
+                self.assertLess(elapsed, budget(1))
                 self.assertLess(peak, 60_000_000, f"{peak:,} bytes")
 
     def test_a_parsers_own_bad_or_notes_key_is_not_the_runners(self):
@@ -2171,7 +2173,7 @@ class TheBoundarysNinthReading(unittest.TestCase):
             with self.subTest(label=label):
                 start = time.monotonic()
                 words = _words(run(_raising(make), cases=["kvn-syntax-variants"]))
-                self.assertLess(time.monotonic() - start, 30)
+                self.assertLess(time.monotonic() - start, budget(30))
                 self.assertTrue(words and all("could not be read" not in w for w in words), words[:2])
         words = _words(run(_raising(lambda: SyntaxError("bad", ("f.py", 1, 2, "x = ("))), cases=["kvn-syntax-variants"]))
         self.assertIn("parser raised SyntaxError: bad (f.py, line 1)", words)
@@ -2206,7 +2208,7 @@ class TheBoundarysNinthReading(unittest.TestCase):
             with self.subTest(holder=label):
                 start = time.monotonic()
                 got = _plain.value(make(x))
-                self.assertLess(time.monotonic() - start, 10)
+                self.assertLess(time.monotonic() - start, budget(10))
                 self.assertIs(type(got), list)
                 self.assertTrue(_plain.is_plain(got))
                 self.assertEqual(_plain.value(make([1, 2])), [[1, 2]])
@@ -2214,7 +2216,7 @@ class TheBoundarysNinthReading(unittest.TestCase):
             with self.subTest(holder=label):
                 start = time.monotonic()
                 self.assertEqual(_plain.value(make(x)), words)
-                self.assertLess(time.monotonic() - start, 10)
+                self.assertLess(time.monotonic() - start, budget(10))
         self.assertEqual(_plain.value(Own(x)), "Own(...)")
 
     def test_an_answer_past_the_reading_budget_fails_in_words(self):
@@ -2235,7 +2237,7 @@ class TheBoundarysNinthReading(unittest.TestCase):
                 return records()
         start = time.monotonic()
         words = _words(run(Endless(), cases=["kvn-syntax-variants"]))
-        self.assertLess(time.monotonic() - start, 300)
+        self.assertLess(time.monotonic() - start, budget(300))
         self.assertTrue(any("the answer was too large or too deeply shared to read" in w for w in words), words[:2])
         with mock.patch.object(_plain, "BUDGET_OBJECTS", 5):
             words = _words(run(Reference(), cases=["kvn-syntax-variants"]))
@@ -2270,7 +2272,7 @@ class TheBoundarysTenthReading(unittest.TestCase):
                 _plain.READING_PEAK[:] = [0, 0]
                 start = time.monotonic()
                 out = _plain.answer(recs)
-                self.assertLess(time.monotonic() - start, 20)
+                self.assertLess(time.monotonic() - start, budget(20))
                 self.assertIsNot(type(out), _plain.Problem, getattr(out, "what", ""))
                 self.assertLess(_plain.READING_PEAK[0], _plain.BUDGET_OBJECTS // 10)
         self.assertEqual(_plain.value(Owner.C1), "<Owner object>")   # never printed by Python: its type's name
@@ -2328,7 +2330,7 @@ class TheBoundarysTenthReading(unittest.TestCase):
                 elapsed = time.monotonic() - start
                 peak = tracemalloc.get_traced_memory()[1]
                 tracemalloc.stop()
-                self.assertLess(elapsed, 5)
+                self.assertLess(elapsed, budget(5))
                 self.assertLess(len(words), 10_000)
                 self.assertLess(peak, 50_000_000, f"{peak:,} bytes")
         self.assertEqual(_plain.exception_text(OSError(2, "gone", "f.tle")), "[Errno 2] gone: 'f.tle'")
@@ -2371,7 +2373,7 @@ class TheBoundarysTenthReading(unittest.TestCase):
                 recs = [{"norad_cat_id": i, "_ns": make()} for i in range(500)]
                 start = time.monotonic()
                 out = _plain.answer(recs)
-                self.assertLess(time.monotonic() - start, 5)
+                self.assertLess(time.monotonic() - start, budget(5))
                 self.assertIsNot(type(out), _plain.Problem, getattr(out, "what", ""))
                 self.assertEqual(out[0]["_ns"], words)
 
@@ -2430,7 +2432,7 @@ class TheBoundarysTenthReading(unittest.TestCase):
             with self.subTest(shared=label):
                 start = time.monotonic()
                 out = _plain.answer([{"norad_cat_id": i, "_x": shared} for i in range(12000)])
-                self.assertLess(time.monotonic() - start, 20)
+                self.assertLess(time.monotonic() - start, budget(20))
                 self.assertIsNot(type(out), _plain.Problem, getattr(out, "what", ""))
 
     def test_a_count_made_inside_a_cycle_is_not_used_elsewhere(self):
@@ -2461,7 +2463,7 @@ class TheBoundarysTenthReading(unittest.TestCase):
             with self.subTest(label=label):
                 start = time.monotonic()
                 out = _plain.answer(recs)
-                self.assertLess(time.monotonic() - start, 5)
+                self.assertLess(time.monotonic() - start, budget(5))
                 self.assertEqual(out[-1]["_x"], words)
 
     def test_objects_made_afresh_for_each_read_are_not_kept_alive(self):
@@ -2572,7 +2574,7 @@ class TheBoundarysTwelfthReading(unittest.TestCase):
                 return "Own(r)"
         start = time.monotonic()
         self.assertEqual(_plain.value(shape(24, "x" * 1000)), "<SimpleNamespace object>")
-        self.assertLess(time.monotonic() - start, 5)
+        self.assertLess(time.monotonic() - start, budget(5))
         self.assertEqual(_plain.value(Own(shape(24, "x").r)), "Own(r)")
 
     def test_one_table_shared_by_every_record_costs_nothing_per_record(self):
@@ -2676,7 +2678,7 @@ class TheBoundarysFourteenthReading(unittest.TestCase):
         x = _shared(26)
         start = time.monotonic()
         self.assertEqual(_plain.value(itertools.repeat(x, 1)), "<repeat object>")
-        self.assertLess(time.monotonic() - start, 5)
+        self.assertLess(time.monotonic() - start, budget(5))
         self.assertEqual(_plain.value(Own(x)), "Own(x)")
 
     def test_a_part_gc_does_not_show_is_never_printed(self):
@@ -2719,7 +2721,7 @@ class TheBoundarysFourteenthReading(unittest.TestCase):
                 with self.subTest(holder=label if want is None else f"{label}, held by the parser's own writing"):
                     start = time.monotonic()
                     out = _plain.answer([{"norad_cat_id": i, "_x": holder(held)} for i in range(3000)])
-                    self.assertLess(time.monotonic() - start, 10)
+                    self.assertLess(time.monotonic() - start, budget(10))
                     self.assertIsNot(type(out), _plain.Problem)
                     if want is None:
                         self.assertTrue(out[0]["_x"].endswith(" object>"), out[0]["_x"])
@@ -2744,7 +2746,8 @@ class ARaiseOnTheComparisonFileFailsAsParse(unittest.TestCase):
         self.assertEqual(failing(r), ["corrupt-input"])
         parse = [i for i in r["corrupt-input"].items if i.check == "parse" and i.status == "fail"]
         self.assertEqual(sorted(os.path.basename(i.file or "") for i in parse),
-                         ["unedited-array.json", "unedited-rows.csv", "unedited-sets.tle"])
+                         ["unedited-array.json", "unedited-first.tle", "unedited-five.tle", "unedited-last.tle", "unedited-rows.csv",
+                          "unedited-sets.tle"])   # D-394's three twins among them
         for i in parse:
             self.assertIn("parser raised ValueError: not this one", i.detail)
         self.assertEqual(failing(run(Dropper(), cases=["corrupt-input"])), ["corrupt-input"])   # the same bug, read normally
@@ -2757,8 +2760,8 @@ class ARaiseOnTheComparisonFileFailsAsParse(unittest.TestCase):
                 return super().parse(raw, fmt)
         r = run(RaisesOnOneComparisonFile(), cases=["corrupt-input"])
         self.assertEqual(failing(r), ["corrupt-input"])
-        self.assertEqual([os.path.basename(i.file or "") for i in r["corrupt-input"].items if i.status == "fail"],
-                         ["unedited-sets.tle"])
+        self.assertEqual(sorted(os.path.basename(i.file or "") for i in r["corrupt-input"].items if i.status == "fail"),
+                         ["unedited-first.tle", "unedited-five.tle", "unedited-last.tle", "unedited-sets.tle"])   # every TLE twin (D-394)
         self.assertEqual(failing(run(Reference(), cases=["corrupt-input"])), [])
 
     def test_a_raise_on_a_corrupt_input_is_still_the_file_refused_as_a_whole(self):

@@ -1,7 +1,7 @@
 {
  "corpus": "gp-omm-conformance",
- "corpus_version": "0.8.0",
- "generated_at": "2026-10-29T01:39:43Z",
+ "corpus_version": "0.9.0",
+ "generated_at": "2026-11-10T05:12:49Z",
  "generator": "tools/make_manifest.py",
  "design": {
   "provider_data_shipped": false,
@@ -47,12 +47,19 @@
   "audit_trail": "DECISIONS.md"
  },
  "checks": {
+  "type4-not-propagated": "Set 20453 with EPHEMERIS_TYPE 4 (an SGP4-XP element set) as TLE, OMM CSV, JSON, XML and KVN, and a KVN also saying MEAN_ELEMENT_THEORY = SGP4-XP (the corpus's spelling, synthetic), each through the propagate hook: a position at any step fails the file, since SGP4 propagates such a set to positions that look right and are not, and so do error codes stamped beside positions; a refusal passes (a raise, Unsupported for the type-4 set alone, a refusal from parse while its twin is read, or an SGP4 error code at every step with no position, as Vallado's C++ answers). An adapter that sets propagates_sgp4_xp = True is not graded on it (the owner's ruling, 2026-11-01; D-409).",
+  "type4-twins-propagate": "Each type-4 file's twin, the same values with EPHEMERIS_TYPE 0, through the same hook: it must propagate within 2e-7 km and km/s of the twins' reference vectors (vectors/propagation-twins.json, D-406), its codes exact, so a hook that refuses every set fails here, and so does Unsupported for the twin alone (D-205, D-280); a format unsupported for both files is skipped and named (D-409).",
+  "twins-tle-positions": "Each of seven shipped TLE sets (derived/propagation-twins/twins.tle) through the parser's propagate hook at six times (-1 day, -1 hour, 0, +1 hour, +1 day, +7 days): every TEME position and velocity component within 2e-7 km and km/s of the corpus's own reference vectors (vectors/propagation-twins.json: SGP4 by Vallado's C++, WGS-72, opsmode 'i', cross-checked with python-sgp4), every SGP4 error code exact (every reference step propagates, so a false decay is what the codes catch). The TLE is sent as its two element lines (D-406).",
+  "twins-omm-positions": "The same for each set's OMM CSV twin (derived/propagation-twins/twins.csv), whose values are exactly the TLE's: a library whose OMM path reads the angles, the mean motion, the eccentricity or BSTAR otherwise than its TLE path fails here, and the epoch through the two deep-space sets (100530, 270354) only, since near-earth SGP4 in TEME does not depend on it (D-406).",
+  "twins-tle-omm-agree": "For each set the parser propagated from both renderings, its TLE and OMM answers within 2e-7 of each other at every step, their codes the same (D-406).",
+  "sgp4-ver-positions": "Each of Vallado's 33 verification element sets (SGP4-VER.TLE, located on this machine and held to the corpus's manifest of its bytes; never shipped, D-388) propagated by the parser's propagate hook to the verification driver's times: every TEME position (km) and velocity (km/s) component within 2e-7 of tcppver.out, WGS-72 and opsmode 'i' only, the largest differences printed (D-401).",
+  "sgp4-ver-error-codes": "Where a verification run ends in an SGP4 error, the code is the reference's (measured by the corpus, in its manifest) at the step after the run's last printed line, and no step before it errs: a false decay and a silent propagation each fail (D-401).",
   "omm-formats-agree": "For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them.",
   "tle-values-match-omm-within-tle-precision": "The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution.",
   "tle-checksums-valid": "Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (ASCII digits count their value, '-' counts 1, everything else 0); a line a writer returns must also be ASCII throughout (D-325).",
   "catalog-number-is-integer": "NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.",
   "tle-catalog-field-decodes": "Columns 3-7 of TLE lines 1 and 2 decode to the same integer (five digits, or Alpha-5 letter + four digits).",
-  "ccsds-epoch-strings": "parse_epoch accepts every CCSDS 502.0-B-3 7.5.10 epoch form in vectors/ccsds-epoch-strings.json (calendar and day-of-year, with or without a fraction and a Z, second 60) and returns the instant each denotes (within 2 us; a leap second may read as 23:59:59 or as the next midnight), and rejects the six invalid forms.",
+  "ccsds-epoch-strings": "parse_epoch accepts every CCSDS 502.0-B-3 7.5.10 epoch form in vectors/ccsds-epoch-strings.json (calendar and day-of-year, with or without a fraction and a Z, second 60) and returns the instant each denotes (within 2 us; a leap second may read as 23:59:59 or as the next midnight), and rejects the fifteen invalid forms, nine of them a second 60 that is not one of the 27 leap seconds (D-382).",
   "two-digit-year-pivot": "TLE epoch years 57-99 map to 1957-1999 and 00-56 to 2000-2056; the resulting ISO epoch equals the OMM EPOCH string.",
   "object-id-may-be-empty": "OBJECT_ID (and in principle OBJECT_NAME) can be empty; parsers must not fail, and must not invent a value.",
   "object-name-unknown-literal": "OBJECT_NAME may be the literal UNKNOWN (CCSDS-recommended) rather than empty.",
@@ -70,7 +77,7 @@
   "mmdot-is-tle-field-value": "OMM MEAN_MOTION_DOT equals the TLE first-derivative field as printed (the TLE 'ndot/2' convention); MEAN_MOTION_DDOT likewise equals the TLE second-derivative field.",
   "bstar-implied-decimal-exponent": "TLE BSTAR and second-derivative fields are +/-NNNNN+/-E with an implied leading decimal point: ' 15975-3' is 0.15975e-3; zero is written ' 00000+0'.",
   "negative-bstar-and-ndot": "BSTAR and the first derivative can be negative; parsers must keep the sign.",
-  "alpha5-decode": "An Alpha-5 catalog field decodes as (letter value)*10000 + digits with A=10 ... Z=33 and I, O unused; 'I', 'O', lowercase, a blank and an empty field are invalid (D-360), and so is a field whose last four characters are not all digits: a letter, a sign, a point or a blank after the first character (D-369), and so is one whose digits are not ASCII, or with an underscore or a plus sign in it (D-370).",
+  "alpha5-decode": "An Alpha-5 catalog field decodes as (letter value)*10000 + digits with A=10 ... Z=33 and I, O unused; 'I', 'O', lowercase, a blank and an empty field are invalid (D-360), and so is a field whose last four characters are not all digits: a letter, a sign, a point or a blank after the first character (D-369), and so is one whose digits are not ASCII, or with an underscore or a plus sign in it (D-370), and a five-digit field with a sign before it or a blank or an underscore inside it (D-390).",
   "alpha5-encode": "Integers 100000-339999 encode to the Alpha-5 table; below 100000 encode as five digits with leading zeros; above 339999 cannot be encoded.",
   "satcat-legacy-below-70000": "The legacy fixed-width SATCAT contains only NORAD ids below 70000; the CSV/JSON SATCAT contains ids on both sides.",
   "kvn-syntax-tolerance": "KVN parsers accept blank lines, COMMENT lines at allowed positions, arbitrary whitespace around '=', bracketed units, day-of-year epochs, an optional trailing Z, signed integers, lowercase 'e' exponents, LF or CRLF endings.",
@@ -80,14 +87,16 @@
   "tle-writer-catalog-field": "A TLE writer puts the catalog number in columns 3-7 of both lines as five digits with leading zeros below 100000 and, from 100000 to 339999, as Alpha-5 (letter value 10-33, A=10 ... Z=33 with I and O never used, then the last four digits); both lines carry the same field.",
   "tle-writer-round-trip": "The written lines, read back by the corpus reference reader, reproduce the record's epoch, mean motion, eccentricity, inclination, RA of ascending node, argument of pericenter, mean anomaly and BSTAR at each field's resolution, quantised by truncation or by rounding half up (CelesTrak truncates the eccentricity, Space-Track rounds it; either is accepted and the convention observed is reported).",
   "tle-writer-refuses-unencodable": "A TLE catalog field cannot represent a number above 339999 (Z9999) or below 0, so the correct output for such a record is a refusal: an error and no lines. Those numbers belong in the OMM formats. The check passes when the writer refuses and fails when it writes lines with a six-digit, blank or otherwise invalid field.",
-  "tle-writer-secondary-fields": "Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information, never failed: orbit-fitting tools regenerate these fields by design.",
+  "tle-writer-secondary-not-changed": "Each side field (MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID, OBJECT_NAME) is written as the record's value (the derivatives at the field's resolution, the element set and revolution numbers in their columns), or zeroed or left out, as documented, or the name cut to the line's 24 columns; the classification, which has no zero, as the record's; written as any other value, an unreadable designator among them, it fails (D-381, D-383; SM-26's W1 and W4).",
+  "tle-writer-secondary-fields": "Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information: orbit-fitting tools zero or regenerate these fields; a value that is neither the record's nor zero or left out fails tle-writer-secondary-not-changed (D-381, D-383).",
   "tle-writer-column-layout": "Every field of a written TLE sits in its fixed columns: on line 1 the decimal points at columns 24 and 35 and the separators at 2, 9, 18, 33, 44, 53, 62 and 64; on line 2 the decimal points at 12, 21, 38, 47 and 55, the separators at 2, 8, 17, 26, 34, 43 and 52, seven eccentricity digits, right-justified element set and revolution numbers. A left-justified value with a recomputed checksum has the right length and checksum and still fails this check.",
   "tle-writer-matches-provider-rendering": "Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's derived line, rendered with CelesTrak's eccentricity truncation). Information only: an equivalent rendering under the other provider's convention is not a defect.",
   "corrupt-tle-checksum-digit": "A TLE set whose line 1 carries a wrong checksum digit, every other character real, is refused with a reason. A parser that validates no checksum returns the set exactly as it returns it from the unedited file: that is reported, not failed, since the corpus's own reference reader treats the checksum as data (owner decision, D-171). A record that differs from that reading fails, as does a silent drop.",
   "corrupt-tle-line-short": "A TLE set whose line 2 has lost one character mid-line (a digit of the eccentricity), so that it is 68 characters and every column after the cut has moved one to the left, is refused with a reason. A record read from it fails as misidentified, since its values are not the set's, and so does a silent drop.",
   "corrupt-tle-letter-in-number": "A TLE set with the letter O in place of a 0 in line 1's epoch field is refused with a reason, not read as a record with a wrong epoch and not dropped silently. The line's checksum is still valid, since a letter counts 0 as the digit it replaced did, so the checksum cannot catch it.",
   "corrupt-tle-missing-line-2": "A TLE set whose line 1 is followed directly by the next set's name line: the orphan line 1 is refused with a reason. Passing over it without a word counts as dropped, and pairing it with the lines after it builds a record from garbage.",
-  "corrupt-tle-invalid-catalog-field": "A TLE set whose catalog field is an invalid Alpha-5 field, I9999 on both lines (the letter I is never used in Alpha-5), both checksums valid, is refused with a reason (one whose _field is the invalid field, or whose _input quotes it, is credited, D-282, D-360). A record read from it fails: under an id the file does not hold (a decoder that maps letters by their code without skipping I reads 189999), it is the corrupt record dropped and a record the file does not hold, built from garbage; under 69999, the invalid field read as a catalog number; a silent drop fails too (D-360).",
+  "corrupt-tle-line-fields-differ": "A TLE set whose line 2 carries another catalog field than its line 1 (69998 for 69999), both checksums valid, is refused with a reason: the two lines name different objects. A record read from it fails: under 69999 or 69998, the set read as one record; a silent drop is the corrupt record dropped (the third blind pass's 17, D-391).",
+  "corrupt-tle-invalid-catalog-field": "A TLE set whose catalog field is an invalid Alpha-5 field, I9999 on both lines in one input and O9999 in another (the letters I and O are never used in Alpha-5; a reader that takes O for 0 reads 9999, D-391), both checksums valid, is refused with a reason (one whose _field is the invalid field, or whose _input quotes it, is credited, D-282, D-360). A record read from it fails: under an id the file does not hold (a decoder that maps letters by their code without skipping I reads 189999), it is the corrupt record dropped and a record the file does not hold, built from garbage; under 69999, the invalid field read as a catalog number; a silent drop fails too (D-360).",
   "corrupt-file-cut": "A file cut mid-record, as a CSV that ends inside its last row and as a JSON array missing its closing bracket: the complete records load and the cut is reported with a reason, or the file is refused as a whole with a reason, which is fail-closed; the complete records a whole-file refusal gives up are counted, not failed (owner decision, D-171). Loading the complete records while saying nothing of the cut is silent partial loading and fails, as does a record read from the cut row.",
   "corrupt-input-neighbours-load": "The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded by this item, since the values check grades it on the same records in their own cases and on the unedited files here (D-175, D-299, D-342). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed."
  },
@@ -2016,7 +2025,7 @@
      "Alpha-5: all 24 letters and both skips, the six official examples, range boundaries, invalid letters and lowercase, a blank and an empty field (D-360), a letter, sign, point or blank after the first character (D-369), non-ASCII digits, an underscore or a plus sign (D-370)",
      "catalog-id text forms: eight valid values (two of nine digits) and four to reject (Alpha-5 text, ten digits, a decimal, empty)",
      "the two-digit-year pivot: 57-99 to 1957-1999, 00-56 to 2000-2056",
-     "CCSDS epoch strings: eight valid forms, each with the instant it denotes, and six invalid forms"
+     "CCSDS epoch strings: fifteen valid forms, each with the instant it denotes (three of them a leap second, one day 366, three at or past the 32-bit time_t limit of 2038-01-19T03:14:07, one before 1970), and fifteen invalid forms (nine a second 60 outside the 27 leap seconds, D-382)"
     ],
     "gaps": [
      "vectors are not element sets; they test the mappings only"
@@ -2034,8 +2043,8 @@
      "path": "vectors/alpha5.json",
      "tier": "stable",
      "format": "vectors-json",
-     "bytes": 10260,
-     "sha256": "7cc235069d3fc991e33206fa8a72002156aebdf2095859f1268c8bb350532aab",
+     "bytes": 10756,
+     "sha256": "570b3966a814c26cbff19c6b50c5fe4de7ccc624c1109ecf8211296cff4a80a2",
      "provenance": "specification"
     },
     {
@@ -2058,8 +2067,8 @@
      "path": "vectors/ccsds-epoch-strings.json",
      "tier": "stable",
      "format": "vectors-json",
-     "bytes": 2453,
-     "sha256": "a0705aff8d0943f542c77ff7fdef9af369cc676b67b3f7ca059c56965da5a820",
+     "bytes": 5593,
+     "sha256": "1ac249eb5a606d1b995f8c42513b2954a72c196c67eed3911f65b6812088d00a",
      "provenance": "specification"
     }
    ]
@@ -2086,7 +2095,9 @@
     "provides": [
      "604 Alpha-5 TLE sets derived from real records, each a name line, line 1 and line 2 (1,208 element lines, 1,812 lines in the four files): 257 with letter A (ids 100000-100789), 347 with letter T (ids 270000-270449)",
      "46 synthetic-derived TLE sets, the lowest and highest id of each of the 24 Alpha-5 letters less the two ids real records hold (100000, 270000): SARAMAGO's first-record elements rendered with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set, so each set's elements are its own, each id a specification vector, not a catalogued object (D-096, D-125, D-286, D-300, D-372)",
-     "100 synthetic-derived TLE sets, one per two-digit epoch year 00-99 (ids 330100-330199), the same elements with the epoch's year replaced: a reader's pivot is graded on data wherever it sits (D-300)"
+     "100 synthetic-derived TLE sets, one per two-digit epoch year 00-99 (ids 330100-330199), the same elements with the epoch's year replaced: a reader's pivot is graded on data wherever it sits (D-300)",
+     "5 synthetic-derived TLE sets with the epoch on 31 December, day 366, of a leap year (1960, 1996, 2000, 2024, 2056; ids 330200-330204), the same elements with the epoch's date replaced: day 366 graded on data (D-384)",
+     "1 synthetic-derived TLE set classified C (id 330205), the same elements with the classification replaced: a column 8 other than U read on data offline (D-404); left out of the writer case's inputs, where it waits for the owner (python-sgp4's writer path resets the classification to U)"
     ],
     "gaps": [
      "letters B-H, J-N, P-S and U-Z appear in no real catalog number yet (the catalog is at ~100789 and the only other 6-digit block is 27xxxx); the parse path reads them through the synthetic-derived file and the hooks through the vectors, and no fabricated data poses as catalog data: D-016 stands, with every synthetic input naming its source record (D-286)",
@@ -2102,7 +2113,7 @@
    ],
    "expected": "fixtures/alpha5-tle-derived/expected.json",
    "case_doc": "fixtures/alpha5-tle-derived/case.md",
-   "record_count": 750,
+   "record_count": 756,
    "sources": [
     {
      "path": "derived/alpha5-tle/alpha5-A-100000-saramago-first.tle",
@@ -2181,12 +2192,38 @@
      "provenance": "synthetic-derived",
      "record_count": 100,
      "provenance_file": "derived/alpha5-tle/alpha5-synthetic-epoch-years.provenance.json"
+    },
+    {
+     "path": "derived/alpha5-tle/alpha5-synthetic-day-366.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-05T13:09:56Z",
+     "http_status": null,
+     "bytes": 840,
+     "sha256": "4068333813257b8a053e2c07c0e1da5dbaef176fdda37c23f49cc63bb69cada9",
+     "provenance": "synthetic-derived",
+     "record_count": 5,
+     "provenance_file": "derived/alpha5-tle/alpha5-synthetic-day-366.provenance.json"
+    },
+    {
+     "path": "derived/alpha5-tle/alpha5-synthetic-classification.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-08T09:17:13Z",
+     "http_status": null,
+     "bytes": 168,
+     "sha256": "dfacc4d228ee81dd5ba61621c86c35dcdfc4350a3a7f76b6e704e7cd046e8f5c",
+     "provenance": "synthetic-derived",
+     "record_count": 1,
+     "provenance_file": "derived/alpha5-tle/alpha5-synthetic-classification.provenance.json"
     }
    ]
   },
   {
    "id": "kvn-syntax-variants",
-   "title": "CCSDS-legal KVN renderings of one record that CelesTrak never emits",
+   "title": "CCSDS-legal KVN renderings of one record that CelesTrak never emits, and one synthetic-derived file of day-366 and post-2038 epochs",
    "kind": "derived-kvn",
    "tests": [
     "kvn-syntax"
@@ -2204,7 +2241,8 @@
      "bracketed units",
      "COMMENT and blank lines, irregular whitespace, TAB, LF endings",
      "OMM 3.0 header with optional TLE parameters omitted",
-     "signed integers and lowercase exponent"
+     "signed integers and lowercase exponent",
+     "eight synthetic-derived OMM messages (ids 99990-99997), the baseline values with a replaced EPOCH: five on 31 December, day 366, of a leap year (1960, 1996, 2000, 2024, 2056), two of them in the day-of-year form (D-384); three at 2038-01-19T03:14:07 and 03:14:08, the last second a signed 32-bit time_t holds and the next, and 2050-06-15 (D-385)"
     ],
     "gaps": [
      "lowercase normative text values (7.5.3) and the 254-character line limit are not exercised",
@@ -2218,7 +2256,7 @@
    "library_findings": [],
    "expected": "fixtures/kvn-syntax-variants/expected.json",
    "case_doc": "fixtures/kvn-syntax-variants/case.md",
-   "record_count": 6,
+   "record_count": 14,
    "sources": [
     {
      "path": "derived/kvn-variants/v01-baseline-reserialised.kvn",
@@ -2297,6 +2335,19 @@
      "provenance": "derived",
      "record_count": 1,
      "provenance_file": "derived/kvn-variants/v06-signed-integers-lowercase-exponent.provenance.json"
+    },
+    {
+     "path": "derived/kvn-variants/v08-synthetic-epochs.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "url": null,
+     "retrieved_at": "2026-11-05T13:57:24Z",
+     "http_status": null,
+     "bytes": 5820,
+     "sha256": "3e39e9dabea6b4ae6ee8f8ecf8b1c5abaaae7b388c75570005a6046b1399ac33",
+     "provenance": "synthetic-derived",
+     "record_count": 8,
+     "provenance_file": "derived/kvn-variants/v08-synthetic-epochs.provenance.json"
     }
    ]
   },
@@ -2315,13 +2366,14 @@
     "tle-writer-column-layout",
     "tle-writer-round-trip",
     "tle-writer-refuses-unencodable",
+    "tle-writer-secondary-not-changed",
     "tle-writer-secondary-fields",
     "tle-writer-matches-provider-rendering"
    ],
    "evidence_basis": [
     "Inputs are records already frozen in this corpus (the v0.1.0 expected values of stable-tier sources): the 604 derived Alpha-5 TLE sets (603 distinct ids, letters A and T), the first ISS record (1998 epoch, negative first derivative, non-zero second derivative, zero BSTAR), the first record of 69999 (negative BSTAR and first derivative) and the first record of analyst 81011 (blank international designator, empty OBJECT_ID). No new provider request and no new raw bytes.",
     "Three inputs are synthetic-derived (PLAN.md section 2.1; owner approval 2026-09-22, DECISIONS D-096): the SARAMAGO first record with NORAD_CAT_ID replaced by 340000, 799501621 and -1, the values of vectors/alpha5.json encode_unrepresentable. The elements are real; the ids are specification vectors that no catalogued object carries. The correct output for them is a refusal.",
-    "One input is synthetic-derived for a field form (DECISIONS D-125): SARAMAGO's elements with the catalog number replaced by the five-digit vector 99999 and BSTAR replaced by 1.2345, the positive-exponent form (' 12345+1') that no fetched record carries; its expected TLE fields are rendered by the corpus, and it is a specification vector, not a catalogued object.",
+    "Two inputs are synthetic-derived for a field form (DECISIONS D-125, D-399): SARAMAGO's elements with the catalog number replaced by the five-digit vector 99999 and BSTAR replaced by 1.2345, the positive-exponent form (' 12345+1') that no fetched record carries, and with the catalog number replaced by 99998 and the eccentricity by 0 (field '0000000'), which none of the frozen records has; their expected TLE fields are rendered by the corpus, and each is a specification vector, not a catalogued object.",
     "The precision rule (a written field equals the input quantised at the field's resolution by truncation or by rounding half up) rests on the evidence of tle-vs-omm-precision-loss: CelesTrak truncates the eccentricity and rounds the mantissas (304 of 304 fetched TLE sets), Space-Track rounds the eccentricity (D-070, D-071). A writer may follow either provider; the corpus reports which convention it observed."
    ],
    "coverage": {
@@ -2348,7 +2400,7 @@
    ],
    "expected": "fixtures/tle-writer-alpha5/expected.json",
    "case_doc": "fixtures/tle-writer-alpha5/case.md",
-   "record_count": 756,
+   "record_count": 762,
    "sources": [
     {
      "path": "derived/alpha5-tle/alpha5-A-100000-saramago-first.tle",
@@ -2401,6 +2453,19 @@
      "provenance": "derived",
      "record_count": 346,
      "provenance_file": "derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.provenance.json"
+    },
+    {
+     "path": "derived/alpha5-tle/alpha5-synthetic-day-366.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-05T13:09:56Z",
+     "http_status": null,
+     "bytes": 840,
+     "sha256": "4068333813257b8a053e2c07c0e1da5dbaef176fdda37c23f49cc63bb69cada9",
+     "provenance": "synthetic-derived",
+     "record_count": 5,
+     "provenance_file": "derived/alpha5-tle/alpha5-synthetic-day-366.provenance.json"
     },
     {
      "path": "derived/alpha5-tle/alpha5-synthetic-epoch-years.tle",
@@ -2516,7 +2581,7 @@
   },
   {
    "id": "corrupt-input",
-   "title": "Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, an invalid catalog field, a file cut mid-record",
+   "title": "Corrupt input among valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, an invalid catalog field, two lines naming different objects, a file cut mid-record",
    "kind": "corrupt-input",
    "tests": [
     "corrupt-input",
@@ -2529,6 +2594,7 @@
     "corrupt-tle-letter-in-number",
     "corrupt-tle-missing-line-2",
     "corrupt-tle-invalid-catalog-field",
+    "corrupt-tle-line-fields-differ",
     "corrupt-file-cut",
     "corrupt-input-neighbours-load",
     "catalog-number-is-integer"
@@ -2542,10 +2608,10 @@
    ],
    "coverage": {
     "provides": [
-     "six corrupt inputs, each one stated edit of 69999's first record (a stable-tier record): line 1's checksum digit changed from 6 to 1; line 2 one character short, the eccentricity's fourth digit (column 30) lost so that every column after it moves left; the letter O for the 0 in column 26 of line 1, inside the epoch field, the checksum still valid; line 1 with no line 2 after it; the catalog field I9999, an invalid Alpha-5 field, on both lines, both checksums recomputed (D-360); the file cut mid-record, as a CSV that ends inside its last row's MEAN_MOTION_DOT value and as a JSON array whose closing bracket is missing",
-     "each TLE input between two valid sets, 25544's first record before it and 20453 from the decaying snapshot after it, so that the counts on the neighbours measure whether a parser picks up again; the CSV holds the same two records before the cut row, the JSON all three records complete",
+     "eleven corrupt inputs, each one stated edit of 69999's first record (a stable-tier record): line 1's checksum digit changed from 6 to 1; line 2 one character short, the eccentricity's fourth digit (column 30) lost so that every column after it moves left; the letter O for the 0 in column 26 of line 1, inside the epoch field, the checksum still valid; line 1 with no line 2 after it; the catalog field I9999, an invalid Alpha-5 field, on both lines, both checksums recomputed (D-360); the same with O9999 (D-391); line 2's catalog field 69998 under line 1's 69999, line 2's checksum recomputed (D-391); input 3's edit with the corrupt set first, last, and second of five sets (27153 and 39473 joining the neighbours), so that no layout is the only one (D-394); the file cut mid-record, as a CSV that ends inside its last row's MEAN_MOTION_DOT value and as a JSON array whose closing bracket is missing",
+     "each TLE input among valid sets: inputs 1 to 4 and 6 to 8 between 25544's first record before them and 20453 from the decaying snapshot after them; input 9 first, before those two; input 10 last, after them; input 11 second of five, with 27153 and 39473 from the same snapshot after 20453 (D-394); so that the counts on the neighbours measure whether a parser picks up again; the CSV holds the same two records before the cut row, the JSON all three records complete",
      "no provider file: every record rendered by the corpus from values frozen in this corpus's public expected.json files, a public clone rebuilding the same bytes",
-     "three unedited files, the inputs' records with no edit (one TLE file for inputs 1 to 4 and 6, the CSV with its last row whole, the JSON array closed), against which every record a parser returns from an input is compared (D-175)",
+     "six unedited files, the inputs' records with no edit (one TLE file for inputs 1 to 4 and 6 to 8, one for each of inputs 9 to 11 in its own layout, the CSV with its last row whole, the JSON array closed), against which every record a parser returns from an input is compared (D-175)",
      "values graded without fetched data: the unedited CSV and JSON files are also held to the frozen expected values (D-299), and so is the unedited TLE file (D-342), and one derived XML file, the ISS first record re-serialised (derived/kvn-variants/v07-xml-ndm-reserialised.xml), is graded for its values; the records carry negative drag terms"
     ],
     "gaps": [
@@ -2563,7 +2629,7 @@
    ],
    "expected": "fixtures/corrupt-input/expected.json",
    "case_doc": "fixtures/corrupt-input/case.md",
-   "record_count": 21,
+   "record_count": 38,
    "sources": [
     {
      "path": "derived/corrupt-input/c1-checksum-digit.tle",
@@ -2631,6 +2697,71 @@
      "provenance_file": "derived/corrupt-input/c6-invalid-catalog-field.provenance.json"
     },
     {
+     "path": "derived/corrupt-input/c7-letter-o-catalog-field.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-07T04:24:53Z",
+     "http_status": null,
+     "bytes": 504,
+     "sha256": "2ff35b3c89c2f9b870c1d426f09464a524003857940543ba235b4ab46d0d4d22",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c7-letter-o-catalog-field.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/c8-line-fields-differ.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-07T04:24:53Z",
+     "http_status": null,
+     "bytes": 504,
+     "sha256": "b5315c0130e0f6997e79b6d3f1e70bd259c79125ccf4810f5a9124fef6f3c9c9",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c8-line-fields-differ.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/c9-letter-in-epoch-first.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-07T15:15:40Z",
+     "http_status": null,
+     "bytes": 504,
+     "sha256": "54eb35fe0c0210c3bdb05c55a362fe19b01755f44b492bd904cc01543c59a393",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c9-letter-in-epoch-first.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/c10-letter-in-epoch-last.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-07T15:15:40Z",
+     "http_status": null,
+     "bytes": 504,
+     "sha256": "a29cb25e157bf08dfac89b5aa9e3793198a97836b80f3d3e917c6b60b7478777",
+     "provenance": "synthetic-derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/c10-letter-in-epoch-last.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/c11-letter-in-epoch-second-of-five.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-07T15:15:40Z",
+     "http_status": null,
+     "bytes": 840,
+     "sha256": "0e9d60fab428fcd8d94ffd2cf56ea41b2d6b6cb337bb2af6f591fa8f07543a66",
+     "provenance": "synthetic-derived",
+     "record_count": 5,
+     "provenance_file": "derived/corrupt-input/c11-letter-in-epoch-second-of-five.provenance.json"
+    },
+    {
      "path": "derived/corrupt-input/c5-cut-last-row.csv",
      "tier": "stable",
      "format": "csv",
@@ -2661,13 +2792,52 @@
      "tier": "stable",
      "format": "tle",
      "url": null,
-     "retrieved_at": "2026-10-26T11:16:07Z",
+     "retrieved_at": "2026-11-07T04:25:11Z",
      "http_status": null,
      "bytes": 504,
      "sha256": "6d53b5f62556841e73b55c3a969d230f31510c5fbb45f145b468a2e429b204d6",
      "provenance": "derived",
      "record_count": 3,
      "provenance_file": "derived/corrupt-input/unedited-sets.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/unedited-first.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-07T15:15:40Z",
+     "http_status": null,
+     "bytes": 504,
+     "sha256": "f6cb69367cd58ad289417c902cb33e54f2453394d3551c9d982a98ac8280f66e",
+     "provenance": "derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/unedited-first.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/unedited-last.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-07T15:15:40Z",
+     "http_status": null,
+     "bytes": 504,
+     "sha256": "37796d4efab18549714c4d397f8b0253c0b2bf7978362a877e5affa10b42d962",
+     "provenance": "derived",
+     "record_count": 3,
+     "provenance_file": "derived/corrupt-input/unedited-last.provenance.json"
+    },
+    {
+     "path": "derived/corrupt-input/unedited-five.tle",
+     "tier": "stable",
+     "format": "tle",
+     "url": null,
+     "retrieved_at": "2026-11-07T15:15:40Z",
+     "http_status": null,
+     "bytes": 840,
+     "sha256": "2f67b1e30d8ea6b1532d2b465b3da5a817ac9fb31a904a9e5508faa1497932eb",
+     "provenance": "derived",
+     "record_count": 5,
+     "provenance_file": "derived/corrupt-input/unedited-five.provenance.json"
     },
     {
      "path": "derived/corrupt-input/unedited-rows.csv",
@@ -2707,6 +2877,241 @@
      "provenance": "derived",
      "record_count": 1,
      "provenance_file": "derived/kvn-variants/v07-xml-ndm-reserialised.provenance.json"
+    }
+   ]
+  },
+  {
+   "id": "sgp4-ver-propagation",
+   "title": "Propagation against Vallado's SGP4 verification file: 33 element sets, TEME position and velocity within 2e-7, SGP4 error codes exact",
+   "kind": "propagation",
+   "tests": [
+    "sgp4-propagation"
+   ],
+   "checks": [
+    "sgp4-ver-positions",
+    "sgp4-ver-error-codes"
+   ],
+   "evidence_basis": [
+    "The reference is Vallado, Crawford, Hujsak and Kelso's verification pair from the code accompanying AIAA 2006-6753: SGP4-VER.TLE (33 element sets, each with its run of minutes) and tcppver.out (the C++ driver's TEME position and velocity per step). gpconf ships neither file (D-388): it locates them (--sgp4-ver, else the installed python-sgp4 package, which carries both) and holds them to the corpus's manifest of their bytes before grading.",
+    "The bar, 2e-7 km and km/s per component, is python-sgp4's own test bar for these files (the owner's ruling on lane C's question 5, 2026-11-01); python-sgp4 2.27 lands within 9.7e-8 km and 5e-10 km/s on all 33 (measured 2026-11-08), and with WGS-84 constants fails 32 of them.",
+    "The error codes and the steps they come at are the corpus's own measurement, in the manifest (tools/make_vallado_manifest.py), cross-checked with python-sgp4's published list."
+   ],
+   "coverage": {
+    "provides": [
+     "33 element sets: near-earth and deep-space, resonant and synchronous orbits, low perigee, high eccentricity, the branches SGP4-VER.TLE's comments name; 7 runs ending in an SGP4 error (codes 1, 1, 6, 6, 4, 3, 6), one of them at t = 0"
+    ],
+    "gaps": [
+     "graded only where Vallado's files are on the machine (the hash manifest, D-388)",
+     "WGS-72 and opsmode 'i' only; WGS-84 report-only, later (the owner's ruling, 2026-10-25)",
+     "TLE input only: the TLE/OMM twins (D-406) and the ephemeris-type-4 case (D-409) are their own cases; fuzzing is gpconf fuzz, outside the cases (D-415)"
+    ]
+   },
+   "ambiguities": [],
+   "library_findings": [],
+   "expected": "fixtures/sgp4-ver-propagation/expected.json",
+   "case_doc": "fixtures/sgp4-ver-propagation/case.md",
+   "record_count": 0,
+   "sources": [
+    {
+     "path": "harnesses/vallado/reference-manifest.json",
+     "tier": "stable",
+     "format": "manifest-json",
+     "bytes": 5732,
+     "sha256": "e090af8edb3ee64120c774aefa47276961205cd48db6e0f9cd58e26d343d4b3b",
+     "provenance": "corpus measurement"
+    }
+   ]
+  },
+  {
+   "id": "propagation-tle-omm-twins",
+   "title": "Propagation from a TLE and from its exact OMM twin: seven shipped sets, the corpus's own reference vectors, within 2e-7",
+   "kind": "propagation-twins",
+   "tests": [
+    "sgp4-propagation",
+    "tle-omm-equivalence"
+   ],
+   "checks": [
+    "twins-tle-positions",
+    "twins-omm-positions",
+    "twins-tle-omm-agree"
+   ],
+   "evidence_basis": [
+    "The sets are ones the corpus already ships (derived/corrupt-input/unedited-sets.tle: 25544 at its 1998 epoch, 20453, 69999; derived/alpha5-tle: 100000, 100686, 100530, 270354), copied byte for byte: near-earth and deep-space, low and high eccentricity, Alpha-5 ids. Each OMM CSV twin holds exactly the TLE's values as the corpus's reference reader reads them, the epoch's eight-digit day fraction a whole number of 864 microseconds (tools/derive_twins.py).",
+    "The reference vectors are the corpus's own (the owner's ruling on lane C's question 3, 2026-11-01): SGP4's output by Vallado's C++ (tools/sgp4_reference_vectors.cpp, built against SGP4.cpp at the recipe's pin), WGS-72 and opsmode 'i', cross-checked with python-sgp4 2.27 at every step."
+   ],
+   "coverage": {
+    "provides": [
+     "7 TLE sets and their exact OMM CSV twins, 6 times each, near-earth and deep-space"
+    ],
+    "gaps": [
+     "OMM CSV only: the other OMM formats' twins are later",
+     "seven shipped sets, not the design's 33 SGP4-VER sets (never shipped, D-388) or the 304 provider pairs, whose OMM carries more digits than the TLE and which are to be reported, never graded (lane C's design section 3)",
+     "the epoch is graded through the two deep-space sets only; MEAN_MOTION_DOT and MEAN_MOTION_DDOT, which SGP4 does not use, not at all",
+     "every reference step propagates: the codes catch a false decay, not a missing error",
+     "WGS-72 and opsmode 'i' only"
+    ]
+   },
+   "ambiguities": [],
+   "library_findings": [],
+   "expected": "fixtures/propagation-tle-omm-twins/expected.json",
+   "case_doc": "fixtures/propagation-tle-omm-twins/case.md",
+   "record_count": 0,
+   "sources": [
+    {
+     "path": "derived/propagation-twins/twins.tle",
+     "tier": "stable",
+     "format": "tle",
+     "bytes": 1176,
+     "sha256": "a764b0f23df5399c3f2c37eb6ca4ce9b58eb4bb958f709a23c1f36c406991572",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/propagation-twins/twins.csv",
+     "tier": "stable",
+     "format": "csv",
+     "bytes": 1248,
+     "sha256": "16c5ba64b47f7a6f864774efabb7251ee0aeba73c67819572c1b55c79147c776",
+     "provenance": "derived"
+    },
+    {
+     "path": "vectors/propagation-twins.json",
+     "tier": "stable",
+     "format": "vectors-json",
+     "bytes": 12895,
+     "sha256": "6fa8c3717f3b91f7c6837f80c0592fbedf7203cdedaa064bc8c2a84d94b053b4",
+     "provenance": "corpus measurement"
+    }
+   ]
+  },
+  {
+   "id": "ephemeris-type-4-refused",
+   "title": "An SGP4-XP element set (ephemeris type 4) is refused, never propagated as SGP4; its type-0 twin propagates",
+   "kind": "propagation-type4",
+   "tests": [
+    "sgp4-propagation",
+    "ephemeris-type"
+   ],
+   "checks": [
+    "type4-not-propagated",
+    "type4-twins-propagate"
+   ],
+   "evidence_basis": [
+    "Ephemeris type 4 marks an element set made for SGP4-XP, whose model and drag term differ from SGP4's; SGP4 run on one gives a position that looks right, with no error code. Vallado's C++ at the recipe's pin does not initialise a set whose type is not 0 ('the ephtype must be 0 for SGP4. SGP4-XP uses 4', SGP4.cpp's twoline2rv), so its propagation answers an error code at every step; python-sgp4 2.27 reads the type and propagates the set exactly as type 0, from the TLE and from OMM CSV (measured 2026-11-09; the owner's report https://github.com/brandon-rhodes/python-sgp4/issues/178).",
+    "The inputs are set 20453 from derived/propagation-twins/twins.tle, which the corpus already ships, with line 1 column 63 set to 4 and the checksum recomputed, and OMM files whose values are exactly the TLE's; MEAN_ELEMENT_THEORY = SGP4-XP in one KVN is the corpus's spelling, labelled synthetic: how a provider writes it is not read, and the case grades EPHEMERIS_TYPE alone (the owner's ruling, 2026-11-01)."
+   ],
+   "coverage": {
+    "provides": [
+     "one near-earth set with a non-zero BSTAR, type 4 and type 0, in TLE and the four OMM formats, six times each"
+    ],
+    "gaps": [
+     "one set; SGP4-XP itself is not graded: gpconf has no SGP4-XP reference, and an adapter that claims it is not graded on the type-4 files",
+     "ephemeris types 1 to 3 out of scope for 0.9.0 (the owner's ruling)",
+     "an adapter's claim of SGP4-XP is taken as given: a library that claims it and propagates as SGP4 is not caught",
+     "beside an error code at every step, only three finite numbers not all zero count as a position: SGP4's positions sent as strings are not caught",
+     "WGS-72 and opsmode 'i' only for the twins"
+    ]
+   },
+   "ambiguities": [],
+   "library_findings": [],
+   "expected": "fixtures/ephemeris-type-4-refused/expected.json",
+   "case_doc": "fixtures/ephemeris-type-4-refused/case.md",
+   "record_count": 0,
+   "sources": [
+    {
+     "path": "derived/ephemeris-type-4/type4.tle",
+     "tier": "stable",
+     "format": "tle",
+     "bytes": 168,
+     "sha256": "01859a919ae42f902f6e075af7ce46e73821f00076c66b688fd9796cf101fa78",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type4.csv",
+     "tier": "stable",
+     "format": "csv",
+     "bytes": 463,
+     "sha256": "51a2fa37f61468d5ad88280efbb829fcf9d73c7a7b5f702b23c9b0690bb60f36",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type4.json",
+     "tier": "stable",
+     "format": "json",
+     "bytes": 524,
+     "sha256": "3512f770263c7c6cf7a3542912a6a755b77dd041084d2a54dfba5add3d45537c",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type4.xml",
+     "tier": "stable",
+     "format": "xml",
+     "bytes": 1123,
+     "sha256": "1ff0551c972ef2cd0800211caaaaa44b7c1fa24a870506a1446171e3eae6ed8b",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type4.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "bytes": 788,
+     "sha256": "3cb851a38916465aeec2d7bb53efe12fb0de433bbc1e7bd3e89b188c7445ff39",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type4-sgp4-xp.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "bytes": 791,
+     "sha256": "d7b7abfec445374a12b5c05036b6a450cb36d168249d7cf081866896af1ed1e5",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type0.tle",
+     "tier": "stable",
+     "format": "tle",
+     "bytes": 168,
+     "sha256": "b3ad06c19a98463b0218a924717ea8acf4e9289ca56bb6815ca3a5038d380d26",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type0.csv",
+     "tier": "stable",
+     "format": "csv",
+     "bytes": 463,
+     "sha256": "93fd3b83d74dc0b40651df917ca471cc84a48e02c8c81ef48014c7dfe666abd8",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type0.json",
+     "tier": "stable",
+     "format": "json",
+     "bytes": 524,
+     "sha256": "850bdced13c2e776453329888a558b4cfd6c7cb17e66adef21279334ba021549",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type0.xml",
+     "tier": "stable",
+     "format": "xml",
+     "bytes": 1123,
+     "sha256": "070c332fa9623e0d012f5680e93da616b4138552c96ce2c6a0d40e5c2591c6e4",
+     "provenance": "derived"
+    },
+    {
+     "path": "derived/ephemeris-type-4/type0.kvn",
+     "tier": "stable",
+     "format": "kvn",
+     "bytes": 788,
+     "sha256": "137e315bd2ce7a6d9b1814c8e7b46fdbe8f5c2ef7ea7be339e508f0b6c353883",
+     "provenance": "derived"
+    },
+    {
+     "path": "vectors/propagation-twins.json",
+     "tier": "stable",
+     "format": "vectors-json",
+     "bytes": 12895,
+     "sha256": "6fa8c3717f3b91f7c6837f80c0592fbedf7203cdedaa064bc8c2a84d94b053b4",
+     "provenance": "corpus measurement"
     }
    ]
   }

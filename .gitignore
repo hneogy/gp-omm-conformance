@@ -28,3 +28,7 @@ spacetrack-verify/
 # The verification TOOL is source code, not data: the only exception to the guard above.
 !tools/verify_against_spacetrack.py
 .hypothesis/
+
+# Vallado's two verification files as `gpconf fetch --include-propagation` downloads them into a clone (D-455):
+# never committed, as they are not shipped (D-388).
+/propagation/

@@ -140,6 +140,10 @@ class Limits(unittest.TestCase):
             @property
             def eof(self):
                 return self.d.eof
+
+            @property
+            def unused_data(self):   # read since D-405, which decodes every gzip member
+                return self.d.unused_data
         fetch.zlib.decompressobj = Spy
         try:
             self.go(gzip.compress(DATA, mtime=0), "gzip")

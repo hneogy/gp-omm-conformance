@@ -329,6 +329,12 @@ def build_derived_tle(case, out_sources, out_records):
                 if years:
                     yy = f"{t['norad_cat_id'] - 330100:02d}"
                     canon["epoch"] = f"{years[yy]:04d}" + canon["epoch"][4:]
+                dates = prov.get("epoch_date_by_id")  # the day-366 file: the epoch's date replaced (D-384)
+                if dates:
+                    canon["epoch"] = dates[str(t["norad_cat_id"])] + canon["epoch"][10:]
+                classes = prov.get("classification_by_id")  # the classification file: column 8 replaced (D-404)
+                if classes:
+                    canon["classification_type"] = classes[str(t["norad_cat_id"])]
                 anomalies = prov.get("mean_anomaly_by_id")  # the letters file: each set its own mean anomaly (D-372)
                 if anomalies:
                     canon["mean_anomaly"] = type(canon["mean_anomaly"])(anomalies[str(t["norad_cat_id"])])
@@ -355,6 +361,24 @@ def build_derived_kvn(case, out_sources, out_records):
         prov = json.load(open(os.path.join(ROOT, path.rsplit(".", 1)[0] + ".provenance.json"), encoding="utf-8"))
         _, recs, facts = gpref.read_file(os.path.join(ROOT, path))
         out_sources[path] = source_entry(path, "stable", fmt=path.rsplit(".", 1)[-1], facts=facts, record_count=len(recs))
+        if prov.get("epoch_by_id"):   # the synthetic-epoch file: the base record's values, each id its own epoch (D-384)
+            for r in recs:
+                want = dict(canon, norad_cat_id=r["norad_cat_id"], epoch=prov["epoch_by_id"][str(r["norad_cat_id"])])
+                got_epoch = r["epoch"].rstrip("Z")
+                if len(got_epoch.split("T")[0]) == 8:   # day-of-year form: the record's instant in the calendar form
+                    t = dt.datetime.strptime(got_epoch, "%Y-%jT%H:%M:%S.%f")
+                    want["epoch"] = t.strftime("%Y-%m-%dT%H:%M:%S.%f")
+                diffs = {k: r.get(k) for k in CANON_KEYS if k not in ("norad_cat_id", "epoch")
+                         and (Decimal(want[k]) != Decimal(r[k]) if k in gpref.DECIMAL_KEYS.values() and want.get(k) is not None and r.get(k) is not None
+                              else want.get(k) != r.get(k))}
+                if diffs:
+                    PROBLEMS.append(f"derived kvn {path} id {r['norad_cat_id']}: value differences from base {diffs}")
+                out_records.append({"norad_cat_id": r["norad_cat_id"], "set": "variants", "tier": "stable", "derived_file": os.path.basename(path),
+                                    "provenance": "synthetic-derived", "transform": prov["description"],
+                                    "ccsds_clauses": prov["ccsds_502_0_b3_clauses"], "canonical": want,
+                                    "values_identical_to_base": False, "differences": {"norad_cat_id": r["norad_cat_id"], "epoch": want["epoch"]},
+                                    "as_written": {"epoch": r["epoch"]}, "keywords_absent": [], "kvn": r.get("kvn")})
+            continue
         r = recs[0]
         diffs = {}
         for k in CANON_KEYS:
@@ -413,6 +437,8 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
         e = json.load(open(os.path.join(ROOT, "fixtures", spec["case"], "expected.json"), encoding="utf-8"))
         for r in e["records"]:
             if spec.get("set") and r.get("set") != spec["set"]:
+                continue
+            if r.get("derived_file") in spec.get("exclude_files", ()):   # a set held out of the writer's inputs (D-404)
                 continue
             if r.get("tier") != "stable":
                 PROBLEMS.append(f"writer input {spec['case']} id {r['norad_cat_id']}: not a stable-tier record; only frozen records may be inputs")
@@ -475,14 +501,15 @@ def build_writer(case, out_sources, out_records, out_notes, case_specific):
         rec[sv["field"]] = sv["value"]
         l0, l1, l2 = R.render(R.omm_fields_from_record(rec), mantissa_mode="round", ecc_mode="truncate")
         fields = {k: v for k, v in gpref.parse_tle_lines(l0, l1, l2)["tle"].items() if k in REFERENCE_TLE_FIELD_KEYS}
-        if fields[sv["field"] + "_field"] != sv["expected_tle_field"]:
-            PROBLEMS.append(f"synthetic field vector {sv['norad_cat_id']}: rendered {fields[sv['field'] + '_field']!r}, expected {sv['expected_tle_field']!r}")
+        key = sv.get("tle_field", sv["field"] + "_field")   # the reader's name for the field: ecc_field for the eccentricity (D-399)
+        if fields[key] != sv["expected_tle_field"]:
+            PROBLEMS.append(f"synthetic field vector {sv['norad_cat_id']}: rendered {fields[key]!r}, expected {sv['expected_tle_field']!r}")
         out_records.append({"norad_cat_id": sv["norad_cat_id"], "role": "input", "provenance": "synthetic-derived", "tier": "stable",
                             "from_case": sv["from_case"], "from_file": b2_file, "source_file": b2_file, "source_sha256": e2["sources"][b2_file]["sha256"],
                             "synthetic_changes": [{"field": "NORAD_CAT_ID", "from": b2["norad_cat_id"], "to": sv["norad_cat_id"], "vector_source": sv["id_vector_source"]},
                                                   {"field": sv["field"].upper(), "from": b2["canonical"][sv["field"]], "to": sv["value"], "vector_source": sv["value_vector_source"], "reason": sv["reason"]}],
                             "canonical": rec, "representable_in_tle": True, "expected_catalog_field": R.to_alpha5(sv["norad_cat_id"]), "expected_behaviour": "write",
-                            "expected_tle_field": {sv["field"] + "_field": sv["expected_tle_field"]},
+                            "expected_tle_field": {key: sv["expected_tle_field"]},
                             "reference_rendering": "corpus-rendered", "reference_tle_fields": fields, "note": sv["note"]})
         n_vectors += 1
     for path in sorted(files):
@@ -502,6 +529,7 @@ CORRUPT_EXPECTED = {  # per check: what the corrupt record must come to, and wha
     "corrupt-tle-letter-in-number": ("refuse", "fail", "read the epoch field with a letter in it as a number"),
     "corrupt-tle-missing-line-2": ("refuse", "fail", "read a set that has no line 2"),
     "corrupt-tle-invalid-catalog-field": ("refuse", "fail", "read the invalid catalog field as a catalog number (D-360)"),
+    "corrupt-tle-line-fields-differ": ("refuse", "fail", "read a set whose two lines name different objects as one record (D-391)"),
     "corrupt-file-cut": ("refuse", "fail", "read the cut row as a record"),
 }
 
@@ -622,7 +650,7 @@ def build_corrupt_input(case, out_sources, out_records, out_notes, case_specific
                       "cut_file": "a whole-file refusal of a cut file passes; the complete records it gives up are counted (owner decision 3)",
                       "shifted_column": "held, not included (owner decision 4)"},
     })
-    out_notes.append(f"{len(files)} files, {len(out_records)} records ({sum(1 for r in out_records if r['role'] == 'corrupt')} corrupt); synthetic-derived under the D-096 precedent, owner approval 2026-09-27 (D-171) and, for the sixth input, 2026-10-23 (D-360).")
+    out_notes.append(f"{len(files)} files, {len(out_records)} records ({sum(1 for r in out_records if r['role'] == 'corrupt')} corrupt); synthetic-derived under the D-096 precedent, owner approval 2026-09-27 (D-171) and, for the sixth input, 2026-10-23 (D-360); the seventh and eighth on the owner's instruction of 2026-11-07 to carry on through the plan that lists them, not approved by name (D-391).")
 
 
 def main():
@@ -688,6 +716,30 @@ def main():
             build_writer(case, out["sources"], out["records"], out["notes"], out["case_specific"])
         elif kind == "corrupt-input":
             build_corrupt_input(case, out["sources"], out["records"], out["notes"], out["case_specific"])
+        elif kind == "propagation-twins":   # the twins and the corpus's own reference vectors, all shipped (D-406)
+            for path in case["files"]:
+                sha, n = sha_bytes(path)
+                out["sources"][path] = {"tier": "stable", "format": "vectors-json" if path.startswith("vectors/") else path.rsplit(".", 1)[1], "bytes": n, "sha256": sha,
+                                        "provenance": "corpus measurement" if path.startswith("vectors/") else "derived"}
+            vec = json.load(open(os.path.join(ROOT, "vectors", "propagation-twins.json"), encoding="utf-8"))
+            out["case_specific"] = {"bar_km_and_km_s": vec["bar_km_and_km_s"], "times": vec["times"], "set_count": len(vec["sets"]),
+                                    "generated_with": vec["generated_with"], "cross_check": vec["cross_check"]}
+        elif kind == "propagation-type4":   # the type-4 files and their type-0 twins, graded against the twins' vectors (D-409)
+            for path in case["files"]:
+                sha, n = sha_bytes(path)
+                out["sources"][path] = {"tier": "stable", "format": "vectors-json" if path.startswith("vectors/") else path.rsplit(".", 1)[1], "bytes": n, "sha256": sha,
+                                        "provenance": "corpus measurement" if path.startswith("vectors/") else "derived"}
+            vec = json.load(open(os.path.join(ROOT, "vectors", "propagation-twins.json"), encoding="utf-8"))
+            out["case_specific"] = {"bar_km_and_km_s": vec["bar_km_and_km_s"], "times": vec["times"], "norad_cat_id": 20453,
+                                    "type_4_files": sorted(p.rsplit("/", 1)[1] for p in case["files"] if "/type4" in p),
+                                    "graded_on": "EPHEMERIS_TYPE alone (the owner's ruling, 2026-11-01)"}
+        elif kind == "propagation":   # the reference is located at run time; only the corpus's own manifest ships (D-388, D-401)
+            path = case["reference_manifest"]
+            sha, n = sha_bytes(path)
+            out["sources"][path] = {"tier": "stable", "format": "manifest-json", "bytes": n, "sha256": sha, "provenance": "corpus measurement"}
+            man = json.load(open(os.path.join(ROOT, path), encoding="utf-8"))
+            out["case_specific"] = {"bar_km_and_km_s": 2e-7, "gravity": "wgs72", "opsmode": "i", "set_count": man["set_count"],
+                                    "error_runs": sum(1 for s in man["sets"] if s.get("error"))}
         d = os.path.join(ROOT, "fixtures", case["id"])
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(d, "expected.json"), "w", encoding="utf-8") as f:

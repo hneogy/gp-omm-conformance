@@ -1,0 +1,47 @@
+{
+  "file": "derived/alpha5-tle/alpha5-synthetic-day-366.tle",
+  "provenance": "synthetic-derived",
+  "label": "SYNTHETIC-DERIVED: one TLE set per leap year (1960, 1996, 2000, 2024, 2056) with its epoch on 31 December, day 366, rendered from one real CelesTrak record with the epoch's date and the catalog number replaced; not served by any provider",
+  "description": "Day 366 of five leap years, each under its own synthetic id (Z0200-Z0204): the epoch field's day 366 graded on data (D-384)",
+  "statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the epoch's date replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+  "source_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+  "source_sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+  "source_url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=CSV",
+  "source_retrieved_at": "2026-09-21T00:43:55Z",
+  "synthetic_source_norad_cat_id": 100000,
+  "generator": "tools/derive_alpha5.py",
+  "renderer": "tools/tlerender.py",
+  "renderer_settings": {
+    "mantissa_mode": "round",
+    "ecc_mode": "truncate",
+    "epoch_rounding": "ROUND_HALF_UP"
+  },
+  "renderer_validation": "tools/validate_render.py: 304/304 CelesTrak TLE records reproduced exactly (lines 0, 1, 2) with these settings on 2026-09-21",
+  "catalog_field_encoding": "Alpha-5 (Space-Track table: A=10 ... Z=33, I and O skipped)",
+  "record_count": 5,
+  "norad_cat_ids": [
+    330200,
+    330201,
+    330202,
+    330203,
+    330204
+  ],
+  "alpha5_letters": {
+    "Z": 5
+  },
+  "line_endings": "CRLF",
+  "output_sha256": "4068333813257b8a053e2c07c0e1da5dbaef176fdda37c23f49cc63bb69cada9",
+  "generated_at": "2026-11-05T13:09:56Z",
+  "known_differences_from_a_celestrak_tle": [
+    "the epochs are specification vectors: the record was never observed at these epochs",
+    "the catalog numbers (330200-330204, Z0200-Z0204) are specification vectors, not catalogued objects",
+    "the checksum is computed over the Alpha-5 line (letters count 0, minus signs count 1)"
+  ],
+  "epoch_date_by_id": {
+    "330200": "1960-12-31",
+    "330201": "1996-12-31",
+    "330202": "2000-12-31",
+    "330203": "2024-12-31",
+    "330204": "2056-12-31"
+  }
+}

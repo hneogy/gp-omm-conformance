@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
-"""The corpus's own wrong-on-purpose adapters for SM-26's findings S1 to S6, so that the public export, which leaves
-out SM-26's adapters until their permission is confirmed (D-367), still holds the grader to all six.
+"""The corpus's own wrong-on-purpose adapters for SM-26's findings S1 to S6, so that the public export, which left
+out SM-26's adapters until their permission was confirmed (D-367; exported from D-382), held the grader to all six.
 
 Written by lane C on 2026-10-28, independently: only from the findings as DECISIONS.md (D-280 to D-286), the changelog
 and docs/ADAPTERS.md describe them. tests/adversarial/sm26.py was never opened, read or copied, nor anything quoting

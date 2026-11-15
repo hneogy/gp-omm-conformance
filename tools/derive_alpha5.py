@@ -92,6 +92,8 @@ def main():
         print(f"{stem}.tle: {len(ids)} records, letters {letters}")
     summary.append(synthetic_letters())
     summary.append(synthetic_years())
+    summary.append(synthetic_day_366())
+    summary.append(synthetic_classification())
     return summary
 
 
@@ -212,6 +214,52 @@ def synthetic_years():
          "the catalog numbers (330100-330199, Z0100-Z0199) are specification vectors, not catalogued objects",
          "the checksum is computed over the Alpha-5 line (letters count 0, minus signs count 1)"],
         {"two_digit_year_to_year": years})
+
+
+DAY_366_YEARS = (1960, 1996, 2000, 2024, 2056)   # leap years across the pivot (60, 96, 00, 24, 56); 2000 by the 400 rule
+
+
+def synthetic_day_366():
+    """One TLE set per leap year above, its epoch on 31 December, day 366, so the parse path reads the one day of the
+    year a reader limited to 365 days loses: before, day 366 reached no reader but through one epoch vector, and a
+    reader dropping it passed every data case (SM-26's E1, R3, D-384). The elements are the SARAMAGO first record's;
+    the epoch keeps its time and takes the date; the catalog number is 330200 and up (Z0200...)."""
+    row, _ = _source_row()
+    rows, dates = [], {}
+    for k, year in enumerate(DAY_366_YEARS):
+        r = dict(row)
+        r["NORAD_CAT_ID"] = str(330200 + k)
+        r["EPOCH"] = f"{year:04d}-12-31" + row["EPOCH"][10:]
+        rows.append(r)
+        dates[str(330200 + k)] = f"{year:04d}-12-31"
+    return _write_synthetic(
+        "alpha5-synthetic-day-366", rows,
+        "SYNTHETIC-DERIVED: one TLE set per leap year (1960, 1996, 2000, 2024, 2056) with its epoch on 31 December, day 366, rendered from one real CelesTrak record with the epoch's date and the catalog number replaced; not served by any provider",
+        "Day 366 of five leap years, each under its own synthetic id (Z0200-Z0204): the epoch field's day 366 graded on data (D-384)",
+        " and the epoch's date replaced",
+        ["the epochs are specification vectors: the record was never observed at these epochs",
+         "the catalog numbers (330200-330204, Z0200-Z0204) are specification vectors, not catalogued objects",
+         "the checksum is computed over the Alpha-5 line (letters count 0, minus signs count 1)"],
+        {"epoch_date_by_id": dates})
+
+
+def synthetic_classification():
+    """One TLE set classified C, the classification CelesTrak's SupGP records carry, so the parse path reads a column 8
+    other than U offline: every other offline set is U, and a reader that hard-codes U passed every offline case (the
+    third blind pass's 1, D-404). The elements are the SARAMAGO first record's; the catalog number is 330205 (Z0205)."""
+    row, _ = _source_row()
+    r = dict(row)
+    r["NORAD_CAT_ID"] = "330205"
+    r["CLASSIFICATION_TYPE"] = "C"
+    return _write_synthetic(
+        "alpha5-synthetic-classification", [r],
+        "SYNTHETIC-DERIVED: one TLE set classified C, rendered from one real CelesTrak record with the classification and the catalog number replaced; not served by any provider",
+        "A TLE set classified C under a synthetic id (Z0205): the classification column read on data offline (D-404)",
+        " and the classification replaced by C",
+        ["the classification is a specification vector: the record was never classified C",
+         "the catalog number (330205, Z0205) is a specification vector, not a catalogued object",
+         "the checksum is computed over the Alpha-5 line (letters count 0, minus signs count 1)"],
+        {"classification_by_id": {"330205": "C"}})
 
 
 if __name__ == "__main__":

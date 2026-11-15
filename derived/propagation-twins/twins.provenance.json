@@ -1,0 +1,16 @@
+{
+  "files": [
+    "derived/propagation-twins/twins.tle",
+    "derived/propagation-twins/twins.csv"
+  ],
+  "provenance": "derived",
+  "statement": "Seven TLE sets the corpus already ships, copied byte for byte, and an OMM CSV twin of each whose values are exactly the TLE's as the corpus's reference reader reads them; no value is invented (D-406).",
+  "sources": [
+    "derived/corrupt-input/unedited-sets.tle",
+    "derived/alpha5-tle/alpha5-A-100000-saramago-first.tle",
+    "derived/alpha5-tle/alpha5-A-last-30-days-snapshot.tle",
+    "derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle"
+  ],
+  "generator": "tools/derive_twins.py",
+  "generated_at": "2026-11-08T12:12:14Z"
+}

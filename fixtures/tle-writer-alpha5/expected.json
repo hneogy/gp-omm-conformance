@@ -2,7 +2,7 @@
  "case": "tle-writer-alpha5",
  "title": "Writing TLEs across the five-digit boundary: Alpha-5 catalog field, valid lines, refusal of numbers the format cannot carry, round trip",
  "schema_version": "1.0",
- "generated_at": "2026-10-29T01:39:43Z",
+ "generated_at": "2026-11-08T06:52:11Z",
  "generator": "tools/make_expected.py",
  "kind": "writer",
  "sources": {
@@ -53,6 +53,18 @@
    "provenance": "derived",
    "record_count": 346,
    "provenance_file": "derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.provenance.json"
+  },
+  "derived/alpha5-tle/alpha5-synthetic-day-366.tle": {
+   "tier": "stable",
+   "format": "tle",
+   "url": null,
+   "retrieved_at": "2026-11-05T13:09:56Z",
+   "http_status": null,
+   "bytes": 840,
+   "sha256": "4068333813257b8a053e2c07c0e1da5dbaef176fdda37c23f49cc63bb69cada9",
+   "provenance": "synthetic-derived",
+   "record_count": 5,
+   "provenance_file": "derived/alpha5-tle/alpha5-synthetic-day-366.provenance.json"
   },
   "derived/alpha5-tle/alpha5-synthetic-epoch-years.tle": {
    "tier": "stable",
@@ -33406,6 +33418,236 @@
    "synthetic_source_norad_cat_id": 100000
   },
   {
+   "norad_cat_id": 330200,
+   "role": "input",
+   "provenance": "synthetic-derived",
+   "tier": "stable",
+   "derived_from": "fixtures/alpha5-tle-derived/expected.json: frozen canonical values of a stable-tier source (v0.1.0)",
+   "from_case": "alpha5-tle-derived",
+   "from_file": "derived/alpha5-tle/alpha5-synthetic-day-366.tle",
+   "source_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+   "source_sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+   "canonical": {
+    "norad_cat_id": 330200,
+    "object_name": "SARAMAGO",
+    "object_id": "2026-067CY",
+    "epoch": "1960-12-31T21:45:20.933856",
+    "mean_motion": "15.20467281",
+    "eccentricity": "0.00055903",
+    "inclination": "97.4593",
+    "ra_of_asc_node": "154.097",
+    "arg_of_pericenter": "270.5113",
+    "mean_anomaly": "89.5482",
+    "bstar": "0.00022159168",
+    "mean_motion_dot": "0.0000477",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1591
+   },
+   "representable_in_tle": true,
+   "expected_catalog_field": "Z0200",
+   "reference_rendering": "celestrak-style-derived-line",
+   "reference_tle_fields": {
+    "catalog_field": "Z0200",
+    "intl_designator_field": "26067CY ",
+    "epoch_field": "60366.90649229",
+    "ndot_field": " .00004770",
+    "nddot_field": " 00000+0",
+    "bstar_field": " 22159-3",
+    "element_set_field": " 999",
+    "ecc_field": "0005590",
+    "rev_field": " 1591"
+   },
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the epoch's date replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_source_norad_cat_id": 100000
+  },
+  {
+   "norad_cat_id": 330201,
+   "role": "input",
+   "provenance": "synthetic-derived",
+   "tier": "stable",
+   "derived_from": "fixtures/alpha5-tle-derived/expected.json: frozen canonical values of a stable-tier source (v0.1.0)",
+   "from_case": "alpha5-tle-derived",
+   "from_file": "derived/alpha5-tle/alpha5-synthetic-day-366.tle",
+   "source_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+   "source_sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+   "canonical": {
+    "norad_cat_id": 330201,
+    "object_name": "SARAMAGO",
+    "object_id": "2026-067CY",
+    "epoch": "1996-12-31T21:45:20.933856",
+    "mean_motion": "15.20467281",
+    "eccentricity": "0.00055903",
+    "inclination": "97.4593",
+    "ra_of_asc_node": "154.097",
+    "arg_of_pericenter": "270.5113",
+    "mean_anomaly": "89.5482",
+    "bstar": "0.00022159168",
+    "mean_motion_dot": "0.0000477",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1591
+   },
+   "representable_in_tle": true,
+   "expected_catalog_field": "Z0201",
+   "reference_rendering": "celestrak-style-derived-line",
+   "reference_tle_fields": {
+    "catalog_field": "Z0201",
+    "intl_designator_field": "26067CY ",
+    "epoch_field": "96366.90649229",
+    "ndot_field": " .00004770",
+    "nddot_field": " 00000+0",
+    "bstar_field": " 22159-3",
+    "element_set_field": " 999",
+    "ecc_field": "0005590",
+    "rev_field": " 1591"
+   },
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the epoch's date replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_source_norad_cat_id": 100000
+  },
+  {
+   "norad_cat_id": 330202,
+   "role": "input",
+   "provenance": "synthetic-derived",
+   "tier": "stable",
+   "derived_from": "fixtures/alpha5-tle-derived/expected.json: frozen canonical values of a stable-tier source (v0.1.0)",
+   "from_case": "alpha5-tle-derived",
+   "from_file": "derived/alpha5-tle/alpha5-synthetic-day-366.tle",
+   "source_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+   "source_sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+   "canonical": {
+    "norad_cat_id": 330202,
+    "object_name": "SARAMAGO",
+    "object_id": "2026-067CY",
+    "epoch": "2000-12-31T21:45:20.933856",
+    "mean_motion": "15.20467281",
+    "eccentricity": "0.00055903",
+    "inclination": "97.4593",
+    "ra_of_asc_node": "154.097",
+    "arg_of_pericenter": "270.5113",
+    "mean_anomaly": "89.5482",
+    "bstar": "0.00022159168",
+    "mean_motion_dot": "0.0000477",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1591
+   },
+   "representable_in_tle": true,
+   "expected_catalog_field": "Z0202",
+   "reference_rendering": "celestrak-style-derived-line",
+   "reference_tle_fields": {
+    "catalog_field": "Z0202",
+    "intl_designator_field": "26067CY ",
+    "epoch_field": "00366.90649229",
+    "ndot_field": " .00004770",
+    "nddot_field": " 00000+0",
+    "bstar_field": " 22159-3",
+    "element_set_field": " 999",
+    "ecc_field": "0005590",
+    "rev_field": " 1591"
+   },
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the epoch's date replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_source_norad_cat_id": 100000
+  },
+  {
+   "norad_cat_id": 330203,
+   "role": "input",
+   "provenance": "synthetic-derived",
+   "tier": "stable",
+   "derived_from": "fixtures/alpha5-tle-derived/expected.json: frozen canonical values of a stable-tier source (v0.1.0)",
+   "from_case": "alpha5-tle-derived",
+   "from_file": "derived/alpha5-tle/alpha5-synthetic-day-366.tle",
+   "source_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+   "source_sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+   "canonical": {
+    "norad_cat_id": 330203,
+    "object_name": "SARAMAGO",
+    "object_id": "2026-067CY",
+    "epoch": "2024-12-31T21:45:20.933856",
+    "mean_motion": "15.20467281",
+    "eccentricity": "0.00055903",
+    "inclination": "97.4593",
+    "ra_of_asc_node": "154.097",
+    "arg_of_pericenter": "270.5113",
+    "mean_anomaly": "89.5482",
+    "bstar": "0.00022159168",
+    "mean_motion_dot": "0.0000477",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1591
+   },
+   "representable_in_tle": true,
+   "expected_catalog_field": "Z0203",
+   "reference_rendering": "celestrak-style-derived-line",
+   "reference_tle_fields": {
+    "catalog_field": "Z0203",
+    "intl_designator_field": "26067CY ",
+    "epoch_field": "24366.90649229",
+    "ndot_field": " .00004770",
+    "nddot_field": " 00000+0",
+    "bstar_field": " 22159-3",
+    "element_set_field": " 999",
+    "ecc_field": "0005590",
+    "rev_field": " 1591"
+   },
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the epoch's date replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_source_norad_cat_id": 100000
+  },
+  {
+   "norad_cat_id": 330204,
+   "role": "input",
+   "provenance": "synthetic-derived",
+   "tier": "stable",
+   "derived_from": "fixtures/alpha5-tle-derived/expected.json: frozen canonical values of a stable-tier source (v0.1.0)",
+   "from_case": "alpha5-tle-derived",
+   "from_file": "derived/alpha5-tle/alpha5-synthetic-day-366.tle",
+   "source_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+   "source_sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+   "canonical": {
+    "norad_cat_id": 330204,
+    "object_name": "SARAMAGO",
+    "object_id": "2026-067CY",
+    "epoch": "2056-12-31T21:45:20.933856",
+    "mean_motion": "15.20467281",
+    "eccentricity": "0.00055903",
+    "inclination": "97.4593",
+    "ra_of_asc_node": "154.097",
+    "arg_of_pericenter": "270.5113",
+    "mean_anomaly": "89.5482",
+    "bstar": "0.00022159168",
+    "mean_motion_dot": "0.0000477",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1591
+   },
+   "representable_in_tle": true,
+   "expected_catalog_field": "Z0204",
+   "reference_rendering": "celestrak-style-derived-line",
+   "reference_tle_fields": {
+    "catalog_field": "Z0204",
+    "intl_designator_field": "26067CY ",
+    "epoch_field": "56366.90649229",
+    "ndot_field": " .00004770",
+    "nddot_field": " 00000+0",
+    "bstar_field": " 22159-3",
+    "element_set_field": " 999",
+    "ecc_field": "0005590",
+    "rev_field": " 1591"
+   },
+   "synthetic_statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the epoch's date replaced; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+   "synthetic_source_norad_cat_id": 100000
+  },
+  {
    "norad_cat_id": 25544,
    "role": "input",
    "provenance": "derived",
@@ -33719,6 +33961,69 @@
     "rev_field": " 1591"
    },
    "note": "Synthetic-derived under the D-096 precedent (D-125): SARAMAGO's real elements with the catalog number replaced by the five-digit vector 99999 and BSTAR replaced by 1.2345. A specification vector for the positive-exponent field form, not a catalogued object's element set; the expected TLE fields are rendered by the corpus."
+  },
+  {
+   "norad_cat_id": 99998,
+   "role": "input",
+   "provenance": "synthetic-derived",
+   "tier": "stable",
+   "from_case": "six-digit-omm-saramago",
+   "from_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+   "source_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+   "source_sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+   "synthetic_changes": [
+    {
+     "field": "NORAD_CAT_ID",
+     "from": 100000,
+     "to": 99998,
+     "vector_source": "the five-digit block 90000-99999, which primary sources describe no catalogued object in (README); 99998, the number below vectors/alpha5.json's 99999, which the BSTAR vector holds"
+    },
+    {
+     "field": "ECCENTRICITY",
+     "from": "0.00055903",
+     "to": "0",
+     "vector_source": "the TLE eccentricity field, seven digits with an assumed leading decimal point (CelesTrak TLE format description): 0 is written 0000000",
+     "reason": "none of the writer case's 761 records had eccentricity 0 (counted 2026-11-08; the third blind pass counted 756 before D-384), so a writer that leaves the field blank for 0 went ungraded (its finding 18, D-399)"
+    }
+   ],
+   "canonical": {
+    "norad_cat_id": 99998,
+    "object_name": "SARAMAGO",
+    "object_id": "2026-067CY",
+    "epoch": "2026-07-14T21:45:20.933856",
+    "mean_motion": "15.20467281",
+    "eccentricity": "0",
+    "inclination": "97.4593",
+    "ra_of_asc_node": "154.097",
+    "arg_of_pericenter": "270.5113",
+    "mean_anomaly": "89.5482",
+    "bstar": "0.00022159168",
+    "mean_motion_dot": "0.0000477",
+    "mean_motion_ddot": "0",
+    "ephemeris_type": 0,
+    "classification_type": "U",
+    "element_set_no": 999,
+    "rev_at_epoch": 1591
+   },
+   "representable_in_tle": true,
+   "expected_catalog_field": "99998",
+   "expected_behaviour": "write",
+   "expected_tle_field": {
+    "ecc_field": "0000000"
+   },
+   "reference_rendering": "corpus-rendered",
+   "reference_tle_fields": {
+    "catalog_field": "99998",
+    "intl_designator_field": "26067CY ",
+    "epoch_field": "26195.90649229",
+    "ndot_field": " .00004770",
+    "nddot_field": " 00000+0",
+    "bstar_field": " 22159-3",
+    "element_set_field": " 999",
+    "ecc_field": "0000000",
+    "rev_field": " 1591"
+   },
+   "note": "Synthetic-derived under the D-096 precedent (D-125, D-399): SARAMAGO's real elements with the catalog number replaced by 99998 and the eccentricity replaced by 0. A specification vector for the zero eccentricity field, not a catalogued object's element set; the expected TLE fields are rendered by the corpus."
   }
  ],
  "checks": [
@@ -33743,8 +34048,12 @@
    "description": "A TLE catalog field cannot represent a number above 339999 (Z9999) or below 0, so the correct output for such a record is a refusal: an error and no lines. Those numbers belong in the OMM formats. The check passes when the writer refuses and fails when it writes lines with a six-digit, blank or otherwise invalid field."
   },
   {
+   "id": "tle-writer-secondary-not-changed",
+   "description": "Each side field (MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID, OBJECT_NAME) is written as the record's value (the derivatives at the field's resolution, the element set and revolution numbers in their columns), or zeroed or left out, as documented, or the name cut to the line's 24 columns; the classification, which has no zero, as the record's; written as any other value, an unreadable designator among them, it fails (D-381, D-383; SM-26's W1 and W4)."
+  },
+  {
    "id": "tle-writer-secondary-fields",
-   "description": "Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information, never failed: orbit-fitting tools regenerate these fields by design."
+   "description": "Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information: orbit-fitting tools zero or regenerate these fields; a value that is neither the record's nor zero or left out fails tle-writer-secondary-not-changed (D-381, D-383)."
   },
   {
    "id": "tle-writer-matches-provider-rendering",
@@ -33778,14 +34087,14 @@
   }
  ],
  "notes": [
-  "752 frozen input records (749 Alpha-5, 3 five-digit), 3 synthetic-derived refusal inputs and 1 synthetic-derived field vector(s) rendered by the corpus."
+  "757 frozen input records (754 Alpha-5, 3 five-digit), 3 synthetic-derived refusal inputs and 2 synthetic-derived field vector(s) rendered by the corpus."
  ],
  "sets": {},
  "case_specific": {
   "inputs": {
-   "frozen_records": 752,
+   "frozen_records": 757,
    "synthetic_derived": 3,
-   "synthetic_field_vectors": 1,
+   "synthetic_field_vectors": 2,
    "alpha5_letters": {
     "A": 258,
     "T": 347,
@@ -33810,7 +34119,7 @@
     "W": 2,
     "X": 2,
     "Y": 2,
-    "Z": 102
+    "Z": 107
    },
    "five_digit_ids": [
     25544,

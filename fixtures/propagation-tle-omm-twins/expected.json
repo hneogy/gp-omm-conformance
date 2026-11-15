@@ -1,0 +1,79 @@
+{
+ "case": "propagation-tle-omm-twins",
+ "title": "Propagation from a TLE and from its exact OMM twin: seven shipped sets, the corpus's own reference vectors, within 2e-7",
+ "schema_version": "1.0",
+ "generated_at": "2026-11-08T13:18:32Z",
+ "generator": "tools/make_expected.py",
+ "kind": "propagation-twins",
+ "sources": {
+  "derived/propagation-twins/twins.tle": {
+   "tier": "stable",
+   "format": "tle",
+   "bytes": 1176,
+   "sha256": "a764b0f23df5399c3f2c37eb6ca4ce9b58eb4bb958f709a23c1f36c406991572",
+   "provenance": "derived"
+  },
+  "derived/propagation-twins/twins.csv": {
+   "tier": "stable",
+   "format": "csv",
+   "bytes": 1248,
+   "sha256": "16c5ba64b47f7a6f864774efabb7251ee0aeba73c67819572c1b55c79147c776",
+   "provenance": "derived"
+  },
+  "vectors/propagation-twins.json": {
+   "tier": "stable",
+   "format": "vectors-json",
+   "bytes": 12895,
+   "sha256": "6fa8c3717f3b91f7c6837f80c0592fbedf7203cdedaa064bc8c2a84d94b053b4",
+   "provenance": "corpus measurement"
+  }
+ },
+ "records": [],
+ "checks": [
+  {
+   "id": "twins-tle-positions",
+   "description": "Each of seven shipped TLE sets (derived/propagation-twins/twins.tle) through the parser's propagate hook at six times (-1 day, -1 hour, 0, +1 hour, +1 day, +7 days): every TEME position and velocity component within 2e-7 km and km/s of the corpus's own reference vectors (vectors/propagation-twins.json: SGP4 by Vallado's C++, WGS-72, opsmode 'i', cross-checked with python-sgp4), every SGP4 error code exact (every reference step propagates, so a false decay is what the codes catch). The TLE is sent as its two element lines (D-406)."
+  },
+  {
+   "id": "twins-omm-positions",
+   "description": "The same for each set's OMM CSV twin (derived/propagation-twins/twins.csv), whose values are exactly the TLE's: a library whose OMM path reads the angles, the mean motion, the eccentricity or BSTAR otherwise than its TLE path fails here, and the epoch through the two deep-space sets (100530, 270354) only, since near-earth SGP4 in TEME does not depend on it (D-406)."
+  },
+  {
+   "id": "twins-tle-omm-agree",
+   "description": "For each set the parser propagated from both renderings, its TLE and OMM answers within 2e-7 of each other at every step, their codes the same (D-406)."
+  }
+ ],
+ "tests": [
+  "sgp4-propagation",
+  "tle-omm-equivalence"
+ ],
+ "coverage": {
+  "provides": [
+   "7 TLE sets and their exact OMM CSV twins, 6 times each, near-earth and deep-space"
+  ],
+  "gaps": [
+   "OMM CSV only: the other OMM formats' twins are later",
+   "seven shipped sets, not the design's 33 SGP4-VER sets (never shipped, D-388) or the 304 provider pairs, whose OMM carries more digits than the TLE and which are to be reported, never graded (lane C's design section 3)",
+   "the epoch is graded through the two deep-space sets only; MEAN_MOTION_DOT and MEAN_MOTION_DDOT, which SGP4 does not use, not at all",
+   "every reference step propagates: the codes catch a false decay, not a missing error",
+   "WGS-72 and opsmode 'i' only"
+  ]
+ },
+ "ambiguities": [],
+ "notes": [],
+ "sets": {},
+ "case_specific": {
+  "bar_km_and_km_s": 2e-07,
+  "times": [
+   -1440.0,
+   -60.0,
+   0.0,
+   60.0,
+   1440.0,
+   10080.0
+  ],
+  "set_count": 7,
+  "generated_with": "tools/sgp4_reference_vectors.cpp built against Vallado's SGP4.cpp at the recipe's pin (harnesses/vallado/README.md), WGS-72, opsmode 'i'",
+  "cross_check": "python-sgp4 2.27 (Satrec, sgp4_tsince, WGS-72): the same error code at every step and within 2e-07 at every step that propagated; largest difference 0"
+ }
+}

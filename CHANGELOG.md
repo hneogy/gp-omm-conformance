@@ -6,6 +6,313 @@ cases, or an additive protocol change; major: a changed `expected.json` schema; 
 before 1.0 and major from 1.0).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
+## [0.9.0] - 2026-11-14
+
+Mutation testing of the grading code before the release: the full run killed 74.2% of 3,412 mutants (879
+survived). Tests were then added for the 206 survivors that could grade a correct parser wrong, pass a wrong one, or
+report wrong words or numbers; each of them, run against the tests written for it (a kill there is a kill by the whole
+suite), is killed, which makes 80.3% (D-534, D-536). A full re-run is planned for 0.9.1.
+
+### Changes that can move your result
+
+The provider's no-data answer is read as the empty answer only where it is the answer the corpus records (D-540).
+For a source recorded as CelesTrak's 404, the file must hold that body byte for byte, and a `.meta.json` that gives a
+status must give the recorded one. Under HTTP 200 or with no recorded status, the text alone or with one line end (a
+single LF or CRLF) stays the empty answer (D-514, D-517), but only the text of the source's own provider (GP's or
+SupGP's, by its URL), and not for a source the corpus records with records, which now fails `source-readable`
+(D-113). Until now any file whose text, stripped of any whitespace, was either provider's no-data text read as the
+clean empty answer and passed: padded text, the other provider's text, a meta file giving HTTP 200. The fetch
+expects a 404 only as that exact text too, so a maintainer's `--include-recaptures` stops at a padded answer instead
+of saving it. Apart from that stop, reaching any of these needs a hand-edited data folder; the data a `gpconf fetch` writes is unaffected.
+Found by the blind pass on D-515's path, before the release.
+
+A source the corpus records as CelesTrak's 404 no-data answer fails `source-readable` when the file in its place holds
+other bytes that read no records (an error page, a blank file), where it went on and read as a file with zero records
+(D-515). The no-data text itself still reads as the empty answer, and records in its place are still read.
+
+The owner's ruling on the type-4 case (D-464): a refusal at `parse` of the type-4 set, its twin read, passes whatever
+the hook answers for that set, an empty, short or unreadable answer included (it failed); positions fail only for a set
+`parse` accepted.
+
+The red-team reading of the 0.9.0 work (D-459): in `ephemeris-type-4-refused`, an answer from `propagate` with more or
+fewer steps than the times asked fails `type4-not-propagated` (one error code for six times read as a code at every
+step, and passed). `twins-tle-omm-agree` fails when no step was
+propagated from both renderings, where it passed over none. `gpconf fuzz --strict` exits 2 when there was nothing to
+fuzz (the adapter reads no format and nothing was propagated), and its `--json` report's `parse.tally` counts an input
+refused whole under a new key, `refused`, which was counted under `ok` before.
+
+A `parse_epoch` hook that reads a second 60 that is not one of the 27 leap seconds, in any minute or on any 30 June or
+31 December, fails `ccsds-epoch-strings`, where until now it passed (D-382; details below).
+
+A command adapter's `parse_epoch` answer that the runner cannot read as an epoch is counted as the command's answer,
+never as its rejection. A harness that answers an invalid string with the string itself sent back fails
+`ccsds-epoch-strings`: until now that echo counted as a rejection (D-306, D-382). So does one that answers `null`, or
+any other text that is no epoch, to mean "rejected", and one that answers an invalid second 60 with the second 60
+kept, where the runner's own refusal of the answer was credited to it. A rejection is `{"error": ...}` or a non-zero
+exit, as `docs/ADAPTERS.md` says.
+
+A TLE writer that writes a side field (MEAN_MOTION_DOT, MEAN_MOTION_DDOT, the element set number, the revolution
+number, the classification, the international designator or the name) as a value that is neither the record's nor zero
+nor left out fails the new check `tle-writer-secondary-not-changed` in `tle-writer-alpha5`, where until now these
+fields were reported for information only. Zeroing a field, leaving it out, and cutting the name to 24 characters
+(not counting Space-Track's `0 ` before it) still pass; the classification has no zero and must be the record's, and a designator the reader cannot read
+is another value, not one left out (D-381, D-383).
+
+A reader that refuses or misreads day 366, 31 December of a leap year, fails `alpha5-tle-derived` and
+`kvn-syntax-variants`, where until now only one epoch vector held that day: the derived TLE case gains five
+synthetic-derived sets and the KVN case five synthetic-derived OMM messages with their epochs there, and the epoch
+vectors a day-366 string that is no leap second (D-384). The five OMM messages are in one file, as CelesTrak serves a
+group, so a reader that reads only the first message of a KVN file now fails the KVN case too, where only the fetched
+group files asked that of it. The writer case takes the five TLE sets as inputs too (761 inputs).
+
+A `parse_epoch` hook that reads an epoch through a 32-bit `time_t`, signed (wrapping after 2038-01-19T03:14:07) or
+unsigned (wrapping before 1970), fails `ccsds-epoch-strings`, where until now no epoch vector lay past 2026 or before
+1972: four valid epoch strings sit at that second, the next, well past it and in 1960 (D-385). An OMM reader with the
+same wrap fails `kvn-syntax-variants` through D-384's 2056 and 1960 messages; D-385 adds the boundary pair there too.
+
+`check-tle --against` holds a written record's side fields as the writer case does (D-381, D-383): MEAN_MOTION_DOT,
+MEAN_MOTION_DDOT, the element set and revolution numbers, the classification, the international designator and the
+name may be zeroed or left out, but a value that is neither the source's nor zero nor left out fails the record, where
+until now they were reported for information only (the owner's ruling, D-387). A file an orbit-fitting tool wrote with
+its own element set or revolution number now fails against its source; zero them, or carry the source's. So does a
+value written where the source has none (a name over a 2LE source, a designator over an empty OBJECT_ID), and a title
+line not marked `#`, which is read as the first record's name.
+
+`gpconf run` exits 2, not 0, when no case was graded (every case skipped, waiting for fetched data or not available)
+and when a `--tag` names no case, as a `--case` that names none already did: a job that read exit 0 as a pass of such
+a run now sees that nothing was graded (the third blind pass's C, D-389).
+
+An `alpha5_decode` hook that reads a five-character field with a sign or an underscore as int() does (`+1234` as 1234,
+`1_234` as 1234), or with a blank inside it, fails `alpha5-decode`, where until now no vector held such a field
+(D-360's finding 7, D-390).
+
+A TLE reader that reads a catalog field led by the letter O, never used in Alpha-5, as a catalog number, or that never compares line
+2's catalog field with line 1's, fails `corrupt-input`, where until now no input on the parse path held such a set
+(the third blind pass's 16 and 17, D-391).
+
+In `corrupt-input` a refusal with no `_field` credits the corrupt record only when its `_input` holds a whole line the
+edit introduced, where any text the edit introduced did: a parser that dropped the set silently and planted a refusal
+quoting one new letter (`O`) was credited on two inputs. A refusal quoting only a fragment of the offending line, with
+no `_field`, now counts as no evidence; every shipped adapter and harness quotes the line whole (D-392).
+The `_input` is read up to 4,096 characters for that test, so a quote of the whole file counts; one longer than that
+voids the file's quoted-input evidence, the cut site's included (D-393).
+
+A file in which a record is both returned and refused fails its `refusals` item, in every case that grades refusals: a
+refusal means the record was dropped with an error, so a warning reported as a refusal of a record the parser also
+returned is a contradiction, and the item names the record. Where a file holds an id more than once, one copy returned
+and another refused is not; a refusal of the cut JSON may name its last record. A parser that dropped a corrupt set
+silently and planted a refusal naming each set of the file, the ones it returned among them, passed `corrupt-input`.
+No shipped adapter or harness refuses a record it returns (D-396).
+
+A command (`--cmd`, `--vectors-cmd`) whose JSON holds a key twice in one object with two different values fails
+where the last value was graded before without a word: the file fails as `parse`, and a corrupt input, or an invalid
+vector answered with exit 0, answered so is no refusal and no rejection; the same value twice is read as once, and a
+vector command's non-zero exit is a rejection whatever it printed (the third blind pass's 19, D-398).
+
+A TLE writer that leaves the eccentricity field blank when the eccentricity is 0 fails `tle-writer-column-layout`
+and `tle-writer-round-trip`, where none of the writer case's records had an eccentricity of 0: one synthetic-derived
+input (99998, SARAMAGO's elements with an eccentricity of 0, field `0000000`) is added, and the case has 762 inputs
+(the third blind pass's 18, D-399).
+
+In `corrupt-input` a refusal quoting the cut site credits the CSV's cut row, as it credited the JSON cut: a CSV reader
+that loaded the complete rows and refused the cut one quoting the file's tail failed as "dropped with nothing said".
+And the cut site's quote is no evidence from a parser that also refuses with a reason in the unedited file, where
+nothing is cut: one that repaired the JSON cut and planted a refusal quoting every answer's tail passed, and so does
+any parser that refuses with a reason in a valid file, which now fails the cut it refused correctly, the item saying
+why. A quote of the cut site is read whole: one quoting the last JSON record from its brace to the cut failed (the
+third blind pass's 12, D-400).
+
+A nineteenth case, `sgp4-ver-propagation`: an adapter with the new optional `propagate` hook is graded against
+Vallado's SGP4 verification file, TEME position and velocity within 2e-7 km and km/s and SGP4 error codes exact,
+where the two files are on your machine (`--sgp4-ver DIR`, or the installed python-sgp4 package) with the corpus's
+bytes; gpconf ships neither. An adapter without the hook skips it, so a run's case count moves from 18 to 19 and the
+offline line reads "5 of 19 cases graded offline". The python-sgp4 preset gains the hook and passes within tolerance
+(largest differences 9.7e-8 km and 5e-10 km/s); the package now carries the corpus's manifest of the two files (D-401).
+
+`check-tle --against` compares a written record of an id the source holds more than once (a history) with the source
+copy whose epoch it writes, by truncation or by rounding, where it read "not compared" and the run exited 3: a
+history written correctly now passes, with exit 0, and wrong values in one copy fail; a record matching no copy's
+epoch fails, and a copy that no written record round-trips to, counted one record to one copy, is not written; exit
+3 no longer occurs (Phase 2's item 6, D-403).
+
+A TLE reader that reports every set as classified U fails `alpha5-tle-derived`, where every offline set was U: one
+synthetic-derived set classified C is added (330205, `Z0205`, SARAMAGO's elements), read on the parse path only; it
+is not a writer input, which waits for the owner (the third blind pass's 1, D-404).
+
+A twentieth case, `propagation-tle-omm-twins`: the `propagate` hook gets seven TLE sets the corpus ships and an OMM
+CSV twin of each whose values are exactly the TLE's, and each answer is graded against the corpus's own reference
+vectors (`vectors/propagation-twins.json`, SGP4 by Vallado's C++, cross-checked with python-sgp4) within 2e-7 km and
+km/s, codes exact, and the two renderings against each other; a library whose OMM path reads the angles, the mean
+motion, the eccentricity or BSTAR otherwise than its TLE path fails it, and the epoch through the two deep-space sets
+only; the derivatives, which SGP4 does not use, are not graded. A parser without the hook skips it, so a run counts 20 cases. The python-sgp4 preset's hook takes
+an OMM CSV too, through `sgp4.omm.initialize`, and passes within 1.1e-9 km (D-406).
+
+A twenty-first case, `ephemeris-type-4-refused`: one set the corpus ships, 20453, with `EPHEMERIS_TYPE` 4 (an SGP4-XP
+element set) as TLE, OMM CSV, JSON, XML and KVN, and a KVN also saying `MEAN_ELEMENT_THEORY = SGP4-XP` (the corpus's
+spelling, synthetic), each through the `propagate` hook. SGP4 run on such a set gives positions that look right and
+are not, so positions at any step fail the file, error codes stamped beside them too; a refusal passes: a raise,
+`Unsupported` for the type-4 set alone, a refusal from `parse` while its twin is read, or an SGP4 error code at every
+step with no position, as Vallado's C++ answers (it does not initialise a set whose type is not 0). Each file's
+type-0 twin must propagate within 2e-7 of the twins' reference vectors, so a hook that refuses every set fails. An
+adapter that sets `propagates_sgp4_xp = True` is not graded on the type-4 files, since gpconf has no SGP4-XP
+reference. Graded on `EPHEMERIS_TYPE` alone; a format unsupported for both files is skipped. A parser without
+the hook skips it, so a run counts 21 cases. The python-sgp4 preset fails it: python-sgp4 2.27 propagates the type-4
+TLE and CSV exactly as type 0 (https://github.com/brandon-rhodes/python-sgp4/issues/178; D-409).
+
+An adapter can declare the constants its `propagate` hook uses, `{"_adapter": {"propagation": {"gravity": "wgs72",
+"opsmode": "i"}}}` in `parse`'s answer, and each propagation case prints it as an information item; it is reported,
+never trusted, and moves no status: the cases grade against WGS-72 and opsmode 'i' whatever is declared. The
+python-sgp4 preset declares WGS-72 and 'i', so its three propagation cases gain that item (D-413).
+
+### Fixed and changed
+
+`gpconf fetch --include-propagation` downloads Vallado's two verification files, `SGP4-VER.TLE` and `tcppver.out`
+(145 KB), for `sgp4-ver-propagation`, from python-sgp4's repository at release 2.27 (commit `6e7428d`), the fetch's
+first host other than CelesTrak, before CelesTrak's requests and under the same rules: the kit's User-Agent, one request
+per file, no retry, a stop on anything but HTTP 200; no compression asked, and no more read than the file's size. A
+file is written only when its bytes are the corpus's manifest's, in a clone under `propagation/`, which `.gitignore`
+keeps out of commits; and one already on disk with
+them is not asked for again; the runner looks there after `--sgp4-ver` and the installed python-sgp4 package. It is
+opt-in: a plain `gpconf fetch` asks CelesTrak only, as before (D-455).
+
+`gpconf fuzz`, opt-in and never part of `gpconf run`: a parser fuzzed against the corpus's reference reader on
+mutated copies of the shipped inputs, seeded and repeatable, findings minimised and saved; with `--propagate`, the
+propagate hook at the edge of SGP4's domain. Its findings are reported only and move no case verdict (D-415); it
+counts copies as the graded cases do, so a dropped copy of an exact duplicate and a record returned more often than
+the input holds it are findings (D-421); `--strict` makes it exit 1 on a finding, for an adapter's own CI step (D-422).
+
+The results schema 1.0: the shape of `gpconf run --json`'s report as a JSON Schema, packaged as
+`gpconf/schemas/results-1.0.schema.json`, versioned with the specification draft (`docs/SPEC.md`), and checked by
+`python3 -m gpconf.schema REPORT.json` with the standard library alone (D-431, D-432). A preset whose library is
+installed at a release too old for its adapter now says which release is installed and what is missing, where it
+said the library was not installed (python-sgp4 2.21 and earlier lack `sgp4.alpha5`; D-430).
+
+Outside the package: adapter templates in Python, JavaScript, C++, Swift, Java, Rust, C# and Go (`templates/`, the
+last four not run where they were written) and a five-minute guide for each (`docs/guides/`), D-426 and D-436;
+recipes for more libraries, Orekit's not yet run (`harnesses/`, D-427,
+D-428); seed corpora for coverage-guided fuzzers (`tools/export_fuzz_seeds.py`, D-433); a pytest plugin,
+`pytest-gpconf`, not yet published: it comes with 0.9.1 (D-434, D-537); and a Dockerfile, not yet built (D-435).
+
+The mutant gate (`tools/mutant_fuzz.py --ci`) now also runs sixteen fixed wrong propagators against the shipped
+propagation cases, and fails if one survives or if their correct base does not pass: off by 1e-6, z or a velocity
+component off just over the bar, two axes swapped, km as m, a constant answer, the last step dropped, a wrong error
+code beside correct values, NaN with code 0, TLE and OMM answers apart, type 4 propagated, error codes stamped on
+type-4 positions, every input refused, WGS-84, minutes read as seconds and BSTAR ignored, the last three answering
+SGP4's output under that wrong setting, shipped as test data (`tools/propagation_mutants.py`, D-414).
+
+The fetch keeps every member of a gzip answer, where it kept the first and dropped the rest without a word; it treats
+a 200 that carries the provider's no-data text, an error text or a JSON error object as an unexpected answer, kept
+beside the data and stopping the run, where it stored such a body as provider data; and it stops before a request
+once the run has downloaded 100 MB, the most CelesTrak asks one address to take in a day, where the cap held for each
+answer alone. A response with neither a length nor chunking that closes early still cannot be told from a complete
+one, a known limit (the third blind pass's E, D-405).
+
+Said where it was not: a run in which no nine-digit catalog number was read (no `parse_catalog_id` hook and the
+nine-digit case not fetched) now says so under the count line; `check-tle --against`'s closing line, where source
+records without a catalog number cannot be held to a written one, says "every source record with a catalog number
+written"; and `docs/ADAPTERS.md` names `check-tle` and its exit 3, and says that line checksums are not graded on the
+reading side (the third blind pass's 5, 11 and D, D-402).
+
+Recorded, unchanged in grading: a parser that drops a corrupt set silently and plants refusals quoting the file's
+lines is credited on some corrupt inputs, never on input 4, so it never passes the case; no rule against it is kept,
+since each one measured failed a correct reader (D-395).
+
+Added: three corrupt inputs with input 3's edit (the letter O in line 1's epoch field) in other layouts: the corrupt
+set first (`c9`), last (`c10`) and second of five sets (`c11`, with 27153 and 39473 from the same frozen snapshot as
+20453), each with its own unedited file, so that the corpus no longer holds every corrupt set in the middle of three
+(D-394).
+
+Added: two corrupt inputs, synthetic-derived from 69999's first record like the other six: `O9999` in both lines'
+catalog field (input 7, graded by `corrupt-tle-invalid-catalog-field`), and line 2's catalog field 69998 under line
+1's 69999 (input 8, the new check `corrupt-tle-line-fields-differ`), each between the two valid sets, every checksum
+valid; a correct reader refuses both with a reason (D-391).
+
+Added: four invalid five-character fields to the Alpha-5 decode vectors, `+1234`, `-1234`, `1 234` and `1_234`
+(D-390).
+
+Fixed: text a parser controls in the gate headline (a refusal reason) is printed escaped, as item details are: a line
+break there forged a gate line, terminal escapes and bidirectional controls reached the terminal, and a lone surrogate
+ended the run with a UnicodeEncodeError before the `--json` report was written; `printable()` also escapes directional
+marks and zero-width characters; and the `--json` report carries a case's `secondary_fields_not_kept`, which only the
+printed table showed (the third blind pass's A and B, D-389).
+
+Added, for the propagation tier to come: `gpconf.sgp4ver`, readers for Vallado's two SGP4 verification files
+(`SGP4-VER.TLE` and `tcppver.out`, the code accompanying AIAA 2006-6753) and the time schedule of their driver, and
+`harnesses/vallado/reference-manifest.json`, the corpus's own manifest of them: bytes, SHA-256 and lines per file; per
+element set its catalog number, run and step counts; and the seven sets that end in an error, with the step and the
+code, measured through Vallado's C++ as python-sgp4 carries it and equal to python-sgp4's published list. The files
+themselves are not in this release, its repository or its package (D-388).
+
+Known limit, recorded (D-386): a TLE writer that rounds a tie half down passes `tle-writer-alpha5`, as a mix of the
+two accepted conventions, truncation and half up. It cannot be told from a writer that formats binary floats, which
+lands on either side of a decimal tie, and holding each field to one convention would fail such writers, python-sgp4's
+among them. Found by SM-26 in round two of the audit (W3); `docs/WRITERS.md` says so.
+
+Added: epochs past 2038 and before 1970 in the epoch hook (SM-26's Y1, round two). The epoch vectors gain
+`2038-01-19T03:14:07Z`, `2038-01-19T03:14:08`, `2050-019T12:00:00.5` and `1960-03-15T12:00:00`;
+`derived/kvn-variants/v08-synthetic-epochs.kvn` gains three messages under ids 99995-99997 at 2038-01-19T03:14:07,
+03:14:08 and 2050-06-15T12:00:00, labelled synthetic-derived like the rest of that file (D-385).
+
+Added: day 366 on the parse path (SM-26's E1, round two). `derived/alpha5-tle/alpha5-synthetic-day-366.tle` holds
+SARAMAGO's first record under ids 330200-330204 with the epoch on 31 December of 1960, 1996, 2000, 2024 and 2056;
+`derived/kvn-variants/v08-synthetic-epochs.kvn` the ISS first record under ids 99990-99994 at the same dates, two in
+the day-of-year form; both labelled synthetic-derived, the ids specification vectors, never observed at these epochs;
+and `2024-366T12:00:00` joins the valid epoch strings (D-384).
+
+Changed: the writer case's side fields (D-381, the owner's ruling, D-383). A writer that doubled MEAN_MOTION_DOT, or
+wrote another piece letter in the international designator, passed: the case reported those fields without failing.
+Found by SM-26 in round two of the audit (W1 and W4), whose adapters are the new check's tests.
+
+Fixed: second 60 is valid only at the 27 leap seconds there have been, 23:59:60 UTC on the dates IERS lists from
+1972-06-30 to 2016-12-31 (`gpconf.tle.LEAP_SECOND_DATES`); CGPM 2026 Resolution 5 makes UTC continuous from 20 May
+2027, so the list is closed. The runner's reader and the reference adapter's `parse_epoch` both refuse it anywhere
+else. The epoch vectors hold nine more invalid strings, each a second 60 that is not a leap second
+(`2026-09-20T12:42:60`, `2026-09-20T12:42:60.5Z`, `2016-12-31T12:00:60`, `1960-06-30T23:59:60`, `1977-06-30T23:59:60`,
+`1980-12-31T23:59:60`, `2016-182T23:59:60`, `2026-12-31T23:59:60`, `2030-12-31T23:59:60`), and two more valid ones, the
+first leap second (`1972-06-30T23:59:60`) and one in the day-of-year form with a fraction and a Z
+(`2016-366T23:59:60.5Z`). Found by SM-26 in round two of the audit ([issue
+#1](https://github.com/hneogy/gp-omm-conformance/issues/1)); SM-26's wrong-on-purpose adapters, licensed by SM-26
+under Apache-2.0, are in `tests/adversarial/` (`sm26.py`, `sm26_wrong2.py`, `sm26_wrong3.py`) and, from this release,
+in the public export (D-380, D-382).
+
+Erratum (0.8.0), found by SM-26: the 0.8.0 entry below says "Second 60 is read only at 23:59:60 UTC on 30 June or 31
+December, the dates on which leap seconds are inserted in practice; anywhere else it is refused, so a reader one
+second late fails." The runner's reader took those two dates in any year (1960-06-30 and 2030-12-31 among them), and
+the `parse_epoch` hook was held to no invalid second 60, so a hook that read second 60 in any minute as second 59
+passed; the reference adapter quoted in `docs/ADAPTERS.md` did exactly that. D-370 states the same rule; D-382
+corrects it.
+
+Fixed, outside the grading: the runner closes each file it reads, where seven reads left the file open until garbage
+collection (a `ResourceWarning` on the corrupt-input case's unedited file) (D-382).
+
+Known limitations, still open in 0.9.0 (each stated in 0.8.0's notes and carried, not built; D-457): in the TLE/OMM
+pair check, two copies of a catalog number at one epoch with the same element set number and revolution are paired by
+the order they come in, and copies are taken greedily rather than by the best one-to-one matching, so a correct parser
+returning such copies in another order can fail the pair (D-358's finding 8, D-352); the pairs, facts and XML cases do
+not check copies returned short or moved onto another copy's epoch (D-359); no input of this release holds a catalog
+number more than once, so no input reaches either. The corrupt-input case makes one edit to each input, so a parser
+that reads any other letter as 0, or repairs every other corruption, passes it. A command (`--cmd`, `--vectors-cmd`,
+`--write-cmd`) has 120 seconds a call and no limit for the run, and its output is read whole into memory. `check-tle`
+takes a name line that begins "1 " or "2 " for an element line, and one that begins "#" for a comment. A refusal's
+`_input` is read with its line endings as they came. `exp_field` rounds a value of more than 28 significant digits in
+the decimal context before it truncates or rounds it to the TLE field, so such a value can come out one in the last
+digit off; no input carries one. A response with neither a length nor chunking that closes early still cannot be told
+from a complete one (D-405).
+
+Known issues found in 0.9.0's review of its own tests, left as they are for this release (D-526): when an input of the
+corrupt-input case holds a catalog number once and a parser returns that number twice, the surplus copy is counted
+as misidentified, and the case's detail says it is a record "the file does not hold, built from garbage", although
+the file does hold that number once; the code comment there says a second copy changes no count. Which of the two is
+meant will be settled with the duplicate-copy work of the next release, and no test holds either yet. The corpus's own TLE
+rendering cuts or rearranges an OBJECT_ID with more than one hyphen or more than eight characters instead of refusing it;
+no input of this release carries one.
+
+Known issue found by the blind pass on the late fix, left for 0.9.1 (D-542): in `tle-omits-six-digit-objects`,
+CelesTrak's exact no-data TLE answer beside an OMM set holding ids below 100000 fails a correct parser on the two count
+checks when no `.meta.json` says the fetch wrote it from the corpus's record. That happens only with a data folder
+fetched before 0.6.0, or the record copied into place by hand; every fetch since 0.6.0 writes that meta, and the
+answer is then not compared. The check dates from 0.6.0 (D-247).
+
 ## [0.8.0] - 2026-11-01
 
 A minor release under the versioning rule (D-333): the grading behaviour that `docs/ADAPTERS.md` documents changes,

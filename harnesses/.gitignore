@@ -19,3 +19,17 @@ gods-eye-view/package.json
 gods-eye-view/package-lock.json
 vallado/repo/
 vallado/build*/
+rust-sgp4/target/
+rust-sgp4/Cargo.lock
+orekit/build/
+go-sgp4/go.sum
+go-sgp4/gpconf-go-sgp4*
+sgp-net/bin/
+sgp-net/obj/
+sgp-net/build/
+brahe/__pycache__/
+sgpkit/upstream/
+sgpkit/.build/
+sgpkit/support/.build/
+sgpkit/v4/.build/
+sgpkit/v4/Package.resolved

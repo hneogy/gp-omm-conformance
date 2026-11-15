@@ -18,6 +18,10 @@ permissions:
 jobs:
   slow-gates:
     runs-on: ubuntu-24.04
+    env:
+      # D-468: the suite's wall-clock limits at twice their measured bound on a shared runner (four times again under
+      # coverage, tests/timebudget.py); every night from 2026-11-01 to 2026-11-10 failed on those limits alone
+      GPCONF_TIME_SCALE: "2"
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5, pinned by commit (D-269)
         with:
@@ -49,5 +53,5 @@ jobs:
           python -m mypy gpconf --ignore-missing-imports --check-untyped-defs > mypy.txt || true
           tail -1 mypy.txt
           n=$(grep -c ": error:" mypy.txt || true)
-          echo "errors: $n (ceiling 47)"
-          test "$n" -le 47
+          echo "errors: $n (ceiling 45)"
+          test "$n" -le 45

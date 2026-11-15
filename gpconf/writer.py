@@ -12,7 +12,8 @@ at the TLE field's own resolution.
 Standard library only. Used by the runner for the case kind 'writer' and by `python -m gpconf check-tle`,
 which applies the same checks to a TLE file written by a tool that cannot be wrapped by an adapter. The checks:
 length and checksum (check_lines), the catalog field (check_catalog_field), every field in its fixed columns
-(check_layout), the round trip through the reference reader (round_trip) and the secondary fields (information).
+(check_layout), the round trip through the reference reader (round_trip) and the secondary fields, which may be
+zeroed or left out but are never another value (D-383, D-387).
 
 Writer protocol (duck-typed, optional on any adapter):
     write_tle(record: dict) -> (line1, line2) | (line0, line1, line2) | text block
@@ -208,22 +209,31 @@ def secondary_fields(l0, l1, l2, record):
     for f in ("mean_motion_dot", "mean_motion_ddot"):
         w = Decimal(str(record.get(f) or 0))
         g = Decimal(str(got[f] or 0))
-        if g == w or (w != 0 and _classify(g, w, quantised(f, w)) is not None):
+        if g == w:
             out[f] = "preserved"
+        elif g == 0:   # zeroed before quantised(): a value the field cannot carry raised there (the review of D-387)
+            out[f] = "zeroed"
         else:
-            out[f] = "zeroed" if g == 0 else "changed"
-    for f in ("element_set_no", "rev_at_epoch"):
+            out[f] = "preserved" if w != 0 and _classify(g, w, quantised(f, w)) is not None else "changed"
+    for f, columns in (("element_set_no", 4), ("rev_at_epoch", 5)):
+        # the field's last columns: a number past them is written modulo 10**columns, as providers do (D-383)
         w, g = int(record.get(f) or 0), int(got[f] or 0)
-        out[f] = "preserved" if g == w else ("zeroed" if g == 0 else "changed")
+        out[f] = "preserved" if g in (w, w % 10 ** columns) else ("zeroed" if g == 0 else "changed")
     out["classification_type"] = "preserved" if got["classification_type"] == (record.get("classification_type") or "U") else "changed"
-    w, g = record.get("object_id") or None, got.get("object_id")
-    out["object_id"] = "preserved" if g == w else ("dropped" if g is None else "changed")
+    wid, gid = (str(record.get("object_id") or "").strip().upper() or None), got.get("object_id")   # as a TLE can write it
+    # left out only when its columns are blank: a designator the reader cannot read is another value (D-383, the
+    # separate review's finding 1: 'XXXXXXXX' or a blanked year passed as left out)
+    # decided on the columns first, so a record with no designator is held too (the review's second reading)
+    if not l1[9:17].strip():
+        out["object_id"] = "dropped" if wid else "preserved"
+    else:
+        out["object_id"] = "preserved" if gid is not None and gid == wid else "changed"
     name = (record.get("object_name") or "").strip()
-    if l0 is None:
+    gname = got.get("object_name") or ""   # as the reader reads it: Space-Track's "0 " prefix taken off (D-336, D-383)
+    if not gname:   # no name line, or an empty one
         out["object_name"] = "dropped" if name else "preserved"
     else:
-        g = l0.strip()
-        out["object_name"] = "preserved" if g == name else ("cut-to-24" if len(name) > 24 and g == name[:24].strip() else "changed")
+        out["object_name"] = "preserved" if gname == name else ("cut-to-24" if len(name) > 24 and gname == name[:24].strip() else "changed")
     nddot = got["tle"]["nddot_field"]
     out["zero_ddot_sign"] = nddot[6] if nddot[1:6] == "00000" else None
     return out
@@ -303,10 +313,12 @@ def extract_records(text):
 
 
 def check_record(l0, l1, l2, against=None):
-    """One written record -> dict with status ('pass' | 'fail' | 'not compared', the last where the source holds the
-    record's id more than once, D-370), catalog_field, norad_cat_id (None when the field
+    """One written record -> dict with status ('pass' | 'fail'; 'not compared' is kept for callers, D-370, and no longer
+    occurs since D-403 pairs an id the source holds more than once by epoch), catalog_field, norad_cat_id (None when the field
     is invalid), problems (format failures, and round-trip mismatches when `against` is given), notes, and, when
-    `against` supplies the source record, round_trip and secondary_fields. `against` maps id -> source record."""
+    `against` supplies the source record, round_trip and secondary_fields. `against` maps id -> source record, with
+    every copy of an id in `against.copies`, a written record of an id held more than once paired with the copy whose
+    epoch it writes (D-403)."""
     r = {"name": (l0 or "").strip() or None, "catalog_field": l1[2:7], "norad_cat_id": None, "problems": [], "notes": []}
     r["problems"] += check_lines(l1, l2)
     m = WIDE_NUMBER.match(l1)
@@ -349,24 +361,64 @@ def check_record(l0, l1, l2, against=None):
                     elif r["norad_cat_id"] == 99999:
                         why = " (likely cause: 99999 is rffit's default catalog number)"
                     r["problems"].append(f"no source record with id {r['norad_cat_id']} in the --against file{why}; the round trip cannot be checked")
-                elif getattr(against, "held", {}).get(r["norad_cat_id"], 1) > 1:
-                    # a source that holds an id more than once (a history) cannot yet say which of its records this
-                    # copy was written from: not compared rather than failed against the wrong one (the owner's
-                    # ruling on D-369's reading; per-epoch pairing comes in 0.8.1)
-                    r["notes"].append(f"not compared: source holds {against.held[r['norad_cat_id']]} copies (per-epoch pairing comes in 0.8.1)")
-                    r["not_compared"] = True
                 else:
+                    copies = getattr(against, "copies", {}).get(r["norad_cat_id"]) or [src]
+                    if len(copies) > 1:
+                        # a source holding the id more than once (a history): the written record is paired with the
+                        # copies whose epoch it writes, by truncation or by rounding, and compared with the one it
+                        # matches (Phase 2's item 6, D-403; before, it was "not compared", D-369, D-370)
+                        wf = rec["tle"]["epoch_field"]
+                        # a copy with no epoch the corpus reads cannot be told apart by epoch: it is a candidate for every
+                        # record, as the same copy held once is compared without one (the review of D-403)
+                        cands = [(i, c) for i, c in enumerate(copies) if wf in epoch_fields(c) or not epoch_fields(c)]
+                        if not cands:
+                            r["problems"].append(f"no source copy of {r['norad_cat_id']} has the epoch written ({wf!r}); the source "
+                                                 f"holds {len(copies)} copies, at " + ", ".join(sorted({epoch_fields(c)[0] for c in copies if epoch_fields(c)}))[:120])
+                            src = None
+                        else:
+                            def clean(c):   # the copy this record round-trips to, side fields included
+                                try:
+                                    return not round_trip(l0, l1, l2, c)[0] and not any(
+                                        v == "changed" for f, v in secondary_fields(l0, l1, l2, c).items() if f in SECONDARY_FIELDS)
+                                except Exception:   # an unreadable source value is reported below, against the first copy
+                                    return False
+                            fits = [i for i, c in cands if clean(c)]
+                            i = fits[0] if fits else cands[0][0]
+                            src = copies[i]
+                            # every copy the record round-trips to, for the one-to-one count of copies written; 1-based, as
+                            # the note says them (the review of D-403)
+                            r["matches_copies"] = [j + 1 for j in fits]
+                            r["paired_copy"] = i + 1
+                            r["notes"].append(f"paired by its epoch with copy {i + 1} of {len(copies)} in the source")
+                if src is not None and r["norad_cat_id"] in against:
                     try:
                         mism, conv = round_trip(l0, l1, l2, src)
                         r["round_trip"] = {"mismatches": mism, "conventions": conv}
                         r["problems"] += [f"round trip: {x}" for x in mism]
                         r["secondary_fields"] = secondary_fields(l0, l1, l2, src)
+                        # a side field may be zeroed or left out; any other value must be the source's (D-381, the
+                        # owner's ruling extended to check-tle on 2026-11-06, D-387)
+                        r["problems"] += [f"side field {f} written as another value than the source's, neither zero nor left out"
+                                          for f in SECONDARY_FIELDS if r["secondary_fields"][f] == "changed"]
                     except Exception as e:  # a source value the corpus cannot read is a problem on the record, not a crash (D-119)
                         r["problems"].append(f"round trip could not be checked: {type(e).__name__}: {e}")
     # a record whose round trip was not made is neither a pass nor a fail: its status says so (D-370; the second
     # blind review's F1: it read [pass], and the run exited 0, for wrong values written under such an id)
     r["status"] = "fail" if r["problems"] else ("not compared" if r.get("not_compared") else "pass")
     return r
+
+
+def epoch_fields(record):
+    """The TLE epoch fields a record's epoch may be written as, by truncation and by rounding half up, or () when the
+    record carries none the corpus reads (D-403)."""
+    v = record.get("epoch")
+    if v is None or v == "":
+        return ()
+    try:
+        iso = _iso(v)
+        return tuple(dict.fromkeys((T.epoch_field(iso, ROUND_DOWN), T.epoch_field(iso, ROUND_HALF_UP))))
+    except Exception:
+        return ()
 
 
 def check_file(text, against=None):
@@ -393,21 +445,23 @@ class Against(dict):
 
     held: dict
     without_id: int
+    copies: dict   # id -> every source record of it, in file order (D-403)
 
 
 def load_against(path):
     """Source records for --against, in any format the reference reader knows (csv, json, xml, kvn, tle, 2le)
     -> Against, {norad_cat_id: record} with each id's count of source records in `held`, and in `without_id` the
     source records that carry no catalog number, which no written record can be held to. For an id the source holds
-    more than once no round trip is made: the record is noted "not compared" (D-369; per-epoch pairing comes in 0.8.1)."""
+    more than once a written record is compared with the copy whose epoch it writes (D-403; it was "not compared", D-369)."""
     _, recs, _ = ref.read_file(path)
     out = Against((r["norad_cat_id"], r) for r in recs if r["norad_cat_id"] is not None)
-    out.held, out.without_id = {}, 0
+    out.held, out.without_id, out.copies = {}, 0, {}
     for r in recs:
         if r["norad_cat_id"] is None:
             out.without_id += 1
         else:
             out.held[r["norad_cat_id"]] = out.held.get(r["norad_cat_id"], 0) + 1
+            out.copies.setdefault(r["norad_cat_id"], []).append(r)
     return out
 
 
@@ -416,17 +470,39 @@ def source_coverage(results, against):
     0.8.0 candidate): `not_written`, (id, written, held) where the files wrote an id the format can carry fewer times
     than the source holds it, none at all included, a failure; `written_more`, (id, written, held) where they wrote it
     more often, a failure; and `refusal_correct`, ids no file wrote that the TLE format cannot carry, for which a
-    refusal was the correct output, information; and `not_compared`, (id, held) for an id the source holds more than
-    once and a file wrote, whose round trip is not made (information; per-epoch pairing comes in 0.8.1). A record written in a form the format does not allow (a six-digit
-    number from column 3) fails on its own and counts as written (`written_id`). The secondary fields stay information
-    (D-095)."""
-    written = {}
+    refusal was the correct output, information; and `not_compared`, now always empty: an id the source holds more than
+    once is compared copy by copy, paired by epoch, and a copy no written record was paired with is not written (D-403). A record written in a form the format does not allow (a six-digit
+    number from column 3) fails on its own and counts as written (`written_id`). The secondary fields fail a record
+    in check_record when written as another value than the source's (D-387; information until then, D-095)."""
+    written: dict = {}
+    matches: dict = {}
     for r in results:
         k = r.get("norad_cat_id") if r.get("norad_cat_id") is not None else r.get("written_id")
         if not r.get("unpaired") and k is not None:
             written[k] = written.get(k, 0) + 1
+        if "matches_copies" in r:
+            matches.setdefault(k, []).append(r["matches_copies"])
     held = getattr(against, "held", None) or {k: 1 for k in against if k is not None}
-    return {"not_compared": [(k, h) for k, h in sorted(held.items()) if h > 1 and k in written],
-            "not_written": [(k, written.get(k, 0), h) for k, h in sorted(held.items()) if representable(k) and written.get(k, 0) < h],
+
+    def covered(k, h):
+        """For an id held more than once, how many copies a one-to-one assignment of written records to the copies
+        each round-trips to covers (a maximum matching): identical copies written once each are all covered, one copy
+        written twice covers one (the review of D-403: a first-match pairing failed correct writers). Where no record
+        carries matches (results made without them, through the API), the count alone, as before."""
+        if h <= 1 or k not in matches:
+            return written.get(k, 0)
+        owner: dict = {}
+
+        def place(rec, seen):
+            for c in matches[k][rec]:
+                if c not in seen:
+                    seen.add(c)
+                    if c not in owner or place(owner[c], seen):
+                        owner[c] = rec
+                        return True
+            return False
+        return sum(place(i, set()) for i in range(len(matches[k])))
+    return {"not_compared": [],   # kept for the --json report's readers; per-epoch pairing compares every copy (D-403)
+            "not_written": [(k, covered(k, h), h) for k, h in sorted(held.items()) if representable(k) and covered(k, h) < h],
             "refusal_correct": [k for k in sorted(held) if not representable(k) and k not in written],
             "written_more": [(k, n, held[k]) for k, n in sorted(written.items()) if k in held and n > held[k]]}

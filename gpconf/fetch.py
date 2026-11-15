@@ -81,7 +81,22 @@ TIMEOUT = 60
 # so an answer past it is no answer the fetch list expects (D-370; the second blind review's F13)
 MAX_ANSWER_BYTES = 100_000_000
 TOOL_VERSION = "tools/fetch.py v3 (full header capture; stops on any unexpected response)"
-NO_DATA_TEXTS = ("No GP data found", "No SupGP data found")  # CelesTrak's body for a query with nothing to return
+NO_DATA_TEXTS = ("No GP data found", "No SupGP data found")
+
+
+def no_data_texts_for(url):
+    """The no-data texts a source's own provider answers with: SupGP's for a SupGP URL, GP's for a GP one, either for a
+    URL that names neither (the corpus's derived sources have none). The runner reads the empty answer by the same
+    rule (D-540)."""
+    u = url.lower() if isinstance(url, str) else ""
+    if "sup-gp" in u or "/supplemental/" in u:
+        return ("No SupGP data found",)
+    if "/gp.php" in u or "/gp-first.php" in u:
+        return ("No GP data found",)
+    return NO_DATA_TEXTS
+
+
+RUN_BYTES = [0]   # the bytes on the wire this process has downloaded, every answer of the run together (D-405)
 UNEXPECTED = ".unexpected"          # suffix of a response the fetch list did not expect, kept beside the data (D-228)
 REFUSALS = (403, 429)               # the provider refusing the address: no request for two hours afterwards (D-228)
 REPO_URL = "https://github.com/hneogy/gp-omm-conformance"
@@ -184,13 +199,19 @@ def decode_body(raw, headers_all):
         return raw, "identity", None
     if coding == "gzip":
         try:
-            d = zlib.decompressobj(16 + zlib.MAX_WBITS)   # gzip framing; at most the cap and one byte, never all of it
-            body = d.decompress(raw, MAX_ANSWER_BYTES + 1)
-            if len(body) > MAX_ANSWER_BYTES:
-                return raw, "gzip", f"a gzip body that decompresses past {MAX_ANSWER_BYTES:,} bytes (D-370)"
-            if not d.eof:
-                raise EOFError("the gzip body ends before its end")
-            return body, "gzip", None
+            # every member: a gzip stream may hold several, one after another (RFC 1952), and the bytes after the first
+            # were dropped without a word (the third blind pass's E, D-405); the cap holds over all of them
+            body, rest = b"", raw
+            while True:
+                d = zlib.decompressobj(16 + zlib.MAX_WBITS)   # gzip framing; at most the cap and one byte, never all of it
+                body += d.decompress(rest, MAX_ANSWER_BYTES + 1 - len(body))
+                if len(body) > MAX_ANSWER_BYTES:
+                    return raw, "gzip", f"a gzip body that decompresses past {MAX_ANSWER_BYTES:,} bytes (D-370)"
+                if not d.eof:
+                    raise EOFError("the gzip body ends before its end")
+                rest = d.unused_data
+                if not rest.strip(b"\x00"):   # nothing more, or the zero padding some servers add after the last member
+                    return body, "gzip", None
         except (OSError, EOFError, zlib.error) as e:
             return raw, "gzip", f"a gzip body that does not decompress ({e})"
     return raw, coding, f"Content-Encoding {coding!r}, which was not asked for"
@@ -212,8 +233,24 @@ def why_unexpected(entry, status, body):
             return "an empty body under HTTP 200"
         if head.startswith(b"<!doctype html") or b"<html" in head:
             return "an HTML page under HTTP 200"
+        # a 200 that carries the provider's words for no data or an error is not data (the third blind pass's E, D-405):
+        # stored as data, it was read as a provider file
+        text = body.decode("utf-8", "replace").strip()
+        if text in NO_DATA_TEXTS:
+            return f"the provider's no-data text ({text!r}) under HTTP 200"
+        if text.lower().startswith(("invalid query", "error")):
+            return f"an error text under HTTP 200 ({text[:60]!r})"
+        if text.startswith("{"):
+            try:
+                obj = json.loads(text)
+            except ValueError:
+                obj = None
+            if isinstance(obj, dict) and ("error" in obj or "Error" in obj):
+                return f"a JSON error object under HTTP 200 ({text[:60]!r})"
         return None
-    if status == entry.get("expect_status") and body.decode("utf-8", "replace").strip() in NO_DATA_TEXTS:
+    # the provider's 404 is expected only as its exact no-data text for this entry's provider: the runner reads
+    # nothing else in that file's place as the empty answer (D-540)
+    if status == entry.get("expect_status") and body in tuple(t.encode("utf-8") for t in no_data_texts_for(entry.get("url"))):
         return None
     return f"HTTP {status}"
 
@@ -607,6 +644,7 @@ def fetch_one(entry, root=None):
     finished = now_utc(precise=True)
     elapsed_ms = round((time.monotonic() - t0) * 1000)
     on_wire = len(body)
+    RUN_BYTES[0] += on_wire
     body, coding, bad_coding = decode_body(body, headers_all)
     why = bad_coding or why_unexpected(entry, status, body)
     meta = {
@@ -672,6 +710,88 @@ def fetch_one(entry, root=None):
     return f"{meta['status_line']}, {qty(len(body), 'byte')}"
 
 
+
+# --include-propagation (D-455; Phase 1 item 3 of the 0.9.0 plan, the owner's ruling of 2026-11-01): Vallado's two
+# verification files, which gpconf does not ship (D-388), downloaded from one pinned public location and checked against
+# the corpus's manifest of them. The location is python-sgp4's repository at the commit of its release 2.27, which holds
+# both files with the manifest's bytes (read from GitHub's API on 2026-11-10: the same git blobs as the corpus's private
+# copies). It is the fetch's first host other than CelesTrak: the same User-Agent, one request per file, no retry, a stop
+# on anything but HTTP 200, and nothing written unless the bytes are the manifest's.
+PROPAGATION_REPO = "brandon-rhodes/python-sgp4"
+PROPAGATION_TAG = "2.27"
+PROPAGATION_COMMIT = "6e7428df7acc48e8176828289a8c14486a114759"
+PROPAGATION_BASE = f"https://raw.githubusercontent.com/{PROPAGATION_REPO}/{PROPAGATION_COMMIT}/sgp4/"
+PROPAGATION_DIR = "propagation"   # under the data root; gpconf/propagation.py looks here after --sgp4-ver and python-sgp4
+
+
+def propagation_targets(corpus, root):
+    """-> [(name, url, path, want)] for the two files, want being the manifest's {'sha256', 'bytes'}."""
+    from . import propagation as P   # the manifest's reader
+    want = P.manifest(corpus)["files"]
+    d = os.path.join(root, PROPAGATION_DIR)
+    return [(name, PROPAGATION_BASE + name, os.path.join(d, name), want[name]) for name in P.FILES]
+
+
+def _get_plain(url, limit):
+    """One GET with the fetch's User-Agent, no compression asked: -> (status, body), the body read to at most `limit`
+    bytes and one, so an answer larger than the file it should be is never held whole. Network errors raise."""
+    req = urllib.request.Request(url, headers={"User-Agent": user_agent(), "Accept": "*/*", "Accept-Encoding": "identity"})
+    try:
+        with _opener.open(req, timeout=TIMEOUT) as resp:
+            return resp.status, resp.read(limit + 1)
+    except urllib.error.HTTPError as e:   # a redirect too: the opener follows none (D-230)
+        e.close()
+        return e.code, b""
+
+
+def fetch_propagation(corpus, root, out, dry_run=False, get=None):
+    """-> exit code: 0 when both files are on disk with the manifest's bytes (fetched now or before); 2 at the first
+    answer that is not HTTP 200 or whose bytes are not the manifest's (nothing written, nothing retried); 3 on a
+    network error."""
+    get = get or _get_plain
+    targets = propagation_targets(corpus, root)
+    for name, url, path, want in targets:
+        if os.path.isfile(path):
+            with open(path, "rb") as f:
+                have = f.read()
+            if hashlib.sha256(have).hexdigest() == want["sha256"]:
+                print(f"{'on disk':>34}  propagation/{name}  (the manifest's bytes; no request)", file=out)
+                continue
+            print(f"{'other bytes':>34}  propagation/{name}  (on disk, not the manifest's: "
+                  f"{'would be ' if dry_run else ''}requested again, kept unless the new answer checks)", file=out)
+        if dry_run:
+            print("FETCH   " + url, file=out)
+            continue
+        try:
+            status, body = get(url, want["bytes"])
+        except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as e:
+            print(f"\nSTOP: network error for {url}: {type(e).__name__}: {e}\nNot retrying.", file=sys.stderr)
+            return 3
+        if status != 200:
+            print(f"\nSTOP: HTTP {status} for {url}\nNothing was written and nothing was retried. The pinned copy may have "
+                  f"moved; report it at {ISSUES_URL}.", file=sys.stderr)
+            return 2
+        got = hashlib.sha256(body).hexdigest()
+        if got != want["sha256"] or len(body) != want["bytes"]:
+            print(f"\nSTOP: {url} answered {len(body):,} bytes with SHA-256 {got}, where the corpus's manifest has "
+                  f"{want['bytes']:,} bytes and {want['sha256']}\nNothing was written: gpconf grades only against the "
+                  f"manifest's bytes. Report it at {ISSUES_URL}.", file=sys.stderr)
+            return 2
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = path + ".part"
+        with open(tmp, "wb") as f:
+            f.write(body)
+        os.replace(tmp, path)
+        meta = {"url": url, "retrieved_at": now_utc()[:19] + "Z", "bytes": len(body), "sha256": got,
+                "source": f"{PROPAGATION_REPO} at tag {PROPAGATION_TAG}, commit {PROPAGATION_COMMIT}",
+                "user_agent": user_agent(), "tool": TOOL_VERSION}
+        with open(path + ".meta.json", "w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2, sort_keys=True)
+            f.write("\n")
+        print(f"{'HTTP 200, ' + qty(len(body), 'byte'):>34}  propagation/{name}  (the manifest's bytes)", file=out)
+    return 0
+
+
 def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, pause=PAUSE_SECONDS, corpus=None, prog=None,
         reuse_sources=None):
     """The command line, parameterised so the request logic can be tested with a stub in place of fetch_one and a
@@ -693,6 +813,10 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     ap.add_argument("--include-satcat", action="store_true",
                     help="also fetch the 9.4 MB legacy SATCAT file (pub/satcat.txt). Only the data check satcat-70000-cutoff reads it, "
                          "and no parser takes part in that check, so a fetch leaves it out unless asked")
+    ap.add_argument("--include-propagation", action="store_true",
+                    help="also download Vallado's two SGP4 verification files (SGP4-VER.TLE and tcppver.out, 145 KB) from "
+                         f"python-sgp4's repository at release {PROPAGATION_TAG}, checked against the corpus's manifest, for the "
+                         "case sgp4-ver-propagation; gpconf does not ship them (D-388, D-455)")
     ap.add_argument("--include-recaptures", action="store_true",
                     help="also fetch maintainer-only re-capture entries (same endpoint requested a second time when the corpus was built); "
                          "requested only when the original is on disk and at least 2 hours old")
@@ -730,6 +854,8 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     captures = [e for e in selected if e.get("launch_window")]
     selected = [e for e in selected if not e.get("launch_window")]
     if args.check_drift:
+        if args.include_propagation:
+            print("--include-propagation: not attempted with --check-drift, which fetches nothing", file=out)
         present = [e for e in selected + captures if is_cached(e, root)]
         n = print_drift(drift_report(present, root, corpus), out)
         return 2 if n else 0
@@ -742,6 +868,12 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     from_record = [e for e in selected if e.get("recorded") and not is_cached(e, root)]
     if from_record:
         print(recorded_line(len(from_record)), file=out)
+    if args.include_propagation:
+        # first, and independent of CelesTrak: its own host, so CelesTrak's two quiet hours after a refusal or a
+        # CelesTrak network error later in the run does not hold it back (D-455, the review's finding 3)
+        code = fetch_propagation(corpus, root, out, dry_run=args.dry_run)
+        if code:
+            return code
     refused = recent_refusal(entries, now, root)
     if refused:
         # two quiet hours after a refusal, whatever is asked for (D-228); the dry run says the same and makes none either
@@ -755,6 +887,7 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
     planned = plan(selected, force=args.force, include_recaptures=args.include_recaptures, root=root, now=now, reuse=reuse,
                    include_satcat=args.include_satcat)
     made = reused = recorded = 0
+    RUN_BYTES[0] = 0   # a run counts its own answers from nothing (D-405)
     for p in planned:
         e, label = p["entry"], f"{p['entry']['case']}/{p['entry']['file']}"
         if args.dry_run:
@@ -775,6 +908,12 @@ def run(argv=None, root=None, entries=None, now=None, fetch_one=None, out=None, 
             continue
         if made and pause:
             time.sleep(pause)
+        # the bytes this run has downloaded, all requests together, held to the most CelesTrak asks one address to take
+        # in a day: the cap was per answer only (the third blind pass's E, D-405); a run never starts a request past it
+        if RUN_BYTES[0] >= MAX_ANSWER_BYTES:
+            print(f"\nSTOP: this run has downloaded {RUN_BYTES[0]:,} bytes, the most CelesTrak asks one address to download "
+                  f"in a day; {e['url']} and the rest were not requested\nNot retrying.", file=sys.stderr)
+            return 3
         made += 1
         print(f"{do_fetch(e, root=root):>34}  {label}", file=out)
     if args.dry_run:  # the planned requests are not "skipped" (D-150): say what a real run would do

@@ -38,6 +38,7 @@ import functools
 import hashlib
 import itertools
 import json
+import math
 import os
 import re
 import signal
@@ -50,6 +51,7 @@ from . import plain
 from . import reference as ref
 from . import tle as tlemod
 from . import writer as W
+from .fetch import no_data_texts_for   # CelesTrak's no-data texts, one definition (D-540)
 from .words import pick, qty
 
 CORE_FIELDS = ["norad_cat_id", "epoch", "mean_motion", "eccentricity", "inclination", "ra_of_asc_node",
@@ -93,6 +95,14 @@ class ParserRaised(Exception):
     the runner's. `Unsupported` stays Unsupported, the protocol's answer for an operation the parser does not have."""
 
 
+class AnswerNotAnEpoch(ValueError):
+    """A command's parse_epoch answered, and the answer is no epoch the runner reads: the input's own text handed back
+    (D-306), or an instant the runner refuses, such as a second 60 that is no leap second. The command answered, so
+    for an invalid vector this is an acceptance, never a rejection: before, the runner's own refusal of the answer was
+    credited to the command as its rejection (D-382, the separate review's F1). Through the guard it is a ParserRaised
+    of this name; a Python parser that raises one by that name only fails itself."""
+
+
 class CommandCrashed(Exception):
     """The parser's command was ended by a signal (a crash: a negative return code, or, from a shell command, 128 plus
     the number of one of CRASH_SIGNALS, as a shell reports it) or did not finish within its time (D-341). Raised by the
@@ -104,6 +114,7 @@ class CommandCrashed(Exception):
     refused, an invalid vector rejected, an id the TLE field cannot carry refused by a writer) it fails, and everywhere
     it is worded as the command's end, never as the parser's raise. POSIX only: Windows has no signals, and a crash
     there is its exit code."""
+    malformed: bool   # set by the runner where it raises one (D-398); an annotation only, no class attribute (D-470)
 
 
 # the signals a program does not end by on purpose (a fault, an abort or a trap, a kill, the kernel's resource limits):
@@ -153,7 +164,9 @@ class _Guarded:
             # crash it was; or one a CommandParser subclass made, by its type, which reads no code of the parser's: a
             # forged one fails only the forger (D-342, the third reading of D-341 and D-342's two readings)
             if type(e) is CommandCrashed and (e in _CRASHES or issubclass(type(self._parser), CommandParser)):
-                raise CommandCrashed(self._text(e, name)) from None   # the runner's own words, from its own code (D-341)
+                c = CommandCrashed(self._text(e, name))   # the runner's own words, from its own code (D-341)
+                c.malformed = e.__dict__.get("malformed") is True   # read as data, no code of the parser's runs (D-398)
+                raise c from None
             raise _raised_type(plain.name(type(e)))(self._text(e, name)) from None
         except Exception as e:
             raise _raised_type(plain.name(type(e)))(self._text(e, name)) from None
@@ -193,7 +206,9 @@ class _Guarded:
         return ParserExit(f"the parser raised {what} inside {name}: a parser must not end the run")
 
     def _guard(self, fn, name):
-        read = plain.answer if name == "parse" else plain.lines if name == "write_tle" else plain.hook_answer
+        # propagate's answer is a list of steps, read as plain values, not as text (D-401)
+        read = (plain.answer if name == "parse" else plain.lines if name == "write_tle" else _propagate_answer if name == "propagate"
+                else plain.hook_answer)
 
         def call(*a, **k):
             return self._read(lambda: fn(*a, **k), name, read)
@@ -226,6 +241,25 @@ class _Guarded:
 
     def __call__(self, *a, **k):
         return self._guard(self._parser, "parse")(*a, **k)
+
+
+def _propagate_answer(out):
+    """propagate's answer, read inside the guard: any iterable of steps (a list, a tuple, a generator), and a numpy
+    array of three numbers as a list (python-sgp4's own sgp4_array answers so: the review of D-401), then as plain
+    values (D-337)."""
+    def lists(v, depth=0):
+        if depth > 4:
+            return v
+        if type(v).__module__ == "numpy" and type(v).__name__ == "ndarray":
+            return v.tolist()
+        if isinstance(v, dict):
+            return {k: lists(x, depth + 1) for k, x in v.items()}
+        if isinstance(v, (list, tuple)):
+            return [lists(x, depth + 1) for x in v]
+        return v
+    if not isinstance(out, (list, tuple, dict, str, bytes)) and hasattr(out, "__iter__"):
+        out = list(out)
+    return plain.value(lists(out))
 
 
 class CorpusIncomplete(Exception):
@@ -458,9 +492,25 @@ def parse_failure(e):
 
 
 def crashed(e):
-    """The words for the parser's command crashing or timing out where a refusal or a rejection would be right, or None
-    for any other exception, which is the refusal or the rejection it always was (D-341)."""
-    return f"the parser's command {e}: a crash or a timeout is no refusal and no rejection (D-341)" if type(e) is CommandCrashed else None
+    """The words for the parser's command crashing or timing out, or answering with JSON that holds a key twice with
+    two values (D-398), where a refusal or a rejection would be right, or None for any other exception, which is the
+    refusal or the rejection it always was (D-341)."""
+    if type(e) is not CommandCrashed:
+        return None
+    if getattr(e, "malformed", False):   # an answer no reader can take one way (D-398)
+        return f"the parser's command {e}: such an answer is no refusal and no rejection (D-398)"
+    return f"the parser's command {e}: a crash or a timeout is no refusal and no rejection (D-341)"
+
+
+def answered(e):
+    """True when e says the parser's command answered parse_epoch with something that is no epoch (AnswerNotAnEpoch,
+    itself or as the guard renames it): an answer, not a rejection (D-382)."""
+    return type(e) is AnswerNotAnEpoch or (isinstance(e, ParserRaised) and type(e).__name__ == "AnswerNotAnEpoch")
+
+
+def plain_text(e):
+    """The text of an exception the runner raised or the guard already read into plain text."""
+    return str.__str__(str(e))[:200] if type(e) is AnswerNotAnEpoch or isinstance(e, ParserRaised) else type(e).__name__
 
 
 def raised(e, text=False):
@@ -655,6 +705,13 @@ def sha256(path):
     return h.hexdigest()
 
 
+def read_bytes(path):
+    """A file's bytes, the file closed again: a bare open(...).read() left it to the garbage collector and warned
+    (ResourceWarning, runner.py's unedited corrupt-input file; D-382)."""
+    with open(path, "rb") as f:
+        return f.read()
+
+
 def strip_ref(rec):
     return {k: rec.get(k) for k in CORE_FIELDS + OPTIONAL_FIELDS}
 
@@ -695,6 +752,24 @@ def field_to_id(field):
     return None
 
 
+INPUT_READ = 4096   # characters of a refusal's _input the corrupt-input evidence test reads: over three times the largest
+# corrupt input (1,278 bytes), and kept per refusal through the run, so not more (D-393's review: memory)
+
+
+def returned_ids(recs):
+    """How many of an adapter's records carry each catalog number, as the runner reads them; a record it cannot read
+    names none (D-396)."""
+    ids: collections.Counter = collections.Counter()
+    for r in recs:
+        try:
+            i = norm_record(r)[0].get("norad_cat_id")
+        except Exception:
+            continue
+        if i is not None:
+            ids[i] += 1
+    return ids
+
+
 def split_refusals(recs):
     """An adapter's list -> (records, refusals, declared). A refusal is an entry carrying `_refused`; its reason must be a
     non-empty string, or the refusal is no better than a drop and is marked so (ok=False). `declared` is the adapter's
@@ -716,7 +791,13 @@ def split_refusals(recs):
             if isinstance(inp, bytes):   # the input's own bytes, as the file holds them, not their repr (D-282, D-337)
                 inp = inp.decode("utf-8", "replace")
             refusals.append({"reason": reason.strip() if ok else None, "ok": ok, "field": field if isinstance(field, str) else None,
-                             "input": str(inp)[:80] if inp is not None else None, "id": field_to_id(field)})
+                             "input": str(inp)[:80] if inp is not None else None, "id": field_to_id(field),
+                             # the whole-line evidence test reads more than the report's 80 characters: a set quoted from
+                             # its name line has line 1 past column 80 (the second reading of D-392); up to INPUT_READ, so
+                             # any honest quote of a corrupt input is read whole, and one longer voids the file's
+                             # quoted-input evidence (D-393)
+                             "input_full": str(inp)[:INPUT_READ] if inp is not None else None,
+                             "input_len": len(str(inp)) if inp is not None else 0})
             continue
         records.append(r)
     return records, refusals, declared
@@ -1188,6 +1269,10 @@ class CaseResult:
             d["voided_by_parser"] = self.voided_by_parser()
         if any(self.annotations().values()):
             d["annotations"] = self.annotations()   # D-312: item skips and field gaps inside a case that did not skip
+        if self.secondary_not_kept:
+            # the printed table's "N secondary fields not kept" (D-369), for a script that reads the report (the third
+            # blind pass's B, D-389)
+            d["secondary_fields_not_kept"] = list(self.secondary_not_kept)
         if self.reused:
             d["reused"] = self.reused
         if self.unexpected:
@@ -1273,7 +1358,8 @@ def _vector_item(res, check, file, calls, bad, ok_detail):
 
 
 class Runner:
-    def __init__(self, parser, root=None, verbose=False, data=None, data_why=None, fetch_hints=True):
+    def __init__(self, parser, root=None, verbose=False, data=None, data_why=None, fetch_hints=True, sgp4_ver=None):
+        self.sgp4_ver = sgp4_ver   # a directory holding Vallado's two verification files (the propagation tier, D-401)
         self.parser_exits = []   # (where, what) for every attempt of the parser to end the run (D-293)
         # by its type: a parser whose __class__ said _Guarded was left unwrapped, its own comparisons deciding checks (D-342)
         self.parser = parser if type(parser) is _Guarded else _Guarded(parser, self.parser_exits)
@@ -1292,7 +1378,7 @@ class Runner:
         # the job, so a command that fetches into it would be wrong advice (D-158)
         self.fetch_hints = fetch_hints
         self.verbose = verbose
-        self.manifest = json.load(open(os.path.join(self.root, "manifest.json"), encoding="utf-8"))
+        self.manifest = json.loads(read_bytes(os.path.join(self.root, "manifest.json")).decode("utf-8"))
         self.launch_window = launch_window_files(self.root)
         self.opt_in = opt_in_files(self.root)
 
@@ -1305,7 +1391,7 @@ class Runner:
 
     # ---- parsing helpers
     def parse(self, path, fmt):
-        raw = open(path, "rb").read()
+        raw = read_bytes(path)
         fn = getattr(self.parser, "parse", None) or self.parser
         recs, self._refusals, self._declared = split_refusals(as_records(fn(raw, fmt)))
         raw_text = raw.decode("utf-8", "replace")
@@ -1378,6 +1464,47 @@ class Runner:
         res.add("source-present", "not-fetched", path, "not on disk: provider data is not shipped with the corpus"
                 + (f"; fetch it with {self.hint()}" if self.fetch_hints else ""))
 
+    def no_data_answer(self, res, path, src, raw, meta_status):
+        """The provider's no-data text the file holds, if it is the empty answer for this source; None if it is not
+        (the reading goes on, and a file that reads no records fails below); False after failing `source-readable`.
+
+        Up to 0.9.0's blind pass on D-515's path, any file whose stripped text was either provider's no-data text read
+        as the clean empty answer, whatever the source records: padded text, the other provider's text, a meta file
+        saying HTTP 200, a data source replaced by the text (D-540). Now:
+        - a source the corpus records as a non-200 answer: the file must be that answer byte for byte (its recorded
+          `response_body`), and a .meta.json status, if any, must be the recorded one;
+        - a source recorded as HTTP 200 or with no status: the text alone, or with one line end after it (a single LF
+          or a single CRLF), is CelesTrak's empty answer (the owner's ruling, D-514 and D-517), unless the corpus
+          records records for it (D-113). Where the source's URL names the provider (GP's `gp.php`/`gp-first.php`, or
+          SupGP's), only that provider's text counts; other whitespace never does."""
+        recorded = src.get("http_status")
+        facts = src.get("facts")
+        body = facts.get("response_body") if isinstance(facts, dict) else None
+        if recorded not in (None, 200):
+            texts = no_data_texts_for(src.get("url"))
+            if isinstance(body, str) and body:
+                if body not in texts:   # a recorded error page or another provider's text is never the empty answer
+                    return None
+                texts = (body,)
+            if raw not in tuple(t.encode("utf-8") for t in texts):
+                return None
+            if meta_status not in (None, recorded):
+                res.add("source-readable", "fail", path,
+                        f"the file holds the provider's no-data text, but its .meta.json gives HTTP {meta_status}, not the "
+                        f"HTTP {recorded} answer the corpus records for this source (D-540)")
+                return False
+            return raw.decode("utf-8")
+        bare = raw[:-2] if raw.endswith(b"\r\n") else raw[:-1] if raw.endswith(b"\n") else raw
+        if bare not in tuple(t.encode("utf-8") for t in no_data_texts_for(src.get("url"))):
+            return None
+        expected_n = src.get("record_count")
+        if isinstance(expected_n, int) and expected_n > 0:
+            res.add("source-readable", "fail", path,
+                    f"the file holds the provider's no-data text ({bare.decode('utf-8')!r}), but the corpus records "
+                    f"{qty(expected_n, 'record')} for this source (D-113, D-540)")
+            return False
+        return bare.decode("utf-8")
+
     def load_source(self, res, case, path, src):
         """Returns (state, fmt, mode, parsed, refrecs, reffacts). state: ok | missing | empty-404 | unreadable | parse-error | unsupported"""
         full = self.path(path)
@@ -1385,6 +1512,7 @@ class Runner:
         if not os.path.exists(full):
             self.report_missing(res, path)
             return "missing", fmt, None, None, None, None
+        got = None   # the HTTP status the data folder's .meta.json gives, when it has one
         if is_provider_data(path) and os.path.exists(full + ".meta.json"):
             # a list, a string or a directory there ended the case as "internal error in runner" (D-351)
             meta = saved_meta(full)
@@ -1417,14 +1545,15 @@ class Runner:
                     "the frozen expected values were not applied to this file and the parser was compared against the corpus's reference reader instead. "
                     + (f"Run {self.hint('--check-drift')}; if" if self.fetch_hints else "If")
                     + " CelesTrak changed this first-ever record, tell the corpus maintainer.")
-        raw = open(full, "rb").read()
-        text = raw.decode("utf-8", "replace")
-        if src.get("http_status", 200) != 200 or text.strip() in ("No GP data found", "No SupGP data found"):
-            if text.strip() in ("No GP data found", "No SupGP data found"):
-                res.empty_answers[path] = text.strip()
-                if "empty-answer-yields-no-records" in case.get("checks", []):
-                    self.check_empty_answer(res, path, fmt, raw, text.strip(), src.get("http_status"))
-                return "empty-404", fmt, mode, [], [], {}
+        raw = read_bytes(full)
+        answer = self.no_data_answer(res, path, src, raw, got)
+        if answer is False:
+            return "unreadable", fmt, mode, None, None, None
+        if answer is not None:
+            res.empty_answers[path] = answer
+            if "empty-answer-yields-no-records" in case.get("checks", []):
+                self.check_empty_answer(res, path, fmt, raw, answer, src.get("http_status"))
+            return "empty-404", fmt, mode, [], [], {}
         if fmt in ("satcat-json", "satcat-csv", "satcat-legacy-fixed-width", "vectors-json"):
             return "data", fmt, mode, None, None, None
         try:
@@ -1442,6 +1571,17 @@ class Runner:
             res.add("source-readable", "fail", path,
                     f"reference reader found 0 of {qty(expected_n, 'expected record')}; the file is {describe_bytes(raw, fmt)}")
             return "unreadable", fmt, mode, None, refrecs, reffacts
+        if src.get("http_status") not in (None, 200) and not refrecs:
+            # A source the corpus records as a non-200 answer is a zero-record file only when it holds the provider's
+            # no-data text, which returned "empty-404" above. Other bytes that read no records (an error page, a blank
+            # file) are not that answer, and must not read as "ok" with zero records (D-515).
+            res.add("source-readable", "fail", path,
+                    f"reference reader found no records, and the file is not the provider's no-data text, the answer the corpus "
+                    f"records for this source (HTTP {src.get('http_status')}"
+                    + (f", exactly {qty(len(src['facts']['response_body'].encode('utf-8')), 'byte')}"
+                       if isinstance(src.get("facts"), dict) and isinstance(src["facts"].get("response_body"), str) else "")
+                    + f"): {describe_bytes(raw, fmt)}")
+            return "unreadable", fmt, mode, None, refrecs, reffacts
         if mode == "snapshot" and isinstance(expected_n, int) and len(refrecs) != expected_n:
             res.add("source-readable", "fail", path,
                     f"internal: reference reader found {len(refrecs)} of {qty(expected_n, 'recorded record')} in a file whose hash matches the tested snapshot")
@@ -1457,7 +1597,8 @@ class Runner:
             return "parse-error", fmt, mode, None, refrecs, reffacts
         res.fmt_read.setdefault(fmt, []).append(path)
         res.refusals[path], res.declared[path] = self._refusals, self._declared
-        self.report_refusals(res, path, self._refusals)
+        self.report_refusals(res, path, self._refusals, collections.Counter(q.get("norad_cat_id") for q in parsed),
+                             collections.Counter(q.get("norad_cat_id") for q in refrecs or []))
         if refrecs and not parsed:
             # Fail closed (D-144): a file the reference reads records from, for which the parser returned none, is not a
             # file with nothing in it. Every per-file check would pass on zero records, so none of them runs; the item
@@ -1510,10 +1651,19 @@ class Runner:
         if words:
             res.add("records-returned", "fail", path, "; ".join(words))
 
-    def report_refusals(self, res, path, refusals):
-        """One item per file that carries refusals (D-144): the reasons with their counts; a refusal without a reason fails it."""
+    def report_refusals(self, res, path, refusals, returned=None, held=None):
+        """One item per file that carries refusals (D-144): the reasons with their counts; a refusal without a reason fails it,
+        and so does a refusal of a record the parser also returned from the file (D-396)."""
         if not refusals:
             return
+        # D-396 (the owner's ruling, 2026-11-08): a refusal means the record was dropped with an error, so a record both
+        # returned and refused is a contradiction, a warning reported as a refusal among them; it fails the file's item.
+        # A file holding an id more than once may have one copy refused and another returned, with one refusal or more
+        # for the copy it drops: an id fails only where the records returned already account for every copy the file
+        # holds (by the reference's reading, once where it reads none) and a refusal names it too (the review of D-396).
+        # Measured before it was built: no shipped adapter or harness, nor GPKit, refuses a record it returns.
+        returned, held = returned or {}, held or {}
+        both = sorted({r["id"] for r in refusals if r["id"] is not None and returned.get(r["id"], 0) >= max(held.get(r["id"], 0), 1)}, key=str)
         reasons = {}
         for r in refusals:
             if r["ok"]:
@@ -1524,7 +1674,10 @@ class Runner:
         if no_reason:
             text += (f"; {qty(no_reason, 'refusal')} without a reason, counted as no refusal, crediting no record: a refusal "
                      f"that gives no reason is no better than a drop")
-        res.add("refusals", "fail" if no_reason else "info", path, text)
+        if both:
+            text += ("; returned and refused the same record — a refusal means the record was dropped; don't report warnings "
+                     f"as refusals ({'id' if len(both) == 1 else 'ids'} {', '.join(map(str, both[:12]))}{' ...' if len(both) > 12 else ''}; D-396)")
+        res.add("refusals", "fail" if no_reason or both else "info", path, text)
 
     # ---- value comparison
     def compare_values(self, res, path, fmt, mode, parsed, oracle, check="values", exempt=None, partial=False, oracle_label=None, held=None, held_in_file=None):
@@ -1792,12 +1945,13 @@ class Runner:
                     try:
                         # from the numbers, not strptime: iso_epoch wrote through strftime("%Y"), which pads no year below
                         # 1000 on some platforms, and strptime then raised ValueError here (it writes through epoch_text
-                        # now, D-355); written as iso_epoch writes, to compare alike
+                        # now, D-355; and from D-382 no year below 1972 holds a leap second); written as iso_epoch
+                        # writes, to compare alike
                         y, mo, d, h, mi, s, us = (int(x) for x in re.split(r"[-T:.]", vals["epoch"]))
                         also = dt.datetime(y, mo, d, h, mi, s, us) + dt.timedelta(seconds=1)
                         vals["_epoch_also"] = tlemod.epoch_text(also)
-                    except OverflowError:   # the last second of 9999: no next instant a datetime can hold
-                        pass
+                    except OverflowError:   # the last second of 9999: no next instant a datetime can hold; no file
+                        pass                # reaches it from D-382 (no leap second after 2016), kept as a guard
             out.append((r["norad_cat_id"], vals))
         return _oracle_by_id(out), label, _held(r["norad_cat_id"] for r in refrecs or [])
 
@@ -1834,7 +1988,7 @@ class Runner:
                     else ok_text + (f"; {tol} within tolerance" if tol else ""))
 
         if "leading-dot-decimals" in active and fmt in ("csv", "kvn", "xml"):
-            kws = leading_dot_keywords(open(self.path(path), "rb").read().decode("utf-8", "replace"), fmt)
+            kws = leading_dot_keywords(read_bytes(self.path(path)).decode("utf-8", "replace"), fmt)
             fields = sorted({ref.DECIMAL_KEYS[k] for k in kws if k in ref.DECIMAL_KEYS})  # only decimal keywords can start with '.'
             if fields:
                 n, bad, tol = compare(fields)
@@ -2397,7 +2551,7 @@ class Runner:
             mode = "snapshot" if sha256(full) == src.get("sha256") else "live"
             res.modes[path] = mode
             if src.get("format") == "satcat-legacy-fixed-width":
-                ids = [int(l[13:18]) for l in open(full, encoding="utf-8", errors="replace").read().splitlines() if l[13:18].strip().isdigit()]
+                ids = [int(l[13:18]) for l in read_bytes(full).decode("utf-8", "replace").splitlines() if l[13:18].strip().isdigit()]
                 if not ids:   # it ended the case as "internal error in runner: ValueError: max() ..." (D-351)
                     res.add("satcat-legacy-below-70000", "not-exercised", path, f"the file holds no SATCAT line ({qty(os.path.getsize(full), 'byte')}): "
                             "the data check was not made; the parser under test is not involved in it", cause="data")
@@ -2497,7 +2651,8 @@ class Runner:
                 except Unsupported:
                     continue
                 except Exception as e:
-                    bad.append(f"valid {v['text']!r}: {raised(e)}" if type(e) is CommandCrashed else f"valid {v['text']!r} rejected ({type(e).__name__})")
+                    bad.append(f"valid {v['text']!r}: {raised(e)}" if type(e) is CommandCrashed else
+                               f"valid {v['text']!r}: {plain_text(e)}" if answered(e) else f"valid {v['text']!r} rejected ({type(e).__name__})")
                     continue
                 if not isinstance(got, dt.datetime):
                     # D-306 (the red team's E6): the hook's contract is text -> datetime. Text handed back was parsed
@@ -2521,6 +2676,8 @@ class Runner:
                 except Exception as e:
                     if crashed(e):
                         bad.append(f"invalid {v['text']!r}: {crashed(e)}")
+                    elif answered(e):   # the command answered; the runner's refusal of the answer is no rejection (D-382)
+                        bad.append(f"invalid {v['text']!r} accepted: {plain_text(e)}")
             _vector_item(res, "ccsds-epoch-strings", "vectors/ccsds-epoch-strings.json", hooks["parse_epoch"], bad,
                          f"{qty(len(ep['valid']), 'valid epoch string')} parsed to the {pick(len(ep['valid']), 'instant it denotes', 'instants they denote')} "
                          f"(within {EPOCH_TOLERANCE_US} us) and {qty(len(ep['invalid']), 'invalid string')} rejected")
@@ -2563,6 +2720,7 @@ class Runner:
             res.add("tle-writer-catalog-field", "skip", None, "parser exposes no write_tle hook")
             return
         lines_bad, cat_bad, rt_bad, emitted_bad, refused_ok, layout_bad, crashed_bad = [], [], [], [], [], [], []
+        side_changed, side_checked = [], 0   # side fields written as another value (D-381, D-383)
         conv, sec, signs, prov = {}, {}, {}, {}
         written, refused_real, rt_checked, unreadable = 0, 0, 0, 0
         unsupported, unsupported_reasons = 0, []
@@ -2624,6 +2782,10 @@ class Runner:
                 conv.setdefault(f, {})[k] = conv.setdefault(f, {}).get(k, 0) + 1
             for f in W.SECONDARY_FIELDS:
                 sec.setdefault(f, {})[s[f]] = sec.setdefault(f, {}).get(s[f], 0) + 1
+            side_checked += 1
+            changed = [f for f in W.SECONDARY_FIELDS if s[f] == "changed"]
+            if changed:
+                side_changed.append(f"id {cat}: {', '.join(changed)}")
             if s["zero_ddot_sign"]:
                 signs[s["zero_ddot_sign"]] = signs.get(s["zero_ddot_sign"], 0) + 1
             if it.get("reference_tle_fields"):
@@ -2689,6 +2851,15 @@ class Runner:
             res.add("tle-writer-secondary-fields", "info", None, f"{sec_text}; zero second-derivative exponent sign: {sign_text} (CelesTrak writes +, Space-Track -)")
             # a name cut to the line's 24 columns is kept as the format allows; any other outcome is not (D-369)
             res.secondary_not_kept = [f for f, v in sec.items() if set(v) - {"preserved", "cut-to-24"}]
+        if side_checked:
+            # a side field may be zeroed or left out, as documented; any other value it is written with must be the
+            # record's, or the case fails (D-381, the owner's ruling on SM-26's W1 and W4; D-383)
+            res.add("tle-writer-secondary-not-changed", "fail" if side_changed else "pass", None,
+                    summary([f"{c} written as another value, neither the record's nor zero or left out" for c in side_changed],
+                            f"{qty(side_checked, 'record')} with each side field kept, or zeroed or left out as documented",
+                            side_checked - len(side_changed), side_checked))
+        else:
+            res.add("tle-writer-secondary-not-changed", "not-exercised", None, nothing, cause="parser")
         if prov:
             res.add("tle-writer-matches-provider-rendering", "info", None,
                     "byte-identical to the provider's or derived rendering: " + ", ".join(f"{f} {a}/{n}" for f, (a, n) in prov.items()))
@@ -2774,6 +2945,7 @@ class Runner:
             return readings[path]
         readings[path] = (base, count, None)
         readings[("parsed", path)] = parsed
+        readings[("refusals", path)] = split_refusals(out)[1]   # what it refused in a valid file: no cut was there (D-400)
         return readings[path]
 
     def run_corrupt_input(self, case, exp, res):
@@ -2792,7 +2964,7 @@ class Runner:
         for r in exp["records"]:
             by_file.setdefault(r["file"], []).append(r)
         unedited = exp["case_specific"].get("unedited", {})
-        readings = {}  # unedited file -> the parser's reading of it, made once
+        readings: dict = {}  # unedited file -> the parser's reading of it, made once
         for path, src in exp["sources"].items():
             if path in unedited or path in exp["case_specific"].get("graded", {}):
                 continue  # read when an input it is the comparison for is graded; a graded file after the inputs
@@ -2867,7 +3039,10 @@ class Runner:
                 self.compare_values(res, upath, fmt, "snapshot", readings[("parsed", upath)], oracle, oracle_label="frozen expected values")
             got, refusals, declared = split_refusals(out)
             res.refusals[path], res.declared[path] = refusals, declared
-            self.report_refusals(res, path, refusals)
+            # these files hold each id once (D-311). The cut JSON holds no corrupt record: every record is complete, and a
+            # refusal of the cut may name the last one, which a correct reader returns (the review of D-396), so there a
+            # record both returned and refused is not read as a contradiction (decided overnight, for the owner's review)
+            self.report_refusals(res, path, refusals, returned_ids(got) if any(r["role"] == "corrupt" for r in want) else None)
             parsed = []
             try:
                 for r in got:
@@ -2917,22 +3092,46 @@ class Runner:
             # ADAPTERS.md has said so all along ("a field of any other form credits the refusal to no record");
             # the earlier behaviour credited any unmatched refusal, which let a silent drop hide behind a decoy.
             edited_text = raw.decode("utf-8", "replace")
-            unedited_text = open(self.path(upath), "rb").read().decode("utf-8", "replace")
+            unedited_text = read_bytes(self.path(upath)).decode("utf-8", "replace")
             # a _field is the catalog field as the input carried it (ADAPTERS.md), so it is evidence only where it is the
             # catalog field (columns 3-7) of an element line the edit introduced: any other text the edit introduced, "O"
             # or a few digits, let a decoy credit a silent drop (D-360's second reading)
             def catalog_fields(text):
                 return {l[2:7].strip() for l in text.splitlines() if l[:2] in ("1 ", "2 ") and len(l) >= 7}
             new_fields = catalog_fields(edited_text) - catalog_fields(unedited_text)
+            # an _input is evidence only where it holds a whole line the edit introduced: any text the edit introduced,
+            # a single letter "O" that no unedited line holds, let a decoy credit a silent drop (the review of D-391;
+            # D-392). Every shipped adapter and harness quotes the offending line whole.
+            new_lines = {l for l in edited_text.splitlines() if l.strip()} - set(unedited_text.splitlines())
+            # an _input longer than is read could hold lines the test never sees: it voids the file's quoted-input
+            # evidence, a refusal's _field still crediting (D-393)
+            inputs_void = any(x.get("input_len", 0) > INPUT_READ for x in refusals)
+
             def quotes_edit(x):
-                q = x["input"]
-                return bool((q and q.strip() and q in edited_text and q not in unedited_text)
+                q = x.get("input_full", x["input"])
+                return bool((q and not inputs_void and any(l in q for l in new_lines))
                             or (x["field"] and x["field"].strip() in new_fields))
             evidenced = [x for x in unmatched if quotes_edit(x)]
-            # a cut introduces no new text, so its evidence is the cut site: a refusal quoting the edited file's tail
-            evidenced_cut = [x for x in with_reason if x["input"] and x["input"].strip() and x["input"] in edited_text[-200:]]
-            if corrupt and outcome[corrupt["norad_cat_id"]][0] == "dropped" and evidenced:
-                outcome[corrupt["norad_cat_id"]] = ("refused", evidenced[0]["reason"])
+            # a cut introduces no new text, so its evidence is the cut site: a refusal quoting the edited file's tail. A
+            # parser that refuses with a reason in the unedited file too, where nothing is cut, says it of every file:
+            # its quote of the cut site is no evidence (the third blind pass's 12, a refusal quoting every JSON answer's
+            # tail; D-400)
+            twin_refused = any(x["ok"] for x in readings.get(("refusals", upath), []))
+
+            def quotes_cut_site(x):   # the quote read whole (D-392), within the file's last 200 characters or ending with the file
+                q = x.get("input_full") or x["input"]
+                return bool(q and q.strip() and (q in edited_text[-200:] or edited_text.rstrip().endswith(q.rstrip())))
+            evidenced_cut = [x for x in with_reason if not inputs_void and not twin_refused and quotes_cut_site(x)]
+            # the CSV cut's corrupt record is its cut row: the cut site's evidence credits it there too, as it credits the
+            # JSON cut (the check of D-360's mended lines: a refusal quoting the cut site failed the CSV, D-400), from a
+            # refusal that names no record of the file, as the edit's evidence is (the review of D-400)
+            cut_row = [x for x in evidenced_cut if x["id"] not in ids] if cut else []
+            # said where it applies: the parser's quote of the cut site was set aside (the review of D-400)
+            twin_words = ("; its refusal quoting the cut site not counted, since it refused with a reason in the unedited "
+                          f"file {uname} too, where nothing is cut (D-400)") if cut and twin_refused and any(
+                              quotes_cut_site(x) for x in with_reason) else ""
+            if corrupt and outcome[corrupt["norad_cat_id"]][0] == "dropped" and (evidenced or cut_row):
+                outcome[corrupt["norad_cat_id"]] = ("refused", (evidenced or cut_row)[0]["reason"])
             # a refusal without a reason that quotes the edit is that, not a drop the adapter never reported (D-360's
             # reading: on the invalid catalog field it read "refusals not reported by this adapter")
             elif corrupt and outcome[corrupt["norad_cat_id"]][0] == "dropped" and any(
@@ -2963,7 +3162,7 @@ class Runner:
                     status, text = "pass", f"the cut reported with a reason that quotes the cut site ({evidenced_cut[0]['reason'][:120]!r})"
                 else:
                     status, text = "fail", (f"{counts['loaded']} of {qty(len(want), 'record')} loaded and nothing said of the cut "
-                                            f"({spec.get('file_edit', 'the file is cut')}): silent partial loading" + garbage_extra)
+                                            f"({spec.get('file_edit', 'the file is cut')}): silent partial loading" + garbage_extra + twin_words)
             elif corrupt["norad_cat_id"] in unread:
                 status, text = "not-exercised", (f"the parser does not return {corrupt['norad_cat_id']} from the unedited file {uname} either, "
                                                  "so what it does with the edited record says nothing about the edit")
@@ -2980,7 +3179,7 @@ class Runner:
                 elif o == "refused without a reason":
                     status, text = "fail", "the corrupt record refused without a reason: no better than a drop (D-144)"
                 else:
-                    status, text = "fail", ("the cut row dropped with nothing said: silent partial loading" if cut else "the corrupt record dropped " +
+                    status, text = "fail", ("the cut row dropped with nothing said: silent partial loading" + twin_words if cut else "the corrupt record dropped " +
                                             ("silently" if declared else "(refusals not reported by this adapter)"))
                     if unmatched:
                         # said without a reason why: the evidence a refusal may carry differs by input and branch (D-360's
@@ -3053,8 +3252,352 @@ class Runner:
                     oracle[r["norad_cat_id"]] = vals
             self.compare_values(res, path, fmt, "snapshot", parsed, oracle, oracle_label="frozen expected values")
 
+    def propagation_declaration(self):
+        """The constants an adapter declares for its propagate hook (lane C's design section 6; D-413): an entry
+        {"_adapter": {"propagation": {"gravity": ..., "opsmode": ...}}} in parse's answer, read once a run from parse's
+        answer to the first twins set (shipped, so it is there in every copy). Reported, never trusted: the references
+        stay WGS-72 and opsmode 'i'. None when the adapter declares none or parse gives no answer."""
+        if hasattr(self, "_propagation_declared"):
+            return self._propagation_declared
+        self._propagation_declared: "dict | None" = None
+        lines = read_bytes(os.path.join(self.root, "derived", "propagation-twins", "twins.tle")).decode("ascii").split("\r\n")
+        try:
+            out = self.parser.parse(("\r\n".join(lines[1:3]) + "\r\n").encode("ascii"), "tle")
+        except Exception:   # Unsupported, a refusal, a crash: nothing declared is read; a parser exit was counted where
+            return None     # the guard caught it and fails the case it happens in (D-293), so this case's grading goes on
+        if isinstance(out, list):
+            for r in out:
+                if isinstance(r, dict) and isinstance(r.get(ADAPTER_KEY), dict) and "propagation" in r[ADAPTER_KEY]:
+                    self._propagation_declared = {"value": r[ADAPTER_KEY]["propagation"]}
+        return self._propagation_declared
+
+    def report_declaration(self, res):
+        """The declaration's info item in a propagation case whose hook is there (D-413): what the adapter claims,
+        beside the case's items, and whether it is the reference's; it moves no status."""
+        twins = os.path.join("derived", "propagation-twins", "twins.tle")
+        if not os.path.exists(os.path.join(self.root, twins)):
+            self.report_missing(res, twins)   # a shipped file: an incomplete copy stops the run (D-148)
+        d = self.propagation_declaration()
+        if d is None:
+            return
+        v = d["value"]
+        if not isinstance(v, dict):
+            res.add("propagation-constants-declared", "info", None, f"the adapter's propagation declaration is no object "
+                    f"({str(v)[:60]}); reported, never trusted (D-413)")
+            return
+        g, o = v.get("gravity"), v.get("opsmode")
+        said = f"gravity {str(g)[:20]}, opsmode {str(o)[:8]}"
+        # the values ADAPTERS.md names are "wgs72" and "i"; case, a hyphen and the word "improved" are read as the same
+        same = (isinstance(g, str) and g.lower().replace("-", "").replace(" ", "") == "wgs72"
+                and isinstance(o, str) and o.lower() in ("i", "improved"))
+        res.add("propagation-constants-declared", "info", None, f"the adapter declares {said}: "
+                + ("the reference's" if same else "not the reference's, WGS-72 and opsmode 'i', which the case grades against")
+                + "; reported, never trusted (D-413)")
+
+    def run_propagation(self, case, exp, res):
+        """The propagation tier (D-401): each of Vallado's element sets through the parser's propagate hook, compared
+        with the located tcppver.out within 2e-7 km and km/s per component, and its SGP4 error codes matched exactly
+        (gpconf/propagation.py). Without the hook, or without the files on this machine, nothing is graded."""
+        from . import propagation as P
+        checks = ("sgp4-ver-positions", "sgp4-ver-error-codes")
+        hook = getattr(self.parser, "propagate", None)
+        if hook is None:
+            for c in checks:
+                res.add(c, "skip", None, "parser exposes no propagate hook")
+            return
+        self.report_declaration(res)
+        try:
+            directory, where, why = P.locate(self.root, self.sgp4_ver, self.data)
+        except OSError as e:
+            for c in checks:
+                res.add(c, "not-exercised", None, f"this copy of the corpus lacks its manifest of Vallado's files ({e}), so "
+                        "no copy of them can be checked: a corpus copy that is incomplete", cause="data")
+            return
+        if directory is None:
+            advice = ("check the directory given with --sgp4-ver" if self.sgp4_ver else
+                      "give their directory with --sgp4-ver, install python-sgp4 2.27, which carries them, or run "
+                      "gpconf fetch --include-propagation, which downloads them from python-sgp4's repository")
+            for c in checks:
+                res.add(c, "not-exercised", None, "Vallado's verification files (SGP4-VER.TLE and tcppver.out) were not "
+                        f"found with the corpus's bytes: {why}; {advice} (gpconf ships neither file, D-388)", cause="data")
+            return
+        refs = P.reference(directory, self.root)
+        pos_bad, code_bad, refused, unsupported, compared, max_r, max_v, codes = [], [], [], [], 0, 0.0, 0.0, 0
+        for ref in refs:
+            try:
+                answers = hook(P.raw_of(ref), "tle", list(ref["times"]))
+            except Unsupported as e:
+                unsupported.append(str(e).strip() or "no reason given")
+                continue
+            except Exception as e:
+                # a valid element set refused: a refusal is the library declining the set, which Vallado's file does
+                # not (an error code is a value per step, D-218's line); a crash is no answer either (D-341)
+                refused.append(f"{ref['catalog']}: " + (crashed(e) or f"{type(e).__name__}: {str(e)[:120]}"))
+                continue
+            problems, st = P.grade_set(ref, answers)
+            compared += st["compared"]
+            max_r, max_v = max(max_r, st["max_r"]), max(max_v, st["max_v"])
+            codes += bool(ref["error"])
+            pos_bad += [f"{ref['catalog']} {p}" for p in problems["values"]]
+            code_bad += [f"{ref['catalog']} {p}" for p in problems["codes"]]
+        if len(unsupported) == len(refs):
+            for c in checks:
+                res.add(c, "skip", None, f"parser reports propagation unsupported: {'; '.join(dict.fromkeys(unsupported))}")
+            return
+        mix = (f"; propagate answered unsupported for {len(unsupported)} of {qty(len(refs), 'element set')}: a hook is "
+               "unsupported for all of its inputs or none (D-205, D-280)") if unsupported else ""
+        lost = (f"; {qty(len(refused), 'valid element set')} refused: " + "; ".join(refused[:4])) if refused else ""
+        stats = f"largest differences {max_r:.3g} km and {max_v:.3g} km/s over {qty(compared, 'step')} (the bar {P.BAR:g}, WGS-72, opsmode 'i'; read from {where})"
+        bad = pos_bad + ([] if not lost else [lost])
+        none = "" if compared else "; no step was compared"
+        # within the bar is a pass within tolerance, as the element values are (lane C's design, section 2); exactly the
+        # file's numbers is a pass, which is also what a parser copying tcppver.out gives (a documented limit, D-401)
+        ok = "pass-tolerance" if (max_r or max_v) else "pass"
+        res.add("sgp4-ver-positions", "fail" if bad or unsupported or not compared else ok, None,
+                ("; ".join(pos_bad[:6]) + (" ..." if len(pos_bad) > 6 else "") + "; " if pos_bad else "") + stats + none + lost + mix)
+        res.add("sgp4-ver-error-codes", "fail" if code_bad or refused or unsupported else "pass", None,
+                ("; ".join(code_bad[:6]) + (" ..." if len(code_bad) > 6 else "") if code_bad else
+                 # D-459: a run that refused sets has its codes ungraded for them; say so, not what a pass says
+                 f"error codes not graded for every set: of the sets graded, {qty(codes, 'run')} ended in an SGP4 error whose step and code matched"
+                 if (refused or unsupported) else
+                 f"{qty(codes, 'run')} ending in an SGP4 error, each at its step with its code, and no false decay") + lost + mix)
+
+    def run_twins(self, case, exp, res):
+        """The TLE/OMM exact twins (D-406; lane C's design section 3): each of seven shipped TLE sets and its OMM CSV
+        twin, whose values are exactly the TLE's, through the propagate hook; each against the corpus's own reference
+        vectors (SGP4 by Vallado's C++, cross-checked with python-sgp4) within 2e-7 km and km/s, codes exact, and the
+        two against each other within the same bar. A library whose OMM path reads the angles, the mean motion, the
+        eccentricity or BSTAR otherwise than its TLE path fails here, and the epoch through the two deep-space sets only
+        (near-earth SGP4 in TEME does not depend on it); the derivatives, which SGP4 does not use, are not graded, and
+        every reference step propagates, so the codes catch a false decay only (the review of D-406)."""
+        from . import propagation as P
+        checks = ("twins-tle-positions", "twins-omm-positions", "twins-tle-omm-agree")
+        hook = getattr(self.parser, "propagate", None)
+        if hook is None:
+            for c in checks:
+                res.add(c, "skip", None, "parser exposes no propagate hook")
+            return
+        self.report_declaration(res)
+        ref = P.twins(self.root)
+        tle_path, csv_path = (os.path.join(self.root, "derived", "propagation-twins", n) for n in ("twins.tle", "twins.csv"))
+        for path in (tle_path, csv_path):
+            if not os.path.exists(path):
+                self.report_missing(res, os.path.relpath(path, self.root))
+        tle_lines = read_bytes(tle_path).decode("ascii").split("\r\n")
+        csv_lines = read_bytes(csv_path).decode("utf-8").split("\r\n")
+        out: dict = {"tle": {"bad": [], "codes": [], "stats": [], "unsupported": [], "refused": []},
+               "csv": {"bad": [], "codes": [], "stats": [], "unsupported": [], "refused": []}}
+        answers = {}
+        for k, st in enumerate(ref["sets"]):
+            # the two element lines, as the Vallado case sends a set: a hook reading two lines is not failed by a name
+            # line (the review of D-406)
+            raws = {"tle": ("\r\n".join(tle_lines[3 * k + 1:3 * k + 3]) + "\r\n").encode("ascii"),
+                    "csv": (csv_lines[0] + "\r\n" + csv_lines[1 + k] + "\r\n").encode("utf-8")}
+            times = [x["t"] for x in st["steps"]]
+            for fmt in ("tle", "csv"):
+                o = out[fmt]
+                try:
+                    a = hook(raws[fmt], fmt, times)
+                except Unsupported as e:
+                    o["unsupported"].append(str(e).strip() or "no reason given")
+                    continue
+                except Exception as e:
+                    o["refused"].append(f"{st['norad_cat_id']}: " + (crashed(e) or f"{type(e).__name__}: {str(e)[:120]}"))
+                    continue
+                answers[(k, fmt)] = a
+                problems, stats = P.grade_steps(st["steps"], a)
+                o["bad"] += [f"{st['norad_cat_id']} {x}" for x in problems["values"]]
+                o["codes"] += [f"{st['norad_cat_id']} {x}" for x in problems["codes"]]
+                o["stats"].append(stats)
+        n = len(ref["sets"])
+        for fmt, check, label in (("tle", "twins-tle-positions", "TLE"), ("csv", "twins-omm-positions", "OMM CSV")):
+            o = out[fmt]
+            if len(o["unsupported"]) == n:
+                res.add(check, "skip", None, f"parser reports propagation from {label} unsupported: {'; '.join(dict.fromkeys(o['unsupported']))}")
+                continue
+            compared = sum(x["compared"] for x in o["stats"])
+            mr = max([x["max_r"] for x in o["stats"]] or [0.0])
+            mv = max([x["max_v"] for x in o["stats"]] or [0.0])
+            words = o["bad"] + o["codes"] + [f"{qty(len(o['refused']), 'set')} refused: " + "; ".join(o["refused"][:3])] * bool(o["refused"])
+            if o["unsupported"]:
+                words.append(f"answered unsupported for {len(o['unsupported'])} of {qty(n, 'set')}: all or none (D-205, D-280)")
+            stats = (f"largest differences {mr:.3g} km and {mv:.3g} km/s over {qty(compared, 'step')} against the corpus's "
+                     f"reference vectors (the bar {P.BAR:g}, WGS-72, opsmode 'i')")
+            ok = "pass-tolerance" if (mr or mv) else "pass"
+            res.add(check, "fail" if words or not compared else ok, None,
+                    ("; ".join(words[:6]) + (" ..." if len(words) > 6 else "") + "; " if words else "") + stats
+                    + ("" if compared else "; no step was compared"))
+        both = [k for k in range(n) if (k, "tle") in answers and (k, "csv") in answers]
+        if not both:
+            res.add("twins-tle-omm-agree", "skip", None, "no set was propagated from both renderings")
+            return
+        mr = mv = 0.0
+        differ = []
+        together = 0
+        for k in both:
+            r, v, d = P.agree(answers[(k, "tle")], answers[(k, "csv")])
+            mr, mv = max(mr, r), max(mv, v)
+            together += P.both_propagated(answers[(k, "tle")], answers[(k, "csv")])
+            differ += [f"{ref['sets'][k]['norad_cat_id']} t = {ref['sets'][k]['steps'][i]['t']:g}" for i in d]
+        bad = mr > P.BAR or mv > P.BAR or differ or not together   # D-459: agreement over no step is no agreement
+        res.add("twins-tle-omm-agree", "fail" if bad else ("pass-tolerance" if (mr or mv) else "pass"), None,
+                (f"error codes differ between the renderings at {', '.join(differ[:4])}; " if differ else "")
+                + f"TLE and OMM answers of the same {qty(len(both), 'set')} differ by at most {mr:.3g} km and {mv:.3g} km/s "
+                  f"over {qty(together, 'step')} both propagated (the bar {P.BAR:g})"
+                + ("" if together else "; no step was propagated from both renderings, so nothing agreed"))
+
+    def run_type4(self, case, exp, res):
+        """Ephemeris type 4 (D-409; lane C's design section 4; the owner's ruling of 2026-11-01): one shipped set, 20453,
+        with EPHEMERIS_TYPE 4 as TLE, OMM CSV, JSON, XML and KVN, and a KVN also saying MEAN_ELEMENT_THEORY = SGP4-XP,
+        each through the propagate hook. Type 4 marks an SGP4-XP element set, which SGP4 propagates to positions that
+        look right and are not: positions for it fail the item, a refusal passes (a raise, Unsupported for the type-4
+        set alone, a refusal from parse while the twin is read, whatever the hook then answers for it (D-464), or an
+        SGP4 error code at every step with no position
+        beside it, as Vallado's C++ answers, which skips sgp4init for a type other than 0), and an adapter that claims
+        SGP4-XP (propagates_sgp4_xp = True) is not graded on it. Each file's type-0 twin, the same values with type 0,
+        must propagate and match the twins' reference vectors (D-406), so refusing every set fails, and Unsupported for
+        the twin alone fails it. Graded on EPHEMERIS_TYPE alone (the owner's ruling)."""
+        from . import propagation as P
+        checks = ("type4-not-propagated", "type4-twins-propagate")
+        hook = getattr(self.parser, "propagate", None)
+        if hook is None:
+            for c in checks:
+                res.add(c, "skip", None, "parser exposes no propagate hook")
+            return
+        self.report_declaration(res)
+        base = os.path.join(self.root, "derived", "ephemeris-type-4")
+        pairs = [(f, f"type4.{f}", f"type0.{f}") for f in ("tle", "csv", "json", "xml", "kvn")] + [("kvn", "type4-sgp4-xp.kvn", "type0.kvn")]
+        for name in {n for _, a, b in pairs for n in (a, b)}:
+            if not os.path.exists(os.path.join(base, name)):
+                self.report_missing(res, os.path.relpath(os.path.join(base, name), self.root))
+
+        def raw(name):
+            b = read_bytes(os.path.join(base, name))
+            if name.endswith(".tle"):   # the two element lines, as the other propagation cases send a set
+                ls = b.decode("ascii").split("\r\n")
+                return ("\r\n".join(ls[1:3]) + "\r\n").encode("ascii")
+            return b
+        tle0 = raw("type0.tle").decode("ascii").split("\r\n")
+        (ref,) = [s for s in P.twins(self.root)["sets"] if s["line1"] == tle0[0] and s["line2"] == tle0[1]]
+        times = [x["t"] for x in ref["steps"]]
+        try:
+            claimed = getattr(self.parser, "propagates_sgp4_xp", None) is True
+        except Exception:
+            claimed = False
+
+        def call(name, fmt):
+            try:
+                return "answer", hook(raw(name), fmt, times)
+            except Unsupported as e:
+                return "unsupported", str(e).strip() or "no reason given"
+            except Exception as e:
+                c = crashed(e)
+                return ("crash", c) if c else ("raised", f"{type(e).__name__}: {str(e)[:120]}")
+
+        def refused_by_parse(f4, f0, fmt):
+            """The type-4 set refused when read, while its twin in the same format is read: a parse that refuses every
+            input is no evidence (the review of D-409)."""
+            def read(name):
+                try:
+                    recs = self.parser.parse(raw(name), fmt)
+                except Unsupported:
+                    return None
+                except Exception as e:
+                    return None if crashed(e) else "raised"
+                if not isinstance(recs, list):
+                    return None
+                records, refusals, _ = split_refusals(recs)
+                return "records" if records else ("refused" if any(r["ok"] for r in refusals) else None)
+            return read(f0) == "records" and read(f4) in ("raised", "refused")
+
+        def position(v):
+            """Three finite numbers, not all zero: a position (an array the library left untouched is none)."""
+            return (isinstance(v, (list, tuple)) and len(v) == 3 and all(type(x) in (int, float) and math.isfinite(x) for x in v)
+                    and any(x != 0 for x in v))
+
+        def steps_say(answers):
+            if not isinstance(answers, (list, tuple)) or not answers or not all(isinstance(a, dict) for a in answers):
+                return "unreadable"
+            if len(answers) != len(ref["steps"]):   # D-459: one code for six times is no code at every step
+                return "short"
+            codes = [a.get("error", 0) for a in answers]   # a step with no code is a step that propagated
+            if any(type(c) is int and c == 0 for c in codes):
+                return "propagated"
+            if not all(type(c) is int for c in codes):
+                return "unreadable"
+            # an error code on every step passes only with no position beside it: codes stamped on SGP4's positions
+            # still hand the positions over (the review of D-409)
+            return "stamped" if any(position(a.get("r")) for a in answers) else "codes"
+        t4_bad, t4_ok, t0_bad, t0_stats, skipped = [], [], [], [], []
+        for fmt, f4, f0 in pairs:
+            # the twin first: a command's propagate op is probed with the first set it is sent, and a probe with the
+            # type-4 set would read a correct command's refusal as having no op (the review of D-409)
+            k0, a0 = call(f0, fmt)
+            k4, a4 = call(f4, fmt)
+            if k4 == "unsupported" and k0 == "unsupported":
+                skipped.append(f"{f4}: {a4}")
+                continue
+            if k0 == "answer":
+                problems, stats = P.grade_steps(ref["steps"], a0)
+                t0_stats.append(stats)
+                t0_bad += [f"{f0} {p}" for p in problems["values"] + problems["codes"]]
+            elif k0 == "unsupported":
+                t0_bad.append(f"{f0} answered unsupported and {f4} did not: Unsupported is for a format's sets all or none "
+                              "(D-205, D-280)")
+            else:
+                t0_bad.append(f"{f0}, a valid type-0 set, refused: {a0}")
+            if k4 == "raised":
+                t4_ok.append(f"{f4} refused ({a4})")
+            elif k4 == "unsupported":
+                # declining the type-4 set alone as unsupported is a refusal in words, and its twin is graded (the
+                # review of D-409; the owner's principle that a correct reader must not fail)
+                t4_ok.append(f"{f4} declined as unsupported ({a4})")
+            elif k4 == "crash":
+                t4_bad.append(f"{f4}: {a4}")
+            elif refused_by_parse(f4, f0, fmt):
+                # D-464 (the owner's ruling, 2026-11-11): a refusal at parse is the strongest form, so it passes whatever
+                # the hook answers; positions fail only for a set parse accepted
+                t4_ok.append(f"{f4} refused when read (parse), its twin read; the hook's answer is not graded for a set "
+                             "parse refused")
+            else:
+                say = steps_say(a4)
+                if say == "codes":
+                    t4_ok.append(f"{f4} answered an SGP4 error code at every step and no position")
+                elif say == "propagated":
+                    t4_bad.append(f"{f4} propagated as SGP4: positions for an SGP4-XP set (EPHEMERIS_TYPE 4) look right and are not")
+                elif say == "stamped":
+                    t4_bad.append(f"{f4} answered error codes beside SGP4 positions: the positions still come out")
+                elif say == "short":
+                    t4_bad.append(f"{f4}: {len(a4)} steps answered for {len(ref['steps'])} times asked: answer one step per time "
+                                  "(a code at every step), or a refusal")
+                else:
+                    t4_bad.append(f"{f4}: the answer is no list of steps (an empty list too: answer a refusal or a code per step)")
+        if len(skipped) == len(pairs):
+            for c in checks:
+                res.add(c, "skip", None, f"parser reports propagation unsupported for every format: {'; '.join(dict.fromkeys(skipped))}")
+            return
+        unsup = f"; skipped, unsupported for both files: {', '.join(s.split(':')[0] for s in skipped)}" if skipped else ""
+        if claimed:
+            res.add("type4-not-propagated", "skip", None, "the adapter claims SGP4-XP (propagates_sgp4_xp = True): not graded, "
+                    "since gpconf has no SGP4-XP reference (the owner's ruling, 2026-11-01)" + unsup)
+        else:
+            words = t4_bad
+            res.add("type4-not-propagated", "fail" if words else "pass", None,
+                    ("; ".join(words[:6]) + (" ..." if len(words) > 6 else "") if words else
+                     f"{qty(len(t4_ok), 'type-4 file')} not propagated: " + "; ".join(t4_ok[:6])) + unsup)
+        compared = sum(s["compared"] for s in t0_stats)
+        mr = max([s["max_r"] for s in t0_stats] or [0.0])
+        mv = max([s["max_v"] for s in t0_stats] or [0.0])
+        words = t0_bad
+        stats = (f"largest differences {mr:.3g} km and {mv:.3g} km/s over {qty(compared, 'step')} against the twins' reference "
+                 f"vectors (the bar {P.BAR:g}, WGS-72, opsmode 'i')")
+        ok = "pass-tolerance" if (mr or mv) else "pass"
+        res.add("type4-twins-propagate", "fail" if words or not compared else ok, None,
+                ("; ".join(words[:6]) + (" ..." if len(words) > 6 else "") + "; " if words else "") + stats
+                + ("" if compared else "; no step was compared") + unsup)
+
     def run_case(self, case):
-        exp = json.load(open(os.path.join(self.root, "fixtures", case["id"], "expected.json"), encoding="utf-8"))
+        exp = json.loads(read_bytes(os.path.join(self.root, "fixtures", case["id"], "expected.json")).decode("utf-8"))
         res = CaseResult(case["id"], case["title"], purpose=case.get("checks", ()))
         kind = exp["kind"]
         exits_before = len(self.parser_exits)
@@ -3075,6 +3618,12 @@ class Runner:
                 self.run_writer(case, exp, res)
             elif kind == "corrupt-input":
                 self.run_corrupt_input(case, exp, res)
+            elif kind == "propagation":
+                self.run_propagation(case, exp, res)
+            elif kind == "propagation-twins":
+                self.run_twins(case, exp, res)
+            elif kind == "propagation-type4":
+                self.run_type4(case, exp, res)
         except CorpusIncomplete:
             raise  # a broken copy of the corpus is not a result about the parser (D-148); the parser's own is a ParserRaised
         except ParserExit:
@@ -3142,11 +3691,50 @@ class Runner:
 
 
 # --------------------------------------------------------------------------- external command adapter
-def _crash(words):
-    """A CommandCrashed of the runner's own, recorded so the guard knows it by identity (D-342)."""
+def _crash(words, malformed=False):
+    """A CommandCrashed of the runner's own, recorded so the guard knows it by identity (D-342). malformed: the command
+    answered, with JSON that holds a key twice in one object, which no reader takes one way; judged as a crash is,
+    no answer, and said in its own words (D-398)."""
     e = CommandCrashed(words)
+    e.malformed = malformed
     _CRASHES.add(e)
     return e
+
+
+class _KeyTwice(ValueError):
+    pass
+
+
+def _pairs_once(pairs):
+    """json's object_pairs_hook for a command's output: a key twice in one object with two different values raises,
+    where json.loads kept the last value without a word (the third blind pass's 19; D-398). The same value twice
+    names one value, and is read as once (the review of D-398: decided overnight, for the owner's review)."""
+    seen: dict = {}
+    for k, v in pairs:
+        if k in seen and not _same_json(seen[k], v):
+            raise _KeyTwice(k)
+        seen[k] = v
+    return dict(pairs)
+
+
+def _same_json(a, b):
+    """Two decoded JSON values the same, kind for kind: 1 and 1.0, or 1 and true, are not (bool is an int)."""
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(_same_json(a[k], b[k]) for k in a)
+    if isinstance(a, list):
+        return len(a) == len(b) and all(_same_json(x, y) for x, y in zip(a, b))
+    return a == b
+
+
+def _command_json(text):
+    """A command's stdout -> its JSON value; a key held twice in one object is a malformed answer (D-398)."""
+    try:
+        return json.loads(text, object_pairs_hook=_pairs_once)
+    except _KeyTwice as e:
+        raise _crash(f"wrote JSON holding the key {e.args[0]!r} twice in one object, with two different values, so "
+                     "which one it meant is undefined (a reader may keep either)", malformed=True) from None
 
 
 class CommandParser:
@@ -3211,7 +3799,7 @@ class CommandParser:
             raise RuntimeError(f"exit {p.returncode}: {self._stderr(p)}")
         try:
             # a byte-order mark before the JSON (.NET and PowerShell tools write one) is no part of it (D-369)
-            data = json.loads(p.stdout.decode("utf-8-sig"))
+            data = _command_json(p.stdout.decode("utf-8-sig"))
         except ValueError as e:
             raise RuntimeError(f"stdout is not JSON ({e}): {p.stdout.decode('utf-8', 'replace')[:120]!r}")
         return data   # its shape is judged by as_records, as a Python adapter's is (D-334)
@@ -3230,12 +3818,17 @@ class CommandParser:
         if not self.vectors_cmd:
             raise AttributeError(op)
         p = self._run(self.vectors_cmd, json.dumps({"op": op, "input": value}).encode())
+        if p.returncode != 0:  # any non-zero exit is a rejection, 3 included (D-205), whatever it printed (the review of D-398)
+            try:
+                out = json.loads(p.stdout.decode("utf-8-sig") or "{}")
+            except ValueError:
+                out = None
+            reason = out.get("error") if isinstance(out, dict) else None
+            raise ValueError(reason if isinstance(reason, str) and reason.strip() else f"exit {p.returncode}")
         try:
-            out = json.loads(p.stdout.decode("utf-8-sig") or "{}")   # a byte-order mark is no part of the JSON (D-369)
+            out = _command_json(p.stdout.decode("utf-8-sig") or "{}")   # a byte-order mark is no part of the JSON (D-369)
         except ValueError as e:
             raise ValueError(f"the command's output is not JSON: {e}")
-        if p.returncode != 0:  # any non-zero exit is a rejection, 3 included (D-205)
-            raise ValueError(out.get("error", f"exit {p.returncode}"))
         if "unsupported" in out:  # an operation the library does not have: the item skips (D-205)
             reason = out["unsupported"]
             if not isinstance(reason, str) or not reason.strip():
@@ -3247,6 +3840,28 @@ class CommandParser:
             raise ValueError("the command's answer carries neither 'result', 'error' nor 'unsupported'")
         return out["result"]
 
+    def propagate(self, raw, fmt, tsince):
+        """The propagation tier's op on --vectors-cmd (D-401): {"op": "propagate", "input": {"raw", "fmt", "tsince"}}.
+        A command written before the op answers it as any op it lacks, often with an error ("unknown op", "the library
+        has no propagate"), which would read as refusing every set. So the first call is a probe with no times: a
+        command that has the op answers an empty list; any other answer means it does not, and the hook is
+        unsupported for the run, its answer printed. The probe can only make the case skip, never fail."""
+        if not self.vectors_cmd:
+            raise Unsupported("no --vectors-cmd, so no propagate op")
+        text = raw.decode("utf-8")
+        if not hasattr(self, "_propagate_probe"):
+            try:
+                answer = self._vec("propagate", {"raw": text, "fmt": fmt, "tsince": []})
+                self._propagate_probe = None if answer == [] else f"answered {str(answer)[:80]!r}"
+            except Unsupported as e:
+                self._propagate_probe = f"answered unsupported: {str(e)[:120]}"
+            except ValueError as e:
+                self._propagate_probe = f"answered with an error: {str(e)[:120]}"
+        if self._propagate_probe is not None:
+            raise Unsupported(f"the command did not answer the probe with no times with an empty list ({self._propagate_probe}); "
+                              "read as having no propagate op")
+        return self._vec("propagate", {"raw": text, "fmt": fmt, "tsince": list(tsince)})
+
     def __getattr__(self, name):
         if name in ("alpha5_decode", "alpha5_encode", "two_digit_year", "parse_epoch", "parse_catalog_id") and self.vectors_cmd:
             def hook(value):
@@ -3256,7 +3871,10 @@ class CommandParser:
                 # a command answers in text, which is converted here; the input's own text handed back unparsed is
                 # no answer, whatever this Python's fromisoformat would make of it (D-306)
                 if isinstance(r, str) and isinstance(value, str) and r.strip() == value.strip() and not CALENDAR_EPOCH.match(r.strip()):
-                    raise ValueError("the command returned the input's own epoch text, unparsed")
-                return dt.datetime.strptime(tlemod.iso_epoch(r), "%Y-%m-%dT%H:%M:%S.%f")
+                    raise AnswerNotAnEpoch(f"the command returned the input's own epoch text, unparsed: {r!r}")
+                try:
+                    return dt.datetime.strptime(tlemod.iso_epoch(r), "%Y-%m-%dT%H:%M:%S.%f")
+                except ValueError as e:
+                    raise AnswerNotAnEpoch(f"the command answered {str(r)[:60]!r}, which is no epoch: {e}") from None
             return hook
         raise AttributeError(name)

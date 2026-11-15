@@ -78,6 +78,42 @@ class LoadSourceTests(unittest.TestCase):
         state, fails = self.load("saramago.tle", body, src)
         self.assertEqual((state, fails), ("empty-404", []))
 
+    def test_the_no_data_text_under_http_200_is_the_empty_answer(self):
+        # D-517, the owner's ruling (D-514): CelesTrak can answer HTTP 200 with the no-data text; that is the empty
+        # answer, not an unreadable file (mutant 431 of the 0.9.0 run). With and without a recorded status, both texts.
+        for body in (b"No GP data found", b"No SupGP data found", b"No GP data found\r\n"):
+            for src in ({"format": "tle", "http_status": 200, "record_count": 0}, {"format": "tle", "record_count": 0}):
+                with self.subTest(body=body, status=src.get("http_status")):
+                    state, fails = self.load("answer.tle", body, dict(src, sha256=__import__("hashlib").sha256(body).hexdigest()))
+                    self.assertEqual((state, fails), ("empty-404", []))
+
+    def test_other_bytes_in_place_of_the_404_body_fail_as_unreadable(self):
+        # D-515: a source recorded as a 404 answer, holding bytes that are not the no-data text and read no records,
+        # used to go on and read as "ok" with zero records.
+        src = {"format": "tle", "http_status": 404, "record_count": 0, "sha256": "0" * 64}
+        html = b"<!DOCTYPE html>\n<html><head><title>502 Bad Gateway</title></head><body>Bad Gateway</body></html>\n"
+        for name, data, word in (("html.tle", html, "HTML"), ("blank.tle", b"   \n", "whitespace only"), ("empty.tle", b"", "empty file")):
+            with self.subTest(name):
+                state, fails = self.load(name, data, src)
+                self.assertEqual(state, "unreadable")
+                self.assertEqual([i.check for i in fails], ["source-readable"], fails)
+                self.assertIn("not the provider's no-data text", fails[0].detail)
+                self.assertIn("HTTP 404", fails[0].detail)
+                self.assertIn(word, fails[0].detail)
+
+    def test_a_derived_source_with_no_recorded_status_is_not_charged_as_a_404(self):
+        # http_status present as null (the derived sources) is not a recorded 404 answer; such a file is not given the
+        # D-515 item.
+        state, fails = self.load("blank.tle", b"   \n", {"format": "tle", "http_status": None, "record_count": 0, "sha256": "0" * 64})
+        self.assertEqual((state, fails), ("ok", []))
+
+    def test_records_in_place_of_the_404_body_are_still_read(self):
+        # A guard against a fix wider than D-515, not a reproduction: a source recorded as a 404 whose object has since
+        # been catalogued answers with records, and that stays "ok".
+        tle = open(GOOD_TLE, "rb").read()
+        state, fails = self.load("launched.tle", tle, {"format": "tle", "http_status": 404, "record_count": 0, "sha256": "0" * 64})
+        self.assertEqual((state, fails), ("ok", []))
+
     def test_a_readable_file_is_ok_and_a_live_file_is_not_count_checked(self):
         tle = open(GOOD_TLE, "rb").read()
         state, fails = self.load("good.tle", tle, {"format": "tle", "sha256": file_sha256(GOOD_TLE), "record_count": 1})

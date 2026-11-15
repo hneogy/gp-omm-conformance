@@ -58,6 +58,19 @@ def inside_line(results):
     return ("Inside cases that did not skip: " + "; ".join(parts) + ". These are not failures, and they were not graded.") if parts else None
 
 
+def nine_digit_line(results):
+    """Under the count line (the third blind pass's 5, D-402): a run in which no nine-digit catalog number was read says
+    so, where the vector hook for it skipped and the nine-digit case had no data, since both passed quietly before."""
+    by = {r.case_id: r for r in results}
+    vec, nine = by.get("alpha5-encoding-vectors"), by.get("nine-digit-supgp-launch-nominals")
+    if vec is None or nine is None or nine.status != "not-fetched":
+        return None
+    if not any(i.check == "catalog-number-is-integer" and i.status == "skip" for i in vec.items):
+        return None
+    return ("No nine-digit catalog number was read in this run: the parser has no parse_catalog_id hook, or answers it "
+            "unsupported, and the nine-digit case needs fetched data.")
+
+
 def print_missing(results, unfetched, runner):
     """Below the count line: what was not fetched and what cannot be, so that neither a case with no data nor a case
     that ran on part of its data reads as a result it has not earned (D-148, D-228, D-229, D-231)."""
@@ -169,7 +182,7 @@ def check_tle(args):
             if r.get("round_trip"):
                 print("         round trip against the source record: " + ", ".join(f"{k} {v}" for k, v in r["round_trip"]["conventions"].items()))
             if r.get("secondary_fields"):
-                print("         secondary fields (information): " + ", ".join(f"{k} {v}" for k, v in r["secondary_fields"].items() if k != "zero_ddot_sign"))
+                print("         secondary fields (zeroed or left out allowed, another value fails): " + ", ".join(f"{k} {v}" for k, v in r["secondary_fields"].items() if k != "zero_ddot_sign"))
             n_pass += r["status"] == "pass"
             n_fail += r["status"] == "fail"
             n_nc += r["status"] == "not compared"
@@ -192,13 +205,16 @@ def check_tle(args):
                   + (f"; and {len(cov['written_more']) - 20} more" if len(cov["written_more"]) > 20 else ""))
         if cov["not_compared"]:
             print(f"  note: {qty(len(cov['not_compared']), 'id')} not compared: the source holds more than one copy of "
-                  + pick(len(cov["not_compared"]), "it", "each") + " (per-epoch pairing comes in 0.8.1): "
+                  + pick(len(cov["not_compared"]), "it", "each") + ": "
                   + ids_shown([f"{k} ({h} copies)" for k, h in cov["not_compared"]]))
         if cov["refusal_correct"]:
             print(f"  note: {qty(len(cov['refusal_correct']), 'id')} the TLE format cannot carry, written by no file, as a refusal "
                   f"should be: ids {ids_shown(cov['refusal_correct'])}")
         if not (cov["not_written"] or cov["written_more"]):
-            print("  [pass] every source record written, none more often than the source holds it")
+            # said of the records it covers: one without a catalog number is held to no written record (the third blind
+            # pass's D, D-402)
+            print("  [pass] every source record " + ("with a catalog number " if against.without_id else "")
+                  + "written, none more often than the source holds it")
         bad = len(cov["not_written"]) + len(cov["written_more"])
         short = f"; against the source, {bad} {pick(bad, 'failure', 'failures')}" if bad else ""
     print(f"\n{qty(n_pass + n_fail + n_nc, 'record')}: {n_pass} {pick(n_pass, 'passes', 'pass')}, {n_fail} {pick(n_fail, 'fails', 'fail')}"
@@ -258,7 +274,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(prog="gpconf", description="gpconf, the GP/OMM conformance corpus. Free test kit: does your satellite software handle catalog numbers above 99,999? "
                                                          "Built from real CelesTrak data.",
                                  epilog="gpconf fetch --help: the fetch subcommand's own options")
-    ap.add_argument("command", choices=["run", "list", "presets", "check-tle", "fetch"])
+    ap.add_argument("command", choices=["run", "list", "presets", "check-tle", "fetch", "fuzz"])
     ap.add_argument("files", nargs="*", help="check-tle: one or more TLE files written by the tool under test")
     ap.add_argument("--against", help="check-tle: the source records the lines were written from (CSV/JSON/XML/KVN/TLE); enables the round-trip check")
     ap.add_argument("--preset", help="a shipped adapter by name: reference, naive, sgp4, pyephem, satellite.js, tle.js or tle.js-api (gpconf presets lists them)")
@@ -269,16 +285,23 @@ def main(argv=None):
     ap.add_argument("--write-cmd", help="external TLE writer for the writer case: one JSON record on stdin, 2-3 TLE lines on stdout; exit 3 = unsupported, other non-zero = refused; an end by a signal or a timeout is a crash, never a refusal")
     ap.add_argument("--root", help="corpus root (default: the clone this package sits in, else the corpus installed with it)")
     ap.add_argument("--data", help=f"folder holding the fetched provider files (default: ${locate.DATA_ENV}, else the clone, else a per-user cache folder)")
+    ap.add_argument("--sgp4-ver", metavar="DIR", help="the directory holding Vallado's SGP4-VER.TLE and tcppver.out, for the "
+                    "propagation case (default: the installed python-sgp4 package's copies, if their bytes are the corpus's)")
     ap.add_argument("--no-fetch-hint", action="store_true", help="do not name the command that fetches provider data, for a run that is "
                     "offline by design, such as the GitHub Action's, whose data folder is empty and discarded with the job")
     ap.add_argument("--case", action="append", help="case id (repeatable)")
     ap.add_argument("--tag", action="append", help="test tag (repeatable)")
     ap.add_argument("--json", help="write the full report to this file")
     ap.add_argument("--verbose", "-v", action="store_true", help="print every item, not only failures and within-tolerance passes")
+    ap.add_argument("--seed", type=int, help="fuzz: the random seed (default 0); the same --seed and --count repeat a run exactly")
+    ap.add_argument("--count", type=int, help="fuzz: how many mutated inputs (default 200)")
+    ap.add_argument("--out", help="fuzz: a folder to save each finding's minimised input in")
+    ap.add_argument("--propagate", action="store_true", help="fuzz: the propagate hook too, at the edge of SGP4's domain")
+    ap.add_argument("--strict", action="store_true", help="fuzz: exit 1 when the run finds anything, 2 when there was nothing to fuzz (default: exit 0 whatever it finds)")
     args = ap.parse_args(argv)
 
     why = json_target_problem(getattr(args, "json", None))
-    if why and args.command in ("run", "check-tle"):
+    if why and args.command in ("run", "check-tle", "fuzz"):
         print(f"gpconf: --json {printable(args.json)}: {why}; nothing was run", file=sys.stderr)
         return 2
     if args.command == "check-tle":  # needs no corpus: it checks the user's own file
@@ -300,7 +323,7 @@ def main(argv=None):
         return 0
     chosen = [f for f in ("preset", "adapter", "cmd") if getattr(args, f)] + (["write-cmd"] if args.write_cmd and not args.cmd else [])
     if not chosen:
-        ap.error("run needs --preset, --adapter, --cmd or --write-cmd")
+        ap.error(f"{args.command} needs --preset, --adapter, --cmd or --write-cmd")
     if args.preset and len(chosen) > 1:
         ap.error("--preset names the parser; it cannot be combined with --adapter, --cmd or --write-cmd")
     if args.module and not args.preset:
@@ -322,12 +345,34 @@ def main(argv=None):
             print(f"gpconf: setup: the adapter {args.adapter} exited while loading (SystemExit({e.code!r})); nothing was run", file=sys.stderr)
             return 2
     parser_name = preset["label"] if preset else (args.cmd or args.write_cmd or args.adapter)
-    runner = Runner(parser, root=root, verbose=args.verbose, data=loc["data"], data_why=loc["data_why"], fetch_hints=not args.no_fetch_hint)
+    if args.command == "fuzz":   # opt-in, never part of run; its findings move no verdict (D-415)
+        from .fuzz import main_fuzz
+        if args.case or args.tag:
+            ap.error("fuzz takes no --case or --tag: it fuzzes the shipped inputs, not cases")
+        if not (args.preset or args.adapter or args.cmd):
+            ap.error("fuzz needs a parser to fuzz: --preset, --adapter or --cmd")
+        args.seed = 0 if args.seed is None else args.seed
+        args.count = 200 if args.count is None else args.count
+        if args.count < 0:
+            ap.error("--count must be 0 or more")
+        if args.out and os.path.exists(args.out) and not os.path.isdir(args.out):
+            ap.error(f"--out {printable(args.out)}: not a folder")
+        print(f"gpconf {__version__} | corpus {manifest['corpus_version']} | parser: {parser_name} | fuzz")
+        return main_fuzz(parser, root, args.seed, args.count, args.out, args.propagate, args.json, args.strict)
+    if any(v is not None and v is not False for v in (args.seed, args.count, args.out, args.propagate, args.strict)):
+        ap.error("--seed, --count, --out, --propagate and --strict belong to fuzz")
+    runner = Runner(parser, root=root, verbose=args.verbose, data=loc["data"], data_why=loc["data_why"], fetch_hints=not args.no_fetch_hint, sgp4_ver=args.sgp4_ver)
     if args.case:   # a name that matches nothing is an error, not a silent no-op (D-269: a typo in CI went green forever)
         ids = [c["id"] for c in manifest["cases"]]
         unknown = [x for x in args.case if x not in ids]
         if unknown:
             print(f"gpconf: no case {', '.join(repr(x) for x in unknown)}; the cases are: {', '.join(ids)}", file=sys.stderr)
+            return 2
+    if args.tag:   # as --case: a tag that names no case is an error (the third blind pass's C, D-389)
+        known = sorted({t for c in manifest["cases"] for t in c["tests"]})
+        unknown = [x for x in args.tag if x not in known]
+        if unknown:
+            print(f"gpconf: no tag {', '.join(repr(x) for x in unknown)}; the tags are: {', '.join(known)}", file=sys.stderr)
             return 2
     try:
         results = runner.run(case_ids=args.case, tags=args.tag)
@@ -347,7 +392,7 @@ def main(argv=None):
     from .gates import compute_gates
     gates = compute_gates(results, root, runner.data)
     for g in gates:
-        print(f"gate {g['name']}: {g['headline']}")
+        print(f"gate {g['name']}: {printable(g['headline'])}")   # it can quote a parser's refusal reason (the third blind pass's A, D-389)
     print()
     for r in results:
         shown = [i for i in r.items if args.verbose or i.status in ("fail", "pass-tolerance")]
@@ -378,7 +423,7 @@ def main(argv=None):
     tol = sum(1 for r in results if r.status == "pass-tolerance")
     unfetched = [r for r in results if r.status == "not-fetched"]
     print("\n" + count_line(results))
-    for line in (graded_line(results), inside_line(results)):
+    for line in (graded_line(results), inside_line(results), nine_digit_line(results)):
         if line:
             print(line)
     print_missing(results, unfetched, runner)
@@ -392,6 +437,11 @@ def main(argv=None):
               "(HTTP 404, 'No GP data found', to a TLE request above 99999): written by the fetch from recorded/, not requested.")
     if tol:
         print("'pass within tolerance' items list per-field count, mean signed difference and maximum, so a systematic bias is visible (see README, Tolerances).")
+    if not failed and not annotation_totals(results)["cases_graded"]:
+        # nothing was graded (every case skipped, needs fetched data or is not available): no result, not a pass (the
+        # third blind pass's C, D-389); the report above and the --json file say why
+        print("gpconf: no case was graded, so there is no result: exit 2", file=sys.stderr)
+        return 2
     return 1 if failed else 0
 
 

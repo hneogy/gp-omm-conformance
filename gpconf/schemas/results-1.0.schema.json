@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gpconf:schema:results:1.0",
+  "title": "gpconf run --json report, results schema 1.0",
+  "description": "The report `gpconf run --json FILE` writes (0.9.0 item d2, D-431). Versioned with the gpconf specification (item d1), not with the package: a minor version of gpconf may add keys anywhere (additionalProperties stays open), and a key or a meaning removed or changed is a new major version of this schema. Statuses and counts are the runner's own (CASE_STATUSES in gpconf/runner.py).",
+  "type": "object",
+  "required": ["gpconf", "corpus_version", "parser", "generated_at", "summary", "inside_cases", "results", "gates"],
+  "properties": {
+    "gpconf": {"type": "string", "description": "the gpconf version that wrote the report"},
+    "corpus_version": {"type": "string"},
+    "parser": {"type": "string", "description": "the preset's label, or the --cmd / --adapter given"},
+    "preset": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {"type": "string"},
+        "library": {"type": ["string", "null"]},
+        "found": {"type": ["string", "null"], "description": "the installed version, or null"},
+        "tested_with": {"type": ["string", "null"]},
+        "runtime": {"type": ["string", "null"]}
+      }
+    },
+    "generated_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "summary": {
+      "type": "object",
+      "description": "case totals: how many cases ended in each status (D-240)",
+      "required": ["cases", "pass", "pass-tolerance", "fail", "skip", "not-fetched", "not-available", "not-exercised"],
+      "properties": {
+        "cases": {"$ref": "#/$defs/count"}, "pass": {"$ref": "#/$defs/count"}, "pass-tolerance": {"$ref": "#/$defs/count"},
+        "fail": {"$ref": "#/$defs/count"}, "skip": {"$ref": "#/$defs/count"}, "not-fetched": {"$ref": "#/$defs/count"},
+        "not-available": {"$ref": "#/$defs/count"}, "not-exercised": {"$ref": "#/$defs/count"}
+      }
+    },
+    "inside_cases": {
+      "type": "object",
+      "description": "item skips and field gaps inside cases that did not skip, and how many cases were graded (D-312)",
+      "required": ["items_skipped", "field_gaps", "cases_graded"],
+      "properties": {
+        "items_skipped": {"$ref": "#/$defs/count"}, "field_gaps": {"$ref": "#/$defs/count"}, "cases_graded": {"$ref": "#/$defs/count"}
+      }
+    },
+    "results": {"type": "array", "items": {"$ref": "#/$defs/case"}},
+    "gates": {"type": "array", "items": {"$ref": "#/$defs/gate"}}
+  },
+  "$defs": {
+    "count": {"type": "integer", "minimum": 0},
+    "case_status": {"enum": ["pass", "pass-tolerance", "fail", "skip", "not-fetched", "not-available", "not-exercised"]},
+    "item_status": {"enum": ["pass", "pass-tolerance", "fail", "skip", "not-fetched", "not-available", "not-exercised", "info"]},
+    "case": {
+      "type": "object",
+      "required": ["case", "title", "status", "counts", "modes", "drift", "items"],
+      "properties": {
+        "case": {"type": "string"},
+        "title": {"type": "string"},
+        "status": {"$ref": "#/$defs/case_status"},
+        "counts": {
+          "type": "object",
+          "description": "items per status in this case",
+          "required": ["pass", "pass-tolerance", "fail", "skip", "not-exercised", "not-fetched", "not-available", "info"],
+          "additionalProperties": {"$ref": "#/$defs/count"}
+        },
+        "modes": {"type": "object", "additionalProperties": {"type": "string"}, "description": "file -> how its expected values were set (snapshot, live, ...)"},
+        "drift": {"type": "object"},
+        "items": {"type": "array", "items": {"$ref": "#/$defs/item"}},
+        "voided_by_parser": {},
+        "annotations": {"type": "object"},
+        "secondary_fields_not_kept": {"type": "array", "items": {"type": "string"}},
+        "reused": {}
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": ["check", "status", "file", "detail"],
+      "properties": {
+        "check": {"type": "string"},
+        "status": {"$ref": "#/$defs/item_status"},
+        "file": {"type": ["string", "null"]},
+        "detail": {"type": "string"},
+        "cause": {"enum": ["parser", "data"], "description": "why a not-exercised item was not exercised (D-294)"},
+        "tolerance_stats": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["n", "mean_signed", "max_abs"],
+            "properties": {"n": {"$ref": "#/$defs/count"}, "mean_signed": {"type": "number"}, "max_abs": {"type": "number"}}
+          }
+        },
+        "counts": {"type": "object", "description": "the record counts behind a values item (D-142)"}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "required": ["id", "name", "formats", "headline"],
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "question": {"type": "string"},
+        "snapshot": {"type": "object"},
+        "formats": {"type": "object", "additionalProperties": {"type": "object", "required": ["state"], "properties": {"state": {"type": "string"}}}},
+        "headline": {"type": "string"}
+      }
+    }
+  }
+}

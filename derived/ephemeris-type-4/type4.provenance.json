@@ -1,0 +1,23 @@
+{
+  "files": [
+    "derived/ephemeris-type-4/type0.csv",
+    "derived/ephemeris-type-4/type0.json",
+    "derived/ephemeris-type-4/type0.kvn",
+    "derived/ephemeris-type-4/type0.tle",
+    "derived/ephemeris-type-4/type0.xml",
+    "derived/ephemeris-type-4/type4-sgp4-xp.kvn",
+    "derived/ephemeris-type-4/type4.csv",
+    "derived/ephemeris-type-4/type4.json",
+    "derived/ephemeris-type-4/type4.kvn",
+    "derived/ephemeris-type-4/type4.tle",
+    "derived/ephemeris-type-4/type4.xml"
+  ],
+  "provenance": "derived",
+  "statement": "One set the corpus already ships (20453, derived/propagation-twins/twins.tle), written with ephemeris type 4 and with type 0 as TLE and as OMM CSV, JSON, XML and KVN whose values are exactly the TLE's; the TLE's line 1 column 63 and checksum changed, nothing else. MEAN_ELEMENT_THEORY = SGP4-XP in one KVN is the corpus's spelling, synthetic: how a provider writes it is not read (the owner's ruling, 2026-11-01). No value is invented (D-409).",
+  "sources": [
+    "derived/propagation-twins/twins.tle",
+    "derived/propagation-twins/twins.csv"
+  ],
+  "generator": "tools/derive_type4.py",
+  "generated_at": "2026-11-10T02:56:43Z"
+}

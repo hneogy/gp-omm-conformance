@@ -90,15 +90,16 @@ class TheReadme(unittest.TestCase):
                     "https://github.com/bilawalsidhu/gods-eye-view/pull/936", "https://github.com/bilawalsidhu/gods-eye-view/pull/767"):
             self.assertIn(url, table)
         rows = [line for line in table.splitlines() if line.startswith("| ") and not line.startswith("| library") and not line.startswith("|---")]
-        self.assertEqual([r.split(" | ")[0] for r in rows], ["| python-sgp4", "| satellite.js", "| astroz", "| libsgp4", "| Gpredict", "| gods-eye-view"])   # Gpredict joined with PR #428, merged 2026-10-08 (D-267, D-269); gods-eye-view at 0.8.0's freeze (D-368)
+        self.assertEqual([r.split(" | ")[0] for r in rows], ["| python-sgp4", "| satellite.js", "| astroz", "| libsgp4", "| Gpredict", "| gods-eye-view", "| tle.js"])   # D-460: tle.js #64   # Gpredict joined with PR #428, merged 2026-10-08 (D-267, D-269); gods-eye-view at 0.8.0's freeze (D-368)
         # one rule (owner): a fix is listed when it followed a corpus report and answered it. astroz #102 came from probes,
         # not from a corpus case (site S-051), and SatDump #1221 and CelesTrak #172 have no fix yet.
         self.assertIn("A fix is listed when it followed a report made from the corpus's results and answered it", flat(table))
         for absent in ("astroz/issues/102", "astroz/pull/104", "SatDump", "CelesTrak/fundamentals"):
             self.assertNotIn(absent, table)
         # the cells that expire with a release (the site's HANDOFF.md, "Expiring claims", names them and the check)
-        self.assertEqual(table.count("no release carries it yet") + table.count("no release carries them yet"), 3)   # python-sgp4, satellite.js, Gpredict (D-269); gods-eye-view's released in v0.3.0 (D-373)
+        self.assertEqual(table.count("no release carries it yet") + table.count("no release carries them yet"), 1)   # python-sgp4 (D-269); gods-eye-view's released in v0.3.0 (D-373), Gpredict's in v2.7 (D-460), satellite.js's in 7.2.0 (D-538, D-540)
         self.assertIn("both released in v0.3.0 on 2026-10-28", table)
+        self.assertIn("all three released in 7.2.0 on 2026-11-11", table)
 
     def test_the_table_s_date_moves_with_each_release(self):
         """"No release carries it yet" is true until python-sgp4, satellite.js, Gpredict or gods-eye-view publishes one,

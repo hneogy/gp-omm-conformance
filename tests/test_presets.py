@@ -69,7 +69,9 @@ class Registry(unittest.TestCase):
     def test_a_missing_library_is_refused_with_the_install_command(self):
         for name, blocked, adapter in (("sgp4", ("sgp4", "sgp4.api", "sgp4.omm", "sgp4.exporter", "sgp4.conveniences", "sgp4.alpha5"), "gpconf.adapters.sgp4_adapter"),
                                        ("pyephem", ("ephem",), "gpconf.adapters.pyephem_adapter")):
-            with self.subTest(preset=name), mock.patch.dict(sys.modules, {m: None for m in blocked}):
+            # absent as a whole: no module and no distribution (D-430 names an installed release that will not load)
+            with self.subTest(preset=name), mock.patch.dict(sys.modules, {m: None for m in blocked}), \
+                    mock.patch.object(presets, "found_version", lambda d: None):
                 sys.modules.pop(adapter, None)
                 with self.assertRaises(presets.PresetUnavailable) as cm:
                     presets.load(name)
@@ -200,6 +202,43 @@ class Report(unittest.TestCase):
                 code, text = run_cli(["run", "--preset", name, "--case", "alpha5-tle-derived"])
                 self.assertIn(code, (0, 1), text)
                 self.assertIn(f"parser: preset {name} ({spec['library']} {found}", text)
+
+
+
+class AnOldReleaseInstalled(unittest.TestCase):
+    """D-430: python-sgp4 2.21 and earlier are installed but lack what the preset imports; the message named no
+    installed release and said "not installed"."""
+
+    def test_the_message_names_the_installed_release(self):
+        def fail(name, *a, **k):
+            raise ImportError("cannot import name 'alpha5' from 'sgp4'")
+        with mock.patch.object(presets.importlib, "import_module", fail), mock.patch.object(presets, "found_version", lambda d: "2.21"):
+            with self.assertRaises(presets.PresetUnavailable) as cm:
+                presets.load("sgp4")
+        msg = str(cm.exception)
+        self.assertIn("2.21 is installed but the adapter cannot load it (ImportError: cannot import name 'alpha5'", msg)
+        self.assertIn("pip install --upgrade sgp4", msg)
+        self.assertNotIn("not installed", msg)
+        self.assertIn("Nothing was run; this says nothing about python-sgp4.", msg)
+
+    def test_the_cause_under_the_adapters_own_words_is_shown(self):
+        def fail(name, *a, **k):
+            try:
+                raise ModuleNotFoundError("No module named 'sgp4.alpha5'")
+            except ImportError as e:
+                raise ImportError("this adapter needs python-sgp4: pip install sgp4") from e
+        with mock.patch.object(presets.importlib, "import_module", fail), mock.patch.object(presets, "found_version", lambda d: "2.21"):
+            with self.assertRaises(presets.PresetUnavailable) as cm:
+                presets.load("sgp4")
+        self.assertIn("(ModuleNotFoundError: No module named 'sgp4.alpha5')", str(cm.exception))
+
+    def test_a_missing_library_still_says_not_installed(self):
+        def fail(name, *a, **k):
+            raise ImportError("No module named 'sgp4'")
+        with mock.patch.object(presets.importlib, "import_module", fail), mock.patch.object(presets, "found_version", lambda d: None):
+            with self.assertRaises(presets.PresetUnavailable) as cm:
+                presets.load("sgp4")
+        self.assertIn("which is not installed: pip install sgp4", str(cm.exception))
 
 
 if __name__ == "__main__":

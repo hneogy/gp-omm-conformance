@@ -4,7 +4,8 @@
  "sources": [
   "CCSDS 502.0-B-3 7.5.10: YYYY-MM-DDThh:mm:ss[.d->d][Z] or YYYY-DDDThh:mm:ss[.d->d][Z]; all fields with leading zeros; Z optional",
   "SANA ndmxml-4.0.0-common-4.0.xsd epochType pattern",
-  "iso: the instant each valid string denotes, as 'YYYY-MM-DDThh:mm:ss.ffffff' UTC; a parse_epoch hook is compared with it within 2 us (D-119)"
+  "iso: the instant each valid string denotes, as 'YYYY-MM-DDThh:mm:ss.ffffff' UTC; a parse_epoch hook is compared with it within 2 us (D-119)",
+  "leap seconds: the 27 dates of IERS Leap_Second.dat (https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat, through Bulletin C 72), the last 2016-12-31; CGPM 2026 Resolution 5 (https://www.bipm.org/en/cgpm-2026/resolution-5): continuous UTC from 20 May 2027; second 60 is valid only at 23:59:60 UTC on those dates (D-382)"
  ],
  "valid": [
   {
@@ -47,6 +48,47 @@
    "iso_alternatives": [
     "2017-01-01T00:00:00.000000"
    ]
+  },
+  {
+   "text": "1972-06-30T23:59:60",
+   "note": "the first leap second, on a 30 June (IERS); read as the instant one second earlier or the next midnight (D-382)",
+   "iso": "1972-06-30T23:59:59.000000",
+   "iso_alternatives": [
+    "1972-07-01T00:00:00.000000"
+   ]
+  },
+  {
+   "text": "2016-366T23:59:60.5Z",
+   "note": "a leap second in the day-of-year form, with a fraction and a Z (D-382)",
+   "iso": "2016-12-31T23:59:59.500000",
+   "iso_alternatives": [
+    "2017-01-01T00:00:00.500000"
+   ]
+  },
+  {
+   "text": "2024-366T12:00:00",
+   "note": "day 366 of a leap year, not a leap second: the last day of 2024 in the day-of-year form (D-384)",
+   "iso": "2024-12-31T12:00:00.000000"
+  },
+  {
+   "text": "2038-01-19T03:14:07Z",
+   "note": "the last second a signed 32-bit time_t holds (2**31 - 1 seconds after 1970) (D-385)",
+   "iso": "2038-01-19T03:14:07.000000"
+  },
+  {
+   "text": "2038-01-19T03:14:08",
+   "note": "the first second past a signed 32-bit time_t: a reader through one wraps to 1901-12-13 (D-385)",
+   "iso": "2038-01-19T03:14:08.000000"
+  },
+  {
+   "text": "2050-019T12:00:00.5",
+   "note": "well past 2038, in the day-of-year form with a fraction (D-385)",
+   "iso": "2050-01-19T12:00:00.500000"
+  },
+  {
+   "text": "1960-03-15T12:00:00",
+   "note": "before 1970, a negative time_t: a reader through an unsigned 32-bit time_t wraps it to 2096 (D-385)",
+   "iso": "1960-03-15T12:00:00.000000"
   }
  ],
  "invalid": [
@@ -73,7 +115,43 @@
   {
    "text": "2026-366T12:42:37",
    "reason": "day of year 366 in a year of 365 days: 7.5.10's DDD is a day of that year"
+  },
+  {
+   "text": "2026-09-20T12:42:60",
+   "reason": "second 60 outside the last minute of a day: a leap second is only ever 23:59:60 UTC (SM-26's L1, D-382)"
+  },
+  {
+   "text": "1960-06-30T23:59:60",
+   "reason": "30 June before the first leap second (1972-06-30) (SM-26's L2, D-382)"
+  },
+  {
+   "text": "1977-06-30T23:59:60",
+   "reason": "30 June in a year whose leap second was on 31 December (1977-12-31) (D-382)"
+  },
+  {
+   "text": "2016-182T23:59:60",
+   "reason": "day-of-year form of 2016-06-30, not a leap-second date; 2016's was 31 December (D-382)"
+  },
+  {
+   "text": "2026-12-31T23:59:60",
+   "reason": "no leap second was announced for 31 December 2026 (IERS Bulletin C 72) (D-382)"
+  },
+  {
+   "text": "2030-12-31T23:59:60",
+   "reason": "after 20 May 2027 UTC is continuous and has no second 60 (CGPM 2026 Resolution 5) (SM-26's L2, D-382)"
+  },
+  {
+   "text": "2026-09-20T12:42:60.5Z",
+   "reason": "second 60 with a fraction and a Z outside the last minute of a day (D-382)"
+  },
+  {
+   "text": "2016-12-31T12:00:60",
+   "reason": "second 60 in another minute of a leap-second date: only 23:59:60 is the leap second (D-382)"
+  },
+  {
+   "text": "1980-12-31T23:59:60",
+   "reason": "31 December between leap seconds (1979-12-31, 1981-06-30): no leap second that day (D-382)"
   }
  ],
- "parser_hazard": "A parser hard-coded to '%Y-%m-%dT%H:%M:%S.%f' (for example python-sgp4's sgp4.omm.initialize) rejects six of the eight valid strings above: every one but the two calendar forms with a fraction and no Z (measured with python-sgp4 2.27, D-331)."
+ "parser_hazard": "A parser hard-coded to '%Y-%m-%dT%H:%M:%S.%f' (for example python-sgp4's sgp4.omm.initialize) rejects thirteen of the fifteen valid strings above: every one but the two calendar forms with a fraction and no Z (measured with python-sgp4 2.27: six of eight, D-331; eight of ten, D-382; nine of eleven, D-384; thirteen of fifteen, D-385)."
 }

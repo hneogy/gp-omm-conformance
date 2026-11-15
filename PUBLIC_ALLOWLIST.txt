@@ -13,7 +13,6 @@ CITATION.cff
 SECURITY.md
 # The GitHub Action (D-158): it runs tools/action_report.py from this repository at the tag a workflow names.
 action.yml
-CLAUDE.md
 DECISIONS.md
 MANIFEST.md
 manifest.json
@@ -66,9 +65,21 @@ tests/adapters/*.py
 tests/golden/*.json
 tools/*.py
 tools/fetchlist.json
+tools/sgp4_reference_vectors.cpp
 # The recipes for the five harnesses that cannot be presets (D-155). ** recurses here, unlike the single-level patterns
 # above; glob skips dotfiles, so the folder's .gitignore has its own line.
 harnesses/**/*
 harnesses/.gitignore
 tools/crosscheck-requirements.lock.txt
 # tools/_fetch-run-*.log are NOT exported: build-time run logs stay private (audit minor item).
+templates/**/*
+templates/.gitignore
+docs/SPEC.md
+pytest-gpconf/**/*
+docker/**/*
+docs/guides/*.md
+gpconf/schemas/*.json
+CONTRIBUTING.md
+docs/MIGRATION.md
+docs/ONBOARDING.md
+docs/LIBRARIES.md

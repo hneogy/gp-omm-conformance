@@ -1,0 +1,39 @@
+{
+  "file": "derived/alpha5-tle/alpha5-synthetic-classification.tle",
+  "provenance": "synthetic-derived",
+  "label": "SYNTHETIC-DERIVED: one TLE set classified C, rendered from one real CelesTrak record with the classification and the catalog number replaced; not served by any provider",
+  "description": "A TLE set classified C under a synthetic id (Z0205): the classification column read on data offline (D-404)",
+  "statement": "synthetic-derived (D-096, D-125, D-286, D-300): SARAMAGO's first-record elements with the catalog number replaced and the classification replaced by C; each id is a specification vector, not a catalogued object. D-016 stands: real records are the only source of real-id sets, and this file poses as no catalog data.",
+  "source_file": "fixtures/six-digit-omm-saramago/raw/saramago-first.csv",
+  "source_sha256": "2a1913dc0c5e2babfc914fd92df9685181cdf964134e9cb9133d7edb89095a9d",
+  "source_url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=100000&FORMAT=CSV",
+  "source_retrieved_at": "2026-09-21T00:43:55Z",
+  "synthetic_source_norad_cat_id": 100000,
+  "generator": "tools/derive_alpha5.py",
+  "renderer": "tools/tlerender.py",
+  "renderer_settings": {
+    "mantissa_mode": "round",
+    "ecc_mode": "truncate",
+    "epoch_rounding": "ROUND_HALF_UP"
+  },
+  "renderer_validation": "tools/validate_render.py: 304/304 CelesTrak TLE records reproduced exactly (lines 0, 1, 2) with these settings on 2026-09-21",
+  "catalog_field_encoding": "Alpha-5 (Space-Track table: A=10 ... Z=33, I and O skipped)",
+  "record_count": 1,
+  "norad_cat_ids": [
+    330205
+  ],
+  "alpha5_letters": {
+    "Z": 1
+  },
+  "line_endings": "CRLF",
+  "output_sha256": "dfacc4d228ee81dd5ba61621c86c35dcdfc4350a3a7f76b6e704e7cd046e8f5c",
+  "generated_at": "2026-11-08T09:17:13Z",
+  "known_differences_from_a_celestrak_tle": [
+    "the classification is a specification vector: the record was never classified C",
+    "the catalog number (330205, Z0205) is a specification vector, not a catalogued object",
+    "the checksum is computed over the Alpha-5 line (letters count 0, minus signs count 1)"
+  ],
+  "classification_by_id": {
+    "330205": "C"
+  }
+}

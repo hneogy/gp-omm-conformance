@@ -78,10 +78,13 @@ class Parser:
         try:
             t = dt.datetime.strptime(base, fmt)
         except ValueError:
-            if base.endswith(":60"):  # leap second: valid per CCSDS, not representable in datetime
-                t = dt.datetime.strptime(base[:-3] + ":59", fmt)
-            else:
+            if not base.endswith(":60"):
                 raise
+            # second 60 is valid per CCSDS only at a leap second; datetime cannot carry it, so it is read as :59. Read
+            # so in any minute, 2026-09-20T12:42:60 passed (D-382; SM-26's L1)
+            t = dt.datetime.strptime(base[:-3] + ":59", fmt)
+            if not tlemod.is_leap_second(t):
+                raise ValueError(f"second 60 outside a leap second: {text!r}")
         if frac:
             t = t + dt.timedelta(microseconds=int(round(float("0" + frac) * 1e6)))
         return t

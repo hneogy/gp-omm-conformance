@@ -1,0 +1,45 @@
+# Test a C# parser with gpconf in five minutes
+
+You need Python 3.9 or later (for gpconf itself), the .NET 8 SDK, and git.
+
+## 1. Get gpconf and the template (one minute)
+
+```bash
+git clone https://github.com/hneogy/gp-omm-conformance
+cd gp-omm-conformance
+```
+
+The template is [`templates/csharp/`](../../templates/csharp/): a whole adapter around a toy TLE reader, so it runs before you change
+anything.
+
+## 2. Run the template as it stands (one minute)
+
+```bash
+dotnet build -c Release templates/csharp/Adapter.csproj
+```
+
+```bash
+python3 -m gpconf run --case alpha5-tle-derived --case corrupt-input --cmd "dotnet templates/csharp/bin/Release/net8.0/Adapter.dll {fmt}"
+```
+
+Both cases pass and the command exits 0: that is the green run. `alpha5-tle-derived` reads catalog numbers above 99999
+in TLE lines (Alpha-5); `corrupt-input` hands your reader broken sets between good ones and checks that the good ones
+still load and the broken ones are refused, not misread.
+
+## 3. Put your parser in (three minutes)
+
+Open the template and replace the toy parser with a call to your library. Keep the rest: reading standard input,
+returning one JSON object per record with the corpus's field names (`norad_cat_id`, `epoch`, `mean_motion`,
+`eccentricity`, the angles in degrees, `bstar`, `mean_motion_dot`, `mean_motion_ddot`), a refusal entry
+(`{"_refused": "why", "_field": "the catalog field"}`) for a record your library rejects, and exit 3 for a format it
+does not read. Then run the same command again. F# and VB.NET readers fit the same template.
+
+A failure names the check, the file and what your reader returned against what was expected: that is a finding about
+your parser, and `docs/ADAPTERS.md` says how each check reads.
+
+## Next
+
+- Every case, with the provider files: `python3 -m gpconf fetch` once (it asks CelesTrak for each file once), then
+  `python3 -m gpconf run --cmd "..."` with no `--case`.
+- The OMM formats (CSV, JSON, XML, KVN), the vector hooks, a TLE writer and SGP4 propagation: `docs/ADAPTERS.md`.
+- In CI: the corpus's GitHub Action (`action.yml`), or `pytest-gpconf` once it is published.

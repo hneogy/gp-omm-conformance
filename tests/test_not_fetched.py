@@ -69,7 +69,7 @@ class NotFetchedStatus(unittest.TestCase):
             code, _ = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", CASE, "--json", out])
             with open(out, encoding="utf-8") as f:
                 rep = json.load(f)
-        self.assertEqual(code, 0)  # absence is not a failure of the parser
+        self.assertEqual(code, 2)   # no case graded: no result, exit 2 (D-389); absence is still not the parser's failure (1)
         (r,) = rep["results"]
         self.assertEqual(r["status"], "not-fetched")
         self.assertGreater(r["counts"]["not-fetched"], 0)
@@ -78,7 +78,7 @@ class NotFetchedStatus(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             sourceless_root(tmp, [CASE, "epoch-year-19xx"])
             code, text = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", CASE, "--case", "epoch-year-19xx"])
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 2)   # no case graded: no result, exit 2 (D-389); absence is still not the parser's failure (1)
         self.assertIn("exact  tol fail skip n/e n/f n/a", text)
         self.assertIn("2 cases: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 2 need fetched data, 0 not available, 0 not exercised", text)
         self.assertIn("2 cases have none of their provider files on disk and report not-fetched", text)

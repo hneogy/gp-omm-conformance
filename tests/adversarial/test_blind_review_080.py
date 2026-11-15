@@ -4,7 +4,7 @@
 2026-10-27): the grader findings fixed in 0.8.0, each with a wrong-on-purpose input or adapter and its twin.
 
 - check-tle --against passed a file that lost or repeated source records, with exit 0 (finding 1); the secondary
-  fields stay information (D-095).
+  fields stayed information (D-095) until D-387.
 - a decoder that read only the first two characters of an Alpha-5 field passed alpha5-encoding-vectors (finding 4,
   the Alpha-5 part; the catalog-id and epoch vectors are 0.8.1's).
 - a command whose JSON began with a byte-order mark, and a parser returning a TLE name as its 24-column line, failed
@@ -32,6 +32,9 @@ from gpconf import writer as W  # noqa: E402
 from gpconf.__main__ import main as gpconf_main  # noqa: E402
 from gpconf.adapters.reference import Parser as Reference  # noqa: E402
 from gpconf.runner import CommandParser, Runner, compare_value  # noqa: E402
+from tests.raw_needed import needs_raw  # noqa: E402
+
+ISS_RAW = os.path.join("fixtures", "baseline-iss-five-formats", "raw")   # withheld from the export (D-408)
 
 CI = os.path.join(ROOT, "derived", "corrupt-input")
 SETS, ROWS = os.path.join(CI, "unedited-sets.tle"), os.path.join(CI, "unedited-rows.csv")
@@ -89,16 +92,17 @@ class CheckTleAgainstTheSource(unittest.TestCase):
         with open(js, encoding="utf-8") as f:
             self.assertEqual(json.load(f)["source"], {"not_compared": [], "not_written": [], "refusal_correct": [], "written_more": []})
 
-    def test_a_changed_secondary_field_stays_information(self):
-        """D-095: the first derivative's sign changed (checksum recomputed) is reported, not failed."""
+    def test_a_changed_secondary_field_fails(self):
+        """The first derivative's sign changed (checksum recomputed): reported, not failed, under D-095; from D-387 (the
+        owner's ruling extending D-381 to check-tle) another value than the source's fails the record."""
         from gpconf import tle as T
         l1 = self.lines[1]
         self.assertEqual(l1[33], "-", l1)   # ISS's first derivative is negative in this set
         l1 = l1[:33] + " " + l1[34:68]
         l1 += str(T.checksum(l1))
         code, out = check_tle(self.write("ndot.tle", [self.lines[0], l1] + self.lines[2:]), "--against", ROWS)
-        self.assertEqual(code, 0, out)
-        self.assertIn("mean_motion_dot changed", out)
+        self.assertEqual(code, 1, out)
+        self.assertIn("side field mean_motion_dot written as another value", out)
 
     def test_a_lost_copy_of_an_id_the_source_holds_twice_fails(self):
         """The reading of D-369, finding 1: a history source holding ISS at two epochs, a file writing one of them."""
@@ -110,11 +114,11 @@ class CheckTleAgainstTheSource(unittest.TestCase):
         code, out = check_tle(self.write("one-iss.tle", self.lines), "--against", src)
         self.assertEqual(code, 1, out)
         self.assertIn("[fail] 1 source record no file wrote: 25544 (1 of 2 written)", out)
-        self.assertIn("note: not compared: source holds 2 copies (per-epoch pairing comes in 0.8.1)", out)
+        self.assertIn("paired by its epoch with copy 1 of 2 in the source", out)   # compared now (D-403)
 
-    def test_a_history_written_whole_is_not_failed_but_said_not_compared(self):
-        """The owner's ruling on D-369's reading: no false fail on a history source in 0.8.0; the ids it holds more
-        than once are not compared, and said so (per-epoch pairing comes in 0.8.1)."""
+    def test_a_history_written_whole_passes_each_copy_paired_by_its_epoch(self):
+        """The owner's ruling on D-369's reading: no false fail on a history source. In 0.8.0 the ids it held more
+        than once were not compared, and the run exited 3 (D-370); per-epoch pairing compares each (D-403)."""
         from gpconf import tle as T
         l1 = self.lines[1].replace(" 98324.28472222 ", " 98325.28472222 ")
         l1 = l1[:68] + str(T.checksum(l1[:68]))
@@ -122,15 +126,14 @@ class CheckTleAgainstTheSource(unittest.TestCase):
         src = self.write("history.tle", history)
         js = os.path.join(self.tmp, "h.json")
         code, out = check_tle(self.write("written.tle", history), "--against", src, "--json", js)
-        # the correct file does not fail (before D-369's ruling its first ISS copy failed the round trip), and does not
-        # pass either: its ISS records read [not compared] and the run exits 3 (D-370; the second blind review's F1)
-        self.assertEqual(code, 3, out)
-        self.assertEqual(out.count("note: not compared: source holds 2 copies (per-epoch pairing comes in 0.8.1)"), 2)
-        self.assertEqual(out.count("[not compared] line"), 2)
-        self.assertIn("4 records: 2 pass, 0 fail, 2 not compared", out)
-        self.assertIn("note: 1 id not compared: the source holds more than one copy of it (per-epoch pairing comes in 0.8.1): 25544 (2 copies)", out)
+        # the correct file passes: each ISS record paired with the copy whose epoch it writes (D-403; before, both read
+        # [not compared] and the run exited 3, D-370)
+        self.assertEqual(code, 0, out)
+        self.assertIn("paired by its epoch with copy 1 of 2 in the source", out)
+        self.assertIn("paired by its epoch with copy 2 of 2 in the source", out)
+        self.assertIn("4 records: 4 pass, 0 fail", out)
         with open(js, encoding="utf-8") as f:
-            self.assertEqual(json.load(f)["source"]["not_compared"], [[25544, 2]])
+            self.assertEqual(json.load(f)["source"]["not_compared"], [])
         # its twin: an id the source holds once is still compared, and a wrong value there still fails the round trip
         # (DELTA's mean motion, line 2 columns 53 to 63, one digit changed, the checksum recomputed: the reading's N16)
         bad = list(history)
@@ -140,6 +143,53 @@ class CheckTleAgainstTheSource(unittest.TestCase):
         code, out = check_tle(self.write("bad.tle", bad), "--against", src)
         self.assertEqual(code, 1, out)
         self.assertIn("round trip: mean_motion", out)
+
+    def test_a_history_with_wrong_values_in_one_copy_fails_and_one_copy_written_twice_is_one_lost(self):
+        """D-403's own cases: per-epoch pairing compares, so a wrong copy fails; a copy written twice is one copy, and
+        the other is not written; a record at an epoch the source holds no copy at fails."""
+        from gpconf import tle as T
+        l1 = self.lines[1].replace(" 98324.28472222 ", " 98325.28472222 ")
+        l1 = l1[:68] + str(T.checksum(l1[:68]))
+        second = [self.lines[0], l1, self.lines[2]]
+        src = self.write("history.tle", self.lines + second)
+        wrong = list(second)
+        wrong[2] = wrong[2][:60] + ("0" if wrong[2][60] != "0" else "1") + wrong[2][61:68]
+        wrong[2] += str(T.checksum(wrong[2]))
+        code, out = check_tle(self.write("w1.tle", self.lines + wrong), "--against", src)
+        self.assertEqual(code, 1, out)
+        self.assertIn("round trip: mean_motion", out)
+        code, out = check_tle(self.write("w2.tle", self.lines + self.lines[:3]), "--against", src)
+        self.assertEqual(code, 1, out)
+        self.assertIn("[fail] 1 source record no file wrote: 25544 (1 of 2 written)", out)
+        l1x = self.lines[1].replace(" 98324.28472222 ", " 98326.28472222 ")
+        l1x = l1x[:68] + str(T.checksum(l1x[:68]))
+        code, out = check_tle(self.write("w3.tle", self.lines + [self.lines[0], l1x, self.lines[2]]), "--against", src)
+        self.assertEqual(code, 1, out)
+        self.assertIn("no source copy of 25544 has the epoch written ('98326.28472222')", out)
+
+    def test_a_source_holding_the_same_set_twice_written_twice_passes(self):
+        """The review of D-403's finding 1: two identical copies, each written once, are both written (a first-match
+        pairing put both records on the first copy and failed the second as not written)."""
+        src = self.write("twice.tle", self.lines + self.lines[:3])
+        code, out = check_tle(self.write("twice-w.tle", self.lines + self.lines[:3]), "--against", src)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("no file wrote", out)
+
+    @needs_raw(ISS_RAW)
+    def test_a_copy_without_an_epoch_is_a_candidate_for_every_record(self):
+        """The review of D-403's finding 3: a source copy with no epoch is compared as the same copy held once is."""
+        import json as _json
+        with open(os.path.join(ROOT, "fixtures", "baseline-iss-five-formats", "raw", "iss.json"), encoding="utf-8") as f:
+            rec = _json.load(f)[0]
+        bare = dict(rec)
+        bare.pop("EPOCH")
+        src = os.path.join(self.tmp, "noepoch.json")
+        with open(src, "w", encoding="utf-8") as f:
+            _json.dump([rec, bare], f)
+        with open(os.path.join(ROOT, "fixtures", "baseline-iss-five-formats", "raw", "iss.tle"), encoding="utf-8") as f:
+            iss = f.read().splitlines()
+        code, out = check_tle(self.write("iss-twice.tle", iss + iss), "--against", src)
+        self.assertNotIn("no source copy of 25544 has the epoch written", out)
 
     def test_a_history_id_written_by_no_file_is_lost_twice_and_not_listed_as_not_compared(self):
         """The re-reading's N11, N12 and N19: an id the source holds twice, written by no file."""
@@ -219,7 +269,13 @@ class CheckTleAgainstTheSource(unittest.TestCase):
         against = W.Against({25544: {}})
         against.held = {25544: 2}
         cov = W.source_coverage([{"norad_cat_id": 25544}, {"norad_cat_id": 25544}], against)
-        self.assertEqual(cov, {"not_compared": [(25544, 2)], "not_written": [], "refusal_correct": [], "written_more": []})
+        self.assertEqual(cov, {"not_compared": [], "not_written": [], "refusal_correct": [], "written_more": []})   # D-403
+        one = W.source_coverage([{"norad_cat_id": 25544, "matches_copies": [1]}] * 2, against)
+        self.assertEqual(one["not_written"], [(25544, 1, 2)])   # one copy written twice: the other is not written
+        same = W.source_coverage([{"norad_cat_id": 25544, "matches_copies": [1, 2]}] * 2, against)
+        self.assertEqual(same["not_written"], [])   # two copies alike, each written once (the review of D-403's 1)
+        near = W.source_coverage([{"norad_cat_id": 25544, "matches_copies": [1]}, {"norad_cat_id": 25544, "matches_copies": [1, 2]}], against)
+        self.assertEqual(near["not_written"], [])   # one record fits both copies, the other only one (its 2)
         cov = W.source_coverage([{"norad_cat_id": 25544}] * 3, against)
         self.assertEqual(cov["written_more"], [(25544, 3, 2)])
 
@@ -320,7 +376,7 @@ class CommandOutput(unittest.TestCase):
         """)
         with open(os.path.join(ROOT, "fixtures", "tle-writer-alpha5", "expected.json"), encoding="utf-8") as f:
             record = json.load(f)["records"][0]["canonical"]
-        text = CommandParser(cmd=None, write_cmd=cmd).write_tle(record)   # one call: the case makes 756
+        text = CommandParser(cmd=None, write_cmd=cmd).write_tle(record)   # one call: the case makes 762 (D-399)
         self.assertFalse(text.startswith("\ufeff"), repr(text[:3]))
         self.assertEqual(W.check_file(text)[0]["status"], "pass")
 
@@ -479,10 +535,14 @@ class SecondaryFieldsSaid(unittest.TestCase):
         self.assertEqual(items(ZeroNdot(), "tle-writer-alpha5").status_text(), "pass (1 secondary field not kept)")
 
 
-    def test_a_pass_that_changed_a_secondary_field_says_so(self):
+    def test_a_changed_secondary_field_fails(self):
+        # the fields were information (D-095) and this writer passed, its case saying so; from D-381 and D-383 a side
+        # field written as another value, here MEAN_MOTION_DOT with its sign dropped, fails the case
         got = items(NdotAbs(), "tle-writer-alpha5")
-        self.assertEqual(got.status, "pass")   # the fields stay information (D-095)
-        self.assertEqual(got.status_text(), "pass (1 secondary field not kept)")
+        self.assertEqual(got.status, "fail")
+        (it,) = [i for i in got.items if i.check == "tle-writer-secondary-not-changed"]
+        self.assertEqual(it.status, "fail")
+        self.assertIn("mean_motion_dot", it.detail)
 
     def test_the_reference_says_nothing_more(self):
         """The twin: a name cut to the line's 24 columns is kept as the format allows."""

@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 NEOGY LLC
+[package]
+name = "gpconf-rust-sgp4"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[dependencies]
+# The library under test, pinned exactly (README.md: the version is not checked from this machine, untested)
+sgp4 = "=2.2.0"
+serde_json = "1"

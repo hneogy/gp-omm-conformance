@@ -3,14 +3,14 @@
 // Vector hooks for gp-omm-conformance over astroz: {op, input} JSON on stdin -> {result} | {error} | {unsupported} on stdout.
 // alpha5_decode and two_digit_year go through Tle.parseLines on the ISS baseline pair with the field substituted
 // (astroz validates no checksum); parse_epoch and parse_catalog_id through Tle.parseOmm on a JSON record with the
-// one value substituted (astroz reads OMM as JSON only). No encoder or writer exists.
+// one value substituted as a JSON string (astroz reads OMM as JSON only). No encoder or writer exists.
 const std = @import("std");
 const Tle = @import("astroz");
 const c = @import("common.zig");
 const L1 = "1 25544U 98067A   26263.52959654  .00008422  00000+0  15975-3 0  9997";
 const L2 = "2 25544  51.6355 213.4302 0003462 300.5590  59.5075 15.49866287 66880";
-const OMM_HEAD = "{\"OBJECT_NAME\":\"ISS (ZARYA)\",\"OBJECT_ID\":\"1998-067A\",\"EPOCH\":\"";
-const OMM_MID = "\",\"MEAN_MOTION\":15.49866287,\"ECCENTRICITY\":0.0003462,\"INCLINATION\":51.6355,\"RA_OF_ASC_NODE\":213.4302,\"ARG_OF_PERICENTER\":300.559,\"MEAN_ANOMALY\":59.5075,\"EPHEMERIS_TYPE\":0,\"CLASSIFICATION_TYPE\":\"U\",\"NORAD_CAT_ID\":";
+const OMM_HEAD = "{\"OBJECT_NAME\":\"ISS (ZARYA)\",\"OBJECT_ID\":\"1998-067A\",\"EPOCH\":";
+const OMM_MID = ",\"MEAN_MOTION\":15.49866287,\"ECCENTRICITY\":0.0003462,\"INCLINATION\":51.6355,\"RA_OF_ASC_NODE\":213.4302,\"ARG_OF_PERICENTER\":300.559,\"MEAN_ANOMALY\":59.5075,\"EPHEMERIS_TYPE\":0,\"CLASSIFICATION_TYPE\":\"U\",\"NORAD_CAT_ID\":";
 const OMM_TAIL = ",\"ELEMENT_SET_NO\":999,\"REV_AT_EPOCH\":66880,\"BSTAR\":0.00015975,\"MEAN_MOTION_DOT\":0.00008422,\"MEAN_MOTION_DDOT\":0}";
 
 pub fn main(init: std.process.Init) !void {
@@ -58,11 +58,18 @@ pub fn main(init: std.process.Init) !void {
             if (c.eql(op, "alpha5_decode")) try w.print("{{\"result\":{d}}}", .{tle.satelliteNumber}) else try w.print("{{\"result\":{d}}}", .{c.yearFromJd(tle.epochJd)});
         } else |err| try w.print("{{\"error\":\"error.{s}\"}}", .{@errorName(err)});
     } else if (c.eql(op, "parse_epoch") or c.eql(op, "parse_catalog_id")) {
-        const json = if (c.eql(op, "parse_epoch"))
-            try std.fmt.allocPrint(gpa, "{s}{s}{s}25544{s}", .{ OMM_HEAD, input, OMM_MID, OMM_TAIL })
-        else
-            try std.fmt.allocPrint(gpa, "{s}2026-09-20T12:42:37.141056{s}{s}{s}", .{ OMM_HEAD, OMM_MID, input, OMM_TAIL });
-        defer gpa.free(json);
+        // The input is the field's text, so it goes into the record as a JSON string, escaped: pasted bare into the
+        // NORAD_CAT_ID number slot, valid text such as 00964 or +25544 made invalid JSON, and astroz's refusal of
+        // that was the harness's mistake, not the library's. std.json reads a quoted value into an integer field.
+        var aw: std.Io.Writer.Allocating = .init(gpa);
+        defer aw.deinit();
+        const rec = &aw.writer;
+        try rec.writeAll(OMM_HEAD);
+        try c.jsonString(rec, if (c.eql(op, "parse_epoch")) input else "2026-09-20T12:42:37.141056");
+        try rec.writeAll(OMM_MID);
+        if (c.eql(op, "parse_epoch")) try rec.writeAll("25544") else try c.jsonString(rec, input);
+        try rec.writeAll(OMM_TAIL);
+        const json = aw.written();
         if (Tle.parseOmm(json, gpa)) |t| {
             var tle = t;
             defer tle.deinit();

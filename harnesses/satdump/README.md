@@ -4,6 +4,7 @@
 |---|---|
 | tested at | master `f3d82adbfe04e57c596b93479d687f4b830ee26c` (2026-09-21), and release 1.2.2, tag `1.2.2`, `7aef0fe8441bc3eb440b1b6ba053556da5e40991` (2024-11-29) |
 | licence of the program | GPL-3.0 |
+| hooks (D-451) | answers: parse; unsupported: alpha5_decode, alpha5_encode, two_digit_year, parse_epoch, parse_catalog_id, propagate, write (no --vectors-cmd or --write-cmd program) |
 | what the harness compiles against | internal source files of SatDump's `src-core/`: `common/tracking/tle.cpp` (the TLE registry's parser, `parseTLEStream`), on master also `db/kepler/kepler_utils.cpp` (`ccsdsOmmToKepler`, the CSV reader), `common/utils.cpp` and `utils/string.cpp`, and the ten files of the bundled predict fork, `libs/predict/`, whose `predict_parse_tle` the harness also calls. The GUI, the database layer, HTTP and logging are not built |
 | toolchain as run | Apple clang 21, C++17 and gnu99, libcurl, macOS; built and run on 2026-09-24 |
 | published result | 3 of 17 cases failed on 1.2.2, 5 of 17 on master, with the runner of 2026-09-24 (corpus D-137); round two, on v0.4.0's eighteen cases: 4 of 18 on 1.2.2, 9 of 18 on master (corpus D-181) |

@@ -4,6 +4,7 @@
 |---|---|
 | tested at | master `661e057a5d369d5ee424676cf1d69cbead95ff2c` ("Version 2", 2026-07-26), the head of pull request #42, `2b8d14139fa266cdf57cb52ec9e1dfa041ee343d` (2026-03-26), and release v3.0, `c6ebb90625b43d7f6c6eb38b386f343d3cfe03a6` (2026-09-26) |
 | licence of the library | Apache-2.0 |
+| hooks (D-451) | answers: parse, alpha5_decode, two_digit_year, parse_epoch, parse_catalog_id; unsupported: alpha5_encode, propagate, write (the library has no writer or encoder) |
 | what the harness compiles against | the library's own classes, `Tle` and `DateTime`, and every `.cc` file of `libsgp4/`, compiled without its CMake build. `Tle::FromCsv` exists only on master, so CSV is read only with `-DHAVE_CSV` |
 | toolchain as run | Apple clang 21, C++17, macOS; built and run on 2026-09-24 |
 | published result | 6 of 17 cases failed on master, 5 of 17 on PR #42, with the runner of 2026-09-24 (corpus D-138); round two, release v3.0 on v0.4.0's eighteen cases: 9 of 18 (corpus D-182, D-183) |

@@ -4,6 +4,7 @@
 |---|---|
 | tested at | main `d558933ec3a9c9ee826eb8de665b6e5d229ebecb` ("refactor: cleanup omm (#92)", 2026-04-23), two commits past tag v0.12.0; and release v0.14.0, `67ca74c8313c5c42159217e2bbddfaedad07e0cd` (2026-09-27) |
 | licence of the library | GPL-3.0 through v0.13.0, so at d558933; MIT from v0.14.0 (#103) |
+| hooks (D-451) | answers: parse, alpha5_decode, two_digit_year, parse_epoch, parse_catalog_id; unsupported: alpha5_encode, propagate, write (the library has no writer or encoder; no propagate op) |
 | what the harness compiles against | the library's source file `src/Tle.zig`, used directly as a module named `astroz` rather than through the package's build: `Tle.MultiIterator` and `Tle.parseLines` for TLE and 2LE, `Tle.parseOmmArray` for OMM JSON |
 | toolchain as run | Zig 0.16.0 (Homebrew), macOS; built and run on 2026-09-24, and at v0.14.0 on 2026-09-27. The library's own parser tests passed on it (`zig test src/Tle.zig`, 10 of 10 at d558933, 14 of 14 at v0.14.0). The harness uses Zig 0.16's process and I/O interfaces, so earlier Zig versions will not build it; later ones were not tried |
 | published result | 9 of 17 cases failed at d558933, with the runner of 2026-09-24 (corpus D-140); 9 of 17 at v0.14.0, with the same runner (corpus D-166); round two, v0.14.0 on v0.4.0's eighteen cases: 10 of 18 in both modes (corpus D-185) |
@@ -23,6 +24,10 @@ library's own `MultiIterator`, which passes over a line shorter than 69 characte
 after it, without an error: neither reaches `parseLines`, so the report shows such a set as dropped silently, which is
 what a caller of the iterator gets.
 `vectors.zig` answers the corpus's vector hooks through the same module. `common.zig` is shared by both.
+Since 0.9.0, `vectors.zig` writes `parse_catalog_id`'s and `parse_epoch`'s text into the OMM record as an escaped JSON
+string (corpus D-509). Before, the catalog text went into the `NORAD_CAT_ID` number slot bare, so valid text such as
+`00964` or `+25544` made invalid JSON, and astroz's refusal of it was reported as the library's. No published verdict
+moved: `catalog-number-is-integer` fails on `1000000000` and `25544.0` either way.
 
 ## Build
 

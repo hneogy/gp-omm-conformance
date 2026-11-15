@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- gpconf harness for SGP.NET (parzivail/SGP.NET), pinned to the release the recipe names. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>GpconfSgpNet</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SGP.NET" Version="[1.6.0]" />
+  </ItemGroup>
+</Project>

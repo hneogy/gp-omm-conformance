@@ -242,6 +242,89 @@ class Refusals(Folder):
         self.assertIn("cannot read the tag message", err.getvalue())
 
 
+class ThePlugin(Folder):
+    """D-480: pytest-gpconf's two files go through the same check, picked by its pyproject's [project] name: its own tag
+    prefix, file names and subject; gpconf's tag, files or name never pass for it, nor its for gpconf."""
+    PWHEEL, PSDIST = "pytest_gpconf-1.2.3-py3-none-any.whl", "pytest_gpconf-1.2.3.tar.gz"
+
+    def setUp(self):
+        super().setUp()
+        with open(self.pyproject, "w", encoding="utf-8") as f:
+            f.write('[project]\nname = "pytest-gpconf"\nversion = "1.2.3"\n')
+        os.remove(os.path.join(self.dist, WHEEL))
+        os.remove(os.path.join(self.dist, SDIST))
+        self.write(self.PWHEEL, b"the plugin wheel's bytes")
+        self.write(self.PSDIST, b"the plugin sdist's bytes")
+
+    def message(self, epoch=1792023858):
+        return rh.message(self.dist, "1.2.3", epoch, "pytest-gpconf")
+
+    def test_the_message_names_the_plugin_and_its_files(self):
+        lines = self.message().split("\n")
+        self.assertEqual(lines[0], "pytest-gpconf 1.2.3")
+        self.assertIn("publish-pytest-gpconf.yml", lines[2])
+        self.assertIn("SOURCE_DATE_EPOCH 1792023858", lines[2])
+        self.assertEqual(lines[3], f"{rh.sha256_file(os.path.join(self.dist, self.PWHEEL))}  {self.PWHEEL}")
+        self.assertEqual(lines[4], f"{rh.sha256_file(os.path.join(self.dist, self.PSDIST))}  {self.PSDIST}")
+
+    def test_the_two_files_of_the_message_pass_on_the_plugin_s_tag(self):
+        output = os.path.join(self.tmp, "github_output")
+        code, out, err = self.run_check(self.message(), tag="pytest-gpconf-v1.2.3", github_output=output)
+        self.assertEqual(code, 0, err)
+        self.assertEqual(out.count("MATCH"), 2)
+        with open(output, encoding="utf-8") as f:
+            got = dict(line.split("=", 1) for line in f.read().splitlines())
+        self.assertEqual((got["version"], got["wheel"], got["sdist"]), ("1.2.3", self.PWHEEL, self.PSDIST))
+
+    def test_a_file_that_differs_by_one_byte_fails(self):
+        text = self.message()
+        self.write(self.PWHEEL, b"the plugin wheel's bytez")
+        code, out, err = self.run_check(text, tag="pytest-gpconf-v1.2.3")
+        self.assertEqual(code, 1)
+        self.assertIn(f"{self.PWHEEL}: DIFFERS", out)
+        self.assertIn("nothing is published", err)
+
+    def test_gpconf_s_tag_and_files_are_refused(self):
+        text = self.message()
+        for tag in ("v1.2.3", "pytest-gpconf-v1.2.4", "pytest_gpconf-v1.2.3"):
+            with self.subTest(tag=tag):
+                code, out, err = self.run_check(text, tag=tag)
+                self.assertEqual(code, 2, (out, err))
+                self.assertIn("tagged pytest-gpconf-v1.2.3", err)
+        self.write(WHEEL, b"x")
+        code, _, err = self.run_check(text, tag="pytest-gpconf-v1.2.3")
+        self.assertEqual(code, 2)
+        self.assertIn("must hold exactly", err)
+
+    def test_the_plugin_s_message_does_not_pass_gpconf(self):
+        text = self.message()
+        with open(self.pyproject, "w", encoding="utf-8") as f:
+            f.write('[project]\nname = "gpconf"\nversion = "1.2.3"\n')
+        code, _, err = self.run_check(text, tag="v1.2.3")
+        self.assertEqual(code, 2)
+        self.assertIn("not one of this release's files", err)
+
+    def test_another_name_or_none_is_refused(self):
+        for body in ('name = "pytest-gpconf-extra"\n', 'name = "GPconf"\n', ""):
+            with self.subTest(body=body):
+                with open(self.pyproject, "w", encoding="utf-8") as f:
+                    f.write('[project]\n' + body + 'version = "1.2.3"\n')
+                code, _, err = self.run_check(self.message(), tag="pytest-gpconf-v1.2.3")
+                self.assertEqual(code, 2)
+                self.assertIn("is none of the projects this check knows", err)
+
+    def test_the_plugin_s_own_pyproject(self):
+        self.assertEqual(rh.project_of(os.path.join(ROOT, "pytest-gpconf", "pyproject.toml"))[0], "pytest-gpconf")
+        self.assertEqual(rh.project_of(os.path.join(ROOT, "pyproject.toml"))[0], "gpconf")
+
+    def test_the_pattern_reads_the_name_as_tomllib_does(self):
+        for text, want in {'[project]\nname = "pytest-gpconf"\nversion = "1"\n': "pytest-gpconf",
+                           '[tool.x]\nname = "gpconf"\n[project]\nversion = "1"\n': None,
+                           "[project]\nname = 'gpconf'  # x\n": "gpconf"}.items():
+            with self.subTest(text=text):
+                self.assertEqual(rh.key_by_pattern(text, "name"), want)
+
+
 class TheVersion(unittest.TestCase):
     """[project].version, read as the build reads it: tomllib where Python has it, a pattern scoped to the [project]
     table before 3.11. Both readers are held to the same forms on every Python."""

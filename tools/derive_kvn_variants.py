@@ -172,5 +172,55 @@ def main(argv=None):
         print(f"{stem}{ext} ({len(text)} bytes)")
 
 
+# synthetic-derived epochs (D-384): the base record's values under synthetic ids, each epoch on a day the variants above
+# never reach; R6 (the year-2038 wrap) adds its epochs here too
+# five-digit ids, as the base record's, so the file asks nothing of a reader but its epochs; primary sources describe no
+# catalogued object in 90000-99999, where the writer case's vector 99999 sits (D-125), so 9999x is no object's number
+SYNTHETIC_EPOCHS = [(99990, "1960-12-31"), (99991, "1996-366"), (99992, "2000-12-31"), (99993, "2024-366"),
+                    (99994, "2056-12-31"),
+                    # the last second a signed 32-bit time_t holds, the next, and one well past it (R6, D-385)
+                    (99995, "2038-01-19T03:14:07.000000"), (99996, "2038-01-19T03:14:08.000000"),
+                    (99997, "2050-06-15T12:00:00.000000")]
+
+
+def synthetic_epochs(r):
+    """One OMM message per entry of SYNTHETIC_EPOCHS: the base record with NORAD_CAT_ID and EPOCH replaced (the date
+    in calendar or day-of-year form, the time kept). -> (stem, text, description, clauses, epoch_by_id)"""
+    texts, epochs = [], {}
+    for i, date in SYNTHETIC_EPOCHS:
+        x = dict(r, NORAD_CAT_ID=str(i), EPOCH=date if "T" in date else date + r["EPOCH"][10:])   # a date keeps the time
+        texts.append(kvn(base_pairs(x)))
+        epochs[str(i)] = x["EPOCH"]
+    return ("v08-synthetic-epochs", "".join(texts),
+            "SYNTHETIC-DERIVED: the base record's values under synthetic five-digit ids 99990-99997, each EPOCH replaced: 31 December, "
+            "day 366, of five leap years (1960, 1996, 2000, 2024, 2056), two in the day-of-year form (D-384); and 2038-01-19T03:14:07 "
+            "and 03:14:08, the last second a signed 32-bit time_t holds and the next, and 2050-06-15T12:00:00 (D-385); "
+            "specification vectors, not catalogued objects, never observed at these epochs.", ["7.5.10"], epochs)
+
+
+def write_synthetic_epochs(force=False):
+    src = os.path.join(ROOT, SRC)
+    meta = json.load(open(src + ".meta.json", encoding="utf-8"))
+    r = list(csv.DictReader(io.StringIO(open(src, encoding="utf-8").read())))[0]
+    stem, text, desc, clauses, epochs = synthetic_epochs(r)
+    out = os.path.join(OUT, stem + ".kvn")
+    if os.path.exists(out) and not force:
+        print(f"{stem}.kvn: exists, left as it is")
+        return
+    with open(out, "w", newline="", encoding="utf-8") as f:
+        f.write(text)
+    prov = {"file": os.path.relpath(out, ROOT).replace(os.sep, "/"), "provenance": "synthetic-derived",
+            "label": "SYNTHETIC-DERIVED: one CelesTrak record's values under synthetic ids with replaced epochs; not served by any provider",
+            "description": desc, "ccsds_502_0_b3_clauses": clauses,
+            "source_file": SRC, "source_sha256": meta["sha256"], "source_url": meta["url"],
+            "source_retrieved_at": meta["retrieved_at"], "source_norad_cat_id": int(r["NORAD_CAT_ID"]),
+            "generator": "tools/derive_kvn_variants.py", "generated_at": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "orbital_values_identical_to_source": False, "epoch_by_id": epochs,
+            "output_sha256": hashlib.sha256(text.encode()).hexdigest()}
+    json.dump(prov, open(out[:-4] + ".provenance.json", "w", encoding="utf-8"), indent=2)
+    print(f"{stem}.kvn ({len(text)} bytes)")
+
+
 if __name__ == "__main__":
     main()
+    write_synthetic_epochs("--force" in sys.argv[1:])

@@ -138,7 +138,7 @@ answer, a writer's answer, an exception, an exit code): ten million objects visi
 hashed or written. Past either, the answer fails in words, "too large or too deeply shared to read" (the file as
 `parse`; a hook's answer or a written record as its own item), rather than read without end; the largest reading in
 the sixteen published runs and GPKit's visited 467,926 objects and copied, hashed or wrote none (D-337). The budget is
-for each answer, not for a run: the writer case asks for 753 answers, so a writer whose every answer runs to the
+for each answer, not for a run: the writer case asks for 762 answers, so a writer whose every answer runs to the
 budget takes that many times as long, and an in-process parser has no time limit of its own (a command has 120 seconds
 a call). And a long text is read once, but the checks then hold and compare it in every record that carries it, so a
 text of a megabyte in each of 750 records cost seconds and half a gigabyte, and one of many megabytes far more: stated
@@ -309,7 +309,7 @@ def _rec(s, name=None):
             "ephemeris_type": s.ephtype, "classification_type": s.classification, "element_set_no": s.elnum, "rev_at_epoch": s.revnum}
 
 
-DECLARATION: dict[str, Any] = {"_adapter": {"refusals": True}}  # every record this adapter drops with an error is reported as a refusal (D-144)
+DECLARATION: dict[str, Any] = {"_adapter": {"refusals": True, "propagation": {"gravity": "wgs72", "opsmode": "i"}}}  # every record this adapter drops with an error is reported as a refusal (D-144); the propagate hook's constants, Satrec with WGS72 and opsmode 'i' (D-413)
 
 
 class Parser:
@@ -396,6 +396,12 @@ standard output:
   declaration (see [Refusals](#refusals-the-refusal-channel)); a UTF-8 byte-order mark before the array is read past,
   any other text before it fails the file (D-369), as before the lines a `--write-cmd` prints (where `check-tle`, which
   reads a file as a TLE reader would, still fails a file that begins with one);
+- JSON that holds a key twice in one object with two different values (a record's or a refusal's) is no answer:
+  which value was meant is undefined, and a reader may keep either. The file fails as `parse`, saying which key, and
+  on a corrupt input, where a refusal is the right outcome, it fails as a crash does, never counted as one. The same
+  value twice is read as once (D-398). A `--vectors-cmd` answer is read so too, after its exit code: a non-zero exit
+  is a rejection whatever it printed, and an exit 0 whose JSON holds a key twice fails the vector's item, never a
+  rejection. An exit 0 whose output is not JSON at all is still read as a rejection, a known limit;
 - exit 3: the format is not supported, and the file is reported as `skip`;
 - any other exit: the file fails as `parse`, with the last 300 characters of what the command wrote to standard
   error (in the corrupt-input case, on a corrupt input, it is that file refused as a whole, as a raise is);
@@ -543,7 +549,7 @@ reason, as the item skips for a Python adapter without the hook; an operation an
 vectors or for none, and a mix fails the item. A non-zero exit counts as a rejection, exit 3 included (the vectors
 protocol never gave it the meaning the parse and write commands do), and so does an answer that carries none of the
 three keys. An end by a signal, or a command still running after 120 seconds, is a crash and never a rejection: the
-vector fails, read as for `--cmd` (D-341). `parse_epoch` answers with an ISO string, which the runner converts; the vector's own text sent back as it came, where that is not already the calendar form, is a rejection (D-306). A Python adapter's hook raises `gpconf.runner.Unsupported` for
+vector fails, read as for `--cmd` (D-341). `parse_epoch` answers with an ISO string, which the runner converts. An answer the runner cannot read as an epoch is the command's answer, never its rejection: the vector's own text sent back as it came, where that is not already the calendar form (D-306), a second 60 that is no leap second, `null` or any other text that is no epoch fails a valid vector and, for an invalid one, counts as accepting it; a rejection is `{"error": ...}` or a non-zero exit (D-382). A Python adapter's hook raises `gpconf.runner.Unsupported` for
 the same effect.
 
 Once `--vectors-cmd` is given, the runner asks it for all five hooks. tle.js has no TLE writer and no OMM parser, so
@@ -612,11 +618,31 @@ same list as the records, an entry like this one from `gpconf/adapters/sgp4_adap
 - `_refused` (required) is the library's reason, a non-empty string. The runner strips it; an empty reason, or one
   that is not a string, makes the refusal count as no refusal (it credits no record), and the file's `refusals` item
   fails (D-356).
+- A refusal means the record was dropped with an error. Don't report warnings as refusals: a file in which a record is
+  both returned and refused (a refusal whose `_field` names a record the parser also returned from it) fails its
+  `refusals` item, which names the record and says "returned and refused the same record — a refusal means the record
+  was dropped; don't report warnings as refusals" (D-396). For example, a reader that loads a set whose checksum is
+  wrong and also returns `{"_refused": "checksum mismatch; record loaded anyway", "_field": "69999"}` fails; one that
+  loads it and says nothing, or that refuses it and does not return it, does not. To pass a warning on, keep it out of
+  the list. Where a file holds a catalog number more than once, returning one copy and refusing another is not a
+  contradiction: an id fails only where the records returned already account for every copy the file holds. A
+  refusal without a reason that names a returned record fails the item on both counts. In `corrupt-input` the cut
+  JSON holds no corrupt record, and a refusal of the cut may name its last record. The check reads refusals where
+  they are graded: the record cases and the edited corrupt inputs, not the unedited files they are compared with.
 - `_field` (optional) is the catalog field exactly as the input carried it. The runner decodes it itself, as digits
   or as Alpha-5 (one letter, then four digits) with the corpus's strict reader, and credits the refusal to that
   expected record. A field of any other form credits the refusal to no record (in the corrupt-input case, a field that
   is the invalid catalog field the edit introduced credits the corrupt record, D-360).
-- `_input` (optional) is the offending input; the first 80 characters are kept for the report.
+- `_input` (optional) is the offending input; the first 80 characters are kept for the report. In the corrupt-input
+  case a refusal with no `_field` credits the corrupt record when its `_input` holds a whole line the edit introduced
+  (a fragment, a single letter, credits nothing, D-392); where the edit is on one line only (input 8 changes line 2's
+  catalog field), quoting the unedited line credits nothing, so give the field, or quote the edited line (D-391).
+  Known limit (D-395): the runner does not check what else a quote holds, so a parser that drops a corrupt set
+  silently and plants refusals quoting the file's lines (each line, the whole file, or a fixed block of it) is
+  credited on the inputs whose edited line its quotes happen to hold. Such a parser never passes the case: input 4 (a
+  set whose line 2 is missing) adds no line to quote, and credits only through `_field` (or a refusal of the whole
+  file, which returns no record). Each rule tried against it failed a correct reader, and gpconf must not fail a
+  correct reader.
 
 The declaration `{"_adapter": {"refusals": true}}`, anywhere in the list (`sgp4_adapter.py` defines it at line 33 and puts
 it first in every list it returns),
@@ -708,10 +734,10 @@ optional methods on your adapter instead:
 
 | hook | gets | returns | raise when | item |
 |---|---|---|---|---|
-| `alpha5_decode(field)` | a catalog field, `str` | the catalog number, `int` | the field is invalid: `I` or `O`, lowercase, a letter after the first place, the wrong length | `alpha5-decode` |
+| `alpha5_decode(field)` | a catalog field, `str` | the catalog number, `int` | the field is invalid: `I` or `O`, lowercase, a letter after the first place, a sign, a blank or an underscore inside it (D-390), the wrong length | `alpha5-decode` |
 | `alpha5_encode(n)` | a catalog number, `int` | the five-character field | the number cannot be written: 340000, 799501621 and -1 are tried | `alpha5-encode` |
 | `two_digit_year(yy)` | a two-digit year, `str` | the four-digit year | never: a raise fails that vector | `two-digit-year-pivot` |
-| `parse_epoch(text)` | a CCSDS epoch, `str` | a `datetime`, compared within 2 microseconds; a string fails the item, since the runner would be the one parsing it (D-306) | the text is not a CCSDS epoch (a one-digit month, a space for the `T`, an offset, a TLE epoch) | `ccsds-epoch-strings` |
+| `parse_epoch(text)` | a CCSDS epoch, `str` | a `datetime`, compared within 2 microseconds; a string fails the item, since the runner would be the one parsing it (D-306) | the text is not a CCSDS epoch (a one-digit month, a space for the `T`, an offset, a TLE epoch, a second 60 that is not one of the 27 leap seconds, D-382) | `ccsds-epoch-strings` |
 | `parse_catalog_id(text)` | a `NORAD_CAT_ID` as text | the number, exactly an `int` | the text is not an integer of up to nine digits (`A0000`, ten digits, `25544.0`, empty) | `catalog-number-is-integer` |
 | `write_tle(record)` | one record: integers for the catalog number and the counters, decimal strings for the elements, the epoch as an ISO string | two lines, three with a name, or one string holding them (a list, a tuple, bytes or any other iterable of lines will do, D-337); line 1 and line 2 in ASCII, as the format is (a name line may hold any characters) (D-325) | a record the TLE format cannot carry is refused with an exception; `Unsupported` must be the answer for every record or for none: a mix fails, and what was written stays graded (D-280). For every record, the case skips; that the library writes no TLE is the adapter's claim, which the runner reports and does not verify (D-312) | the writer case |
 
@@ -728,17 +754,35 @@ not-exercised), and one returned for some records and omitted for others fails (
 value for `center_name`, `ref_frame`, `time_system` or `mean_element_theory`, the runner accepts `None` or the OMM
 constant defaults (`EARTH`, `TEME`, `UTC`, `SGP4`/`SGP/SGP4`) and fails anything else (D-285). In the corrupt-input
 case a refusal credits the corrupt record only on evidence — a `_field` that decodes to it, an `_input` quoting text
-the edit introduced (for a cut, an `_input` quoting the cut site), or a `_field` that is the catalog field of an element
+the edit introduced (for a cut, an `_input` quoting the cut site: read whole, within the file's last 200 characters or ending
+where the file ends, in the CSV and the JSON alike, and only from a parser that refuses nothing with a reason in the
+unedited file, where nothing is cut, D-400), or a `_field` that is the catalog field of an element
 line the edit introduced (an invalid catalog field decodes to no record, so that `_field` is the evidence, D-360); a
 refusal that names no record credits none, as this document has always said (D-282).
 
 The writer case reads the lines `write_tle` returns back with the corpus's own reader. They must be two 69-character
 lines with valid checksums, with every field in its fixed columns, and with the catalog field as five digits below
 100000 and in Alpha-5 from 100000; read back, each element must equal the record at the field's resolution, by
-truncation or by rounding half up, since both provider conventions exist. The report says which convention it saw per
-field, and reports separately, without failing, how the writer treated the derivatives, the element set number, the
-revolution number and the name. For a catalog number the field cannot carry, a refusal is the correct output and
-passes.
+truncation or by rounding half up, since both provider conventions exist; a writer that rounds a tie half down passes
+as a mix of the two, a known limit (`docs/WRITERS.md`, D-386). The report says which convention it saw per field, and
+reports separately how the writer treated the derivatives, the element set number, the revolution number, the
+classification, the international designator and the name. Each of those but the classification may be written as the
+record's value (the derivatives at the field's resolution, the two numbers in their columns), as zero, or left out
+(blank columns, no name line or an empty one), and the name cut to the line's 24 columns or after Space-Track's `0 `
+prefix; the classification, which has no zero, must be the record's. Written as any other value, a designator the
+reader cannot read among them, it fails `tle-writer-secondary-not-changed` (D-381, D-383; until 0.9.0 these were
+reported only, and a writer that doubled MEAN_MOTION_DOT or wrote another piece letter passed, SM-26's W1 and W4). For
+a catalog number the field cannot carry, a refusal is the correct output and passes.
+
+A file a tool wrote, where no adapter can be wrapped around the writer, is checked with `gpconf check-tle FILE
+[--against RECORDS]`: the same checks per record, and with the source records the round trip and whether every
+source record was written. It exits 0 when every record passed, 1 when one failed and 2 on a usage error; 3, for a record not
+compared, is kept for callers and no longer occurs, since an id the source holds more than once is compared with the
+copy whose epoch the record writes (`docs/WRITERS.md`, D-370, D-402, D-403).
+
+Line checksums are not graded on the reading side: a reader that validates none reads the wrong checksum digit of
+corrupt-input's first input as its unedited record, and that item is reported as information, not a failure (owner
+decision 2 of the corrupt-input case, D-171, D-402). A writer's checksums are graded (`tle-checksums-valid`).
 
 A hook you leave out is reported as `skip` for its item, never as a failure, and a case whose items all skip reports
 `skip`. (By command, see [Vector hooks by command](#vector-hooks-by-command): all five are asked once `--vectors-cmd`
@@ -746,7 +790,12 @@ is given.)
 
 The corpus's own readers implement all five vector hooks.
 
-From [`gpconf/adapters/reference.py`](../gpconf/adapters/reference.py), lines 45 to 87:
+Erratum (0.8.0), found by SM-26 ([issue #1](https://github.com/hneogy/gp-omm-conformance/issues/1)): the copy of
+`parse_epoch` quoted here until 0.9.0 read second 60 in any minute as second 59, under the comment "leap second: valid
+per CCSDS"; second 60 is valid only at the 27 leap seconds there have been, 23:59:60 UTC on the dates in
+`gpconf.tle.LEAP_SECOND_DATES`, and the reader below refuses it anywhere else (D-382).
+
+From [`gpconf/adapters/reference.py`](../gpconf/adapters/reference.py), lines 45 to 90:
 
 ```python
     def alpha5_decode(self, field):
@@ -785,21 +834,132 @@ From [`gpconf/adapters/reference.py`](../gpconf/adapters/reference.py), lines 45
         try:
             t = dt.datetime.strptime(base, fmt)
         except ValueError:
-            if base.endswith(":60"):  # leap second: valid per CCSDS, not representable in datetime
-                t = dt.datetime.strptime(base[:-3] + ":59", fmt)
-            else:
+            if not base.endswith(":60"):
                 raise
+            # second 60 is valid per CCSDS only at a leap second; datetime cannot carry it, so it is read as :59. Read
+            # so in any minute, 2026-09-20T12:42:60 passed (D-382; SM-26's L1)
+            t = dt.datetime.strptime(base[:-3] + ":59", fmt)
+            if not tlemod.is_leap_second(t):
+                raise ValueError(f"second 60 outside a leap second: {text!r}")
         if frac:
             t = t + dt.timedelta(microseconds=int(round(float("0" + frac) * 1e6)))
         return t
 ```
 
+## The propagation hook
+
+One optional hook, for the propagation case `sgp4-ver-propagation` (D-401). An adapter without it skips the case;
+nothing else changes. gpconf has no propagator of its own: it compares your numbers with Vallado's verification file.
+
+The hook takes one element set's bytes and format, as `parse` gets a file (`"tle"` here), and minutes since the
+set's epoch, and returns one `{"r": [x, y, z], "v": [vx, vy, vz], "error": code}` per time: TEME, km and km/s,
+plain numbers, the SGP4 error code an int (0 when the step propagated; `r` and `v` may be `None` when it is not).
+From [`gpconf/adapters/sgp4_adapter.py`](../gpconf/adapters/sgp4_adapter.py), lines 84 to 104:
+
+```python
+    def propagate(self, raw, fmt, tsince):
+        """The propagation tier (D-401): one element set's bytes, minutes since its epoch -> TEME r (km), v (km/s) and
+        the SGP4 error code per step, by Satrec with WGS-72 and opsmode 'i', the library's defaults, through
+        sgp4_tsince; an OMM CSV through sgp4.omm.initialize (D-406)."""
+        from sgp4.api import WGS72
+        if fmt in ("tle", "2le"):
+            lines = [l for l in raw.decode("utf-8").splitlines() if l.startswith(("1 ", "2 "))]
+            if len(lines) != 2:
+                raise ValueError(f"one element set expected, {len(lines)} element lines given")
+            s = Satrec.twoline2rv(lines[0], lines[1], WGS72)
+        elif fmt == "csv":   # the OMM path, sgp4.omm, as the library's users take it (D-406)
+            (fields,) = list(omm.parse_csv(io.StringIO(raw.decode("utf-8"))))
+            s = Satrec()
+            omm.initialize(s, fields)
+        else:
+            raise Unsupported(fmt)
+        out = []
+        for t in tsince:
+            e, r, v = s.sgp4_tsince(float(t))
+            out.append({"r": list(r), "v": list(v), "error": int(e)} if e == 0 else {"r": None, "v": None, "error": int(e)})
+        return out
+```
+
+- The reference is `SGP4-VER.TLE` and `tcppver.out`, the verification pair of the code accompanying AIAA 2006-6753.
+  gpconf ships neither (D-388): it looks for them in the directory given with `--sgp4-ver DIR`, else in the installed
+  python-sgp4 package, which carries both, else in the copy `gpconf fetch --include-propagation` downloaded from
+  python-sgp4's repository at release 2.27 (D-455), and uses them only when their bytes are the ones in the corpus's
+  manifest (`harnesses/vallado/reference-manifest.json`). Without them the case is not exercised, and says why.
+- Every position and velocity component must be within 2e-7 km and km/s of the file, with WGS-72 constants and
+  opsmode `'i'`; another gravity model or opsmode is a wrong answer for this reference. The largest differences are
+  printed either way.
+- Where a run ends in an SGP4 error, the code must be the reference's at the step after the run's last printed line
+  (the corpus measured each one; they are in the manifest), and no step before it may err. Values on an error step
+  are not compared. A non-zero code before it is a false decay; 0 where the reference errs is a silent propagation.
+- Raising refuses the set. Vallado's sets are all valid input, so a refusal fails the case; an error code is the
+  answer for a run that ends early. `Unsupported` is for all sets or none (D-205, D-280).
+- By command: a sixth op on `--vectors-cmd`, `{"op": "propagate", "input": {"raw": "<text>", "fmt": "tle",
+  "tsince": [0, 360, ...]}}`, answered `{"result": [{"r": ..., "v": ..., "error": 0}, ...]}`. The first call of a
+  run is a probe with no times (`"tsince": []`): answer it `{"result": []}`. Any other answer, as a command written
+  before the op gives for an op it lacks, means it has no propagate op, and the case skips, the answer printed.
+- The python-sgp4 preset propagates with `Satrec.twoline2rv(..., WGS72)` and `sgp4_tsince`, and an OMM CSV through
+  `sgp4.omm.initialize`.
+- The case `propagation-tle-omm-twins` (D-406) sends the same hook seven shipped TLE sets and their OMM CSV twins,
+  whose values are exactly the TLE's, and grades each against the corpus's own reference vectors
+  (`vectors/propagation-twins.json`, SGP4 by Vallado's C++, cross-checked with python-sgp4), and the two renderings
+  against each other, within the same bar: a library whose OMM path reads the epoch, the angles, the mean motion or
+  BSTAR otherwise than its TLE path fails it (the epoch only through its two deep-space sets, since near-earth SGP4 in
+  TEME does not depend on it; the derivatives, which SGP4 does not use, not at all). The TLE comes as its two element
+  lines. A hook that propagates TLE only answers `Unsupported("csv")` for the CSV, and a command `{"unsupported":
+  "..."}`: any other refusal of a valid CSV fails the OMM item (D-205). A reader that cannot read the Alpha-5 ids of
+  four of the sets fails the TLE item on them too.
+- The case `ephemeris-type-4-refused` (D-409) sends the hook one shipped set, 20453, with `EPHEMERIS_TYPE` 4 (an
+  SGP4-XP element set) as TLE, OMM CSV, JSON, XML and KVN, and a KVN that also says `MEAN_ELEMENT_THEORY = SGP4-XP`,
+  each with its type-0 twin, the twin first. Refuse a type-4 set: raise, `Unsupported` included (in this case only,
+  by the owner's ruling, D-410: everywhere else `Unsupported` is for all of a hook's inputs or none, D-280), or by
+  command answer `{"error": "..."}`. A refusal from `parse` counts too while `parse` reads the twin: it is the strongest form,
+  and it passes whatever the hook answers for that set, short of a crash or a timeout (the owner's ruling, D-464).
+  For a set `parse` accepted, an SGP4 error code at every step counts too with no position beside it (`r` missing or `None`, NaN as python-sgp4 gives on an error step,
+  all zeros, or anything but three finite numbers), which is what Vallado's C++ gives
+  (its `twoline2rv` does not initialise a set whose type is not 0); and for such a set a position at any step fails the file, error codes
+  stamped beside positions too: SGP4 run on an SGP4-XP set gives positions that look right and are not. So does an
+  empty list: answer a refusal, or one step per time asked, each with its code; an answer with more or fewer steps
+  than the times asked fails the file (D-459). The twin must propagate within the bar of the twins' reference
+  vectors, and `Unsupported` for the twin alone fails it; a hook that reads TLE and CSV only answers `Unsupported` for
+  JSON, XML and KVN, both types, and those formats are skipped and named. A command must answer the probe with no
+  times (`[]`) for any set, as for the other propagation cases. A library that does propagate SGP4-XP sets
+  `propagates_sgp4_xp = True` on its adapter, and the type-4 files are then not graded (gpconf has no SGP4-XP
+  reference); the claim is taken as given, so a library that claims it and propagates as SGP4 is not caught, nor
+  one that sends SGP4's positions as something other than numbers (strings, say) beside an error code at every step. The
+  case grades `EPHEMERIS_TYPE` alone; types 1 to 3 are out of scope for 0.9.0.
+- The answer may be any iterable of steps, and `r` and `v` lists, tuples or numpy arrays of three numbers. Within
+  the bar the positions item is a pass within tolerance; exactly the file's numbers is a pass.
+- Declare the constants your hook uses in `parse`'s answer, in the same `_adapter` entry as the refusals
+  declaration: `{"_adapter": {"refusals": True, "propagation": {"gravity": "wgs72", "opsmode": "i"}}}` (`true` in a
+  command's JSON; D-413). A second `_adapter` entry replaces the first, so keep the two keys in one. The values are
+  `"wgs72"`, `"wgs72old"` or `"wgs84"`, and `"i"` or `"a"`; case and a hyphen do not matter. gpconf reads it
+  once a run, from `parse`'s answer to the first twins set, and each propagation case prints it as an information
+  item, saying whether it is the reference's. It is reported, never trusted: every case still grades against WGS-72
+  and opsmode `'i'`, so a WGS-84 hook fails with its declaration printed beside the numbers. The python-sgp4 preset
+  declares WGS-72 and `'i'`.
+- Budget: a command's propagate call has the same budget as its other calls, 120 seconds by default; one past it
+  is a crash, which is never a refusal (D-341). A Python hook runs in gpconf's process and has none.
+- Known limits: values on and after an error step are never compared, as the reference's are implementation detail
+  there, and neither are the codes after it: the verification driver stops a run at its first error, and SGP4 itself
+  may propagate again at a later step (Vallado's code answers 0 at 13 later steps of 33333 and 149 of 20413, measured,
+  D-476), so a code there is no evidence either way; a velocity beside an every-step code with no position is not
+  read on the type-4 route (only `r` is: no library is known to answer that way; 0.9.1 reads `v` too); a type-4 set
+  that `parse` refuses, while it reads the twin, passes whatever the hook answers for it short of a crash or a timeout
+  (D-464), so a library whose parser and propagator are
+  separate code paths, the propagator taking the set its parser refused, is not caught (to be looked at again in
+  0.9.1); and a parser that reads the answers out of `tcppver.out` instead of propagating passes, with differences of
+  exactly 0, since gpconf compares numbers and does not propagate. Every step of the twins' reference propagates, so
+  their codes catch a false decay, not a missing error. Fuzzing is `gpconf fuzz`, outside the graded cases (below,
+  D-415).
+
 ## Running it
 
 ### Fetch the provider data, once
 
-Five cases run from files that ship with the corpus: the Alpha-5 vectors, the derived Alpha-5 lines, the KVN variants,
-the writer case and the corrupt-input case. Twelve of the other thirteen read provider files, which you fetch once;
+Seven cases run from files that ship with the corpus: the Alpha-5 vectors, the derived Alpha-5 lines, the KVN
+variants, the writer case, the corrupt-input case, the TLE/OMM twins and the ephemeris-type-4 case (the last two graded
+through the `propagate` hook, skipped without it); the Vallado propagation case reads two files gpconf locates on your machine. Twelve of the other thirteen read
+provider files, which you fetch once;
 the thirteenth, `supgp-celestrak-classification-c`, reads a launch-window capture that no fetch requests, and reports
 `not-available` (D-229):
 
@@ -850,10 +1010,12 @@ but holds an item that skipped, or a file in which a field with expected values 
 its status cell: `pass (1 item skipped)`, `pass (5 field gaps)`, `pass (1 item skipped, 2 field gaps)`. The status,
 the counts and the exit status are what they were; the words in brackets are what the status leaves out. Under the
 count line a sentence totals them across the run, and when cases were not graded for lack of provider data a line
-says how many were: `5 of 18 cases graded offline; not a full conformance result.` A run on the five cases that
+says how many were: `5 of 21 cases graded offline; not a full conformance result.` A run on the five cases that
 ship is a run on five cases. The exit status is 0 when no case failed, 1 when one did, and 2 when nothing could run: a
-preset whose library is missing, a corpus copy that is incomplete, or a `--json` path that cannot be written; a report
-that cannot be written after the run is 2 as well (D-370).
+preset whose library is missing, a corpus copy that is incomplete, a `--case` or `--tag` that names nothing, or a
+`--json` path that cannot be written; a report that cannot be written after the run is 2 as well (D-370); and so is a
+run in which no case was graded, every case skipped, waiting for fetched data or not available, since that is no
+result (from 0.9.0, D-389).
 
 An item names the file it read or, for a check across the files of a set, the set: `iss-live`. The checks that
 compare a set's TLE records with its OMM records (the TLE/OMM consistency check, `mmdot-is-tle-field-value` and the
@@ -883,6 +1045,43 @@ file matched the tested snapshot or was compared live), `drift`, `items`, `reuse
 from an earlier version's cache, and `unexpected` when the fetch kept a response it did not expect for one of the
 case's files (D-228), with `in_place` true where an earlier fetch saved that response in the data's place (D-351). Each item holds `check`, `status`, `file` and `detail`; a values item adds `counts`,
 the numbers above, and a pass within tolerance adds `tolerance_stats`.
+
+### Fuzz your adapter: `gpconf fuzz`
+
+`gpconf fuzz` takes the same `--preset`, `--adapter` or `--cmd` (and `--vectors-cmd`) as `run`, and calls your
+`parse` on mutated copies of the corpus's shipped inputs, in the formats it reads (a format whose first input it
+answers `Unsupported` is left out). Each answer is judged against the corpus's own reference reader on the same
+bytes, record by record: a record both return must agree; a record the reference reads that you neither return nor
+refuse is a finding (a copy of a repeated id too; a refusal needs a reason to count); a record only you return is an
+observation, since a reader may be lenient; a raise is a refusal and always fine; a field the reference reads as
+absent is not compared, so a default you give there is fine; a crash (an exit, a command's signal or timeout) and an
+answer that is no list are findings. A value the runner cannot read, a NaN or an infinity, is a finding where the
+reference reads the input, and an observation where it refuses it (an OMM `NaN`) or holds a value past a float's
+range (`1e999`, which `float()` reads as an infinity). `--seed` and `--count` make a run repeatable, `--out DIR`
+saves each finding's minimised input (up to 200 more calls of your parser per finding, each a run of your command
+with `--cmd`), and `--json FILE` keeps the whole report. With `--propagate` your
+`propagate` hook gets OMM CSV sets at the edge of SGP4's domain (eccentricity 0 to 1, mean motion near 0 and above
+17 rev/day, BSTAR at -1, 0 and 1, epochs in 1957 and 2056) at times as far as 1e9 minutes: each step must be a non-zero
+code or a finite position and velocity. Eccentricity exactly 1 is where SGP4's own code gives a silent NaN: Vallado's
+C++, as python-sgp4's compiled `Satrec` carries it in every release with `sgp4.omm` (2.13 to 2.27), propagates the set
+with code 0 and NaN at every step, where 0.999999 gives error 4, and python-sgp4's pure-Python fallback raises
+`ZeroDivisionError` on it; so a faithful port is reported there, a corpus observation about SGP4, not about a port
+(D-424). A Python adapter runs in gpconf's process with no budget, so a hang in it
+hangs the run; a command has its budget. Findings are reported only: they never move a case verdict, and the command
+exits 0 (the owner's ruling on lane C's question 8; D-415), or with `--strict` exits 1 when it finds anything, for a CI
+step of your own (D-422), and 2 when there was nothing to fuzz: the adapter reads no format and nothing was propagated
+(D-459). An input your adapter refuses whole, with a reason, is tallied `refused`, neither a finding nor `ok`; a run in
+which every input was refused says so, and is not a failure by itself. Each record is judged by its own catalog number: a NaN in a record the reference reads is a
+finding even where the reference refuses another set in the same input (D-417). Copies are counted as the graded
+cases count them (D-311): the input holds an id as often as the reference reads it, so keeping one copy of an exact
+duplicate (a CSV row written twice) is a dropped copy unless you refuse the other with a reason, and returning a
+record more often than the reference reads it, in copies that agree or not, is a finding, "surplus", where the
+reference refuses no set of that id and none without one (D-421). A record holding no value at all, as the empty
+message a KVN with its first line written twice opens, is no record on either side, neither one to drop nor a copy
+(D-429). Known limits: where the input already holds a copy
+of an id that the reference refuses, a NaN in the other copy of that id is an observation, and so is a surplus copy
+of an id where the reference refuses a set of it or one without an id, so such a misreading is not reported as a
+finding.
 
 ## What not to do
 

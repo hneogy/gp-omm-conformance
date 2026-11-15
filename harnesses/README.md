@@ -26,10 +26,30 @@ code before trusting a count.
 | [astroz](astroz/) | main d558933, and release v0.14.0 at 67ca74c | GPL-3.0 through v0.13.0, MIT from v0.14.0 | the library's `src/Tle.zig`, used directly as a module | Zig 0.16.0 (as run; the harness uses interfaces new in 0.16) |
 | [gods-eye-view](gods-eye-view/) | release v0.2.1 at aa16b7c, and main ce671ce before it | MIT | the application's satellites layer, by its internal module paths, with Cesium stood in | Node.js (26.5.0 as run) |
 | [vallado](vallado/) | CelesTrak/fundamentals-of-astrodynamics at 4b04ddc, the SGP4 files as 7e0078a left them | the repository is AGPL-3.0; its NOTICE, in the tree at that commit, gives the SGP4 C++ folder its original unrestricted terms | `SGP4.cpp` and `SGP4.h` alone: the reader `twoline2rv()` and the `elsetrec` structure, as `SGP4.h` declares them | a C++17 compiler (Apple clang 21 as run) |
+| [gpkit](gpkit/) | release v1.2.0 at 971b642, and v1.1.0 at 0c4d396 before it | Apache-2.0 | nothing: GPKit carries its own adapter (`Sources/gpconf-adapter`), by gpconf's author; the recipe is the pin and the commands | Swift 6 with SwiftPM (as run, 2026-11-10) |
+| [orekit](orekit/) | **not run (untested)** | Apache-2.0 | Orekit's `TLE` class and its getters | a JDK, Orekit and Hipparchus, `orekit-data` |
+| [rust-sgp4](rust-sgp4/) | crate 2.2.0, run in CI only | MIT or Apache-2.0 [not read] | the `sgp4` crate's `Elements` and `Constants` | Rust and Cargo |
+| [brahe](brahe/) | PyPI 1.8.1 | MIT | an `--adapter` file on `GPRecord.from_json` and `ccsds.OMM.from_str` | Python with `brahe` |
+| [sgp-net](sgp-net/) | SGP.NET 1.6.0, run in CI only | MIT | SGP.NET 1.6.0's `Tle` and OMM parsers | the .NET 8 SDK |
+| [go-sgp4](go-sgp4/) | v1.0.2, run in CI only | Apache-2.0 | akhenakh/sgp4 v1.0.2's `ParseTLELines`, `ParseOMMs`, `ParseOMMsCSV`, `FindPosition` | Go 1.23 |
+| [sgpkit](sgpkit/) | release 3.1.0 at 30bb573 (run 2026-10-06, and in CI on 2026-11-10) | MIT | SGPKit's own targets over a clone at the tag, and a C bridge over its `createTLE()` | Swift 6 with SwiftPM, C++17 |
 
 The sixth recipe is of another kind. `vallado/` is not one of the eight libraries: it is the SGP4 C++ they descend
 from, Vallado's reference implementation as CelesTrak publishes it, read directly and not through a library that
 wraps it (decision D-216, 2026-10-03). It has no row on the site.
+
+The seventh, `gpkit/`, is GPKit, a Swift library by gpconf's author (decision D-378). It carries its own adapter in
+its own repository, so its recipe holds no harness code: the pinned release and the commands that build the adapter
+and run it (decision D-427, 2026-11-10).
+
+Two more, `orekit/` and `rust-sgp4/`, were written for 0.9.0 on a machine without a JDK or a Rust toolchain and have
+never been built or run: each says so in its title and its first row, and none of their numbers exists yet
+(decision D-428).
+
+For 0.9.0 item b4 and b3, three more (decision D-438): `brahe/`, an adapter file for brahe's Python package, run
+once; and `sgp-net/` (C#) and `go-sgp4/` (Go), written from the libraries' sources read on GitHub and first built
+by the corpus's CI. Each library's results stay private until its maintainers have heard them.
+`sgpkit/` is SGPKit's harness, moved from the owner's swift-satellite workspace, where it was written and run.
 
 The counts each run produced are in the one-off runs table on the site's library page
 (https://gpconf.neogy.dev/library/), recorded with the runner of 2026-09-24 (gpconf 0.2.1). Later runners add checks,

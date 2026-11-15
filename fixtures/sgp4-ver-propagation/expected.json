@@ -1,0 +1,51 @@
+{
+ "case": "sgp4-ver-propagation",
+ "title": "Propagation against Vallado's SGP4 verification file: 33 element sets, TEME position and velocity within 2e-7, SGP4 error codes exact",
+ "schema_version": "1.0",
+ "generated_at": "2026-11-08T13:18:32Z",
+ "generator": "tools/make_expected.py",
+ "kind": "propagation",
+ "sources": {
+  "harnesses/vallado/reference-manifest.json": {
+   "tier": "stable",
+   "format": "manifest-json",
+   "bytes": 5732,
+   "sha256": "e090af8edb3ee64120c774aefa47276961205cd48db6e0f9cd58e26d343d4b3b",
+   "provenance": "corpus measurement"
+  }
+ },
+ "records": [],
+ "checks": [
+  {
+   "id": "sgp4-ver-positions",
+   "description": "Each of Vallado's 33 verification element sets (SGP4-VER.TLE, located on this machine and held to the corpus's manifest of its bytes; never shipped, D-388) propagated by the parser's propagate hook to the verification driver's times: every TEME position (km) and velocity (km/s) component within 2e-7 of tcppver.out, WGS-72 and opsmode 'i' only, the largest differences printed (D-401)."
+  },
+  {
+   "id": "sgp4-ver-error-codes",
+   "description": "Where a verification run ends in an SGP4 error, the code is the reference's (measured by the corpus, in its manifest) at the step after the run's last printed line, and no step before it errs: a false decay and a silent propagation each fail (D-401)."
+  }
+ ],
+ "tests": [
+  "sgp4-propagation"
+ ],
+ "coverage": {
+  "provides": [
+   "33 element sets: near-earth and deep-space, resonant and synchronous orbits, low perigee, high eccentricity, the branches SGP4-VER.TLE's comments name; 7 runs ending in an SGP4 error (codes 1, 1, 6, 6, 4, 3, 6), one of them at t = 0"
+  ],
+  "gaps": [
+   "graded only where Vallado's files are on the machine (the hash manifest, D-388)",
+   "WGS-72 and opsmode 'i' only; WGS-84 report-only, later (the owner's ruling, 2026-10-25)",
+   "TLE input only: the TLE/OMM twins are their own case (D-406); the ephemeris-type-4 case and fuzzing are later parts of the tier"
+  ]
+ },
+ "ambiguities": [],
+ "notes": [],
+ "sets": {},
+ "case_specific": {
+  "bar_km_and_km_s": 2e-07,
+  "gravity": "wgs72",
+  "opsmode": "i",
+  "set_count": 33,
+  "error_runs": 7
+ }
+}

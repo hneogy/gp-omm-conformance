@@ -168,7 +168,7 @@ class TheRunnerSaysNotAvailable(unittest.TestCase):
             code, text = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", ALL_CAPTURES, "--json", report])
             with open(report, encoding="utf-8") as f:
                 rep = json.load(f)
-        self.assertEqual(code, 0)                                                       # absence is not a failure of the parser
+        self.assertEqual(code, 2)   # no case graded: no result, exit 2 (D-389); absence is still not the parser's failure (1)
         self.assertIn("exact  tol fail skip n/e n/f n/a", text)
         self.assertRegex(text, rf"{ALL_CAPTURES}\s+not-available\s+0\s+0\s+0\s+0\s+0\s+0\s+5\n")
         self.assertIn("1 case: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 1 not available, 0 not exercised", text)

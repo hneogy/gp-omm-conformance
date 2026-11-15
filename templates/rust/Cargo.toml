@@ -1,0 +1,9 @@
+[package]
+name = "gpconf-adapter-template"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+# No dependencies: the template writes its JSON itself. Add your parser here.
+[dependencies]

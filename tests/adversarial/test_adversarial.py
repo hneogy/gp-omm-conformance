@@ -18,11 +18,7 @@ sys.path.insert(0, ROOT)
 from gpconf.runner import Runner  # noqa: E402
 from gpconf.adapters.reference import Parser as Reference  # noqa: E402
 from tests.adversarial import sweep  # noqa: E402
-if os.path.exists(os.path.join(ROOT, "tests", "adversarial", "sm26.py")):
-    from tests.adversarial import sm26  # noqa: E402
-else:   # withheld from the public export until SM-26's permission is confirmed (D-367); present, it must load
-    sm26 = None
-NO_SM26 = "SM-26's adapters are not in the public export (D-367)"
+from tests.adversarial import sm26  # noqa: E402  (withheld from 0.8.0's export, D-367; licensed and exported, D-380, D-382)
 
 NO_DATA = ["alpha5-encoding-vectors", "alpha5-tle-derived", "kvn-syntax-variants", "tle-writer-alpha5", "corrupt-input"]
 
@@ -56,28 +52,22 @@ def gap_items(results):
 class Suspects(unittest.TestCase):
     """The adapters that passed with zero fails on gpconf 0.6.1 (SM-26's run and the corpus's reproduction)."""
 
-    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s1_writer_dodge_fails_the_writer_case(self):
         self.assertIn("tle-writer-alpha5", failing(run(sm26.S1WriterDodge())))          # D-280
 
-    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s2_file_dodge_fails_where_it_read_the_format(self):
         self.assertEqual(failing(run(sm26.S2FileDodge())), ["alpha5-tle-derived", "corrupt-input"])   # D-280
 
-    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s3_duplicate_tail_fails(self):
         self.assertEqual(failing(run(sm26.S3DuplicateTail())), ["alpha5-tle-derived", "corrupt-input", "kvn-syntax-variants"])   # D-281; corrupt-input since D-299 grades its unedited OMM files
 
-    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s4_split_decoder_fails_on_the_synthetic_letters(self):
         self.assertIn("alpha5-tle-derived", failing(run(sm26.S4SplitDecoder())))        # D-286
 
-    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s5_non_integer_ids_fail(self):
         for a in (sm26.S5FloatIds(), sm26.S5StrIds()):
             self.assertIn("alpha5-tle-derived", failing(run(a)))                        # D-283
 
-    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_s6_stray_refusal_fails(self):
         self.assertEqual(failing(run(sm26.S6StrayRefusal())), ["corrupt-input"])        # D-282
 
@@ -121,15 +111,11 @@ class TwinsAndControls(unittest.TestCase):
 
     def test_every_twin_fails(self):
         sm26_twins = (sm26.S1WriterDodgeTwin, sm26.S2FileDodgeTwin, sm26.S3DuplicateHead, sm26.S4SplitDecoderTwin,
-                      sm26.S5FloatIdsHook, sm26.S6SilentDrop) if sm26 else ()   # the corpus's own run without them (D-367)
-        if sm26 is None:
-            with self.subTest("SM-26's twins"):
-                self.skipTest(NO_SM26)
+                      sm26.S5FloatIdsHook, sm26.S6SilentDrop)
         for a in sm26_twins + (sweep.N1ElsetKeyDropTwin, sweep.N3WriterPartwayTwin):
             with self.subTest(a.__name__):
                 self.assertTrue(failing(run(a())), a.__name__)
 
-    @unittest.skipIf(sm26 is None, NO_SM26)
     def test_every_control_fails(self):
         for a in (sm26.C1NoIOSkip, sm26.C2OffByOne, sm26.C3Pivot58, sm26.C4NanId, sm26.C5Crash, sm26.C6Lenient, sm26.C7PlausibleWrong):
             with self.subTest(a.__name__):

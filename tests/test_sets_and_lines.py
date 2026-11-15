@@ -40,7 +40,8 @@ def flat(text):
 
 class TheDerivedFiles(unittest.TestCase):
     """The figures, counted from the files the corpus ships: 604 sets derived from real records in four files, and
-    146 synthetic-derived sets in two more (46 for the letters, 100 for the two-digit years; D-286, D-300), counted
+    152 synthetic-derived sets in four more (46 for the letters, 100 for the two-digit years, 5 for day 366, 1 classified
+    C; D-286, D-300, D-384, D-404), counted
     apart so the published 604 stays a count of real-record derivations."""
 
     @classmethod
@@ -51,7 +52,7 @@ class TheDerivedFiles(unittest.TestCase):
         cls.lines = [line for p in cls.files for line in read(os.path.relpath(p, ROOT).replace(os.sep, "/")).splitlines()]
 
     def test_604_sets_are_1208_element_lines_and_1812_lines(self):
-        self.assertEqual((len(self.files), len(self.synthetic)), (4, 2))
+        self.assertEqual((len(self.files), len(self.synthetic)), (4, 4))
         line1 = [x for x in self.lines if x.startswith("1 ")]
         line2 = [x for x in self.lines if x.startswith("2 ")]
         self.assertEqual((len(line1), len(line2)), (604, 604))
@@ -105,7 +106,7 @@ class TheWords(unittest.TestCase):
     def test_the_readme_says_sets_with_their_lines(self):
         readme = flat(read("README.md"))
         self.assertIn("| `alpha5-tle-derived` | 604 derived Alpha-5 TLE sets, 1,208 element lines (letters A and T), from real CelesTrak records; "
-                      "146 synthetic-derived sets for every letter and every two-digit epoch year |", readme)
+                      "152 synthetic-derived sets for every letter, every two-digit epoch year, day 366 of five leap years and a classification of C |", readme)
         self.assertIn("was validated (304 of 304 fetched TLE sets byte for byte: the name line, line 1 and line 2 of each)", readme)
         self.assertIn("by reproducing 304 of 304 fetched CelesTrak TLE sets byte for byte", readme)
         self.assertIn('The corpus says "TLE set" for an object\'s lines and "line" for one line: 604 derived Alpha-5 TLE sets, 304 fetched TLE sets (D-248).', readme)

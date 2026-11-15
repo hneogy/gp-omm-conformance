@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytest-gpconf"
+version = "0.1.0"
+description = "Run gpconf conformance cases against your GP/OMM parser as ordinary pytest tests"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+dependencies = ["gpconf>=0.9.0", "pytest>=7"]
+classifiers = ["Framework :: Pytest", "License :: OSI Approved :: Apache Software License"]
+
+[project.entry-points.pytest11]
+gpconf = "pytest_gpconf.plugin"
+
+[tool.setuptools.packages.find]
+where = ["src"]

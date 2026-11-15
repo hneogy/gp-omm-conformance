@@ -123,6 +123,11 @@ def load(name, module=None, cwd=None):
         mod = importlib.import_module(spec["module"])
     except ImportError as e:
         if spec.get("requires"):
+            have = found_version(spec.get("distribution"))
+            if have:   # an older release is installed and lacks what the adapter imports (D-430: python-sgp4 2.21 and earlier)
+                why = e.__cause__ if isinstance(e.__cause__, ImportError) else e   # the adapter's own words hide the module
+                raise setup_error(spec, f"needs {spec['library']}; {have} is installed but the adapter cannot load it "
+                                        f"({type(why).__name__}: {str(why)[:120]}): pip install --upgrade {spec['requires']}") from e
             raise setup_error(spec, f"needs {spec['library']}, which is not installed: pip install {spec['requires']}") from e
         raise
     parser = getattr(mod, "Parser")()

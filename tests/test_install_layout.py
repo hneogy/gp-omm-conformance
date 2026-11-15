@@ -174,7 +174,7 @@ class InstalledCopy(unittest.TestCase):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "run", "--adapter", "my_adapter:Parser")
         self.assertEqual(code, 0, out)
         self.assertIn(f"provider data: {self.cache} (per-user cache)", out)
-        self.assertIn("18 cases: 5 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
+        self.assertIn("21 cases: 5 pass (exact), 0 pass within tolerance, 0 fail, 3 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
         self.assertIn("1 case cannot run from a fetch and reports not-available: supgp-celestrak-classification-c.", out)  # D-229
         self.assertIn(f"--include-satcat runs it: {PY} -m gpconf fetch --include-satcat.", out)                           # D-232
         self.assertIn(f"fetch it with {PY} -m gpconf fetch.", out)
@@ -185,7 +185,7 @@ class InstalledCopy(unittest.TestCase):
     def test_list_reads_the_bundled_manifest(self):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "list")
         self.assertEqual(code, 0, out)
-        self.assertEqual(len(out.strip().splitlines()), 18, out)
+        self.assertEqual(len(out.strip().splitlines()), 21, out)   # with the propagation cases (D-401, D-406, D-409)
 
     def test_fetch_dry_run_plans_every_normal_entry_into_the_cache_and_writes_nothing(self):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "fetch", "--dry-run")
@@ -227,7 +227,7 @@ class InstalledCopy(unittest.TestCase):
         self.assertIn(f"provider data: {data} ({locate.DATA_ENV})", out)
         # every case a fetch can feed runs; the one whose files are all launch-window captures cannot (D-229)
         # and the SATCAT data check, whose file the fetch brings only on request (D-231), is not made and says so (D-232)
-        self.assertIn("18 cases: 16 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 1 not available, 1 not exercised", out)
+        self.assertIn("21 cases: 16 pass (exact), 0 pass within tolerance, 0 fail, 3 skip, 0 need fetched data, 1 not available, 1 not exercised", out)
         self.assertIn("satcat-70000-cutoff is a data check on the legacy SATCAT file, 9.4 MB, which the fetch brings only on request.", out)
         self.assertIn(f"nothing about the parser under test depends on it. --include-satcat runs it: {PY} -m gpconf fetch --include-satcat.", out)
         self.assertNotRegex(out, r"ha(s|ve) none of (its|their) provider files on disk")
@@ -253,7 +253,7 @@ class InstalledCopy(unittest.TestCase):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "run", "--adapter", "my_adapter:Parser",
                                   extra_env={locate.DATA_ENV: data})
         self.assertEqual(code, 0, out)
-        self.assertIn("18 cases: 17 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 0 not available, 1 not exercised", out)
+        self.assertIn("21 cases: 17 pass (exact), 0 pass within tolerance, 0 fail, 3 skip, 0 need fetched data, 0 not available, 1 not exercised", out)
         self.assertNotIn("launch-window", out)
 
 
@@ -276,11 +276,11 @@ class InstalledPresets(unittest.TestCase):
         code, out = self.run_preset("reference")
         self.assertEqual(code, 0, out)
         self.assertIn("parser: preset reference\n", out)
-        self.assertIn("18 cases: 5 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
+        self.assertIn("21 cases: 5 pass (exact), 0 pass within tolerance, 0 fail, 3 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
         code, out = self.run_preset("naive")
         self.assertEqual(code, 1, out)  # it fails the five offline cases, which is what it is for
         self.assertIn("parser: preset naive (a demonstration of failure, not a parser anyone should use)", out)
-        self.assertIn("18 cases: 0 pass (exact), 0 pass within tolerance, 5 fail, 0 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
+        self.assertIn("21 cases: 0 pass (exact), 0 pass within tolerance, 5 fail, 3 skip, 11 need fetched data, 1 not available, 1 not exercised", out)
 
     def test_the_library_presets_name_the_version_found(self):
         code, out = run_installed(self.site, self.home, self.project, "-m", "gpconf", "presets")

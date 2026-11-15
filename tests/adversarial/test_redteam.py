@@ -76,7 +76,7 @@ class EscapesThatAreClosed(unittest.TestCase):
         self.assertEqual(failing(r), ["corrupt-input"])          # the unedited TLE file's frozen values catch the drop (D-342)
         values = [i for i in r["corrupt-input"].items if i.check == "values" and (i.file or "").endswith("unedited-sets.tle")]
         self.assertEqual([i.status for i in values], ["fail"])
-        self.assertEqual(len(r["corrupt-input"].voided_by_parser()), 5)   # the inputs it leaves ungraded are still named (five with D-360's sixth input)
+        self.assertEqual(len(r["corrupt-input"].voided_by_parser()), 6)   # the checks it leaves ungraded are still named (six: D-360's and D-391's O9999 share one, D-391's line-fields check the sixth)
         self.assertEqual(r["corrupt-input"].as_dict()["voided_by_parser"], r["corrupt-input"].voided_by_parser())
         for name in ("Empty", "RefuseSome"):                     # the report's two wider cases
             self.assertNotEqual(run(adapter("e00", name))["corrupt-input"].status, "pass", name)
@@ -147,9 +147,10 @@ class EscapesThatAreClosed(unittest.TestCase):
         self.assertEqual(failing(r), ["alpha5-encoding-vectors", "kvn-syntax-variants"])
         (hook,) = [i for i in r["alpha5-encoding-vectors"].items if i.check == "ccsds-epoch-strings"]
         self.assertIn("parse_epoch must return a datetime", hook.detail)
-        (values,) = [i for i in r["kvn-syntax-variants"].items if i.check == "values" and i.status == "fail"]
-        self.assertIn("v02-day-of-year-epoch-Z.kvn", values.file)
-        self.assertIn("passed back unparsed", values.detail)
+        values = [i for i in r["kvn-syntax-variants"].items if i.check == "values" and i.status == "fail"]
+        # v02 and, from D-384, v08, whose day-366 epochs are two in the day-of-year form
+        self.assertEqual(sorted(os.path.basename(i.file) for i in values), ["v02-day-of-year-epoch-Z.kvn", "v08-synthetic-epochs.kvn"])
+        self.assertTrue(all("passed back unparsed" in i.detail for i in values))
         self.assertEqual(failing(run(Twin())), ["alpha5-encoding-vectors", "kvn-syntax-variants"])
         # on today's reference the adapter's KVN bug never meets raw text; its hook still hands text back, and fails
         self.assertEqual(failing(run(adapter("e06", "Win"))), ["alpha5-encoding-vectors"])
@@ -161,7 +162,7 @@ class EscapesThatAreClosed(unittest.TestCase):
         r = run(parser, ["alpha5-encoding-vectors"])["alpha5-encoding-vectors"]
         (hook,) = [i for i in r.items if i.check == "ccsds-epoch-strings"]
         self.assertEqual(hook.status, "fail")
-        self.assertIn("rejected (ValueError)", hook.detail)     # the proxy's refusal of the echoed text
+        self.assertIn("returned the input's own epoch text, unparsed", hook.detail)   # the echo is an answer (D-382)
 
     def test_text_a_harness_built_itself_is_still_normalised(self):   # D-306: what the rule leaves alone
         """The corpus's harnesses return a TLE epoch as year and day-of-year text, by design, and the runner
@@ -180,10 +181,14 @@ class EscapesThatAreClosed(unittest.TestCase):
 
 
 class ByDesign(unittest.TestCase):
-    """The two the report itself says contradict nothing (D-303)."""
+    """The two the report itself says contradict nothing (D-303). E10's was by design until D-381 and D-383: a side
+    field written as another value fails the writer case now."""
 
-    def test_e10_writer_secondary_fields_are_information(self):
-        self.assertEqual(failing(run(adapter("e10", "Win"))), [])
+    def test_e10_a_side_field_written_wrong_fails(self):
+        r = run(adapter("e10", "Win"))
+        self.assertEqual(failing(r), ["tle-writer-alpha5"])
+        (it,) = [i for i in r["tle-writer-alpha5"].items if i.check == "tle-writer-secondary-not-changed"]
+        self.assertIn("mean_motion_dot", it.detail)
 
     def test_e17_float_output_within_the_documented_tolerance(self):
         r = run(adapter("e17", "Win"))

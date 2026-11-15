@@ -4,6 +4,7 @@
 |---|---|
 | tested at | `4b04ddce172a3f5d958b4256a29ea996c8e666be` (2026-09-28), the first commit that carries the repository's NOTICE. The two files compiled were last changed by `7e0078a10e9aed2a44eef0ab646c0018ca69e1ad` (2026-08-31) and are byte-identical at both commits and on `main` on 2026-10-03; the first form of the harness was run at both, with the same items |
 | licence of the code | the repository is AGPL-3.0. Its NOTICE, in the tree at the commit pinned, says that the SGP4 C++ source (`software/cpp/SGP4/`) derives from Vallado, Crawford, Hujsak and Kelso, AIAA 2006-6753, and "retains those original unrestricted terms". The NOTICE entered the repository with that commit: at `7e0078a`, where the code last changed, the tree has none and its README names the AGPL alone, which is why the pin is the later commit. Nothing of the repository is copied here |
+| hooks (D-451) | answers: parse, alpha5_decode, two_digit_year, propagate; unsupported: alpha5_encode, parse_epoch, parse_catalog_id, write (the code has no writer or encoder and no OMM reader) |
 | what the harness compiles against | `SGP4.cpp` and `SGP4.h`, the two source files of `software/cpp/SGP4/SGP4/`, and nothing else of the repository: the one reader, `SGP4Funcs::twoline2rv()`, and the `elsetrec` structure it fills, both declared in `SGP4.h` |
 | toolchain as run | Apple clang 21, C++17, macOS; built and run on 2026-10-03 |
 | published result | none: this recipe has no row on the site. Run on 2026-10-03 against corpus v0.5.0's eighteen cases, 8 of 18 cases failed (corpus D-216) |
@@ -39,6 +40,17 @@ the reader with whatever line follows it, so the reader, not the harness, answer
 it (corpus D-183). `vectors.cpp` answers the
 corpus's vector hooks through the same call; a field that is not five characters long is turned away by the helper
 itself, since it cannot be placed in the line. `common.h` is shared by both.
+
+`vectors.cpp` also answers the propagation tier's `propagate` op (corpus D-416): the set's two lines go to the same
+reader call (WGS-72, opsmode `'i'`, a zeroed `elsetrec`), and `SGP4Funcs::sgp4` runs from the initialised set at each
+time, as the verification driver does, giving TEME r (km), v (km/s) and the code per step; the probe with no times
+is answered `[]`, and OMM input `unsupported`, since the code reads TLE lines only. For a set whose ephemeris type is
+not 0, `twoline2rv()` does not call `sgp4init()` ("the ephtype must be 0 for SGP4. SGP4-XP uses 4"), so every step
+answers a non-zero code and no position, which the case `ephemeris-type-4-refused` reads as not propagated (corpus
+D-410). Measured 2026-11-10 at the pin: `sgp4-ver-propagation` passes within 9.71e-8 km and 5e-10 km/s over 666
+steps, all seven error runs at their step with their code; `propagation-tle-omm-twins` passes on the TLE exactly (the
+corpus's reference vectors are this code's output) with OMM unsupported; `ephemeris-type-4-refused` passes on the TLE,
+its four OMM formats unsupported.
 
 ## Build
 

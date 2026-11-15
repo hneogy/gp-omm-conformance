@@ -32,7 +32,7 @@ FATAL_BODY = "Fatal Python error: Segmentation fault\n\nCurrent thread 0x1 (most
 
 def report(folder, name, at, thread_name, signal="SIGSEGV", pid=1, parent=2):
     body = {"captureTime": at.strftime("%Y-%m-%d %H:%M:%S.%f %z"),
-            "procPath": "/usr/bin/python3", "pid": pid, "parentProc": "Python", "parentPid": parent, "responsibleProc": "claude",
+            "procPath": "/usr/bin/python3", "pid": pid, "parentProc": "Python", "parentPid": parent, "responsibleProc": "Terminal",
             "exception": {"type": "EXC_CRASH", "signal": signal}, "faultingThread": 0,
             "threads": [{"name": thread_name, "frames": [{"imageIndex": 0, "symbol": "__kill"}]}],
             "usedImages": [{"name": "libsystem_kernel.dylib"}]}

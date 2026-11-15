@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
-"""The small edge cases of 0.7.1, each with its wrong-on-purpose adapter and a twin (CLAUDE.md, "Grader changes").
+"""The small edge cases of 0.7.1, each with its wrong-on-purpose adapter and a twin (the maintainer's "Grader changes" rule).
 
 From the hardening review of 2026-10-11 (W1 to W3 of its report): an infinite or NaN value, or a digit of another
 script in a written line, failed in words that blamed the wrong side ("parser raised OverflowError", "internal error in

@@ -30,7 +30,8 @@ reasoning is in `DECISIONS.md`, D-095 to D-101.
   command's exit code says what happened to one record (0 written, 3 writing unsupported, so the case
   is skipped, any other value a refusal); `gpconf`'s own exit code, for `run` and `check-tle` alike,
   is 0 when nothing failed, 1 when anything did, and 2 when nothing could run or the `--json` report could not be
-  written; `check-tle` exits 3 when nothing failed but a record was not compared (D-370).
+  written; `check-tle`'s exit 3, for a record not compared (D-370), is kept and no longer occurs: an id the source
+  holds more than once is compared with the copy whose epoch the record writes (D-403).
 - A file a tool wrote: `python3 -m gpconf check-tle FILE... [--against RECORDS]`. Same checks (length,
   checksum, catalog field, column layout), applied to every `1 `/`2 ` line pair in the file whatever its
   length; name lines, `#` comment lines and LF or CRLF endings are accepted; an element line without its
@@ -38,7 +39,11 @@ reasoning is in `DECISIONS.md`, D-095 to D-101.
   written element line (an 80-column card image's blanks, say) is taken off and noted, which file line and which
   columns, as information that changes no status and no exit code (D-338); `--against`
   supplies the source records (CSV, JSON, XML, KVN or TLE, with the epoch in the calendar or the
-  day-of-year form) for the round trip; a records file the reference reader rejects (anything outside the format, read as
+  day-of-year form) for the round trip, and holds the side fields as the writer case does: zeroed or left out, or the
+  source's value, never another (from 0.9.0, D-387). A value written where the source has none (a name over a 2LE
+  source, a designator where the source's OBJECT_ID is empty) is another value and fails; a first line that is neither
+  an element line nor a `#` comment is read as the first record's name, so a title line fails that record unless it
+  starts with `#`; and the name may be cut to 24 characters, not counting Space-Track's `0 ` before it; a records file the reference reader rejects (anything outside the format, read as
   strictly as a parser's answer, D-336; bytes that are not UTF-8; an extension it does not know), or that is missing, stops the check with exit 2, naming the file and what is wrong,
   since it is no reference to check against. A written record whose catalog number has no match in those records is a failure, not a
   note: the line is about some other object, or about none. When the number is `00000` or `99999` the detail
@@ -57,10 +62,20 @@ D-071). The runner reports which convention it observed per field, and reports m
 without failing them. This is the format's resolution, not a tolerance: the comparison is exact against
 one of two renderings, and the corpus's own renderer stays exact.
 
+Known limit (D-386, found by SM-26 in round two of the audit, W3): because each record is held to either
+convention, a writer that rounds a tie half down (a value exactly halfway between two field values)
+passes: on a tie half down writes the truncated value, and elsewhere it rounds as half up does. It cannot
+be told from a writer that formats binary floats, which rounds the binary value nearest a decimal tie and
+so lands on either side of it (Python's `%.8f`, which python-sgp4's exporter uses, rounds 942 of 2,000
+exact eight-place ties up and 1,058 down). Holding each field to one convention across a writer's records
+would catch W3 and fail every such float writer on tie inputs, so the corpus does not. The writer inputs
+hold 58 exact ties in the eccentricity and two in BSTAR, and W3 passes on them.
+
 Fields an orbit-fitting tool regenerates by design (first and second derivative of mean motion, element
-set number, revolution number, classification, designator, name) and the exponent sign written for a
-zero second derivative (`+` at CelesTrak, `-` at Space-Track) are reported for information and never
-failed.
+set number, revolution number, classification, designator, name) may be zeroed or left out; written as any
+other value than the record's they fail `tle-writer-secondary-not-changed` (from 0.9.0, D-383; the
+classification, which has no zero, must be the record's). How each was treated, and the exponent sign
+written for a zero second derivative (`+` at CelesTrak, `-` at Space-Track), are reported for information.
 
 ## The case `tle-writer-alpha5`
 
@@ -75,10 +90,13 @@ replaced by 340000, 799501621 and -1, the `encode_unrepresentable` values of `ve
 Real elements, vector ids; their correct output is a refusal. A fourth synthetic-derived input (D-125) keeps
 SARAMAGO's elements, takes the five-digit vector id 99999 and a BSTAR of 1.2345, the positive-exponent field
 form (` 12345+1`) that no fetched record supplies; its expected fields are rendered by the corpus, and it is a
-specification vector, not a catalogued object.
+specification vector, not a catalogued object. A fifth (D-399) takes 99998 and an eccentricity of 0, field
+`0000000`, which none of the frozen records has, so that a writer leaving the field blank for 0 fails the column
+layout; it too is a specification vector.
 
 Checks: `tle-checksums-valid`, `tle-writer-catalog-field`, `tle-writer-round-trip`,
-`tle-writer-refuses-unencodable`; information items `tle-writer-secondary-fields` and
+`tle-writer-refuses-unencodable`, `tle-writer-secondary-not-changed` (a side field kept, zeroed or left out, the name
+cut to 24 columns, never another value; from 0.9.0, D-383); information items `tle-writer-secondary-fields` and
 `tle-writer-matches-provider-rendering`. Texts in `MANIFEST.md`.
 
 ## Three writers, one run (2026-09-22, `docs/FAILURES.md`)

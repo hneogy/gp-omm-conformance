@@ -1,6 +1,6 @@
-# Corpus manifest (0.8.0)
+# Corpus manifest (0.9.0)
 
-Generated 2026-10-29T01:39:43Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-11-10T05:12:49Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No provider data is shipped, and one provider response is: CelesTrak's 16-byte answer `No GP data found`, in `recorded/` with its provenance, which holds no orbital data (D-247, a named exception to D-023). Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped), and writes the recorded answer where it used to request it.
 
@@ -20,10 +20,13 @@ No provider data is shipped, and one provider response is: CelesTrak's 16-byte a
 | 12 | `tle-vs-omm-precision-loss` | pairs | 0 | 0/0 | 2 |
 | 13 | `omm-xml-schema` | xml | 0 | 0/0 | 1 |
 | 14 | `alpha5-encoding-vectors` | vectors | 0 | 4/0 | 1 |
-| 15 | `alpha5-tle-derived` | derived-tle | 750 | 6/0 | 3 |
-| 16 | `kvn-syntax-variants` | derived-kvn | 6 | 6/0 | 2 |
-| 17 | `tle-writer-alpha5` | writer | 756 | 11/2 | 4 |
-| 18 | `corrupt-input` | corrupt-input | 21 | 11/0 | 6 |
+| 15 | `alpha5-tle-derived` | derived-tle | 756 | 8/0 | 3 |
+| 16 | `kvn-syntax-variants` | derived-kvn | 14 | 7/0 | 2 |
+| 17 | `tle-writer-alpha5` | writer | 762 | 12/2 | 4 |
+| 18 | `corrupt-input` | corrupt-input | 38 | 19/0 | 6 |
+| 19 | `sgp4-ver-propagation` | propagation | 0 | 1/0 | 3 |
+| 20 | `propagation-tle-omm-twins` | propagation-twins | 0 | 3/0 | 5 |
+| 21 | `ephemeris-type-4-refused` | propagation-type4 | 0 | 12/0 | 5 |
 
 The records column sums the record counts of a case's source files: `analyst-objects` counts the 565 group records plus the two single-object first fetches (567).
 
@@ -192,7 +195,7 @@ Coverage gaps:
 
 ## 16. `kvn-syntax-variants`
 
-CCSDS-legal KVN renderings of one record that CelesTrak never emits
+CCSDS-legal KVN renderings of one record that CelesTrak never emits, and one synthetic-derived file of day-366 and post-2038 epochs
 
 Tests: kvn-syntax
 
@@ -216,7 +219,7 @@ Coverage gaps:
 
 ## 18. `corrupt-input`
 
-Corrupt input between valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, an invalid catalog field, a file cut mid-record
+Corrupt input among valid records: a wrong checksum digit, a line one character short, a letter in a numeric field, a set missing its second line, an invalid catalog field, two lines naming different objects, a file cut mid-record
 
 Tests: corrupt-input, fail-closed, resynchronisation
 
@@ -229,14 +232,61 @@ Coverage gaps:
 - a line cut short at its end, which loses only the checksum digit and leaves every value readable, is not an input: a parser that accepts it reads the right values, and accepting a malformed line whose values survive is what the wrong checksum digit already shows (D-171)
 - any non-empty reason counts as a refusal's reason; whether it names the right defect is not checked
 
+## 19. `sgp4-ver-propagation`
+
+Propagation against Vallado's SGP4 verification file: 33 element sets, TEME position and velocity within 2e-7, SGP4 error codes exact
+
+Tests: sgp4-propagation
+
+Coverage gaps:
+
+- graded only where Vallado's files are on the machine (the hash manifest, D-388)
+- WGS-72 and opsmode 'i' only; WGS-84 report-only, later (the owner's ruling, 2026-10-25)
+- TLE input only: the TLE/OMM twins (D-406) and the ephemeris-type-4 case (D-409) are their own cases; fuzzing is gpconf fuzz, outside the cases (D-415)
+
+## 20. `propagation-tle-omm-twins`
+
+Propagation from a TLE and from its exact OMM twin: seven shipped sets, the corpus's own reference vectors, within 2e-7
+
+Tests: sgp4-propagation, tle-omm-equivalence
+
+Coverage gaps:
+
+- OMM CSV only: the other OMM formats' twins are later
+- seven shipped sets, not the design's 33 SGP4-VER sets (never shipped, D-388) or the 304 provider pairs, whose OMM carries more digits than the TLE and which are to be reported, never graded (lane C's design section 3)
+- the epoch is graded through the two deep-space sets only; MEAN_MOTION_DOT and MEAN_MOTION_DDOT, which SGP4 does not use, not at all
+- every reference step propagates: the codes catch a false decay, not a missing error
+- WGS-72 and opsmode 'i' only
+
+## 21. `ephemeris-type-4-refused`
+
+An SGP4-XP element set (ephemeris type 4) is refused, never propagated as SGP4; its type-0 twin propagates
+
+Tests: sgp4-propagation, ephemeris-type
+
+Coverage gaps:
+
+- one set; SGP4-XP itself is not graded: gpconf has no SGP4-XP reference, and an adapter that claims it is not graded on the type-4 files
+- ephemeris types 1 to 3 out of scope for 0.9.0 (the owner's ruling)
+- an adapter's claim of SGP4-XP is taken as given: a library that claims it and propagates as SGP4 is not caught
+- beside an error code at every step, only three finite numbers not all zero count as a position: SGP4's positions sent as strings are not caught
+- WGS-72 and opsmode 'i' only for the twins
+
 ## Checks
 
+- **type4-not-propagated** — Set 20453 with EPHEMERIS_TYPE 4 (an SGP4-XP element set) as TLE, OMM CSV, JSON, XML and KVN, and a KVN also saying MEAN_ELEMENT_THEORY = SGP4-XP (the corpus's spelling, synthetic), each through the propagate hook: a position at any step fails the file, since SGP4 propagates such a set to positions that look right and are not, and so do error codes stamped beside positions; a refusal passes (a raise, Unsupported for the type-4 set alone, a refusal from parse while its twin is read, or an SGP4 error code at every step with no position, as Vallado's C++ answers). An adapter that sets propagates_sgp4_xp = True is not graded on it (the owner's ruling, 2026-11-01; D-409).
+- **type4-twins-propagate** — Each type-4 file's twin, the same values with EPHEMERIS_TYPE 0, through the same hook: it must propagate within 2e-7 km and km/s of the twins' reference vectors (vectors/propagation-twins.json, D-406), its codes exact, so a hook that refuses every set fails here, and so does Unsupported for the twin alone (D-205, D-280); a format unsupported for both files is skipped and named (D-409).
+- **twins-tle-positions** — Each of seven shipped TLE sets (derived/propagation-twins/twins.tle) through the parser's propagate hook at six times (-1 day, -1 hour, 0, +1 hour, +1 day, +7 days): every TEME position and velocity component within 2e-7 km and km/s of the corpus's own reference vectors (vectors/propagation-twins.json: SGP4 by Vallado's C++, WGS-72, opsmode 'i', cross-checked with python-sgp4), every SGP4 error code exact (every reference step propagates, so a false decay is what the codes catch). The TLE is sent as its two element lines (D-406).
+- **twins-omm-positions** — The same for each set's OMM CSV twin (derived/propagation-twins/twins.csv), whose values are exactly the TLE's: a library whose OMM path reads the angles, the mean motion, the eccentricity or BSTAR otherwise than its TLE path fails here, and the epoch through the two deep-space sets (100530, 270354) only, since near-earth SGP4 in TEME does not depend on it (D-406).
+- **twins-tle-omm-agree** — For each set the parser propagated from both renderings, its TLE and OMM answers within 2e-7 of each other at every step, their codes the same (D-406).
+- **sgp4-ver-positions** — Each of Vallado's 33 verification element sets (SGP4-VER.TLE, located on this machine and held to the corpus's manifest of its bytes; never shipped, D-388) propagated by the parser's propagate hook to the verification driver's times: every TEME position (km) and velocity (km/s) component within 2e-7 of tcppver.out, WGS-72 and opsmode 'i' only, the largest differences printed (D-401).
+- **sgp4-ver-error-codes** — Where a verification run ends in an SGP4 error, the code is the reference's (measured by the corpus, in its manifest) at the step after the run's last printed line, and no step before it errs: a false decay and a silent propagation each fail (D-401).
 - **omm-formats-agree** — For the same object and snapshot, CSV, JSON, XML and KVN yield identical canonical values for every OMM keyword present in all of them.
 - **tle-values-match-omm-within-tle-precision** — The TLE rendering equals the OMM values except: eccentricity truncated to 7 digits, BSTAR and second derivative rounded (half up) to a 5-digit mantissa, epoch at 1e-8 day resolution.
 - **tle-checksums-valid** — Every TLE line 1 and line 2 is 69 characters and ends with the modulo-10 checksum (ASCII digits count their value, '-' counts 1, everything else 0); a line a writer returns must also be ASCII throughout (D-325).
 - **catalog-number-is-integer** — NORAD_CAT_ID parses as an integer in every OMM format, including values of six and nine digits, and a ten-digit value is rejected (CCSDS allows up to nine digits); leading zeros and an explicit '+' are legal in KVN.
 - **tle-catalog-field-decodes** — Columns 3-7 of TLE lines 1 and 2 decode to the same integer (five digits, or Alpha-5 letter + four digits).
-- **ccsds-epoch-strings** — parse_epoch accepts every CCSDS 502.0-B-3 7.5.10 epoch form in vectors/ccsds-epoch-strings.json (calendar and day-of-year, with or without a fraction and a Z, second 60) and returns the instant each denotes (within 2 us; a leap second may read as 23:59:59 or as the next midnight), and rejects the six invalid forms.
+- **ccsds-epoch-strings** — parse_epoch accepts every CCSDS 502.0-B-3 7.5.10 epoch form in vectors/ccsds-epoch-strings.json (calendar and day-of-year, with or without a fraction and a Z, second 60) and returns the instant each denotes (within 2 us; a leap second may read as 23:59:59 or as the next midnight), and rejects the fifteen invalid forms, nine of them a second 60 that is not one of the 27 leap seconds (D-382).
 - **two-digit-year-pivot** — TLE epoch years 57-99 map to 1957-1999 and 00-56 to 2000-2056; the resulting ISO epoch equals the OMM EPOCH string.
 - **object-id-may-be-empty** — OBJECT_ID (and in principle OBJECT_NAME) can be empty; parsers must not fail, and must not invent a value.
 - **object-name-unknown-literal** — OBJECT_NAME may be the literal UNKNOWN (CCSDS-recommended) rather than empty.
@@ -254,7 +304,7 @@ Coverage gaps:
 - **mmdot-is-tle-field-value** — OMM MEAN_MOTION_DOT equals the TLE first-derivative field as printed (the TLE 'ndot/2' convention); MEAN_MOTION_DDOT likewise equals the TLE second-derivative field.
 - **bstar-implied-decimal-exponent** — TLE BSTAR and second-derivative fields are +/-NNNNN+/-E with an implied leading decimal point: ' 15975-3' is 0.15975e-3; zero is written ' 00000+0'.
 - **negative-bstar-and-ndot** — BSTAR and the first derivative can be negative; parsers must keep the sign.
-- **alpha5-decode** — An Alpha-5 catalog field decodes as (letter value)*10000 + digits with A=10 ... Z=33 and I, O unused; 'I', 'O', lowercase, a blank and an empty field are invalid (D-360), and so is a field whose last four characters are not all digits: a letter, a sign, a point or a blank after the first character (D-369), and so is one whose digits are not ASCII, or with an underscore or a plus sign in it (D-370).
+- **alpha5-decode** — An Alpha-5 catalog field decodes as (letter value)*10000 + digits with A=10 ... Z=33 and I, O unused; 'I', 'O', lowercase, a blank and an empty field are invalid (D-360), and so is a field whose last four characters are not all digits: a letter, a sign, a point or a blank after the first character (D-369), and so is one whose digits are not ASCII, or with an underscore or a plus sign in it (D-370), and a five-digit field with a sign before it or a blank or an underscore inside it (D-390).
 - **alpha5-encode** — Integers 100000-339999 encode to the Alpha-5 table; below 100000 encode as five digits with leading zeros; above 339999 cannot be encoded.
 - **satcat-legacy-below-70000** — The legacy fixed-width SATCAT contains only NORAD ids below 70000; the CSV/JSON SATCAT contains ids on both sides.
 - **kvn-syntax-tolerance** — KVN parsers accept blank lines, COMMENT lines at allowed positions, arbitrary whitespace around '=', bracketed units, day-of-year epochs, an optional trailing Z, signed integers, lowercase 'e' exponents, LF or CRLF endings.
@@ -264,14 +314,16 @@ Coverage gaps:
 - **tle-writer-catalog-field** — A TLE writer puts the catalog number in columns 3-7 of both lines as five digits with leading zeros below 100000 and, from 100000 to 339999, as Alpha-5 (letter value 10-33, A=10 ... Z=33 with I and O never used, then the last four digits); both lines carry the same field.
 - **tle-writer-round-trip** — The written lines, read back by the corpus reference reader, reproduce the record's epoch, mean motion, eccentricity, inclination, RA of ascending node, argument of pericenter, mean anomaly and BSTAR at each field's resolution, quantised by truncation or by rounding half up (CelesTrak truncates the eccentricity, Space-Track rounds it; either is accepted and the convention observed is reported).
 - **tle-writer-refuses-unencodable** — A TLE catalog field cannot represent a number above 339999 (Z9999) or below 0, so the correct output for such a record is a refusal: an error and no lines. Those numbers belong in the OMM formats. The check passes when the writer refuses and fails when it writes lines with a six-digit, blank or otherwise invalid field.
-- **tle-writer-secondary-fields** — Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information, never failed: orbit-fitting tools regenerate these fields by design.
+- **tle-writer-secondary-not-changed** — Each side field (MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID, OBJECT_NAME) is written as the record's value (the derivatives at the field's resolution, the element set and revolution numbers in their columns), or zeroed or left out, as documented, or the name cut to the line's 24 columns; the classification, which has no zero, as the record's; written as any other value, an unreadable designator among them, it fails (D-381, D-383; SM-26's W1 and W4).
+- **tle-writer-secondary-fields** — Whether the writer preserves, zeroes or drops MEAN_MOTION_DOT, MEAN_MOTION_DDOT, ELEMENT_SET_NO, REV_AT_EPOCH, CLASSIFICATION_TYPE, OBJECT_ID and OBJECT_NAME, and which exponent sign it writes for a zero second derivative (CelesTrak +, Space-Track -). Reported for information: orbit-fitting tools zero or regenerate these fields; a value that is neither the record's nor zero or left out fails tle-writer-secondary-not-changed (D-381, D-383).
 - **tle-writer-column-layout** — Every field of a written TLE sits in its fixed columns: on line 1 the decimal points at columns 24 and 35 and the separators at 2, 9, 18, 33, 44, 53, 62 and 64; on line 2 the decimal points at 12, 21, 38, 47 and 55, the separators at 2, 8, 17, 26, 34, 43 and 52, seven eccentricity digits, right-justified element set and revolution numbers. A left-justified value with a recomputed checksum has the right length and checksum and still fails this check.
 - **tle-writer-matches-provider-rendering** — Per field, how many written fields are byte-identical to the provider's rendering of the same record (CelesTrak's TLE line, or the corpus's derived line, rendered with CelesTrak's eccentricity truncation). Information only: an equivalent rendering under the other provider's convention is not a defect.
 - **corrupt-tle-checksum-digit** — A TLE set whose line 1 carries a wrong checksum digit, every other character real, is refused with a reason. A parser that validates no checksum returns the set exactly as it returns it from the unedited file: that is reported, not failed, since the corpus's own reference reader treats the checksum as data (owner decision, D-171). A record that differs from that reading fails, as does a silent drop.
 - **corrupt-tle-line-short** — A TLE set whose line 2 has lost one character mid-line (a digit of the eccentricity), so that it is 68 characters and every column after the cut has moved one to the left, is refused with a reason. A record read from it fails as misidentified, since its values are not the set's, and so does a silent drop.
 - **corrupt-tle-letter-in-number** — A TLE set with the letter O in place of a 0 in line 1's epoch field is refused with a reason, not read as a record with a wrong epoch and not dropped silently. The line's checksum is still valid, since a letter counts 0 as the digit it replaced did, so the checksum cannot catch it.
 - **corrupt-tle-missing-line-2** — A TLE set whose line 1 is followed directly by the next set's name line: the orphan line 1 is refused with a reason. Passing over it without a word counts as dropped, and pairing it with the lines after it builds a record from garbage.
-- **corrupt-tle-invalid-catalog-field** — A TLE set whose catalog field is an invalid Alpha-5 field, I9999 on both lines (the letter I is never used in Alpha-5), both checksums valid, is refused with a reason (one whose _field is the invalid field, or whose _input quotes it, is credited, D-282, D-360). A record read from it fails: under an id the file does not hold (a decoder that maps letters by their code without skipping I reads 189999), it is the corrupt record dropped and a record the file does not hold, built from garbage; under 69999, the invalid field read as a catalog number; a silent drop fails too (D-360).
+- **corrupt-tle-line-fields-differ** — A TLE set whose line 2 carries another catalog field than its line 1 (69998 for 69999), both checksums valid, is refused with a reason: the two lines name different objects. A record read from it fails: under 69999 or 69998, the set read as one record; a silent drop is the corrupt record dropped (the third blind pass's 17, D-391).
+- **corrupt-tle-invalid-catalog-field** — A TLE set whose catalog field is an invalid Alpha-5 field, I9999 on both lines in one input and O9999 in another (the letters I and O are never used in Alpha-5; a reader that takes O for 0 reads 9999, D-391), both checksums valid, is refused with a reason (one whose _field is the invalid field, or whose _input quotes it, is credited, D-282, D-360). A record read from it fails: under an id the file does not hold (a decoder that maps letters by their code without skipping I reads 189999), it is the corrupt record dropped and a record the file does not hold, built from garbage; under 69999, the invalid field read as a catalog number; a silent drop fails too (D-360).
 - **corrupt-file-cut** — A file cut mid-record, as a CSV that ends inside its last row and as a JSON array missing its closing bracket: the complete records load and the cut is reported with a reason, or the file is refused as a whole with a reason, which is fail-closed; the complete records a whole-file refusal gives up are counted, not failed (owner decision, D-171). Loading the complete records while saying nothing of the cut is silent partial loading and fails, as does a record read from the cut row.
 - **corrupt-input-neighbours-load** — The valid records around each corrupt input load exactly as the same parser reads them from the unedited file: the corrupt input changes nothing about them, so the parser picks up again after it. How exactly a parser reads these records is not graded by this item, since the values check grades it on the same records in their own cases and on the unedited files here (D-175, D-299, D-342). A parser that refuses a whole TLE file for one bad set gives up the valid sets with it and fails here; for a file cut mid-record, the complete records a whole-file refusal gives up are reported, not failed.
 

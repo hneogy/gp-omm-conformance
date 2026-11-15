@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gpconf"
-version = "0.8.0"
+version = "0.9.0"
 # The About line of docs/BRAND.md, word for word (D-242).
 description = "Free test kit: does your satellite software handle catalog numbers above 99,999? Built from real CelesTrak data."
 readme = "README.md"
@@ -56,5 +56,5 @@ include = ["gpconf", "gpconf.*"]
 
 [tool.setuptools.package-data]
 # gpconf/corpus/ exists only in a tree staged from a public export by tools/stage_package.py, never in the repository.
-gpconf = ["corpus/**/*"]
+gpconf = ["corpus/**/*", "schemas/*.json"]   # the results schema (D-431)
 "gpconf.adapters" = ["*.mjs"]

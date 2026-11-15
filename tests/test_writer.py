@@ -55,8 +55,9 @@ class ExpectedInputsTests(unittest.TestCase):
         synthetic = [r for r in recs if r["provenance"] == "synthetic-derived"]
         frozen = [r for r in recs if r["provenance"] == "derived"]
         letters = ([i for i in range(100000, 340000, 10000) if i not in (100000, 270000)] + list(range(109999, 340000, 10000))  # both ends of all 24 letters less the two real ids (D-300)
-                   + list(range(330100, 330200)))                                                                            # and the hundred two-digit-year sets
-        self.assertEqual(sorted(r["norad_cat_id"] for r in synthetic), sorted([-1, 99999, 340000, 799501621] + letters))
+                   + list(range(330100, 330200))                                                                             # and the hundred two-digit-year sets
+                   + list(range(330200, 330205)))                                                                            # and the five day-366 sets (D-384)
+        self.assertEqual(sorted(r["norad_cat_id"] for r in synthetic), sorted([-1, 99998, 99999, 340000, 799501621] + letters))   # 99998: the zero-eccentricity vector (D-399)
         refusals = [r for r in synthetic if r["norad_cat_id"] in (-1, 340000, 799501621)]
         self.assertTrue(all(r["representable_in_tle"] is False and r["expected_behaviour"] == "refuse" for r in refusals))
         letter_recs = [r for r in synthetic if r["norad_cat_id"] in letters]
@@ -181,7 +182,7 @@ class NaiveWriterTests(unittest.TestCase):
         self.assertEqual(by["tle-writer-refuses-unencodable"].status, "fail")
         self.assertIn("0 of 3", by["tle-writer-refuses-unencodable"].detail)
         self.assertIn("instead of a refusal", by["tle-writer-refuses-unencodable"].detail)
-        self.assertIn("4 of 753 catalog fields correct", by["tle-writer-catalog-field"].detail)  # the four five-digit ids incl. the D-125 vector; 753 = 756 inputs - 3 unrepresentable
+        self.assertIn("5 of 759 catalog fields correct", by["tle-writer-catalog-field"].detail)  # the five five-digit ids incl. the D-125 and D-399 vectors; 759 = 762 inputs - 3 unrepresentable (D-384, D-399)
 
 
 class Sgp4WriterTests(unittest.TestCase):
@@ -197,7 +198,7 @@ class Sgp4WriterTests(unittest.TestCase):
             # the accelerated library fails the catalog field on two synthetic-letter inputs; the specifics are
             # recorded privately until reported upstream (Batch G convention; D-286, 2026-10-09)
             self.assertEqual(by["tle-writer-catalog-field"].status, "fail")
-            self.assertEqual(by["tle-writer-catalog-field"].detail.split(" ", 3)[:3], ["749", "of", "753"])
+            self.assertEqual(by["tle-writer-catalog-field"].detail.split(" ", 3)[:3], ["755", "of", "759"])   # 759 with the D-399 vector, which it writes correctly
         else:
             self.assertEqual(by["tle-writer-catalog-field"].status, "pass", by["tle-writer-catalog-field"].detail)
         self.assertEqual(by["tle-checksums-valid"].status, "pass", by["tle-checksums-valid"].detail)
@@ -332,8 +333,8 @@ class CheckTleTests(unittest.TestCase):
         # four records against a source file that holds only 100000: matched, unmatched, 00000, 99999 (D-112)
         f = T.omm_fields_from_record(self.rec)
         def lines(catnr):
-            _, l1, l2 = T.render(dict(f, NORAD_CAT_ID=str(catnr)))
-            return f"REC {catnr}\n{l1}\n{l2}\n"
+            l0, l1, l2 = T.render(dict(f, NORAD_CAT_ID=str(catnr)))   # the source's name: another fails (D-387)
+            return f"{l0}\n{l1}\n{l2}\n"
         text = lines(100000) + lines(123456) + lines(0) + lines(99999)
         tle = self.write("written.tle", text)
         csv = self.write("source.csv", self.source_csv())

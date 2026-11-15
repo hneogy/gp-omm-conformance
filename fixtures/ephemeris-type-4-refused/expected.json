@@ -1,0 +1,144 @@
+{
+ "case": "ephemeris-type-4-refused",
+ "title": "An SGP4-XP element set (ephemeris type 4) is refused, never propagated as SGP4; its type-0 twin propagates",
+ "schema_version": "1.0",
+ "generated_at": "2026-11-10T02:58:14Z",
+ "generator": "tools/make_expected.py",
+ "kind": "propagation-type4",
+ "sources": {
+  "derived/ephemeris-type-4/type4.tle": {
+   "tier": "stable",
+   "format": "tle",
+   "bytes": 168,
+   "sha256": "01859a919ae42f902f6e075af7ce46e73821f00076c66b688fd9796cf101fa78",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type4.csv": {
+   "tier": "stable",
+   "format": "csv",
+   "bytes": 463,
+   "sha256": "51a2fa37f61468d5ad88280efbb829fcf9d73c7a7b5f702b23c9b0690bb60f36",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type4.json": {
+   "tier": "stable",
+   "format": "json",
+   "bytes": 524,
+   "sha256": "3512f770263c7c6cf7a3542912a6a755b77dd041084d2a54dfba5add3d45537c",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type4.xml": {
+   "tier": "stable",
+   "format": "xml",
+   "bytes": 1123,
+   "sha256": "1ff0551c972ef2cd0800211caaaaa44b7c1fa24a870506a1446171e3eae6ed8b",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type4.kvn": {
+   "tier": "stable",
+   "format": "kvn",
+   "bytes": 788,
+   "sha256": "3cb851a38916465aeec2d7bb53efe12fb0de433bbc1e7bd3e89b188c7445ff39",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type4-sgp4-xp.kvn": {
+   "tier": "stable",
+   "format": "kvn",
+   "bytes": 791,
+   "sha256": "d7b7abfec445374a12b5c05036b6a450cb36d168249d7cf081866896af1ed1e5",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type0.tle": {
+   "tier": "stable",
+   "format": "tle",
+   "bytes": 168,
+   "sha256": "b3ad06c19a98463b0218a924717ea8acf4e9289ca56bb6815ca3a5038d380d26",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type0.csv": {
+   "tier": "stable",
+   "format": "csv",
+   "bytes": 463,
+   "sha256": "93fd3b83d74dc0b40651df917ca471cc84a48e02c8c81ef48014c7dfe666abd8",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type0.json": {
+   "tier": "stable",
+   "format": "json",
+   "bytes": 524,
+   "sha256": "850bdced13c2e776453329888a558b4cfd6c7cb17e66adef21279334ba021549",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type0.xml": {
+   "tier": "stable",
+   "format": "xml",
+   "bytes": 1123,
+   "sha256": "070c332fa9623e0d012f5680e93da616b4138552c96ce2c6a0d40e5c2591c6e4",
+   "provenance": "derived"
+  },
+  "derived/ephemeris-type-4/type0.kvn": {
+   "tier": "stable",
+   "format": "kvn",
+   "bytes": 788,
+   "sha256": "137e315bd2ce7a6d9b1814c8e7b46fdbe8f5c2ef7ea7be339e508f0b6c353883",
+   "provenance": "derived"
+  },
+  "vectors/propagation-twins.json": {
+   "tier": "stable",
+   "format": "vectors-json",
+   "bytes": 12895,
+   "sha256": "6fa8c3717f3b91f7c6837f80c0592fbedf7203cdedaa064bc8c2a84d94b053b4",
+   "provenance": "corpus measurement"
+  }
+ },
+ "records": [],
+ "checks": [
+  {
+   "id": "type4-not-propagated",
+   "description": "Set 20453 with EPHEMERIS_TYPE 4 (an SGP4-XP element set) as TLE, OMM CSV, JSON, XML and KVN, and a KVN also saying MEAN_ELEMENT_THEORY = SGP4-XP (the corpus's spelling, synthetic), each through the propagate hook: a position at any step fails the file, since SGP4 propagates such a set to positions that look right and are not, and so do error codes stamped beside positions; a refusal passes (a raise, Unsupported for the type-4 set alone, a refusal from parse while its twin is read, or an SGP4 error code at every step with no position, as Vallado's C++ answers). An adapter that sets propagates_sgp4_xp = True is not graded on it (the owner's ruling, 2026-11-01; D-409)."
+  },
+  {
+   "id": "type4-twins-propagate",
+   "description": "Each type-4 file's twin, the same values with EPHEMERIS_TYPE 0, through the same hook: it must propagate within 2e-7 km and km/s of the twins' reference vectors (vectors/propagation-twins.json, D-406), its codes exact, so a hook that refuses every set fails here, and so does Unsupported for the twin alone (D-205, D-280); a format unsupported for both files is skipped and named (D-409)."
+  }
+ ],
+ "tests": [
+  "sgp4-propagation",
+  "ephemeris-type"
+ ],
+ "coverage": {
+  "provides": [
+   "one near-earth set with a non-zero BSTAR, type 4 and type 0, in TLE and the four OMM formats, six times each"
+  ],
+  "gaps": [
+   "one set; SGP4-XP itself is not graded: gpconf has no SGP4-XP reference, and an adapter that claims it is not graded on the type-4 files",
+   "ephemeris types 1 to 3 out of scope for 0.9.0 (the owner's ruling)",
+   "an adapter's claim of SGP4-XP is taken as given: a library that claims it and propagates as SGP4 is not caught",
+   "WGS-72 and opsmode 'i' only for the twins"
+  ]
+ },
+ "ambiguities": [],
+ "notes": [],
+ "sets": {},
+ "case_specific": {
+  "bar_km_and_km_s": 2e-07,
+  "times": [
+   -1440.0,
+   -60.0,
+   0.0,
+   60.0,
+   1440.0,
+   10080.0
+  ],
+  "norad_cat_id": 20453,
+  "type_4_files": [
+   "type4-sgp4-xp.kvn",
+   "type4.csv",
+   "type4.json",
+   "type4.kvn",
+   "type4.tle",
+   "type4.xml"
+  ],
+  "graded_on": "EPHEMERIS_TYPE alone (the owner's ruling, 2026-11-01)"
+ }
+}

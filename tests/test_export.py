@@ -13,6 +13,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 from public_scrub import SUPGP_CASES, supgp_value_strings  # noqa: E402
 import export_public  # noqa: E402
+from public_scrub import PRIVATE_NAMES as PRIVATE  # noqa: E402  (D-545; None in the public tree)
 
 TEXT_EXT = (".json", ".md", ".py", ".txt", ".csv", ".kvn", ".xml", ".tle", ".2le", ".yml", ".toml", ".xsd", ".log", "")
 
@@ -63,13 +64,120 @@ class ExportGuardTests(unittest.TestCase):
                             continue
                         self.assertIn(rel, rels, f"{rel} is not in the export: add a line for its folder or file type to PUBLIC_ALLOWLIST.txt")
 
-    def test_sm26s_adapters_are_withheld(self):
-        # D-367: SM-26's adapters stay out of the public export until SM-26's permission is confirmed; the tests that
-        # load them skip there (tests/adversarial/test_adversarial.py).
+    def test_sm26s_adapters_are_exported(self):
+        # D-367 withheld SM-26's adapters until SM-26's permission; SM-26 licensed them under Apache-2.0 (D-380), so from
+        # D-382 they are exported with the tests that load them, and nothing is withheld.
         rels = {os.path.relpath(f, self.dest).replace(os.sep, "/") for f in self.files}
-        self.assertEqual(sorted(export_public.WITHHELD), ["tests/adversarial/sm26.py"])
-        self.assertNotIn("tests/adversarial/sm26.py", rels)
-        self.assertIn("tests/adversarial/test_adversarial.py", rels)
+        self.assertFalse([k for k in export_public.WITHHELD if "sm26" in k])
+        for f in ("sm26.py", "sm26_wrong2.py", "sm26_wrong3.py", "test_adversarial.py"):
+            self.assertIn(f"tests/adversarial/{f}", rels)
+
+    def test_vallados_files_are_withheld_from_the_export_and_the_package(self):
+        # D-388, the owner's ruling (2026-11-06): private, for tests and the private repository only, until the owner
+        # confirms written bundling permission; the package is staged from the export (tools/stage_package.py)
+        rels = {os.path.relpath(f, self.dest).replace(os.sep, "/") for f in self.files}
+        vallado = ["harnesses/vallado/reference/SGP4-VER.TLE", "harnesses/vallado/reference/tcppver.out"]
+        self.assertEqual(sorted(export_public.WITHHELD), vallado)
+        for f in vallado:
+            self.assertNotIn(f, rels)
+        self.assertIn("harnesses/vallado/reference/PROVENANCE.json", rels)   # what they are, and why withheld, is public
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        import fnmatch, stage_package
+        for f in vallado:
+            self.assertFalse([p for p in stage_package.CORPUS if fnmatch.fnmatch(f, p)], f)
+
+    def test_no_instructions_for_coding_assistants_are_exported(self):
+        """D-461 (the owner's ruling, 2026-11-10): the instruction files and the assistant's settings folder stay
+        private, whatever the allowlist says. Their names are spelt only in the private names file (D-545); the
+        public tree matches them by hash."""
+        found = [os.path.relpath(os.path.join(b, f), self.dest) for b, ds, fs in os.walk(self.dest) for f in fs + ds
+                 if export_public.instruction_file(os.path.relpath(os.path.join(b, f), self.dest))]
+        self.assertEqual(found, [])
+        allow = open(os.path.join(ROOT, "PUBLIC_ALLOWLIST.txt"), encoding="utf-8").read().split()
+        self.assertEqual([a for a in allow if export_public.instruction_file(a)], [])
+        if not PRIVATE:
+            self.skipTest("the private names file is absent (the public tree): its cases run in the private repository")
+        cases = PRIVATE["instruction_file_cases"]
+        for rel in cases["refused"]:
+            self.assertTrue(export_public.instruction_file(rel), rel)
+            self.assertTrue(re.search(PRIVATE["instruction_file_regex"], rel, re.I), rel)
+            self.assertTrue(any(export_public._h(p) in export_public.INSTRUCTION_FILE_NAMES | export_public.INSTRUCTION_FOLDER_NAMES
+                                for p in rel.split("/")), rel)   # the hash check alone refuses each, as in the public tree
+        for rel in cases["kept"]:
+            self.assertFalse(export_public.instruction_file(rel), rel)
+
+    def test_the_exported_decision_log_names_no_coding_assistant(self):
+        """D-462 (the owner's ruling, 2026-11-10): reworded in the exported copy, with a note; the private log intact."""
+        text = open(os.path.join(self.dest, "DECISIONS.md"), encoding="utf-8").read()
+        self.assertIn("Public copy: the coding assistant's name", text)
+        self.assertIn("passages about unreported findings and private correspondence are shortened (D-542)", text)
+        from public_scrub import scrub_decisions_md, named_in
+        self.assertEqual(scrub_decisions_md("# T\nno mention here\n"), ("# T\nno mention here\n", 0))
+        if not PRIVATE:
+            self.skipTest("the private names file is absent (the public tree): its cases run in the private repository")
+        self.assertEqual(named_in(text), [])
+        private = open(os.path.join(ROOT, "DECISIONS.md"), encoding="utf-8").read()
+        self.assertIn(PRIVATE["private_marker"], private)   # the original is untouched
+        self.assertEqual(len(text.splitlines()), len(private.splitlines()) + 2)   # the note and its blank line, nothing more
+        for given, want in PRIVATE["decisions_cases"]:
+            self.assertEqual(scrub_decisions_md(given)[0].splitlines()[-1], want)
+
+    def test_the_exported_tree_spells_no_private_name(self):
+        """D-545 (the owner's ruling, 2026-11-14): no file of the exported tree, by name or content, holds the
+        assistant's or its maker's name, an instruction file's name or the co-author trailer, in any case; the
+        export refuses the private names file; and the check that stops the export finds each name it must."""
+        rels = {os.path.relpath(f, self.dest).replace(os.sep, "/") for f in self.files}
+        self.assertNotIn(export_public.PRIVATE_NAMES_FILE, rels)
+        self.assertTrue(export_public.private_names_file(export_public.PRIVATE_NAMES_FILE))   # refused if ever allowlisted
+        self.assertTrue(export_public.private_names_file("tools\\private-names.json".replace("\\", os.sep)))
+        self.assertFalse(export_public.private_names_file("tools/fetchlist.json"))
+        if PRIVATE:   # tracked in the private repository, so the export never depends on an untracked file
+            p = subprocess.run(["git", "-C", ROOT, "ls-files", "--error-unmatch", export_public.PRIVATE_NAMES_FILE],
+                               capture_output=True, text=True)
+            if p.returncode != 128 or "not a git repository" not in p.stderr:   # a git archive tree has no repository
+                self.assertEqual(p.returncode, 0, p.stderr)
+        if not PRIVATE:
+            self.skipTest("the private names file is absent (the public tree): its cases run in the private repository")
+        from public_scrub import named_in
+        hits = []
+        for f in self.files:
+            rel = os.path.relpath(f, self.dest)
+            with open(f, "rb") as fh:
+                hits += [(rel, h) for h in named_in(rel + "\n" + fh.read().decode("utf-8", "replace"))]
+        self.assertEqual(hits, [])
+        for sample in PRIVATE["names_cases"]["named"]:
+            self.assertTrue(named_in(sample), sample)
+        for sample in PRIVATE["names_cases"]["clean"]:
+            self.assertEqual(named_in(sample), [], sample)
+
+    def test_the_exported_decision_log_shortens_the_private_passages(self):
+        """D-542 (the owner's ruling, 2026-11-14): each passage is shortened in the exported copy, nothing else changes,
+        and a passage that is missing or not the recorded one stops the export. The passages are known here only by
+        their SHA-256, since this file is exported too."""
+        import hashlib
+        from public_scrub import _PRIVATE, PrivatePassageError, scrub_private_passages
+        text = open(os.path.join(self.dest, "DECISIONS.md"), encoding="utf-8").read()
+        for entry, head, tail, digest, new in _PRIVATE:
+            self.assertIn(new, text, entry)
+        self.assertEqual(scrub_private_passages(text), (text, 0))   # the exported copy is already shortened
+        if PRIVATE:   # the private repository holds the originals
+            private = open(os.path.join(ROOT, "DECISIONS.md"), encoding="utf-8").read()
+            out, n = scrub_private_passages(private)
+            self.assertEqual(n, len(_PRIVATE))
+            before, after = private.splitlines(), out.splitlines()
+            self.assertEqual(len(before), len(after))
+            changed = [k for k, (a, b) in enumerate(zip(before, after)) if a != b]
+            self.assertEqual(len(changed), len({e for e, *_ in _PRIVATE}) + 1)   # one line per entry, D-499's two lines
+            for entry, head, tail, digest, new in _PRIVATE:
+                i = private.find(head, private.find(f"**{entry} ("))
+                span = private[i:private.find(tail, i + len(head)) + len(tail)]
+                self.assertEqual(hashlib.sha256(span.encode("utf-8")).hexdigest(), digest, entry)
+                self.assertNotIn(span, out, entry)
+        entry, head, tail, digest, new = _PRIVATE[2]
+        with self.assertRaises(PrivatePassageError):   # the head is there but the passage is not the recorded one
+            scrub_private_passages(f"# T\n**{entry} (x)** {head}something else {tail}\n")
+        with self.assertRaises(PrivatePassageError):   # the entry is there but its passage is gone
+            scrub_private_passages(f"# T\n**{entry} (x)** nothing of it\n")
 
     def test_the_action_is_exported(self):
         # D-158: action.yml at the root is what `uses: hneogy/gp-omm-conformance@<tag>` reads; its script is in tools/
@@ -141,7 +249,7 @@ class ExportGuardTests(unittest.TestCase):
 
     def test_no_absolute_home_path_in_any_exported_file(self):
         # D-172: three docstrings shipped the owner's home folder in v0.3.0, written through a shell whose zsh `:P`
-        # modifier made a real path of `$name:Parser`. CLAUDE.md already warned against that spelling and did not stop it,
+        # modifier made a real path of `$name:Parser`. The maintainer's notes already warned against that spelling and did not stop it,
         # so the guard is a test: no exported file, of any type, may carry an absolute home path of any user.
         hits = []
         for f in self.files:

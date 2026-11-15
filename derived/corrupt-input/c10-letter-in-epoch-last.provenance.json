@@ -1,0 +1,64 @@
+{
+  "file": "derived/corrupt-input/c10-letter-in-epoch-last.tle",
+  "provenance": "synthetic-derived",
+  "label": "SYNTHETIC-DERIVED: real records frozen in this corpus, rendered by the corpus, with one stated edit; served by no provider",
+  "input": 10,
+  "check": "corrupt-tle-letter-in-number",
+  "description": "A set with a letter in a numeric column of line 1, last in the file, after two valid sets.",
+  "rendering": {
+    "renderer": "gpconf/tle.py render",
+    "settings": {
+      "mantissa_mode": "round",
+      "ecc_mode": "truncate"
+    },
+    "checked_against": "each record's frozen TLE field substrings (by_format.tle.fields in its expected.json): equal",
+    "note": "for these five-digit records the renderer reproduces CelesTrak's own lines (tools/validate_render.py, 304 of 304 records)"
+  },
+  "records": [
+    {
+      "position": 1,
+      "role": "valid",
+      "norad_cat_id": 25544,
+      "values_from": "fixtures/epoch-year-19xx/expected.json",
+      "set": "iss-first",
+      "tier": "stable",
+      "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+      "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5"
+    },
+    {
+      "position": 2,
+      "role": "valid",
+      "norad_cat_id": 20453,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "decaying",
+      "tier": "live",
+      "source_file": "fixtures/bstar-and-derivative-forms/raw/decaying.csv",
+      "source_sha256": "e40fb090eb7d485d6b43de84202838aa680c299e50c2f9c5e3b6192b5d50ec79"
+    },
+    {
+      "position": 3,
+      "role": "corrupt",
+      "norad_cat_id": 69999,
+      "values_from": "fixtures/bstar-and-derivative-forms/expected.json",
+      "set": "gp-69999-first",
+      "tier": "stable",
+      "source_file": "fixtures/satcat-70000-cutoff/raw/gp-69999-first.csv",
+      "source_sha256": "601736c2b121cea243ec864e2dd50383c404a0c4fabd110bb981652ad0ccb108",
+      "edit": {
+        "line": 1,
+        "column": 26,
+        "was": "0",
+        "now": "O",
+        "epoch_field_was": "26189.70990935",
+        "epoch_field_now": "26189.7O990935",
+        "statement": "line 1 column 26, the first 0 among the epoch field's fractional digits, replaced by the letter O ('26189.70990935' becomes '26189.7O990935'); the checksum is still valid, since a letter counts 0 as the digit it replaced did"
+      }
+    }
+  ],
+  "owner_approval": "the owner's ruling 2026-11-07 (option (c)): inputs with the corrupt set first, last and off-centre among four or more sets, so that a refusal fixed to one layout cannot pass for evidence; synthetic-derived provenance under the D-096 precedent; DECISIONS D-394",
+  "generator": "tools/derive_corrupt_inputs.py",
+  "generated_at": "2026-11-07T15:15:40Z",
+  "line_endings": "CRLF",
+  "bytes": 504,
+  "output_sha256": "a29cb25e157bf08dfac89b5aa9e3793198a97836b80f3d3e917c6b60b7478777"
+}

@@ -36,10 +36,16 @@ reports as not exercised for every parser, on a file the fetch brings only on re
 The Alpha-5 letters I and O that python-sgp4's compiled `Satrec` writes, in the writer case below, are reported as
 [brandon-rhodes/python-sgp4#173](https://github.com/brandon-rhodes/python-sgp4/issues/173) (filed 2026-10-10, D-307).
 
-The counts below were measured on the maintainer's copy, with ten launch-window captures that a new user's fetch
-cannot obtain (D-229). A run from a fresh fetch reproduces fewer: `supgp-celestrak-classification-c` cannot run at
-all and reports `not-available`, and the failures that rest on the nominal 799501621 do not occur, so the naive
-adapter fails 14 cases where 15 are listed here and python-sgp4 fails 6 where 8 are; the reference passes 16.
+The reference and naive columns were measured on the 0.9.0 re-measure's fresh fetch (2026-11-11) with the corpus's ten
+launch-window captures added. A new user's fetch cannot obtain those files (D-229). Both figures, of 21 cases:
+- with the ten captures, as in the table below: the reference passes 17 and the naive adapter fails 14;
+- from a fresh fetch alone: the reference passes 16 and the naive adapter fails 13.
+The one case between them is `supgp-celestrak-classification-c`. It reads only launch-window captures, so without them
+it reports `not-available`: a pass for the reference, a fail for naive. The python-sgp4 column comes from the
+re-measure's own run on the fresh fetch alone, without the captures (D-483): it fails 7 of 21, and that case shows
+`not-available` there.
+python-sgp4 propagating an element set of ephemeris type 4 as SGP4, in `ephemeris-type-4-refused` below, is reported as
+[brandon-rhodes/python-sgp4#178](https://github.com/brandon-rhodes/python-sgp4/issues/178) (filed 2026-11-08).
 """
 
 

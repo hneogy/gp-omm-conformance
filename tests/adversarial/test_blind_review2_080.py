@@ -57,9 +57,11 @@ class HistoryNotCompared(unittest.TestCase):
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
             code = gpconf_main(["check-tle", write("bad.tle", [n, l1, bad, n, l1b, bad]), "--against", src])
         out = out.getvalue()
-        self.assertEqual(code, 3, out)
+        # compared since D-403, each copy paired by its epoch: a failure, as for an id held once (0.8.0: exit 3)
+        self.assertEqual(code, 1, out)
         self.assertNotIn("[pass] line", out)
-        self.assertIn("2 records: 0 pass, 0 fail, 2 not compared", out)
+        self.assertIn("2 records: 0 pass, 2 fail", out)
+        self.assertEqual(out.count("round trip: inclination"), 2)
         # its twin, the same wrong line under an id the source holds once: compared, and a failure
         out = io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
@@ -156,7 +158,8 @@ class SecondSixty(unittest.TestCase):
         self.assertTrue(any("second 60 outside a leap second" in (i.detail or "") for i in got.items if i.status == "fail"))
 
     def test_a_leap_second_is_still_read_and_the_vector_still_passes(self):
-        """The twins: second 60 at 23:59:60 UTC on 30 June or 31 December, in either form and through an offset."""
+        """The twins: second 60 at 23:59:60 UTC on a leap-second date (30 June or 31 December in D-370's words; one of
+        the 27 dates from D-382), in either form and through an offset."""
         self.assertEqual(T.iso_epoch("2016-12-31T23:59:60"), "2016-12-31T23:59:59.000000")
         self.assertEqual(T.iso_epoch("2016-366T23:59:60Z"), "2016-12-31T23:59:59.000000")
         self.assertEqual(T.iso_epoch("2015-06-30T23:59:60.5"), "2015-06-30T23:59:59.500000")

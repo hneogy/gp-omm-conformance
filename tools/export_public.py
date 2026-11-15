@@ -23,16 +23,48 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
-from public_scrub import scrub_expected, scrub_audit_md  # noqa: E402
+from public_scrub import scrub_expected, scrub_audit_md, scrub_decisions_md, PRIVATE_NAMES, named_in  # noqa: E402
 RAW = re.compile(r"(^|/)fixtures/[^/]+/raw(/|$)")
+# The maintainer's instructions for coding assistants stay in the private repository (D-461, the owner's ruling of
+# 2026-11-10): the two instruction files at any depth, and anything under the assistant's settings folder, are refused
+# whatever the allowlist says. The public tree never spells their names (D-545): a file is matched by the SHA-256 of
+# its name, a folder by the SHA-256 of each folder's name, in lower case. The private names file, when present, adds
+# the original pattern as a second check, and the export refuses that file itself.
+INSTRUCTION_FILE_NAMES = {"bccc86317c281a19e56f3f941077ea61b3fb37d5bd527c518b92b188c4461251",
+                    "b951327c37d8a1ed4d5ed18908681f6aca718ecdfe174aa39cf2237547f92fe7"}
+INSTRUCTION_FOLDER_NAMES = {"e026f56c08dcdea441a2aa620ab410ce91162062609b2430f5a13bc9b7cf93f1"}
+PRIVATE_NAMES_FILE = "tools/private-names.json"
+
+
+def _h(name):
+    return hashlib.sha256(name.lower().encode("utf-8")).hexdigest()
+
+
+def private_names_file(rel):
+    """The private names file, refused whatever the allowlist says (D-545)."""
+    return rel.replace(os.sep, "/").lstrip("./") == PRIVATE_NAMES_FILE
+
+
+def instruction_file(rel):
+    parts = [p for p in rel.replace(os.sep, "/").split("/") if p]
+    if not parts:
+        return False
+    hit = _h(parts[-1]) in INSTRUCTION_FILE_NAMES or any(_h(p) in INSTRUCTION_FOLDER_NAMES for p in parts)
+    if PRIVATE_NAMES:
+        hit = hit or bool(re.search(PRIVATE_NAMES["instruction_file_regex"], "/".join(parts), re.I))
+    return hit
 SPACETRACK = re.compile(r"space[-_ .]?track", re.I)
 # The one provider response that is exported (D-247): the provider's 16-byte answer to a query with nothing to return,
 # by its exact bytes, and its provenance file. Anything else under recorded/ is refused.
 RECORDED = {"recorded/celestrak-no-gp-data-found.txt": "000844fd5b7a7b64f14b58cc34f0016ad51b0982b0d38f915986560e4e217683",
             "recorded/celestrak-no-gp-data-found.provenance.json": None}
-# Files the allowlist matches that stay private, each with its reason (D-367): SM-26's adapters, contributed in issue #1
-# with no licence stated, until the owner confirms SM-26's permission; the tests that load them skip without them.
-WITHHELD = {"tests/adversarial/sm26.py": "SM-26's work, withheld until SM-26's permission is confirmed (D-367)"}
+# Files the allowlist matches that stay private, each with its reason (D-367). SM-26's adapters were the one entry until
+# SM-26 licensed them under Apache-2.0 (D-380); they are exported from D-382. Vallado's verification files stay private,
+# for tests and the private repository only, until the owner confirms written bundling permission (D-388); the package
+# is staged from the export, so they never reach it either.
+VALLADO_PRIVATE = "Vallado's verification file (AIAA 2006-6753), private until the owner confirms written bundling permission (D-388)"
+WITHHELD = {"harnesses/vallado/reference/SGP4-VER.TLE": VALLADO_PRIVATE,
+            "harnesses/vallado/reference/tcppver.out": VALLADO_PRIVATE}
 
 
 def main():
@@ -55,6 +87,12 @@ def main():
         if RAW.search(rel):
             refused.append((rel, "raw provider file"))
             continue
+        if private_names_file(rel):
+            refused.append((rel, "the private names file (D-545)"))
+            continue
+        if instruction_file(rel):
+            refused.append((rel, "instructions for coding assistants, private (D-461)"))
+            continue
         if rel.replace(os.sep, "/").startswith("recorded/"):
             want = RECORDED.get(rel.replace(os.sep, "/"), "")
             if want == "" or (want and hashlib.sha256(open(os.path.join(ROOT, rel), "rb").read()).hexdigest() != want):
@@ -74,6 +112,7 @@ def main():
         out.append(rel)
     lines = []
     scrubbed = []
+    named = []
     for rel in out:
         src = os.path.join(ROOT, rel)
         data = open(src, "rb").read()
@@ -87,6 +126,15 @@ def main():
             if removed:
                 data = text.encode("utf-8")
                 scrubbed.append(rel)
+        elif rel == "DECISIONS.md":   # the coding assistant's name reworded in the exported copy only (D-462)
+            text, n = scrub_decisions_md(data.decode("utf-8"))
+            if n:
+                data = text.encode("utf-8")
+                scrubbed.append(rel)
+        found = named_in(rel + "\n" + data.decode("utf-8", "replace"))
+        if found:   # the assistant's or its maker's name, or an instruction file's, would go public (D-545)
+            named.append((rel, found))
+            continue
         lines.append(f"{rel}\t{len(data)}\t{hashlib.sha256(data).hexdigest()}")
         if not a.dry_run:
             dst = os.path.join(a.dest, rel)
@@ -98,9 +146,15 @@ def main():
     if not a.dry_run:
         with open(os.path.join(a.dest, "EXPORT-MANIFEST.txt"), "w", encoding="utf-8") as f:
             f.write("# path\tbytes\tsha256\n" + "\n".join(lines) + "\n")
-    print(f"{'would copy' if a.dry_run else 'copied'} {len(out)} file(s); refused {len(refused)}; scrubbed {len(scrubbed)}: {scrubbed}")
+    print(f"{'would copy' if a.dry_run else 'copied'} {len(out) - len(named)} file(s); refused {len(refused)}; scrubbed {len(scrubbed)}: {scrubbed}")
     for rel, why in refused:
         print(f"  refused: {rel} ({why})")
+    if named:   # the export stops: those files were not written, and the destination is incomplete
+        for rel, found in named:
+            print(f"  STOPPED: {rel} holds {len(found)} private name(s) (D-545)")
+        sys.exit(f"export stopped: {len(named)} file(s) would put a private name in the public tree (D-545)")
+    if not PRIVATE_NAMES:
+        print("  note: the private names file is absent, so the private-name check did not run (D-545)")
 
 
 if __name__ == "__main__":

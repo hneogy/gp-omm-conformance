@@ -30,7 +30,7 @@ def _rec(s, name=None):
             "ephemeris_type": s.ephtype, "classification_type": s.classification, "element_set_no": s.elnum, "rev_at_epoch": s.revnum}
 
 
-DECLARATION: dict[str, Any] = {"_adapter": {"refusals": True}}  # every record this adapter drops with an error is reported as a refusal (D-144)
+DECLARATION: dict[str, Any] = {"_adapter": {"refusals": True, "propagation": {"gravity": "wgs72", "opsmode": "i"}}}  # every record this adapter drops with an error is reported as a refusal (D-144); the propagate hook's constants, Satrec with WGS72 and opsmode 'i' (D-413)
 
 
 class Parser:
@@ -80,3 +80,25 @@ class Parser:
 
     def alpha5_encode(self, n):
         return to_alpha5(n)
+
+    def propagate(self, raw, fmt, tsince):
+        """The propagation tier (D-401): one element set's bytes, minutes since its epoch -> TEME r (km), v (km/s) and
+        the SGP4 error code per step, by Satrec with WGS-72 and opsmode 'i', the library's defaults, through
+        sgp4_tsince; an OMM CSV through sgp4.omm.initialize (D-406)."""
+        from sgp4.api import WGS72
+        if fmt in ("tle", "2le"):
+            lines = [l for l in raw.decode("utf-8").splitlines() if l.startswith(("1 ", "2 "))]
+            if len(lines) != 2:
+                raise ValueError(f"one element set expected, {len(lines)} element lines given")
+            s = Satrec.twoline2rv(lines[0], lines[1], WGS72)
+        elif fmt == "csv":   # the OMM path, sgp4.omm, as the library's users take it (D-406)
+            (fields,) = list(omm.parse_csv(io.StringIO(raw.decode("utf-8"))))
+            s = Satrec()
+            omm.initialize(s, fields)
+        else:
+            raise Unsupported(fmt)
+        out = []
+        for t in tsince:
+            e, r, v = s.sgp4_tsince(float(t))
+            out.append({"r": list(r), "v": list(v), "error": int(e)} if e == 0 else {"r": None, "v": None, "error": int(e)})
+        return out

@@ -198,7 +198,10 @@ class WhatStopsTheRun(_Fetch):
         self.assertIsNone(fetch.why_unexpected({}, 200, xml))
         self.assertIsNone(fetch.why_unexpected({}, 200, b"1 25544U 98067A   26264.50000000  .00010000  00000+0  10000-3 0  9990"))
         self.assertEqual(fetch.why_unexpected({}, 404, NO_DATA), "HTTP 404")                 # a 404 is expected only where the list says so
-        self.assertIsNone(fetch.why_unexpected({"expect_status": 404}, 404, b"No SupGP data found\r\n"))
+        self.assertIsNone(fetch.why_unexpected({"expect_status": 404}, 404, b"No SupGP data found"))
+        # D-540: only the exact text is the expected answer; the runner reads nothing else in that file's place as the
+        # empty answer, so a padded one stops the fetch (D-228 had taken it with its CRLF)
+        self.assertEqual(fetch.why_unexpected({"expect_status": 404}, 404, b"No SupGP data found\r\n"), "HTTP 404")
 
     def test_no_answer_at_all_exits_3_and_keeps_nothing(self):
         code, out, err, calls = self.go({**GOOD, A["url"]: "no answer"})
@@ -352,7 +355,7 @@ class TheRunnerNeverReadsAnUnexpectedResponse(unittest.TestCase):
         self.assertIn("only with --force, two hours or more after that answer", item.detail)
         self.assertNotIn("fetch it with", item.detail)
         self.assertEqual(r.as_dict()["unexpected"], {DATA_FILE: {"http_status": 403, "at": "2026-10-05T12:00:00Z", "why": "HTTP 403", "kept": "decaying.csv.unexpected"}})
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 2)   # no case graded: no result, exit 2 (D-389); absence is still not the parser's failure (1)
         self.assertIn("1 provider file is missing because the fetch got a response it did not expect for it (HTTP 403)", text)
         self.assertIn("fetch it with", text)                              # the case's other files are simply not fetched yet
 

@@ -1,0 +1,320 @@
+{
+ "what": "the corpus's own manifest of Vallado's SGP4 verification files (AIAA 2006-6753); the files themselves are not shipped (D-388)",
+ "files": {
+  "SGP4-VER.TLE": {
+   "bytes": 8616,
+   "sha256": "d246d1d9d768ace445a38a965713fa9ba52d80fd8a41a0502ff83d7acffe2881",
+   "lines": 110
+  },
+  "tcppver.out": {
+   "bytes": 140162,
+   "sha256": "687bf28dbe52df86e8e60ab5cb4a08d1aa3dbcaf4e63b1f7ab95f044fbe3833b",
+   "lines": 700
+  }
+ },
+ "measured_with": "python-sgp4 2.27 (sgp4.api.Satrec, Vallado's C++, WGS-72), tools/make_vallado_manifest.py",
+ "error_codes_cross_check": "equal to python-sgp4's published list for this file, in file order",
+ "set_count": 33,
+ "sets": [
+  {
+   "catalog": 5,
+   "start": 0.0,
+   "stop": 4320.0,
+   "step": 360.0,
+   "steps_scheduled": 13,
+   "steps_printed": 13
+  },
+  {
+   "catalog": 4632,
+   "start": -5184.0,
+   "stop": -4896.0,
+   "step": 120.0,
+   "steps_scheduled": 5,
+   "steps_printed": 5
+  },
+  {
+   "catalog": 6251,
+   "start": 0.0,
+   "stop": 2880.0,
+   "step": 120.0,
+   "steps_scheduled": 25,
+   "steps_printed": 25
+  },
+  {
+   "catalog": 8195,
+   "start": 0.0,
+   "stop": 2880.0,
+   "step": 120.0,
+   "steps_scheduled": 25,
+   "steps_printed": 25
+  },
+  {
+   "catalog": 9880,
+   "start": 0.0,
+   "stop": 2880.0,
+   "step": 120.0,
+   "steps_scheduled": 25,
+   "steps_printed": 25
+  },
+  {
+   "catalog": 9998,
+   "start": -1440.0,
+   "stop": -720.0,
+   "step": 60.0,
+   "steps_scheduled": 14,
+   "steps_printed": 14
+  },
+  {
+   "catalog": 11801,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 360.0,
+   "steps_scheduled": 5,
+   "steps_printed": 5
+  },
+  {
+   "catalog": 14128,
+   "start": 0.0,
+   "stop": 2880.0,
+   "step": 120.0,
+   "steps_scheduled": 25,
+   "steps_printed": 25
+  },
+  {
+   "catalog": 16925,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 120.0,
+   "steps_scheduled": 13,
+   "steps_printed": 13
+  },
+  {
+   "catalog": 20413,
+   "start": 1440.0,
+   "stop": 4320.0,
+   "step": 120.0,
+   "steps_scheduled": 26,
+   "steps_printed": 26
+  },
+  {
+   "catalog": 21897,
+   "start": 0.0,
+   "stop": 2880.0,
+   "step": 120.0,
+   "steps_scheduled": 25,
+   "steps_printed": 25
+  },
+  {
+   "catalog": 22312,
+   "start": 54.2028672,
+   "stop": 1440.0,
+   "step": 20.0,
+   "steps_scheduled": 72,
+   "steps_printed": 23,
+   "error": {
+    "code": 1,
+    "at_minutes": 494.2028672,
+    "step_index": 23
+   }
+  },
+  {
+   "catalog": 22674,
+   "start": 0.0,
+   "stop": 2880.0,
+   "step": 120.0,
+   "steps_scheduled": 25,
+   "steps_printed": 25
+  },
+  {
+   "catalog": 23177,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 120.0,
+   "steps_scheduled": 13,
+   "steps_printed": 13
+  },
+  {
+   "catalog": 23333,
+   "start": 0.0,
+   "stop": 1600.0,
+   "step": 120.0,
+   "steps_scheduled": 15,
+   "steps_printed": 15
+  },
+  {
+   "catalog": 23599,
+   "start": 0.0,
+   "stop": 720.0,
+   "step": 20.0,
+   "steps_scheduled": 37,
+   "steps_printed": 37
+  },
+  {
+   "catalog": 24208,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 120.0,
+   "steps_scheduled": 13,
+   "steps_printed": 13
+  },
+  {
+   "catalog": 25954,
+   "start": -1440.0,
+   "stop": 1440.0,
+   "step": 120.0,
+   "steps_scheduled": 26,
+   "steps_printed": 26
+  },
+  {
+   "catalog": 26900,
+   "start": 9300.0,
+   "stop": 9400.0,
+   "step": 60.0,
+   "steps_scheduled": 4,
+   "steps_printed": 4
+  },
+  {
+   "catalog": 26975,
+   "start": 0.0,
+   "stop": 2880.0,
+   "step": 120.0,
+   "steps_scheduled": 25,
+   "steps_printed": 25
+  },
+  {
+   "catalog": 28057,
+   "start": 0.0,
+   "stop": 2880.0,
+   "step": 120.0,
+   "steps_scheduled": 25,
+   "steps_printed": 25
+  },
+  {
+   "catalog": 28129,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 120.0,
+   "steps_scheduled": 13,
+   "steps_printed": 13
+  },
+  {
+   "catalog": 28350,
+   "start": 0.0,
+   "stop": 2880.0,
+   "step": 120.0,
+   "steps_scheduled": 25,
+   "steps_printed": 13,
+   "error": {
+    "code": 1,
+    "at_minutes": 1560.0,
+    "step_index": 13
+   }
+  },
+  {
+   "catalog": 28623,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 120.0,
+   "steps_scheduled": 13,
+   "steps_printed": 13
+  },
+  {
+   "catalog": 28626,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 120.0,
+   "steps_scheduled": 13,
+   "steps_printed": 13
+  },
+  {
+   "catalog": 28872,
+   "start": 0.0,
+   "stop": 60.0,
+   "step": 5.0,
+   "steps_scheduled": 13,
+   "steps_printed": 11,
+   "error": {
+    "code": 6,
+    "at_minutes": 55.0,
+    "step_index": 11
+   }
+  },
+  {
+   "catalog": 29141,
+   "start": 0.0,
+   "stop": 440.0,
+   "step": 20.0,
+   "steps_scheduled": 23,
+   "steps_printed": 22,
+   "error": {
+    "code": 6,
+    "at_minutes": 440.0,
+    "step_index": 22
+   }
+  },
+  {
+   "catalog": 29238,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 120.0,
+   "steps_scheduled": 13,
+   "steps_printed": 13
+  },
+  {
+   "catalog": 88888,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 120.0,
+   "steps_scheduled": 13,
+   "steps_printed": 13
+  },
+  {
+   "catalog": 33333,
+   "start": 0.0,
+   "stop": 150.0,
+   "step": 5.0,
+   "steps_scheduled": 31,
+   "steps_printed": 5,
+   "error": {
+    "code": 4,
+    "at_minutes": 25.0,
+    "step_index": 5
+   }
+  },
+  {
+   "catalog": 33334,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 1.0,
+   "steps_scheduled": 1441,
+   "steps_printed": 1,
+   "error": {
+    "code": 3,
+    "at_minutes": 0.0,
+    "step_index": 0,
+    "stale_line": "the one line printed repeats the previous set's last line; not graded"
+   }
+  },
+  {
+   "catalog": 33335,
+   "start": 0.0,
+   "stop": 1440.0,
+   "step": 20.0,
+   "steps_scheduled": 73,
+   "steps_printed": 73
+  },
+  {
+   "catalog": 20413,
+   "start": 1844000.0,
+   "stop": 1845100.0,
+   "step": 5.0,
+   "steps_scheduled": 222,
+   "steps_printed": 70,
+   "error": {
+    "code": 6,
+    "at_minutes": 1844345.0,
+    "step_index": 70
+   }
+  }
+ ]
+}

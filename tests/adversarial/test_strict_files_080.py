@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
 """The reference reader reads a file as strictly as the runner reads a parser's answer (D-336), with its wrong-on-purpose
-parsers and twins (CLAUDE.md, "Grader changes").
+parsers and twins (the maintainer's "Grader changes" rule).
 
 The reference reader is the oracle: it made the frozen expected values, and on live bytes the runner compares a parser
 with it directly. It read a file's numbers with Decimal() and int(), which take underscores between digits, the digits
@@ -714,9 +714,11 @@ class TheReviewersThirdReading(unittest.TestCase):
 
 class ALeapSecondAtTheEndOfTime(unittest.TestCase):
     """Finding 2, a false fail of the second mend: the last second of 9999 has no next instant a datetime can hold, and
-    the case ended as an internal error. Twin: a wrong instant still fails."""
+    the case ended as an internal error. From D-382 23:59:60 on 9999-12-31 is no leap second, so the file is refused in
+    words; the year's end is held at the last real leap second, 2016-12-31, where either instant passes and a wrong one
+    still fails."""
 
-    def statuses(self, epoch):
+    def items(self, file_epoch, epoch):
         data = tempfile.mkdtemp(prefix="gpconf-strict-leap-9999-")
         try:
             class Gives(Reference):
@@ -728,17 +730,26 @@ class ALeapSecondAtTheEndOfTime(unittest.TestCase):
                     return out
             os.makedirs(os.path.join(data, LIVE), exist_ok=True)
             with open(os.path.join(data, LIVE, "iss.csv"), "w", encoding="utf-8", newline="") as f:
-                f.write(csv_text(EPOCH="9999-12-31T23:59:60"))
+                f.write(csv_text(EPOCH=file_epoch))
             res = Runner(Gives(), root=ROOT, data=data, fetch_hints=False).run(case_ids=["baseline-iss-five-formats"])[0]
             self.assertFalse([i for i in res.items if "internal error" in i.detail])
-            return [i.status for i in res.items if i.check == "values" and (i.file or "").endswith("iss.csv")]
+            return res.items
         finally:
             shutil.rmtree(data, ignore_errors=True)
 
-    def test_the_last_second(self):
-        self.assertEqual(self.statuses("9999-12-31T23:59:59.000000"), ["pass"])
-        self.assertEqual(self.statuses("9999-12-31T23:59:58.000000"), ["fail"])
+    def values(self, file_epoch, epoch):
+        return [i.status for i in self.items(file_epoch, epoch) if i.check == "values" and (i.file or "").endswith("iss.csv")]
 
+    def test_the_last_second_of_9999_is_refused_in_words(self):
+        bad = [i for i in self.items("9999-12-31T23:59:60", "9999-12-31T23:59:59.000000") if i.check == "reference-reader"]
+        self.assertEqual([i.status for i in bad], ["fail"])
+        self.assertIn("second 60 outside a leap second", bad[0].detail)
+
+    def test_the_last_leap_second(self):
+        for answer in ("2016-12-31T23:59:59.000000", "2017-01-01T00:00:00.000000"):
+            with self.subTest(answer=answer):
+                self.assertEqual(self.values("2016-12-31T23:59:60", answer), ["pass"])
+        self.assertEqual(self.values("2016-12-31T23:59:60", "2016-12-31T23:59:58.000000"), ["fail"])
 
 
 class TheReviewersFourthReading(unittest.TestCase):
@@ -772,8 +783,9 @@ class TheReviewersFourthReading(unittest.TestCase):
         self.assertEqual(len(ref.read_xml_text(xml_text(EPOCH=e + ".+00:00"))[0]), 1)
 
     def test_written_lines_keep_the_writer_contract_for_name_and_designator(self):
-        """Finding 2: the name and the designator of lines a writer wrote are reported for information and never failed
-        (docs/WRITERS.md, the hooks table); the provider-file rules reached them through the reader."""
+        """Finding 2: the name and the designator of lines a writer wrote are not held to the provider-file rules, which
+        reached them through the reader; the writer contract decides them (docs/WRITERS.md; from D-383 and D-387 another
+        value than the source's fails)."""
         from gpconf import writer as W
         l0, l1, l2 = LINES
         for name, n0, d1 in (("a non-ASCII name", "\u00d1USAT-1", l1), ("a short designator", l0, column(l1, 9, 17, "98067   "))):
@@ -1040,7 +1052,9 @@ class ALeapSecondWhereYearsAreNotPadded(unittest.TestCase):
     """The seventh reading: where strftime("%Y") pads no year below 1000 (glibc under the Pythons that leave it so [inferred: which versions is an open question], as CI's 3.9 job
     runs), iso_epoch writes '999-...', and the leap-second branch read that back with strptime, which raised ValueError:
     the case ended as an internal error of the runner. Simulated here by writing the year unpadded; the twin is this
-    platform's padded year."""
+    platform's padded year. From D-382 no year below 1000 holds a leap second, so the file is refused in words on both;
+    every real leap second's year has four digits, so the unpadded reading no longer arises there, and the year's end
+    is held at 2016-12-31 in ALeapSecondAtTheEndOfTime."""
 
     def setUp(self):
         self.data = tempfile.mkdtemp(prefix="gpconf-strict-leap999-")
@@ -1048,7 +1062,7 @@ class ALeapSecondWhereYearsAreNotPadded(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.data, ignore_errors=True)
 
-    def statuses(self, unpadded, answer):
+    def items(self, unpadded, answer):
         from unittest import mock
         from gpconf import tle as T
 
@@ -1067,15 +1081,15 @@ class ALeapSecondWhereYearsAreNotPadded(unittest.TestCase):
         with mock.patch.object(T, "iso_epoch", bare):
             res = Runner(Gives(), root=ROOT, data=self.data, fetch_hints=False).run(case_ids=["baseline-iss-five-formats"])[0]
         self.assertFalse([i.detail for i in res.items if "internal error" in (i.detail or "")])
-        return [i.status for i in res.items if i.check == "values" and (i.file or "").endswith("iss.csv")]
+        return res.items
 
     def test_unpadded_and_padded_years(self):
         for unpadded in (True, False):
-            for answer in ("0999-12-31T23:59:59.500000", "1000-01-01T00:00:00.500000"):   # either instant, across the year
+            for answer in ("0999-12-31T23:59:59.500000", "1000-01-01T00:00:00.500000"):
                 with self.subTest(unpadded=unpadded, answer=answer):
-                    self.assertEqual(self.statuses(unpadded, answer), ["pass"])
-            with self.subTest(unpadded=unpadded, answer="a third instant"):
-                self.assertEqual(self.statuses(unpadded, "1000-01-01T00:00:01.500000"), ["fail"])
+                    bad = [i for i in self.items(unpadded, answer) if i.check == "reference-reader"]
+                    self.assertEqual([i.status for i in bad], ["fail"])
+                    self.assertIn("second 60 outside a leap second", bad[0].detail)
 
 
 

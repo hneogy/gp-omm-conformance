@@ -29,8 +29,11 @@ from tests.adapters.naive import Parser as Naive  # noqa: E402
 CASE = "corrupt-input"
 D = os.path.join(ROOT, "derived", "corrupt-input")
 FILES = ["c1-checksum-digit.tle", "c2-line-2-short.tle", "c3-letter-in-epoch.tle", "c4-line-2-missing.tle",
-         "c6-invalid-catalog-field.tle", "c5-cut-last-row.csv", "c5-cut-closing-bracket.json"]
-UNEDITED = ["unedited-sets.tle", "unedited-rows.csv", "unedited-array.json"]
+         "c6-invalid-catalog-field.tle", "c7-letter-o-catalog-field.tle", "c8-line-fields-differ.tle",
+         "c9-letter-in-epoch-first.tle", "c10-letter-in-epoch-last.tle", "c11-letter-in-epoch-second-of-five.tle",
+         "c5-cut-last-row.csv", "c5-cut-closing-bracket.json"]
+UNEDITED_TLE = ["unedited-sets.tle", "unedited-first.tle", "unedited-last.tle", "unedited-five.tle"]   # D-394: one per layout
+UNEDITED = UNEDITED_TLE + ["unedited-rows.csv", "unedited-array.json"]
 
 
 def read(path):
@@ -118,6 +121,13 @@ class Inputs(unittest.TestCase):
             c6 = text("c6-invalid-catalog-field.tle").split("\r\n")[k]
             self.assertEqual((c6[2:7], c6[:2] + c6[7:68]), ("I9999", clean[k][:2] + clean[k][7:68]))
             self.assertEqual(T.checksum(c6), int(c6[68]))                      # its checksums recomputed, still holding
+            c7 = text("c7-letter-o-catalog-field.tle").split("\r\n")[k]          # input 7 (D-391): O9999, the same way
+            self.assertEqual((c7[2:7], c7[:2] + c7[7:68]), ("O9999", clean[k][:2] + clean[k][7:68]))
+            self.assertEqual(T.checksum(c7), int(c7[68]))
+        c8 = text("c8-line-fields-differ.tle").split("\r\n")                      # input 8 (D-391): line 2's field alone
+        self.assertEqual(c8[4], clean[4])
+        self.assertEqual((c8[5][2:7], c8[5][:2] + c8[5][7:68]), ("69998", clean[5][:2] + clean[5][7:68]))
+        self.assertEqual(T.checksum(c8[5]), int(c8[5][68]))
 
     def test_each_input_is_its_unedited_file_with_its_one_edit(self):
         # D-175: the comparison is only fair if the unedited file differs from each input by the input's edit alone
@@ -127,10 +137,13 @@ class Inputs(unittest.TestCase):
         self.assertEqual(rows[len(cut):], "23," + rows.split("\r\n")[-2].rsplit(",", 1)[1] + "\r\n")  # the cut: the value's last two digits and the row's last field
         self.assertEqual(text("unedited-array.json"), text("c5-cut-closing-bracket.json") + "]\r\n")
         by = {u: v["for_inputs"] for u, v in EXPECTED["case_specific"]["unedited"].items()}
-        self.assertEqual(by, {"derived/corrupt-input/unedited-sets.tle": [1, 2, 3, 4, 6], "derived/corrupt-input/unedited-rows.csv": [5],
+        self.assertEqual(by, {"derived/corrupt-input/unedited-sets.tle": [1, 2, 3, 4, 6, 7, 8], "derived/corrupt-input/unedited-first.tle": [9],
+                              "derived/corrupt-input/unedited-last.tle": [10], "derived/corrupt-input/unedited-five.tle": [11],
+                              "derived/corrupt-input/unedited-rows.csv": [5],
                               "derived/corrupt-input/unedited-array.json": [5]})
         self.assertEqual({n: f["unedited"].rsplit("/", 1)[1] for n, f in EXPECTED["case_specific"]["files"].items()},
-                         dict(zip(FILES, ["unedited-sets.tle"] * 5 + ["unedited-rows.csv", "unedited-array.json"])))
+                         dict(zip(FILES, ["unedited-sets.tle"] * 7 + ["unedited-first.tle", "unedited-last.tle", "unedited-five.tle",
+                                                                       "unedited-rows.csv", "unedited-array.json"])))
 
     def test_the_cut_files(self):
         csv_text = text("c5-cut-last-row.csv")
@@ -144,7 +157,7 @@ class Inputs(unittest.TestCase):
 
     def test_the_expected_values_are_those_of_the_record_without_the_edit(self):
         by = {(r["file"], r["norad_cat_id"]): r for r in EXPECTED["records"]}
-        self.assertEqual(len(EXPECTED["records"]), 21)
+        self.assertEqual(len(EXPECTED["records"]), 38)   # three per file, five in input 11's (D-391, D-394)
         corrupt = by[("c3-letter-in-epoch.tle", 69999)]
         self.assertEqual((corrupt["role"], corrupt["expected"]["epoch"]), ("corrupt", "2026-07-08T17:02:16.167840"))
         self.assertEqual(by[("c1-checksum-digit.tle", 69999)]["if_read_as_unedited"], "report")
@@ -282,8 +295,10 @@ class Rules(unittest.TestCase):
         class Reports(self.Lenient):
             def parse(self, raw, fmt):
                 out = super().parse(raw, fmt)
-                # the refusal quotes the cut site, as a real parser's error does: that is its evidence (D-282)
-                return out + [{"_refused": "JSON array not closed", "_input": raw.decode()[-60:]}] if fmt == "json" else out
+                # the refusal quotes the cut site, as a real parser's error does: that is its evidence (D-282); given only
+                # where the array is not closed, since one on every JSON answer is the third blind pass's decoy (D-400)
+                cut = fmt == "json" and not raw.rstrip().endswith(b"]")
+                return out + [{"_refused": "JSON array not closed", "_input": raw.decode()[-60:]}] if cut else out
         it = item(run(Reports()), "c5-cut-closing-bracket.json", "corrupt-file-cut")
         self.assertEqual(it.status, "pass")
         self.assertIn("JSON array not closed", it.detail)
@@ -380,7 +395,7 @@ class Comparison(unittest.TestCase):
         self.assertNotIn("mean_motion_ddot", iss)
         r, control = run(parser), run(Reference())
         self.assertEqual(r.status, "fail")
-        self.assertEqual(sorted({(i.check, os.path.basename(i.file)) for i in r.items if i.status == "fail"}), [("values", "unedited-sets.tle")])
+        self.assertEqual(sorted({(i.check, os.path.basename(i.file)) for i in r.items if i.status == "fail"}), sorted(("values", u) for u in UNEDITED_TLE))
         tle = lambda res: [(i.check, i.status, i.file) for i in res.items if i.file and i.file.endswith(".tle") and i.check != "values"]
         self.assertEqual(tle(r), tle(control))
         for name in FILES[:4]:
@@ -396,12 +411,12 @@ class Comparison(unittest.TestCase):
         r = run(ImpreciseEverywhere())
         self.assertEqual(r.status, "fail")
         failing = sorted({(i.check, os.path.basename(i.file)) for i in r.items if i.status == "fail"})
-        self.assertEqual(failing, [("values", "unedited-array.json"), ("values", "unedited-rows.csv"), ("values", "unedited-sets.tle"),
-                                   ("values", "v07-xml-ndm-reserialised.xml")])
+        self.assertEqual(failing, sorted([("values", "unedited-array.json"), ("values", "unedited-rows.csv"),
+                                          ("values", "v07-xml-ndm-reserialised.xml")] + [("values", u) for u in UNEDITED_TLE]))
         graded = [i for i in run(Reference()).items if i.check == "values"]
         self.assertEqual(sorted((os.path.basename(i.file), i.status) for i in graded),
-                         [("unedited-array.json", "pass"), ("unedited-rows.csv", "pass"), ("unedited-sets.tle", "pass"),
-                          ("v07-xml-ndm-reserialised.xml", "pass")])
+                         sorted([("unedited-array.json", "pass"), ("unedited-rows.csv", "pass"),
+                                 ("v07-xml-ndm-reserialised.xml", "pass")] + [(u, "pass") for u in UNEDITED_TLE]))
 
     def test_a_neighbour_the_corrupt_input_changes_fails(self):
         from decimal import Decimal
@@ -461,7 +476,7 @@ class Comparison(unittest.TestCase):
                 return out + [{**next(x for x in out if "_refused" not in x), "norad_cat_id": 99999}] if fmt == "tle" else out
         r = run(Phantom())
         fails = [(i.check, os.path.basename(i.file), i.detail) for i in r.items if i.status == "fail"]
-        self.assertEqual([(c, f) for c, f, _ in fails], [("values", "unedited-sets.tle")], fails)
+        self.assertEqual(sorted((c, f) for c, f, _ in fails), sorted(("values", u) for u in UNEDITED_TLE), fails)
         self.assertIn("99999", fails[0][2])
         self.assertEqual(item(r, "c2-line-2-short.tle", "corrupt-tle-line-short").counts["misidentified"], 0)
 

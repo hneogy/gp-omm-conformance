@@ -3,8 +3,8 @@
 """Each of SM-26's findings S1, S2, S3 and S6 tied to the corpus's own adapters that stand in for it (0.8.1 list item
 3; D-379).
 
-SM-26's adapters stay out of the public export until their permission is confirmed (D-367), so in a clone, an export
-or public CI the grader is held to these four findings only by adapters the corpus ships. The map below is the one
+SM-26's adapters were left out of the 0.8.0 export (D-367; licensed by SM-26 and exported from D-382), so there the
+grader was held to these four findings only by adapters the corpus ships, and still is, beside SM-26's own. The map below is the one
 `test_own_s_findings_080`'s docstring states; this module holds it: every adapter named there under a label is named
 here under the same label, and each fails the case its finding is about. A stand-in that stops failing, or a label
 left with no stand-in, fails here by name. S4 and S5 are written in `test_own_s_findings_080` itself.

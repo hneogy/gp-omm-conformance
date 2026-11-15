@@ -25,6 +25,8 @@ import string
 import sys
 import types
 import unittest
+
+from tests.timebudget import budget  # noqa: E402  (D-468)
 from decimal import Decimal
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -561,7 +563,7 @@ class RealWorldTypes(unittest.TestCase):                                        
         start = time.monotonic()
         got = plain.answer(real)
         elapsed = time.monotonic() - start
-        self.assertLess(elapsed, 2.0)
+        self.assertLess(elapsed, budget(2.0))
         self.assertEqual(len(got), 1)
         self.assertIs(type(got[0]), dict, got[0])
         want = norm_record(plain.answer(plain_answer)[0])[0]
@@ -700,7 +702,7 @@ class SharedDeepThroughEveryRoute(unittest.TestCase):                           
         start = time.monotonic()
         results = run(adapter, cases=cases)
         elapsed = time.monotonic() - start - spent[0]
-        self.assertLess(elapsed, 3.0 if cases != ["tle-writer-alpha5"] else 20.0, (route, shape, levels, wrap, spent[0]))
+        self.assertLess(elapsed, budget(3.0 if cases != ["tle-writer-alpha5"] else 20.0), (route, shape, levels, wrap, spent[0]))
         self.assertIn(cases[0], results)
         details = [i.detail or "" for r in results.values() for i in r.items]
         self.assertFalse([d for d in details if "internal error" in d], (route, shape, levels, wrap))

@@ -159,8 +159,10 @@ class StagePackage(unittest.TestCase):
         self.assertIn(f"(https://github.com/hneogy/gp-omm-conformance/blob/v{version}/AUDIT.md)", staged)
         self.assertIn(f"(https://github.com/hneogy/gp-omm-conformance/blob/v{version}/docs/ADAPTERS.md)", staged)
         self.assertEqual(sp.relative_links(staged), [])
-        # the README's relative links: AUDIT.md (counted 2026-09-26, D-159), and the adapter guide twice (D-161)
-        self.assertEqual(sorted(set(sp.relative_links(repo))), ["AUDIT.md", "docs/ADAPTERS.md"])
+        # the README's relative links: AUDIT.md (counted 2026-09-26, D-159), the adapter guide twice (D-161), and the
+        # migration guide and the onboarding page (D-453), each rewritten to the tag on PyPI
+        self.assertEqual(sorted(set(sp.relative_links(repo))), ["AUDIT.md", "docs/ADAPTERS.md", "docs/LIBRARIES.md", "docs/MIGRATION.md", "docs/ONBOARDING.md"])   # D-459: LIBRARIES.md
+        self.assertIn(f"(https://github.com/hneogy/gp-omm-conformance/blob/v{version}/docs/MIGRATION.md)", staged)
         self.assertEqual(len(staged.splitlines()), len(repo.splitlines()))  # links rewritten, nothing else
 
     def test_the_audit_reads_the_long_description(self):
@@ -223,7 +225,7 @@ class Metadata(unittest.TestCase):
         self.assertIn("[tool.setuptools.packages.find]", self.text)
         self.assertIn('include = ["gpconf", "gpconf.*"]', self.text)
         self.assertNotRegex(self.text, r'(?m)^packages\s*=')
-        self.assertIn('gpconf = ["corpus/**/*"]', self.text)
+        self.assertIn('gpconf = ["corpus/**/*", "schemas/*.json"]', self.text)   # the results schema ships (D-431)
         self.assertIn('"gpconf.adapters" = ["*.mjs"]', self.text)
 
     def test_the_extras_are_the_library_presets_and_crosscheck_is_gone(self):

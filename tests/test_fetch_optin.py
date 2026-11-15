@@ -181,7 +181,7 @@ class TheRunner(unittest.TestCase):
             self.records_only(tmp)
             code, text = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", CASE])
             quiet_code, quiet = run_cli(["run", "--adapter", "tests.adapters.reference:Parser", "--root", tmp, "--case", CASE, "--no-fetch-hint"])
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 2)   # no case graded: no result, exit 2 (D-389); absence is still not the parser's failure (1)
         self.assertIn("1 case: 0 pass (exact), 0 pass within tolerance, 0 fail, 0 skip, 0 need fetched data, 0 not available, 1 not exercised", text)
         self.assertIn(f"{CASE} is a data check on the legacy SATCAT file, 9.4 MB, which the fetch brings only on request. It was not made, "
                       "and no parser takes part in it: nothing about the parser under test depends on it.", text)

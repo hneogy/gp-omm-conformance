@@ -62,6 +62,16 @@
 "parse",
 "alpha5-synthetic-epoch-years.tle",
 "fail"
+],
+[
+"parse",
+"alpha5-synthetic-day-366.tle",
+"fail"
+],
+[
+"parse",
+"alpha5-synthetic-classification.tle",
+"fail"
 ]
 ],
 "status": "fail"
@@ -539,6 +549,76 @@
 "fail"
 ],
 [
+"corrupt-tle-invalid-catalog-field",
+"c7-letter-o-catalog-field.tle",
+"pass"
+],
+[
+"corrupt-input-neighbours-load",
+"c7-letter-o-catalog-field.tle",
+"fail"
+],
+[
+"catalog-number-is-integer",
+"c8-line-fields-differ.tle",
+"pass"
+],
+[
+"corrupt-tle-line-fields-differ",
+"c8-line-fields-differ.tle",
+"fail"
+],
+[
+"corrupt-input-neighbours-load",
+"c8-line-fields-differ.tle",
+"pass"
+],
+[
+"values",
+"unedited-first.tle",
+"pass"
+],
+[
+"corrupt-tle-letter-in-number",
+"c9-letter-in-epoch-first.tle",
+"pass"
+],
+[
+"corrupt-input-neighbours-load",
+"c9-letter-in-epoch-first.tle",
+"fail"
+],
+[
+"values",
+"unedited-last.tle",
+"pass"
+],
+[
+"corrupt-tle-letter-in-number",
+"c10-letter-in-epoch-last.tle",
+"pass"
+],
+[
+"corrupt-input-neighbours-load",
+"c10-letter-in-epoch-last.tle",
+"fail"
+],
+[
+"values",
+"unedited-five.tle",
+"pass"
+],
+[
+"corrupt-tle-letter-in-number",
+"c11-letter-in-epoch-second-of-five.tle",
+"pass"
+],
+[
+"corrupt-input-neighbours-load",
+"c11-letter-in-epoch-second-of-five.tle",
+"fail"
+],
+[
 "values",
 "unedited-rows.csv",
 "pass"
@@ -660,6 +740,21 @@
 ]
 ],
 "status": "fail"
+},
+"ephemeris-type-4-refused": {
+"items": [
+[
+"type4-not-propagated",
+null,
+"skip"
+],
+[
+"type4-twins-propagate",
+null,
+"skip"
+]
+],
+"status": "skip"
 },
 "epoch-year-19xx": {
 "items": [
@@ -962,6 +1057,11 @@
 "omm-version-3-accepted",
 "v06-signed-integers-lowercase-exponent.kvn",
 "pass"
+],
+[
+"parse",
+"v08-synthetic-epochs.kvn",
+"fail"
 ]
 ],
 "status": "fail"
@@ -1126,6 +1226,26 @@
 ],
 "status": "fail"
 },
+"propagation-tle-omm-twins": {
+"items": [
+[
+"twins-tle-positions",
+null,
+"skip"
+],
+[
+"twins-omm-positions",
+null,
+"skip"
+],
+[
+"twins-tle-omm-agree",
+null,
+"skip"
+]
+],
+"status": "skip"
+},
 "satcat-70000-cutoff": {
 "items": [
 [
@@ -1165,6 +1285,21 @@
 ]
 ],
 "status": "not-exercised"
+},
+"sgp4-ver-propagation": {
+"items": [
+[
+"sgp4-ver-positions",
+null,
+"skip"
+],
+[
+"sgp4-ver-error-codes",
+null,
+"skip"
+]
+],
+"status": "skip"
 },
 "six-digit-omm-saramago": {
 "items": [
@@ -1377,6 +1512,11 @@ null,
 "tle-writer-secondary-fields",
 null,
 "info"
+],
+[
+"tle-writer-secondary-not-changed",
+null,
+"pass"
 ],
 [
 "tle-writer-matches-provider-rendering",

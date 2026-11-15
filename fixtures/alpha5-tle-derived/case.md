@@ -30,6 +30,8 @@ Provides:
 - 604 Alpha-5 TLE sets derived from real records, each a name line, line 1 and line 2 (1,208 element lines, 1,812 lines in the four files): 257 with letter A (ids 100000-100789), 347 with letter T (ids 270000-270449)
 - 46 synthetic-derived TLE sets, the lowest and highest id of each of the 24 Alpha-5 letters less the two ids real records hold (100000, 270000): SARAMAGO's first-record elements rendered with the catalog number replaced and the mean anomaly stepped by 7 degrees from set to set, so each set's elements are its own, each id a specification vector, not a catalogued object (D-096, D-125, D-286, D-300, D-372)
 - 100 synthetic-derived TLE sets, one per two-digit epoch year 00-99 (ids 330100-330199), the same elements with the epoch's year replaced: a reader's pivot is graded on data wherever it sits (D-300)
+- 5 synthetic-derived TLE sets with the epoch on 31 December, day 366, of a leap year (1960, 1996, 2000, 2024, 2056; ids 330200-330204), the same elements with the epoch's date replaced: day 366 graded on data (D-384)
+- 1 synthetic-derived TLE set classified C (id 330205), the same elements with the classification replaced: a column 8 other than U read on data offline (D-404); left out of the writer case's inputs, where it waits for the owner (python-sgp4's writer path resets the classification to U)
 
 Gaps (stated explicitly for this case):
 
@@ -57,5 +59,7 @@ Every file of this case ships with the repository; nothing is fetched.
 | `derived/alpha5-tle/alpha5-T-analyst-27xxxx-snapshot.tle` | stable | none: derived file shipped with the repository | 58128 | generated 2026-09-21T01:01:34Z | `f4868060a6ab61d3…` |
 | `derived/alpha5-tle/alpha5-synthetic-letters.tle` | stable | none: derived file shipped with the repository | 7728 | generated 2026-10-29T01:39:43Z | `1592e5efd9f1178e…` |
 | `derived/alpha5-tle/alpha5-synthetic-epoch-years.tle` | stable | none: derived file shipped with the repository | 16800 | generated 2026-10-10T02:16:22Z | `de427c200042f372…` |
+| `derived/alpha5-tle/alpha5-synthetic-day-366.tle` | stable | none: derived file shipped with the repository | 840 | generated 2026-11-05T13:09:56Z | `4068333813257b8a…` |
+| `derived/alpha5-tle/alpha5-synthetic-classification.tle` | stable | none: derived file shipped with the repository | 168 | generated 2026-11-08T09:17:13Z | `dfacc4d228ee81dd…` |
 
 Expected values: `fixtures/alpha5-tle-derived/expected.json` (schema_version 1.0).

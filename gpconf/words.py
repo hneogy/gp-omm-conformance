@@ -30,12 +30,17 @@ _ESCAPES = {"\n": "\\n", "\r": "\\r", "\t": "\\t"}
 
 # the line and paragraph separators Python's splitlines() breaks at, and the bidirectional controls that reorder what a
 # terminal shows: escaped with the control characters (the reading of D-369)
-_SHOWN_ESCAPED = {0x2028, 0x2029, *range(0x202A, 0x202F), *range(0x2066, 0x206A)}
+_SHOWN_ESCAPED = {0x2028, 0x2029, *range(0x202A, 0x202F), *range(0x2066, 0x206A),
+                  # directional marks and zero-width characters, which hide or reorder text unseen (the third blind
+                  # pass's A, D-389)
+                  0x061C, 0x200B, 0x200C, 0x200D, 0x200E, 0x200F, 0x2060, 0xFEFF}
 
 
 def _hidden(c):
     o = ord(c)
-    return o < 32 or 127 <= o < 160 or o in _SHOWN_ESCAPED
+    # a lone surrogate cannot be written as UTF-8 at all: printed raw it ended the run with UnicodeEncodeError, before
+    # the --json report was written (the third blind pass's A, D-389)
+    return o < 32 or 127 <= o < 160 or o in _SHOWN_ESCAPED or 0xD800 <= o <= 0xDFFF
 
 
 def printable(text):

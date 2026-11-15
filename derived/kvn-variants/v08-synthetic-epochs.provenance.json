@@ -1,0 +1,28 @@
+{
+  "file": "derived/kvn-variants/v08-synthetic-epochs.kvn",
+  "provenance": "synthetic-derived",
+  "label": "SYNTHETIC-DERIVED: one CelesTrak record's values under synthetic ids with replaced epochs; not served by any provider",
+  "description": "SYNTHETIC-DERIVED: the base record's values under synthetic five-digit ids 99990-99997, each EPOCH replaced: 31 December, day 366, of five leap years (1960, 1996, 2000, 2024, 2056), two in the day-of-year form (D-384); and 2038-01-19T03:14:07 and 03:14:08, the last second a signed 32-bit time_t holds and the next, and 2050-06-15T12:00:00 (D-385); specification vectors, not catalogued objects, never observed at these epochs.",
+  "ccsds_502_0_b3_clauses": [
+    "7.5.10"
+  ],
+  "source_file": "fixtures/epoch-year-19xx/raw/iss-first.csv",
+  "source_sha256": "cbdd6a2e36b97d543654a12e6ff60767e1d570d7fcbd5248b0999d85a6292af5",
+  "source_url": "https://celestrak.org/NORAD/elements/gp-first.php?CATNR=25544&FORMAT=CSV",
+  "source_retrieved_at": "2026-09-21T00:43:39Z",
+  "source_norad_cat_id": 25544,
+  "generator": "tools/derive_kvn_variants.py",
+  "generated_at": "2026-11-05T13:57:24Z",
+  "orbital_values_identical_to_source": false,
+  "epoch_by_id": {
+    "99990": "1960-12-31T06:49:59.999808",
+    "99991": "1996-366T06:49:59.999808",
+    "99992": "2000-12-31T06:49:59.999808",
+    "99993": "2024-366T06:49:59.999808",
+    "99994": "2056-12-31T06:49:59.999808",
+    "99995": "2038-01-19T03:14:07.000000",
+    "99996": "2038-01-19T03:14:08.000000",
+    "99997": "2050-06-15T12:00:00.000000"
+  },
+  "output_sha256": "3e39e9dabea6b4ae6ee8f8ecf8b1c5abaaae7b388c75570005a6046b1399ac33"
+}

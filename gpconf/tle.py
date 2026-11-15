@@ -99,6 +99,21 @@ def exp_field(text, mantissa_mode="truncate"):
 # epoch written in Arabic-Indic digits was read as the instant it spells
 EPOCH_RE = re.compile(r"(\d{4})-(?:(\d{2})-(\d{2})|(\d{3}))T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})?", re.ASCII)
 
+# The UTC dates whose last second was the leap second 23:59:60, all 27 there have been (IERS Leap_Second.dat, through
+# Bulletin C 72); CGPM 2026 Resolution 5 makes UTC continuous from 20 May 2027, and none was announced for 31 December
+# 2026, so the list is closed (D-382; found by SM-26, issue #1).
+LEAP_SECOND_DATES = frozenset(dt.date.fromisoformat(d) for d in (
+    "1972-06-30", "1972-12-31", "1973-12-31", "1974-12-31", "1975-12-31", "1976-12-31", "1977-12-31", "1978-12-31",
+    "1979-12-31", "1981-06-30", "1982-06-30", "1983-06-30", "1985-06-30", "1987-12-31", "1989-12-31", "1990-12-31",
+    "1992-06-30", "1993-06-30", "1994-06-30", "1995-12-31", "1997-06-30", "1998-12-31", "2005-12-31", "2008-12-31",
+    "2012-06-30", "2015-06-30", "2016-12-31"))
+
+
+def is_leap_second(t):
+    """True when the naive UTC datetime t, its second read as 59, is the minute of a leap second: 23:59 on one of
+    LEAP_SECOND_DATES."""
+    return (t.hour, t.minute) == (23, 59) and t.date() in LEAP_SECOND_DATES
+
 
 def epoch_text(t):
     """A naive datetime as the corpus writes an epoch, 'YYYY-MM-DDThh:mm:ss.ffffff', the year in four digits on every
@@ -110,10 +125,10 @@ def iso_epoch(text):
     """An epoch string in any form the corpus accepts -> canonical 'YYYY-MM-DDThh:mm:ss.ffffff' (UTC, naive).
     Accepts the CCSDS 502.0-B-3 7.5.10 calendar and day-of-year forms, any number of fraction digits (quantised
     to microseconds, half even), an optional 'Z', a '+HH:MM'/'-HH:MM' offset (converted to UTC: a parser under test
-    may return one) and second 60 at 23:59:60 UTC on 30 June or 31 December, the dates on which leap seconds are
-    inserted in practice (mapped to :59 as the reference adapter does; anywhere else it is refused, D-370: ITU-R TF.460
-    also allows the end of any other month, never used yet). Raises ValueError for anything else, so
-    a caller never sees a bare strptime failure (D-119)."""
+    may return one) and second 60 only at the 27 leap seconds there have been, 23:59:60 UTC on LEAP_SECOND_DATES
+    (mapped to :59 as the reference adapter does; anywhere else it is refused, D-382, correcting D-370, which took 30 June
+    or 31 December in any year). Raises ValueError for anything else, so a caller never sees a bare strptime failure
+    (D-119)."""
     s = str(text).strip()
     m = EPOCH_RE.fullmatch(s)
     if not m:
@@ -137,11 +152,11 @@ def iso_epoch(text):
     if zone and zone != "Z":
         sign = 1 if zone[0] == "+" else -1
         t -= sign * dt.timedelta(hours=int(zone[1:3]), minutes=int(zone[4:6]))
-    if int(ss) == 60 and not ((t.month, t.day) in ((6, 30), (12, 31)) and (t.hour, t.minute) == (23, 59)):
-        # leap seconds are inserted at the end of 30 June or 31 December, UTC, in practice (ITU-R TF.460 allows the end of
-        # any month; no other has been used); read as :59 anywhere, a parser one second late (13:13:60 for 13:13:59)
-        # passed (D-370; the second blind review's F6)
-        raise ValueError(f"second 60 outside a leap second (23:59:60 UTC on 30 June or 31 December) in {text!r}")
+    if int(ss) == 60 and not is_leap_second(t):
+        # read as :59 anywhere, a parser one second late (13:13:60 for 13:13:59) passed (D-370; the second blind
+        # review's F6); taken on any 30 June or 31 December, 1960-06-30T23:59:60 and 2030-12-31T23:59:60 were read too
+        # (D-382; SM-26's L2)
+        raise ValueError(f"second 60 outside a leap second (23:59:60 UTC on one of the 27 leap-second dates) in {text!r}")
     return epoch_text(t + dt.timedelta(microseconds=us))
 
 

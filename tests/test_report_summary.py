@@ -136,7 +136,10 @@ class TheCatalogueTable(unittest.TestCase):
     def test_a_cell_gives_the_failing_items_with_a_word_that_does_not_vary(self):
         text = read("docs", "FAILURES.md")
         rows = [line for line in text.splitlines() if line.startswith("| `")]
-        self.assertEqual(len(rows), 18)
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        from cases import CASES   # one row per case: 18 until 0.9.0's three propagation cases (D-489)
+        self.assertEqual(len(rows), len(CASES))
+        self.assertEqual(len(rows), 21)
         self.assertNotRegex(text, r"\(\d+ fail\)")
         self.assertIn("fail (1 failing)", text)
         self.assertIn("pass (0 failing)", text)

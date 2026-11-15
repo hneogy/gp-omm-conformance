@@ -9,7 +9,8 @@ the grading let through. Survivors are grouped by mutation and printed with thei
 be rebuilt and inspected:  python3 tools/mutant_fuzz.py --one SEED
 
 Usage: python3 tools/mutant_fuzz.py [--count N] [--seed S] [--jobs J] [--root PATH] [--one SEED]
-Standard library plus the corpus only; no network; the cases run offline.
+Standard library plus the corpus only; no network; the cases run offline. With every run, the propagation tier's
+sixteen fixed mutant adapters (tools/propagation_mutants.py, D-414) run too, and --ci fails if one survives.
 """
 import argparse
 import hashlib
@@ -339,6 +340,14 @@ def main(argv=None):
             json.dump(rows, f, indent=0, default=str)
     if errors:
         print(f"first runner error: seed {errors[0]['seed']}: {errors[0]['detail']}")
+    # the propagation tier's mutant adapters (D-414): sixteen fixed wrong propagators, every one of which must fail a
+    # shipped propagation case while the correct base passes them; they run with every gate, whatever the count
+    sys.path.insert(0, os.path.join(ROOT, "tools"))
+    import propagation_mutants
+    prop_ok = propagation_mutants.report(a.root)
+    if a.ci and not prop_ok:
+        print("CI GATE: a propagation mutant survived, or the propagation base does not pass (D-414)")
+        return 1
     if a.ci and (escapes or errors):
         print(f"CI GATE: {len(escapes)} survivor(s) outside the allowlist, {len(errors)} runner error(s)")
         for r in escapes[:10]:

@@ -88,7 +88,7 @@ class Behaviour(unittest.TestCase):
     def test_a_passing_preset(self):
         code, summary, out = run_step("reference")
         self.assertEqual(code, 0, summary)
-        self.assertIn("**5 of 18 cases exercised**, offline: 5 pass", summary)
+        self.assertIn("**5 of 21 cases exercised**, offline: 5 pass", summary)
         self.assertIn("| case | status | exact | tol | fail | skip | n/e | n/f |", summary)
         self.assertIn("**Gate, this month's launches:**", summary)
         self.assertIn(SENTENCE, summary)

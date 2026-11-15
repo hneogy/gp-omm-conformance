@@ -420,6 +420,22 @@
   {
    "field": "A+123",
    "reason": "a sign inside the field, which int() reads past (D-370)"
+  },
+  {
+   "field": "+1234",
+   "reason": "a sign before four digits, which int() reads as 1234 (D-360's finding 7, D-390)"
+  },
+  {
+   "field": "-1234",
+   "reason": "a sign before four digits, which int() reads as -1234 (D-360's finding 7, D-390)"
+  },
+  {
+   "field": "1 234",
+   "reason": "a blank inside a five-digit field (D-360's finding 7, D-390)"
+  },
+  {
+   "field": "1_234",
+   "reason": "an underscore inside a five-digit field, which int() reads as 1234 (D-360's finding 7, D-390)"
   }
  ],
  "encode_unrepresentable": [

@@ -45,6 +45,8 @@ APPROVAL = ("owner approval 2026-09-27 of the v0.4.0 plan's inputs 1 to 5 (secti
             "section 10; synthetic-derived provenance under the D-096 precedent (PLAN.md section 2.1); DECISIONS D-171")
 APPROVAL6 = ("owner approval 2026-10-23 of a sixth input, an invalid catalog field (I9999 or blank), beside D-171's five; "
              "synthetic-derived provenance under the D-096 precedent; DECISIONS D-360")
+APPROVAL78 = ("the owner's instruction 2026-11-07 to carry on through the 0.9.0 plan's catalog-field group, which lists these "
+              "two inputs (the third blind pass's 16 and 17); synthetic-derived provenance under the D-096 precedent; DECISIONS D-391")
 EDITED = "SYNTHETIC-DERIVED: real records frozen in this corpus, rendered by the corpus, with one stated edit; served by no provider"
 UNEDITED = "DERIVED: real records frozen in this corpus, rendered by the corpus with no edit; served by no provider"
 UNEDITED_BASIS = ("DECISIONS D-175 (owner instruction 2026-09-27): what a parser returns from each corrupt input is "
@@ -58,6 +60,12 @@ UNEDITED_BASIS = ("DECISIONS D-175 (owner instruction 2026-09-27): what a parser
 BEFORE = {"case": "epoch-year-19xx", "set": "iss-first", "norad_cat_id": 25544}
 CORRUPT = {"case": "bstar-and-derivative-forms", "set": "gp-69999-first", "norad_cat_id": 69999}
 AFTER = {"case": "bstar-and-derivative-forms", "set": "decaying", "norad_cat_id": 20453}
+# two more valid sets for the five-set layout (D-394), from the same frozen snapshot as 20453, each with a full designator
+MORE = [{"case": "bstar-and-derivative-forms", "set": "decaying", "norad_cat_id": 27153},
+        {"case": "bstar-and-derivative-forms", "set": "decaying", "norad_cat_id": 39473}]
+APPROVAL911 = ("the owner's ruling 2026-11-07 (option (c)): inputs with the corrupt set first, last and off-centre among "
+               "four or more sets, so that a refusal fixed to one layout cannot pass for evidence; synthetic-derived "
+               "provenance under the D-096 precedent; DECISIONS D-394")
 
 
 def frozen(spec):
@@ -118,7 +126,13 @@ def tle_text(sets):
     return "".join(EOL.join(s) + EOL for s in sets)
 
 
+ONLY = set()   # file names to write, from the command line; none named writes all (released files stay as they are, D-391)
+
+
 def write(name, text, meta, edited=True, approval=APPROVAL):
+    if ONLY and name not in ONLY:
+        return
+    WRITTEN.add(name)
     os.makedirs(OUT, exist_ok=True)
     data = text.encode("utf-8")
     path = os.path.join(OUT, name)
@@ -181,6 +195,7 @@ def main():
     edit = {"line": 1, "column": col + 1, "was": "0", "now": "O", "epoch_field_was": l1[18:32], "epoch_field_now": bad[18:32],
             "statement": f"line 1 column {col + 1}, the first 0 among the epoch field's fractional digits, replaced by the letter O "
                          f"({l1[18:32]!r} becomes {bad[18:32]!r}); the checksum is still valid, since a letter counts 0 as the digit it replaced did"}
+    edit3, bad3 = edit, bad   # inputs 9 to 11 carry this edit (D-394)
     write("c3-letter-in-epoch.tle", tle_text([before, (l0, bad, l2), after]),
           {"input": 3, "check": "corrupt-tle-letter-in-number", "description": "A set with a letter in a numeric column of line 1, between two valid sets.",
            "rendering": rendering, "records": records(edit)})
@@ -212,6 +227,61 @@ def main():
           {"input": 6, "check": "corrupt-tle-invalid-catalog-field", "description": "A set whose catalog field is an invalid Alpha-5 field on both lines, between two valid sets.",
            "rendering": rendering, "records": records(edit)}, approval=APPROVAL6)
 
+    # Input 7 (D-391; the third blind pass's 16): the letter O, never used in Alpha-5, as the field's letter on both
+    # lines, both checksums recomputed: a reader that takes O for 0 reads 9999.
+    field = "O9999"
+    b1, b2 = recheck(l1[:2] + field + l1[7:]), recheck(l2[:2] + field + l2[7:])
+    assert T.checksum(b1) == int(b1[68]) and T.checksum(b2) == int(b2[68]), "the checksums should be valid"
+    edit = {"lines": [1, 2], "columns": "3-7", "was": l1[2:7], "now": field,
+            "checksums": {"line 1": [l1[68], b1[68]], "line 2": [l2[68], b2[68]]},
+            "statement": f"the catalog field (columns 3 to 7) of both lines changed from {l1[2:7]!r} to {field!r}, an invalid Alpha-5 field "
+                         f"(the letter O is never used; a reader taking it for 0 reads 9999), both checksums recomputed "
+                         f"({l1[68]} to {b1[68]} and {l2[68]} to {b2[68]}) so that the field is the only defect"}
+    write("c7-letter-o-catalog-field.tle", tle_text([before, (l0, b1, b2), after]),
+          {"input": 7, "check": "corrupt-tle-invalid-catalog-field", "description": "A set whose catalog field is O9999 on both lines, the letter O never used in Alpha-5, between two valid sets.",
+           "rendering": rendering, "records": records(edit)}, approval=APPROVAL78)
+
+    # Input 8 (D-391; the third blind pass's 17): line 2's catalog field names another object than line 1's (69998 for
+    # 69999), line 2's checksum recomputed: a reader that takes line 1's field for both, or never compares them, reads it.
+    other = "69998"
+    b2 = recheck(l2[:2] + other + l2[7:])
+    assert T.checksum(b2) == int(b2[68]) and T.checksum(l1) == int(l1[68]), "the checksums should be valid"
+    edit = {"line": 2, "columns": "3-7", "was": l2[2:7], "now": other,
+            "checksums": {"line 2": [l2[68], b2[68]]},
+            "statement": f"line 2's catalog field (columns 3 to 7) changed from {l2[2:7]!r} to {other!r}, so that the two lines name "
+                         f"different objects, line 2's checksum recomputed ({l2[68]} to {b2[68]}); line 1 is the real line"}
+    write("c8-line-fields-differ.tle", tle_text([before, (l0, l1, b2), after]),
+          {"input": 8, "check": "corrupt-tle-line-fields-differ", "description": "A set whose line 2 carries another catalog field than its line 1, between two valid sets.",
+           "rendering": rendering, "records": records(edit)}, approval=APPROVAL78)
+
+    # Inputs 9 to 11 (D-394): input 3's edit (the letter O in line 1's epoch field) with the corrupt set first, last, and
+    # second of five, each with its own unedited file in the same layout, so that the corpus's inputs no longer all
+    # hold the corrupt set in the middle of three
+    more = [tle(m) for m in MORE]
+    layouts = [(9, "c9-letter-in-epoch-first.tle", "unedited-first.tle", [None, ("v", before, w_before), ("v", after, w_after)],
+                "A set with a letter in a numeric column of line 1, first in the file, before two valid sets."),
+               (10, "c10-letter-in-epoch-last.tle", "unedited-last.tle", [("v", before, w_before), ("v", after, w_after), None],
+                "A set with a letter in a numeric column of line 1, last in the file, after two valid sets."),
+               (11, "c11-letter-in-epoch-second-of-five.tle", "unedited-five.tle",
+                [("v", before, w_before), None, ("v", after, w_after)] + [("v", s, w) for s, w in more],
+                "A set with a letter in a numeric column of line 1, second of five sets.")]
+    for n, name, twin, layout, desc in layouts:
+        sets, clean, recs = [], [], []
+        for k, item in enumerate(layout):
+            if item is None:
+                sets.append((l0, bad3, l2)); clean.append(corrupt)
+                recs.append({"position": k + 1, "role": "corrupt", **w_corrupt, "edit": edit3})
+            else:
+                _, s, w = item
+                sets.append(s); clean.append(s)
+                recs.append({"position": k + 1, "role": "valid", **w})
+        write(name, tle_text(sets), {"input": n, "check": "corrupt-tle-letter-in-number", "description": desc,
+                                     "rendering": rendering, "records": recs}, approval=APPROVAL911)
+        write(twin, tle_text(clean), {"for_inputs": [n], "description": f"The sets of input {n} with no edit, in its order.",
+                                      "rendering": rendering,
+                                      "records": [dict(r, role="valid", **({"edited_in_inputs": [n]} if r["role"] == "corrupt" else {})) for r in
+                                                  [{k2: v for k2, v in r.items() if k2 != "edit"} for r in recs]]}, edited=False)
+
     # Input 5: a file cut mid-record, in CSV (inside its last row) and in JSON (the closing bracket missing). The cut
     # record is 69999's, last in both files; the complete records are the two neighbours.
     rows = [omm_row(BEFORE), omm_row(AFTER), omm_row(CORRUPT)]
@@ -242,13 +312,13 @@ def main():
            "file_edit": edit,
            "records": [{"position": i + 1, "role": "valid", **w} for i, (_, w) in enumerate(rows)]})
 
-    # The unedited files (D-175): each input's records as the input lays them out, with no edit. Inputs 1 to 4 and 6 share
+    # The unedited files (D-175): each input's records as the input lays them out, with no edit. Inputs 1 to 4 and 6 to 8 share
     # one TLE file; input 5's CSV has its last row whole and its JSON array is closed. Each input is its unedited file
     # with its one edit made, which tests/test_corrupt_input.py checks byte for byte.
     write("unedited-sets.tle", tle_text([before, corrupt, after]),
-          {"for_inputs": [1, 2, 3, 4, 6], "description": "The three TLE sets of inputs 1 to 4 and 6 with no edit, in the inputs' order.",
+          {"for_inputs": [1, 2, 3, 4, 6, 7, 8], "description": "The three TLE sets of inputs 1 to 4 and 6 to 8 with no edit, in the inputs' order.",
            "rendering": rendering,
-           "records": [{"position": 1, "role": "valid", **w_before}, {"position": 2, "role": "valid", "edited_in_inputs": [1, 2, 3, 4, 6], **w_corrupt},
+           "records": [{"position": 1, "role": "valid", **w_before}, {"position": 2, "role": "valid", "edited_in_inputs": [1, 2, 3, 4, 6, 7, 8], **w_corrupt},
                        {"position": 3, "role": "valid", **w_after}]}, edited=False)
     write("unedited-rows.csv", full,
           {"for_inputs": [5], "description": "The CSV of input 5 with its last row whole: three complete records.",
@@ -261,5 +331,11 @@ def main():
            "records": [{"position": i + 1, "role": "valid", **w} for i, (_, w) in enumerate(rows)]}, edited=False)
 
 
+WRITTEN = set()
+
+
 if __name__ == "__main__":
+    ONLY.update(sys.argv[1:])
     main()
+    if ONLY - WRITTEN:   # a name mistyped or given as a path wrote nothing: say so (the review of D-391)
+        sys.exit(f"no such input: {', '.join(sorted(ONLY - WRITTEN))} (give file names, as derived/corrupt-input/ holds them)")

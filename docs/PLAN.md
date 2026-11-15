@@ -57,19 +57,23 @@ Two further spec-vs-practice divergences to record rather than resolve:
 
 ## 1. Deliverable and non-goals
 
-Deliverable: a versioned, MIT-licensed directory of real fixtures plus expected parsed
-values, a machine-readable manifest, and a small stdlib-only Python runner that can drive
-either a Python callable or an external command. Language-agnostic: the fixtures and
+Deliverable: a versioned, Apache-2.0-licensed directory (MIT for every release up to 0.6.2;
+D-310) of real fixtures plus expected parsed values, a machine-readable manifest, and a
+small stdlib-only Python runner that can drive either a Python callable or an external
+command. Language-agnostic: the fixtures and
 `expected.json` are the product; the runner is a convenience.
 
-Non-goals: a parser library, a propagator, any Space-Track client with stored credentials,
-anything that fetches on a schedule.
+Non-goals: a parser library, a propagator of its own (the propagation cases compare a parser's numbers with
+Vallado's verification file located on the user's machine, D-401, and with the corpus's own reference vectors, SGP4's
+output computed once by Vallado's C++ and cross-checked with python-sgp4, shipped as data, D-406 and D-409; gpconf
+runs no propagator when it grades), any Space-Track client with stored credentials, anything that fetches on a
+schedule.
 
 ## 2. Repository layout
 
 ```
 gp-omm-conformance/
-├── LICENSE                     MIT
+├── LICENSE                     Apache-2.0 since 0.7.0; MIT up to 0.6.2 (D-310)
 ├── README.md                   migration explainer + how to run
 ├── manifest.json               every case: id, tests, files, provenance, ambiguities
 ├── MANIFEST.md                 generated human-readable view of manifest.json
@@ -338,7 +342,7 @@ that agree across formats stay at the record level as before.
    frozen bytes (GP data changes every 2 hours), so the hashes become documentation rather
    than a check.
 3. Publish raw files on the permissive reading of "freely available". Not recommended under
-   CLAUDE.md.
+   the maintainer's decision policy.
 
 Recommendation: 1, with 2 as the fallback design if no answer comes.
 
@@ -515,5 +519,5 @@ The plan, in order (owner, 2026-10-09):
    on the fixed runner before any published claim is edited.
 5. Reply to SM-26 on issue #1; the issue stays open until the fixes ship.
 
-`CLAUDE.md` carries the standing rule ("Grader changes"): no change to a non-grading path without an adversarial
+The maintainer's decision policy carries the standing rule ("Grader changes"): no change to a non-grading path without an adversarial
 adapter and its twin.

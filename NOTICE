@@ -10,6 +10,11 @@ credit gpconf and cite the DOI above (see CITATION.cff).
 
 gpconf is a name of NEOGY LLC. Forks are welcome under a different name.
 
+Outside contribution. tests/adversarial/sm26.py, sm26_wrong2.py and
+sm26_wrong3.py are the work of SM-26, who contributed them in
+https://github.com/hneogy/gp-omm-conformance/issues/1 and licensed them under
+Apache-2.0, credited as SM-26 (DECISIONS.md, D-380). They are not NEOGY LLC's.
+
 Scope note. The Apache-2.0 licence in the LICENSE file covers the corpus's code,
 documentation, specification vectors, derived files and expected values. It
 does not cover, and the repository does not contain, raw data served by

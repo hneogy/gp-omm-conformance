@@ -1,6 +1,6 @@
 # kvn-syntax-variants
 
-CCSDS-legal KVN renderings of one record that CelesTrak never emits
+CCSDS-legal KVN renderings of one record that CelesTrak never emits, and one synthetic-derived file of day-366 and post-2038 epochs
 
 ## What it tests
 
@@ -8,7 +8,7 @@ CCSDS-legal KVN renderings of one record that CelesTrak never emits
 
 ## How to read a failure
 
-Six CCSDS-legal renderings of one record that CelesTrak never emits: day-of-year epoch with Z, bracketed units, comments and blank lines and odd whitespace with LF endings, an OMM 3.0 header with the optional TLE parameters omitted, signed integers and a lowercase exponent. Every variant must parse to the same orbital values as the base record. The naive adapter (tests/adapters/naive.py) fails four of the six: v02 (day-of-year epoch with Z), v03 (bracketed units), v04 (COMMENT lines and irregular whitespace) and v05 (optional keywords omitted); it passes v01 and v06.
+Six CCSDS-legal renderings of one record that CelesTrak never emits: day-of-year epoch with Z, bracketed units, comments and blank lines and odd whitespace with LF endings, an OMM 3.0 header with the optional TLE parameters omitted, signed integers and a lowercase exponent. Every variant must parse to the same orbital values as the base record. A seventh file, v08, is synthetic-derived: eight OMM messages in one file, as CelesTrak serves a group, each the base record's values under a five-digit specification id (99990-99997), five with the epoch on 31 December, day 366, of a leap year, two in the day-of-year form (D-384), and three at or past 2038-01-19T03:14:07, the last second a signed 32-bit time_t holds (D-385); each must parse to its own record, and every message in the file must be read. The naive adapter (tests/adapters/naive.py) fails five of the seven: v02 (day-of-year epoch with Z), v03 (bracketed units), v04 (COMMENT lines and irregular whitespace), v05 (optional keywords omitted) and v08 (its day-of-year epochs); it passes v01 and v06.
 
 ## Checks
 
@@ -26,6 +26,7 @@ Provides:
 - COMMENT and blank lines, irregular whitespace, TAB, LF endings
 - OMM 3.0 header with optional TLE parameters omitted
 - signed integers and lowercase exponent
+- eight synthetic-derived OMM messages (ids 99990-99997), the baseline values with a replaced EPOCH: five on 31 December, day 366, of a leap year (1960, 1996, 2000, 2024, 2056), two of them in the day-of-year form (D-384); three at 2038-01-19T03:14:07 and 03:14:08, the last second a signed 32-bit time_t holds and the next, and 2050-06-15 (D-385)
 
 Gaps (stated explicitly for this case):
 
@@ -49,5 +50,6 @@ Every file of this case ships with the repository; nothing is fetched.
 | `derived/kvn-variants/v04-comments-blank-lines-whitespace-LF.kvn` | stable | none: derived file shipped with the repository | 677 | generated 2026-09-21T00:50:18Z | `1cae8ec648cc8867…` |
 | `derived/kvn-variants/v05-omm-3.0-header-optional-keywords-omitted.kvn` | stable | none: derived file shipped with the repository | 728 | generated 2026-09-21T00:50:18Z | `10e02122947f3c7d…` |
 | `derived/kvn-variants/v06-signed-integers-lowercase-exponent.kvn` | stable | none: derived file shipped with the repository | 733 | generated 2026-09-21T00:50:18Z | `dff1329a94b59bc8…` |
+| `derived/kvn-variants/v08-synthetic-epochs.kvn` | stable | none: derived file shipped with the repository | 5820 | generated 2026-11-05T13:57:24Z | `3e39e9dabea6b4ae…` |
 
 Expected values: `fixtures/kvn-syntax-variants/expected.json` (schema_version 1.0).

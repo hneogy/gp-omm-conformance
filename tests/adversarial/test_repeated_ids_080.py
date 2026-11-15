@@ -13,6 +13,8 @@ import shutil
 import sys
 import tempfile
 import unittest
+
+from tests.timebudget import budget  # noqa: E402  (D-468)
 from decimal import Decimal
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -99,7 +101,7 @@ class AnIdTheInputHoldsTwiceIsComparedCopyByCopy(unittest.TestCase):
         text = FIRST.splitlines()[0] + "\r\n" + "\r\n".join(rows) + "\r\n"
         start = time.monotonic()
         item = self.values_item(records_as(lambda rs: rs[::-1]), text)
-        self.assertLess(time.monotonic() - start, 20)
+        self.assertLess(time.monotonic() - start, budget(20))
         self.assertEqual(item.status, "pass", item.detail[:300])
 
     def test_copies_within_tolerance_of_each_other_are_paired_exactly(self):

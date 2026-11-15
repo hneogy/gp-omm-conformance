@@ -124,3 +124,127 @@ def scrub_audit_md(text):
                 out.insert(i + 2, f"_Public copy: {word} of the Appendix A table withheld; see the notice under Appendix A._")
                 break
     return "\n".join(out) + "\n", removed
+
+
+# D-462 (the owner's ruling of 2026-11-10): the exported decision log names neither the coding assistant nor its
+# instructions file. The private log is append-only and never altered; only the exported copy changes, with a note.
+# D-545 (the owner's ruling of 2026-11-14): the public tree never spells those names either, so the rewording table,
+# its fallbacks, the names the export refuses to publish and the cases that prove each check are in the private names
+# file, which stays in the private repository and which the export refuses. Without it (in the public tree) the
+# rewording and the name check do not run; the export says so.
+PRIVATE_NAMES_PATH = os.path.join(ROOT, "tools", "private-names.json")
+
+
+def _private_names():
+    if not os.path.exists(PRIVATE_NAMES_PATH):
+        return None
+    with open(PRIVATE_NAMES_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+PRIVATE_NAMES = _private_names()
+
+
+def named_in(text):
+    """-> the private names `text` holds, case-insensitive (D-545); [] when it holds none or the file is absent."""
+    import re
+    if not PRIVATE_NAMES:
+        return []
+    return [m.group(0) for w in PRIVATE_NAMES["names"] for m in re.finditer(w, text, re.I)]
+
+
+DECISIONS_NOTE = ("*Public copy: the coding assistant's name and its instructions file, which stays in the maintainer's private "
+                  "repository, are reworded here (D-462), and passages about unreported findings and private correspondence "
+                  "are shortened (D-542); the private original is intact.*")
+
+# D-542 (the owner's ruling of 2026-11-14): passages in entries since 0.8.0 that spell out unreported findings (against
+# D-134) or private correspondence are shortened in the exported copy. This file is exported, so it never holds the
+# passages themselves: each is found inside its own entry from a neutral head to the first tail after it, and replaced
+# only if its SHA-256 is the one below. A passage missing or changed stops the export.
+_PRIVATE = [
+    # (entry, head, tail, SHA-256 of the passage from head through tail, the replacement)
+    ("D-388", "confirms written bundling permission ", "Dr. Kelso.",
+     "50eba8e74d6547c17f081c08c4db24b51265f99462da1be9069b21281d53ee17",
+     "confirms written bundling permission, which is asked for separately."),
+    ("D-388", "confirms Dr. Kelso's ", "written permission",
+     "0e25669efd814d0ee90dc6412724b63cab58b00e389afd6ee812b88e07fee254",
+     "confirms written bundling permission, asked for separately"),
+    ("D-474", "§2 0.9.0 ships without Vallado's files, ", "later",
+     "a0a8e1aa2b554157cb52c81368f4a8bc8ad6d1ed503e15c1403ae7a35fec21e6",
+     "§2 0.9.0 ships without Vallado's files, the bundling permission is asked for separately"),
+    ("D-497", "- Still failing in both modes: ", "on 8 Nov.",
+     "cee1be692792e4b1e17e5f517e403737aa2d26b652287ecb01d2704a20302898",
+     "- Still failing in both modes: two unreported minor observations (8 Nov), recorded privately (the Batch G "
+     "convention, D-134)."),
+    ("D-498", "The six still failing are the ", "observations.",
+     "356b3f9791783f59983fc739c0680f8752bbe7b5ff10a7d5347b9279f58921a3",
+     "The six still failing are the two unreported observations (D-134)."),
+    ("D-499", "and keep the ", "for after 0.9.0.",
+     "5827e2e2ab93b7a222ef69a23b5b2738d5f81c04a9e50bd5588a90dce2982c0b",
+     "and keep two unreported findings in the ledger, for after 0.9.0."),
+    ("D-499", "It lists satkit's ", "again on 0.24.3.",
+     "586d1531386b025ff2869e29fb88995974b058e29f4ba0369157868badb88571",
+     "It lists two satkit observations, seen on 0.24.2 (8 Nov) and again on 0.24.3; their specifics stay private "
+     "until reported (D-134)."),
+    ("D-502", "the owner's permission request ", "covers both",
+     "cd3f919ce813b7a8d32902e54c2cac50f53bdc53f2a80226e0c71dcd2030003c",
+     "the owner's permission request covers both"),
+    ("D-502", "D-388 keeps ", "the owner's to send.",
+     "9ff1b865846f3714d499e0992bf6b43e4f37b23a5e6b9f5aae63169cbc94f59e",
+     "D-388 keeps `SGP4-VER.TLE` and `tcppver.out` private until the owner confirms written bundling permission. The "
+     "request for that permission covers both files; its text stays private. No file or other entry changes."),
+    ("D-541", "  - D-502 describes ", "says;",
+     "eb5687e656367b401df6c666090ef9425c950fe80b7619490c68fa5f46f26e53",
+     "  - D-502 describes private correspondence;"),
+]
+
+
+class PrivatePassageError(ValueError):
+    """A D-542 passage is missing or not the one recorded: the export stops rather than publish it."""
+
+
+def scrub_private_passages(text):
+    """-> (text, n): the D-542 passages shortened. An entry the text does not hold is skipped (a short test text);
+    an entry already shortened is left alone; any other mismatch raises PrivatePassageError."""
+    import hashlib
+    n = 0
+    for entry, head, tail, digest, new in _PRIVATE:
+        start = text.find(f"**{entry} (")
+        if start < 0:
+            continue
+        end = text.find("\n**D-", start + 1)
+        end = len(text) if end < 0 else end
+        body = text[start:end]
+        if body.count(head) != 1:
+            if new in body:
+                continue
+            raise PrivatePassageError(f"{entry}: the passage's head is not found exactly once")
+        i = body.find(head)
+        j = body.find(tail, i + len(head))
+        span = body[i:j + len(tail)] if j >= 0 else ""
+        if j < 0 or hashlib.sha256(span.encode("utf-8")).hexdigest() != digest:
+            if new in body:
+                continue
+            raise PrivatePassageError(f"{entry}: the passage is not the one D-542 records")
+        text = text[:start] + body[:i] + new + body[j + len(tail):] + text[end:]
+        n += 1
+    return text, n
+
+
+def scrub_decisions_md(text):
+    """-> (text, n): the exported DECISIONS.md with every mention of the coding assistant reworded (D-462) and the
+    D-542 passages shortened, and a note under the title; n counts the replacements. The rewording table and its
+    fallbacks are in the private names file (D-545); without it only the D-542 passages are shortened."""
+    import re
+    text, n = scrub_private_passages(text)
+    if PRIVATE_NAMES:
+        for old, new in PRIVATE_NAMES["decisions_table"]:
+            n += text.count(old)
+            text = text.replace(old, new)
+        for pattern, new in PRIVATE_NAMES["decisions_fallback"]:
+            text, k = re.subn(pattern, new, text)
+            n += k
+    if n:
+        title, _, rest = text.partition("\n")
+        text = title + "\n\n" + DECISIONS_NOTE + "\n" + rest
+    return text, n

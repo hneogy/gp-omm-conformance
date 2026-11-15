@@ -4,6 +4,7 @@
 |---|---|
 | tested at | tag v2.6, `c9fa018f2f16bff6dd1c5c51befb8188fe5a5e35` ("Version 2.6", 2026-08-16) |
 | licence of the application | GPL-2.0 |
+| hooks (D-451) | answers: parse; unsupported: alpha5_decode, alpha5_encode, two_digit_year, parse_epoch, parse_catalog_id, propagate, write (no --vectors-cmd or --write-cmd program) |
 | what the harness compiles against | Gpredict's internal SGP4 module, the six files of `src/sgpsdp/` it needs, compiled on their own without the GTK application; the harness calls the module's `Get_Next_Tle_Set()` directly. `stubs/` stands in for GLib, whose only use by the module is `g_ascii_strtod`, mapped to the C library's `strtod`: in the C locale, which the harness never changes, the two are the same conversion |
 | toolchain as run | Apple clang 21 (`cc -std=gnu99`), macOS; built and run on 2026-09-24. Gpredict's own SGP4 test, `test-001.c`, built the same way, ran and exited 0 |
 | published result | 6 of 17 cases failed, with the runner of 2026-09-24 (corpus D-133); round two, with this harness on v0.4.0's eighteen cases: 7 of 18 (corpus D-178, unchanged under D-183) |

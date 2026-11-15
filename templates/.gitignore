@@ -1,0 +1,5 @@
+# build outputs of the templates, never committed
+rust/target/
+rust/Cargo.lock
+csharp/bin/
+csharp/obj/

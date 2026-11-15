@@ -28,6 +28,11 @@ file names and their hashes there, for the job that publishes them.
 Exit 0: both files match. Exit 1: a file differs from the maintainer's. Exit 2: refused, the input is not a release
 (a missing or extra file, a missing, repeated or malformed hash line, a tag that does not name the version).
 
+The pytest plugin (D-480) goes the same way: PYPROJECT is pytest-gpconf/pyproject.toml, whose [project] name picks
+its tag, pytest-gpconf-v<version>, its files, pytest_gpconf-<version>-py3-none-any.whl and
+pytest_gpconf-<version>.tar.gz, and its message's subject, "pytest-gpconf <version>"; the workflow that checks it is
+.github/workflows/publish-pytest-gpconf.yml. A pyproject of any other name is refused.
+
 Standard library only; Python 3.9 and later.
 """
 import argparse
@@ -39,6 +44,18 @@ import sys
 SUBJECT = "gp-omm-conformance {version}"
 SENTENCE = ("SHA-256 of the maintainer's build of this tag (tools/stage_package.py, SOURCE_DATE_EPOCH {epoch}). "
             ".github/workflows/publish.yml builds the tag again and publishes nothing unless its files have these hashes.")
+# The two projects this check knows, by their [project] name (D-480): gpconf, and the pytest plugin built from
+# pytest-gpconf/ and published by its own workflow. Each names its files' stem, its tag's prefix, its message's subject
+# and sentence; gpconf's are the ones above, unchanged. Any other name is refused.
+PROJECTS = {
+    "gpconf": {"stem": "gpconf", "tag": "v", "subject": SUBJECT, "sentence": SENTENCE},
+    "pytest-gpconf": {
+        "stem": "pytest_gpconf", "tag": "pytest-gpconf-v", "subject": "pytest-gpconf {version}",
+        "sentence": ("SHA-256 of the maintainer's build of this tag (python -m build of pytest-gpconf/ in an archive of "
+                     "the tagged commit, SOURCE_DATE_EPOCH {epoch}). .github/workflows/publish-pytest-gpconf.yml builds "
+                     "the tag again and publishes nothing unless its files have these hashes."),
+    },
+}
 HASH_RUN = re.compile(r"[0-9A-Fa-f]{64}")
 HASH_LINE = re.compile(r"^([0-9a-f]{64})  ([^\s/\\]+)$")
 # A version as setuptools writes it into the file names, so that the names below are the ones the build makes; and
@@ -50,18 +67,28 @@ class Refused(Exception):
     """The input is not a release: the check is not made."""
 
 
-def version_by_pattern(text):
-    """[project].version read without a TOML parser (Python 3.9 and 3.10, which have no tomllib): the first
-    `version = "..."` or `version = '...'` line of the [project] table, a comment after it allowed; None if there is
+def key_by_pattern(text, key):
+    """[project].<key> read without a TOML parser (Python 3.9 and 3.10, which have no tomllib): the first
+    `<key> = "..."` or `<key> = '...'` line of the [project] table, a comment after it allowed; None if there is
     none."""
     table = re.search(r"(?ms)^\[project\][ \t]*(?:#[^\n]*)?$(.*?)(?=^[ \t]*\[|\Z)", text)
-    m = table and re.search(r"""(?m)^[ \t]*version[ \t]*=[ \t]*(?:"([^"\n\\]*)"|'([^'\n]*)')[ \t]*(?:#[^\n]*)?$""", table.group(1))
+    m = table and re.search(r"""(?m)^[ \t]*""" + re.escape(key) + r"""[ \t]*=[ \t]*(?:"([^"\n\\]*)"|'([^'\n]*)')[ \t]*(?:#[^\n]*)?$""", table.group(1))
     return (m.group(1) if m.group(1) is not None else m.group(2)) if m else None
+
+
+def version_by_pattern(text):
+    """[project].version read without a TOML parser (see key_by_pattern)."""
+    return key_by_pattern(text, "version")
 
 
 def version_of(pyproject):
     """The version in pyproject.toml's [project] table, which names the tag and the two files: read with tomllib where
     Python has it (3.11 and later), as the build reads it, and by version_by_pattern() before that."""
+    return project_of(pyproject)[1]
+
+
+def project_of(pyproject):
+    """-> (the [project] name, one of PROJECTS, and the version), read as version_of() describes; refused otherwise."""
     try:
         with open(pyproject, encoding="utf-8") as f:
             text = f.read()
@@ -70,28 +97,33 @@ def version_of(pyproject):
     try:
         import tomllib
     except ImportError:
-        version = version_by_pattern(text)
+        name, version = key_by_pattern(text, "name"), version_by_pattern(text)
     else:
         try:
             project = tomllib.loads(text).get("project")
         except tomllib.TOMLDecodeError as e:
             raise Refused(f"{pyproject} is not TOML: {e}") from None
+        name = project.get("name") if isinstance(project, dict) else None
         version = project.get("version") if isinstance(project, dict) else None
     if not isinstance(version, str):
         raise Refused(f"no [project] version in {pyproject}")
     if not VERSION.fullmatch(version):
         raise Refused(f"the version in {pyproject}, {version!r}, is not one this check knows the file names of")
-    return version
+    if name not in PROJECTS:
+        raise Refused(f"the [project] name in {pyproject}, {name!r}, is none of the projects this check knows: "
+                      f"{', '.join(PROJECTS)}")
+    return name, version
 
 
-def release_files(version):
-    """-> (the wheel's name, the sdist's name) for a version."""
-    return f"gpconf-{version}-py3-none-any.whl", f"gpconf-{version}.tar.gz"
+def release_files(version, project="gpconf"):
+    """-> (the wheel's name, the sdist's name) for a version of a project."""
+    stem = PROJECTS[project]["stem"]
+    return f"{stem}-{version}-py3-none-any.whl", f"{stem}-{version}.tar.gz"
 
 
-def dist_files(dist, version):
+def dist_files(dist, version, project="gpconf"):
     """Refuse a DIST that holds anything but the release's two files, each a plain file -> their names."""
-    names = release_files(version)
+    names = release_files(version, project)
     if not os.path.isdir(dist):
         raise Refused(f"{dist} is not a folder")
     present = sorted(os.listdir(dist))
@@ -112,17 +144,18 @@ def sha256_file(path):
     return h.hexdigest()
 
 
-def message(dist, version, epoch=None):
+def message(dist, version, epoch=None, project="gpconf"):
     """-> the annotated tag's message for the two files in dist."""
-    names = dist_files(dist, version)
-    lines = [SUBJECT.format(version=version), "", SENTENCE.format(epoch=epoch if epoch is not None else "as recorded")]
+    names = dist_files(dist, version, project)
+    p = PROJECTS[project]
+    lines = [p["subject"].format(version=version), "", p["sentence"].format(epoch=epoch if epoch is not None else "as recorded")]
     lines += [f"{sha256_file(os.path.join(dist, n))}  {n}" for n in names]
     return "\n".join(lines) + "\n"
 
 
-def parse_message(text, version):
+def parse_message(text, version, project="gpconf"):
     """A tag message -> {file name: SHA-256}, refusing anything but one well-formed line for each of the two files."""
-    names = release_files(version)
+    names = release_files(version, project)
     found = {}
     for number, line in enumerate(text.split("\n"), 1):
         if not HASH_RUN.search(line):
@@ -143,12 +176,13 @@ def parse_message(text, version):
     return found
 
 
-def check(dist, version, tag, text):
+def check(dist, version, tag, text, project="gpconf"):
     """-> (names, {name: built SHA-256}, {name: the message's SHA-256}); refused when the input is not a release."""
-    if tag != "v" + version:
-        raise Refused(f"the tag is {tag!r}, and this tree's version, {version}, is tagged v{version}")
-    want = parse_message(text, version)
-    names = dist_files(dist, version)
+    prefix = PROJECTS[project]["tag"]
+    if tag != prefix + version:
+        raise Refused(f"the tag is {tag!r}, and this tree's version, {version}, is tagged {prefix}{version}")
+    want = parse_message(text, version, project)
+    names = dist_files(dist, version, project)
     got = {n: sha256_file(os.path.join(dist, n)) for n in names}
     return names, got, want
 
@@ -169,16 +203,16 @@ def main(argv=None):
     c.add_argument("--summary", metavar="FILE", help="append a summary of the check here (Markdown)")
     a = ap.parse_args(argv)
     try:
-        version = version_of(a.pyproject)
+        project, version = project_of(a.pyproject)
         if a.command == "message":
-            sys.stdout.write(message(a.dist, version, a.epoch))
+            sys.stdout.write(message(a.dist, version, a.epoch, project))
             return 0
         try:
             with open(a.message, encoding="utf-8", newline="") as f:   # a CR stays a CR, and fails the line it is on
                 text = f.read()
         except (OSError, UnicodeDecodeError) as e:
             raise Refused(f"cannot read the tag message {a.message}: {e}") from None
-        names, got, want = check(a.dist, version, a.tag, text)
+        names, got, want = check(a.dist, version, a.tag, text, project)
     except Refused as e:
         print(f"release_hashes: refused: {e}", file=sys.stderr)
         return 2

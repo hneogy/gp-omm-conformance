@@ -706,7 +706,7 @@ authority extends to people who obtain the data from CelesTrak, and none says it
    CelesTrak specifically. These are the weakest case for redistribution and are the **only**
    source of real 9-digit catalog numbers. They stay gitignored (DECISIONS D-002, D-018).
 4. Resolving this needs one of: a statement from CelesTrak (contacting Dr. Kelso is an
-   owner-only action under CLAUDE.md), or the owner's own legal judgment. Options that avoid
+   owner-only action under the maintainer's decision policy), or the owner's own legal judgment. Options that avoid
    the question are listed in PLAN.md "Phase 2 amendments".
 
 Building the fixtures continues; publishing them does not, until the owner decides.

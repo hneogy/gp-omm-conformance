@@ -69,7 +69,8 @@ TOP = ["pyproject.toml", "README.md", "LICENSE", "NOTICE"]
 # docs/ADAPTERS.md is the adapter guide the README, the runner and a case document all name (D-302): it ships with
 # the package, byte for byte as the export holds it, so that the hash check below covers it like every other file.
 CORPUS = ["manifest.json", "tools/fetchlist.json", "fixtures/*/expected.json", "fixtures/*/case.md", "derived/**/*", "vectors/**/*",
-          "recorded/celestrak-no-gp-data-found.txt", "recorded/celestrak-no-gp-data-found.provenance.json", "docs/ADAPTERS.md"]
+          "recorded/celestrak-no-gp-data-found.txt", "recorded/celestrak-no-gp-data-found.provenance.json", "docs/ADAPTERS.md",
+          "harnesses/vallado/reference-manifest.json"]   # the corpus's own manifest of Vallado's files, not the files (D-388, D-401)
 BUNDLED = "gpconf/corpus"
 RAW = re.compile(r"(^|/)fixtures/[^/]+/raw(/|$)")
 SDIST_OTHER = re.compile(r"^(PKG-INFO|setup\.cfg|pyproject\.toml|README\.md|LICENSE|NOTICE|gpconf\.egg-info/.+)$")

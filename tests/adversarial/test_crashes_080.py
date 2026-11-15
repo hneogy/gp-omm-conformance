@@ -19,6 +19,8 @@ import tempfile
 import time
 import unittest
 
+from tests.timebudget import budget  # noqa: E402  (D-468)
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 
@@ -253,7 +255,7 @@ class ACommandThatCrashesOrRunsOutOfTimeRefusesNothing(unittest.TestCase):
     def test_a_timeout_on_a_cut_corrupt_input_fails_it(self):
         start = time.monotonic()
         r = run(self.command("hang", timeout=3), cases=["corrupt-input"])
-        self.assertLess(time.monotonic() - start, 60)
+        self.assertLess(time.monotonic() - start, budget(60))
         self.assertEqual(failing(r), ["corrupt-input"])
         self.assertTrue(all("did not finish within 3 seconds" in d for d in self.details(r, "corrupt-input")),
                         self.details(r, "corrupt-input"))

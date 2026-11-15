@@ -312,7 +312,7 @@ def _column_int(f):
 
 def _object_id(field, written):
     """The designator as an OBJECT_ID; on lines a writer wrote one that is not a designator ("UNKNOWN ") is none,
-    since the writer contract reports the designator and never fails it (D-336)."""
+    since the writer contract decides the designator (D-336; from D-383 and D-387 an unreadable one is another value)."""
     try:
         return intl_designator_to_object_id(field)
     except ValueError:

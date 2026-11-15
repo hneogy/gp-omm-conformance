@@ -21,6 +21,8 @@ import sys
 import tempfile
 import time
 import unittest
+
+from tests.timebudget import budget  # noqa: E402  (D-468)
 from decimal import Decimal
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -237,7 +239,7 @@ class AHistoryIsGradedRecordByRecord(unittest.TestCase):
             with self.subTest(check=name):
                 t = time.monotonic()
                 check()
-                self.assertLess(time.monotonic() - t, 3.0, name)
+                self.assertLess(time.monotonic() - t, budget(3.0), name)
         self.assertEqual([(i.check, i.status) for i in res.items],
                          [("two-digit-year-pivot", "pass"), ("tle-values-match-omm-within-tle-precision", "pass"),
                           ("object-name-unknown-literal", "fail")], [i.detail for i in res.items])
