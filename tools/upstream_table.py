@@ -90,7 +90,7 @@ def parse_bullet(line, group):
     library, rest = m.group(1).strip(), m.group(2)
     # "Private notes: ..." runs to the end of the bullet and is never read, stored or rendered (D-560)
     rest = re.split(r"\s*Private notes:", rest, maxsplit=1)[0]
-    status_given = re.search(r";?\s*status: (closed \(maintainers said planned\)|merged; the project has no releases)\.?", rest)
+    status_given = re.search(r";?\s*status: (closed \(maintainers said planned\)|merged; the project has no releases|another user's report, open upstream)\.?", rest)
     if status_given:
         rest = rest.replace(status_given.group(0), ".")
     # an explicit proof ("proof: [text](url)") and a link the ledger itself marks as inferred
@@ -119,7 +119,8 @@ def parse_bullet(line, group):
     merged = re.search(r"merged (\d{4}-\d{2}-\d{2})", tail)
     by = re.search(r"fixed by ([^,;]+(?:, (?:the maintainer|a contributor))?)", tail)
     given_status = {"closed (maintainers said planned)": "closed-planned",
-                    "merged; the project has no releases": "merged-no-releases"}.get(status_given.group(1)) if status_given else None
+                    "merged; the project has no releases": "merged-no-releases",
+                    "another user's report, open upstream": "open-others-report"}.get(status_given.group(1)) if status_given else None
     if given_status:
         status = given_status
     elif group in ("my-pr", "maintainer"):
@@ -201,7 +202,8 @@ def link(url, text=None):
 # the allowed statuses (D-552, D-560); anything else is a gap in `rows` and a mismatch in the check
 STATUS_WORD = {"released": "released", "merged": "merged, not yet released",
                "merged-no-releases": "merged; the project has no releases", "open": "open", "declined": "declined",
-               "closed-planned": "closed (maintainers said planned)"}
+               "closed-planned": "closed (maintainers said planned)",
+               "open-others-report": "another user's report, open upstream"}   # counted apart from this project's open reports
 
 
 def render(table):
@@ -217,8 +219,11 @@ def render(table):
             proof += f"; {r['inferred']['label']}: {link(r['inferred']['url'], r['inferred']['text'])}"
         out.append(f"| {r['library']} | {finding} | {STATUS_WORD[r['status']]} | {proof} | {rel} | {date} |")
     s = table["summary"]
+    theirs = sum(1 for r in table["rows"] if r["status"] == "open-others-report")   # another user's report, counted apart
+    others = (f"{s['other']} that ended another way" if not theirs else
+              f"{s['other']} others: {s['other'] - theirs} that ended another way and {theirs} another user's report" + ("s" if theirs > 1 else ""))
     out += ["", f"{s['total']} findings: {s['my-pr']} fixed by this project's pull requests, {s['maintainer']} by maintainers and "
-            f"contributors after this project's report, {s['open']} still open, {s['other']} that ended another way; as of {table['as_of']}."]
+            f"contributors after this project's report, {s['open']} still open, {others}; as of {table['as_of']}."]
     return "\n".join(out) + "\n"
 
 
