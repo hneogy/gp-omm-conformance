@@ -163,6 +163,27 @@ class TheCheckFindsEachMismatch(unittest.TestCase):
         p = run_check(self.rows, answers(**{"/repos/o/libfive/issues/3": {"state": "closed", "created_at": "2026-10-05T10:00:00Z"}}))
         self.assertTrue(any("libfive" in x and "marked open" in x for x in p), p)
 
+    def test_another_users_report_whose_issue_is_closed_fails(self):
+        """The owner's ruling of 2026-11-16: a row under "another user's report, open upstream" is checked as open is."""
+        r = ut.parse_bullet(f"- **libeight**: a field refused; involvement: reported by another user. [#12]({G}/o/libeight/issues/12); "
+                            "status: another user's report, open upstream.", "other")
+        ut.complete([r], {})
+        self.assertEqual((r["status"], ut.STATUS_WORD[r["status"]]), ("open-others-report", "another user's report, open upstream"))
+        is_open = {"/repos/o/libeight/issues/12": {"state": "open", "created_at": "2026-08-20T10:00:00Z", "closed_at": None}}
+        self.assertEqual(run_check(self.rows + [r], answers(**is_open)), [])
+        closed = {"/repos/o/libeight/issues/12": {"state": "closed", "created_at": "2026-08-20T10:00:00Z", "closed_at": "2026-11-16T00:00:00Z"}}
+        p = run_check(self.rows + [r], answers(**closed))
+        self.assertTrue(any("libeight" in x and "marked open" in x for x in p), p)
+
+    def test_the_summary_names_another_users_report_apart(self):
+        rows = [{"status": "open-others-report"}, {"status": "declined"}, {"status": "closed-planned"}]
+        md = ut.render({"as_of": "x", "summary": {"total": 3, "my-pr": 0, "maintainer": 0, "open": 0, "other": 3}, "rows": []})
+        self.assertIn("3 that ended another way;", md)
+        md = ut.render({"as_of": "x", "summary": {"total": 3, "my-pr": 0, "maintainer": 0, "open": 0, "other": 3},
+                        "rows": [dict(library="l", finding="f", issues=[], prs=[], commits=[], release=None, proof=None, date=None,
+                                      inferred=None, proof_given=None, involvement=None, opt_in=None, **x) for x in rows]})
+        self.assertIn("3 others: 2 that ended another way and 1 another user's report;", md)
+
     def test_a_declined_row_whose_issue_is_open(self):
         p = run_check(self.rows, answers(**{"/repos/o/libsix/issues/7": {"state": "open", "created_at": "2026-09-27T10:00:00Z"}}))
         self.assertTrue(any("libsix" in x and "marked declined" in x for x in p), p)

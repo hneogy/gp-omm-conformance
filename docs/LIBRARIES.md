@@ -87,9 +87,9 @@ The full list, not highlights (D-552), the same table as the README's: generated
 | sgp4 crate (Rust) | a type 4 (SGP4-XP) TLE propagated as plain SGP4 | open | [#23](https://github.com/neuromorphicsystems/sgp4/issues/23) |  | 2026-11-10 (reported) |
 | PyEphem | a letter in the epoch field accepted and the epoch read up to it | declined | [#297](https://github.com/brandon-rhodes/pyephem/issues/297) |  | 2026-10-01 (closed) |
 | SatDump | Alpha-5 sets dropped silently; SupGP CSV rejected whole on master | closed (maintainers said planned) | [#1221](https://github.com/SatDump/SatDump/issues/1221) |  | 2026-09-27 (closed) |
-| python-sgp4 | nine-digit NORAD_CAT_ID refused by the OMM reader (reported by another user; gpconf tested the fix) | open | [#169](https://github.com/brandon-rhodes/python-sgp4/issues/169) |  | 2026-08-20 (reported) |
+| python-sgp4 | nine-digit NORAD_CAT_ID refused by the OMM reader (reported by another user; gpconf tested the fix) | another user's report, open upstream | [#169](https://github.com/brandon-rhodes/python-sgp4/issues/169) |  | 2026-08-20 (reported) |
 
-38 findings: 10 fixed by this project's pull requests, 13 by maintainers and contributors after this project's report, 12 still open, 3 that ended another way; as of 2026-11-16.
+38 findings: 10 fixed by this project's pull requests, 13 by maintainers and contributors after this project's report, 12 still open, 3 others: 2 that ended another way and 1 another user's report; as of 2026-11-16.
 <!-- upstream-table:end -->
 
 ## Known gaps

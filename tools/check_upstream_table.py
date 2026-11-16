@@ -220,7 +220,7 @@ def check(table, src, record=None):
                 problems.append(f"{name}: marked merged, not yet released, but {tag} already holds {proof}")
         if st == "released" and not (r.get("release") and r["release"].get("url")):
             problems.append(f"{name}: marked released, with no release link")
-        if st == "open" and proof and pf.get("state") != "open":
+        if st in ("open", "open-others-report") and proof and pf.get("state") != "open":
             problems.append(f"{name}: marked open, but {proof} is {pf.get('state')} on GitHub")
         if st in ("declined", "closed-planned") and proof and pf.get("state") != "closed":
             problems.append(f"{name}: marked {st}, but {proof} is {pf.get('state')} on GitHub")
