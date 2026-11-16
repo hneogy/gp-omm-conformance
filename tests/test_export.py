@@ -27,6 +27,19 @@ HOME_PATH = re.compile(r"(?<!\w)/(?:U[s]ers|h[o]me|r[o]ot)/[^\s\"'`<>)\]]*"
 ALLOWED_HOME_PATHS = {("tests/test_install_layout.py", "/U" + "sers/u")}
 
 
+def lines_removed(private):
+    """How many lines the shortened passages take out of the private log: each passage's own line breaks less its
+    replacement's, computed from the passages themselves (the owner's ruling of 2026-11-16, option A: exact, not loosened)."""
+    from public_scrub import _PRIVATE
+    n = 0
+    for entry, head, tail, digest, new in _PRIVATE:
+        start = private.find(f"**{entry} (")
+        i = private.find(head, start)
+        span = private[i:private.find(tail, i + len(head)) + len(tail)]
+        n += span.count("\n") - new.count("\n")
+    return n
+
+
 class ExportGuardTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -118,7 +131,10 @@ class ExportGuardTests(unittest.TestCase):
         self.assertEqual(named_in(text), [])
         private = open(os.path.join(ROOT, "DECISIONS.md"), encoding="utf-8").read()
         self.assertIn(PRIVATE["private_marker"], private)   # the original is untouched
-        self.assertEqual(len(text.splitlines()), len(private.splitlines()) + 2)   # the note and its blank line, nothing more
+        # the note and its blank line, less exactly the lines the shortened passages took up (D-274's reply, the owner's
+        # ruling of 2026-11-16), nothing more
+        self.assertEqual(len(text.splitlines()), len(private.splitlines()) + 2 - lines_removed(private))
+        self.assertEqual(lines_removed(private), 18)   # pinned: D-274's reply block; any other line count is a change
         for given, want in PRIVATE["decisions_cases"]:
             self.assertEqual(scrub_decisions_md(given)[0].splitlines()[-1], want)
 
@@ -165,9 +181,12 @@ class ExportGuardTests(unittest.TestCase):
             out, n = scrub_private_passages(private)
             self.assertEqual(n, len(_PRIVATE))
             before, after = private.splitlines(), out.splitlines()
-            self.assertEqual(len(before), len(after))
-            changed = [k for k, (a, b) in enumerate(zip(before, after)) if a != b]
-            self.assertEqual(len(changed), len({e for e, *_ in _PRIVATE}) + 1)   # one line per entry, D-499's two lines
+            self.assertEqual(len(before) - lines_removed(private), len(after))   # exactly the passages' own lines go
+            self.assertEqual(len(before) - len(after), 18)   # pinned, not computed from the replacements
+            import collections
+            changed = list((collections.Counter(after) - collections.Counter(before)).elements())
+            # one line per entry; D-499's two lines; D-274's title line and its reading's line (2026-11-16)
+            self.assertEqual(len(changed), len({e for e, *_ in _PRIVATE}) + 2)
             for entry, head, tail, digest, new in _PRIVATE:
                 i = private.find(head, private.find(f"**{entry} ("))
                 span = private[i:private.find(tail, i + len(head)) + len(tail)]
