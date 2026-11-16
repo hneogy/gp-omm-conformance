@@ -3,8 +3,8 @@
  "as_of": "2026-11-14",
  "summary": {
   "my-pr": 10,
-  "maintainer": 12,
-  "open": 13,
+  "maintainer": 13,
+  "open": 12,
   "other": 3,
   "total": 38
  },
@@ -548,6 +548,28 @@
    "date_is": "merged"
   },
   {
+   "group": "maintainer",
+   "library": "Vallado's SGP4 code (CelesTrak's repository)",
+   "finding": "`twoline2rv` reads an Alpha-5 field beginning with I or O as a five-digit number",
+   "issues": [
+    "https://github.com/CelesTrak/fundamentals-of-astrodynamics/issues/172"
+   ],
+   "prs": [
+    "https://github.com/CelesTrak/fundamentals-of-astrodynamics/pull/175"
+   ],
+   "commits": [],
+   "status": "merged",
+   "release": null,
+   "merged": "2026-11-15",
+   "by": "the maintainer",
+   "involvement": null,
+   "proof_given": null,
+   "inferred": null,
+   "proof": "https://github.com/CelesTrak/fundamentals-of-astrodynamics/pull/175",
+   "date": "2026-11-15",
+   "date_is": "merged"
+  },
+  {
    "group": "open",
    "library": "PyEphem",
    "finding": "Alpha-5 fields read as catalog number 0, silently",
@@ -625,26 +647,6 @@
    "inferred": null,
    "proof": "https://github.com/brandon-rhodes/python-sgp4/issues/179",
    "date": "2026-11-08",
-   "date_is": "reported"
-  },
-  {
-   "group": "open",
-   "library": "Vallado's SGP4 code (CelesTrak's repository)",
-   "finding": "`twoline2rv` reads an Alpha-5 field beginning with I or O as a five-digit number",
-   "issues": [
-    "https://github.com/CelesTrak/fundamentals-of-astrodynamics/issues/172"
-   ],
-   "prs": [],
-   "commits": [],
-   "status": "open",
-   "release": null,
-   "merged": null,
-   "by": null,
-   "involvement": null,
-   "proof_given": null,
-   "inferred": null,
-   "proof": "https://github.com/CelesTrak/fundamentals-of-astrodynamics/issues/172",
-   "date": "2026-10-02",
    "date_is": "reported"
   },
   {

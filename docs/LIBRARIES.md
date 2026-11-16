@@ -72,11 +72,11 @@ The full list, not highlights (D-552), the same table as the README's: generated
 | Basilisk | `satOmm2elem` skipped CelesTrak's KVN (`MEAN_ELEMENT_THEORY = SGP/SGP4`) | merged, not yet released | [PR #1675](https://github.com/AVSLab/basilisk/pull/1675) |  | 2026-11-11 (merged) |
 | satkit | `TLE.from_lines` dropped a whole file for one bad set | released | [PR #287](https://github.com/ssmichael1/satkit/pull/287) | [v0.24.3](https://github.com/ssmichael1/satkit/releases/tag/v0.24.3) | 2026-11-11 (merged) |
 | SGPKit (swift-sgp4) | `TLEDecoder.decodeCollection` dropped every TLE in a file for one bad set; found by gpconf (`corrupt-input`) | released | [PR #17](https://github.com/csanfilippo/swift-sgp4/pull/17) | [4.5.0](https://github.com/csanfilippo/swift-sgp4/releases/tag/4.5.0) | 2026-11-14 (merged) |
+| Vallado's SGP4 code (CelesTrak's repository) | `twoline2rv` reads an Alpha-5 field beginning with I or O as a five-digit number | merged, not yet released | [PR #175](https://github.com/CelesTrak/fundamentals-of-astrodynamics/pull/175) |  | 2026-11-15 (merged) |
 | PyEphem | Alpha-5 fields read as catalog number 0, silently | open | [#296](https://github.com/brandon-rhodes/pyephem/issues/296) |  | 2026-09-25 (reported) |
 | python-sgp4 | `Satrec.sgp4init` writes I and O as Alpha-5 letters | open | [#173](https://github.com/brandon-rhodes/python-sgp4/issues/173) |  | 2026-10-10 (reported) |
 | python-sgp4 | a type 4 (SGP4-XP) TLE propagated as plain SGP4 | open | [#178](https://github.com/brandon-rhodes/python-sgp4/issues/178) |  | 2026-11-08 (reported) |
 | python-sgp4 | line 2's catalog number not checked against line 1's | open | [#179](https://github.com/brandon-rhodes/python-sgp4/issues/179) |  | 2026-11-08 (reported) |
-| Vallado's SGP4 code (CelesTrak's repository) | `twoline2rv` reads an Alpha-5 field beginning with I or O as a five-digit number | open | [#172](https://github.com/CelesTrak/fundamentals-of-astrodynamics/issues/172) |  | 2026-10-02 (reported) |
 | Vallado's SGP4 code (CelesTrak's repository) | `twoline2rv` returns the element set and revolution numbers with the checksum digit attached | open | [#174](https://github.com/CelesTrak/fundamentals-of-astrodynamics/issues/174) |  | 2026-10-08 (reported) |
 | strf | no range check in `number_to_alpha5` above 339999 | open | [#88](https://github.com/cbassa/strf/issues/88) |  | 2026-09-23 (reported) |
 | libsgp4 | epoch rounded by 8 µs; `FromCsv` reads stray microseconds | open | [#45](https://github.com/dnwrnr/sgp4/issues/45) |  | 2026-09-24 (reported) |
@@ -89,7 +89,7 @@ The full list, not highlights (D-552), the same table as the README's: generated
 | SatDump | Alpha-5 sets dropped silently; SupGP CSV rejected whole on master | closed (maintainers said planned) | [#1221](https://github.com/SatDump/SatDump/issues/1221) |  | 2026-09-27 (closed) |
 | python-sgp4 | nine-digit NORAD_CAT_ID refused by the OMM reader (reported by another user; gpconf tested the fix) | open | [#169](https://github.com/brandon-rhodes/python-sgp4/issues/169) |  | 2026-08-20 (reported) |
 
-38 findings: 10 fixed by this project's pull requests, 12 by maintainers and contributors after this project's report, 13 still open, 3 that ended another way; as of 2026-11-14.
+38 findings: 10 fixed by this project's pull requests, 13 by maintainers and contributors after this project's report, 12 still open, 3 that ended another way; as of 2026-11-14.
 <!-- upstream-table:end -->
 
 ## Known gaps
