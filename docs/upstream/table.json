@@ -1,6 +1,6 @@
 {
  "generated_by": "tools/upstream_table.py (D-552, D-553)",
- "as_of": "2026-11-14",
+ "as_of": "2026-11-16",
  "summary": {
   "my-pr": 10,
   "maintainer": 13,
@@ -549,7 +549,7 @@
   },
   {
    "group": "maintainer",
-   "library": "Vallado's SGP4 code (CelesTrak's repository)",
+   "library": "CelesTrak's fundamentals-of-astrodynamics (SGP4 reference code)",
    "finding": "`twoline2rv` reads an Alpha-5 field beginning with I or O as a five-digit number",
    "issues": [
     "https://github.com/CelesTrak/fundamentals-of-astrodynamics/issues/172"
@@ -651,7 +651,7 @@
   },
   {
    "group": "open",
-   "library": "Vallado's SGP4 code (CelesTrak's repository)",
+   "library": "CelesTrak's fundamentals-of-astrodynamics (SGP4 reference code)",
    "finding": "`twoline2rv` returns the element set and revolution numbers with the checksum digit attached",
    "issues": [
     "https://github.com/CelesTrak/fundamentals-of-astrodynamics/issues/174"
@@ -756,7 +756,7 @@
   {
    "group": "open",
    "library": "SatelliteKit",
-   "finding": "deep-space Lyddane check on `abs(inclination)` where Vallado's is signed",
+   "finding": "deep-space Lyddane check on `abs(inclination)` where the reference SGP4 code's is signed",
    "issues": [
     "https://github.com/gavineadie/SatelliteKit/issues/24"
    ],
