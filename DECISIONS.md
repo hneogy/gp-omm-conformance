@@ -3401,3 +3401,21 @@ hash-matched passage. The released 0.8.0 changelog line stays as written (D-262)
 - **The generated files catch up (the owner's option A):** writing them again also writes 0.10.0's revised
   `tle-omits-six-digit-objects` description, already in `tools/cases.py` and `tools/make_manifest.py` at the freeze but
   never written into `manifest.json`, `MANIFEST.md` and five cases' `case.md`; they now match their sources.
+
+**D-611 (2026-11-17) — The type-check ratchet's three findings on 0.10.0 mended; the ratchet joins the freeze gate; the
+upstream table brought current (the owner's rulings of 2026-11-16 and 2026-11-17).** 0.10.0's ci, which runs the ratchet
+on every push (D-571), failed on public main 5108f42: mypy 2.4.0 found 48 errors where the ceiling is 45. Run locally at
+the same version and target (Python 3.12), cd8bd5d counts 45, as its nightly did, and 5108f42 48: the 3 came from 0.10.0's
+own code in `gpconf/runner.py`. The ceiling is unchanged.
+- **Two lists annotated** (`t4_bad`, `t0_bad`, the type-4 case's): no behaviour change.
+- **The corrupt-input item no longer reads a record it cannot be sure of.** On one input path, the JSON array cut before
+  its closing bracket, no record is the corrupt one; there the item's details were never read, since "built a record" is
+  said only of the corrupt record, but only a text match kept it so. Now that case stops loudly, as an internal error,
+  instead of reading a missing record. No user-visible bug; a test drives that path, through both a whole-file refusal
+  and a silent partial load, and finds no internal error and no details.
+- **The freeze gate runs the same ratchet**, the ci step's command at mypy 2.4.0 for Python 3.12, and fails above 45; the
+  step was proven on a planted 46th error, then the plant removed.
+- **The upstream table:** every row checked live again (38 rows, 0 mismatches, 0 not checked); no row's status, proof,
+  release or date moves, and no new GP/OMM/TLE item was reported since the last refresh. The recorded GitHub facts are
+  current again (CelesTrak/fundamentals-of-astrodynamics #172 closed on 2026-11-15, which they still had open, and the
+  fields the newer check records), and the table's date is the day it was checked, 2026-11-17.
