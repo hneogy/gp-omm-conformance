@@ -3314,8 +3314,13 @@ class Runner:
                     status, text = "fail", text + garbage_extra
                 if corrupt["norad_cat_id"] in surplus:
                     status, text = "fail", text + "; " + twice(corrupt["norad_cat_id"])
+            # "built a record" is said only of the corrupt record (above), so it exists here; said otherwise, fail loudly
+            # rather than read a missing record (D-611)
+            built = status == "fail" and "built a record" in text
+            if built and corrupt is None:
+                raise RuntimeError("internal: a record built from the corrupt input, but no corrupt record named (D-611)")
             res.add(check, status, path, text, counts=counts, cause="parser" if status == "not-exercised" else None,
-                    details=full_diffs.get(corrupt["norad_cat_id"]) if status == "fail" and "built a record" in text else None)
+                    details=full_diffs.get(corrupt["norad_cat_id"]) if built and corrupt is not None else None)
             # the valid records around it, graded where the parser returns them from the unedited file
             valid = [r for r in want if r["role"] == "valid"]
             graded = [r for r in valid if r["norad_cat_id"] not in unread]
@@ -3669,7 +3674,9 @@ class Runner:
             # an error code on every step passes only with no position beside it: codes stamped on SGP4's positions
             # still hand the positions over (the review of D-409)
             return "stamped" if any(position(a.get("r")) for a in answers) else "codes"
-        t4_bad, t4_ok, t0_bad, t0_stats, skipped = [], [], [], [], []
+        t4_bad: list[str] = []   # annotated for mypy's ratchet (D-611); the lists hold item texts
+        t0_bad: list[str] = []
+        t4_ok, t0_stats, skipped = [], [], []
         t4_sets, t0_sets, t0_other = [], [], []   # the files each list's entries belong to (D-593)
         for fmt, f4, f0 in pairs:
             # the twin first: a command's propagate op is probed with the first set it is sent, and a probe with the
