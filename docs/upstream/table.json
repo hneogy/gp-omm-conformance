@@ -27,6 +27,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/brandon-rhodes/python-sgp4/pull/172",
    "date": "2026-09-24",
    "date_is": "merged"
@@ -52,6 +53,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/shashwatak/satellite-js/pull/186",
    "date": "2026-09-26",
    "date_is": "merged"
@@ -75,6 +77,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/shashwatak/satellite-js/pull/187",
    "date": "2026-09-28",
    "date_is": "merged"
@@ -100,6 +103,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/shashwatak/satellite-js/pull/197",
    "date": "2026-10-14",
    "date_is": "merged"
@@ -125,6 +129,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/csete/gpredict/pull/428",
    "date": "2026-10-08",
    "date_is": "merged"
@@ -150,6 +155,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/bilawalsidhu/gods-eye-view/pull/767",
    "date": "2026-10-17",
    "date_is": "merged"
@@ -175,6 +181,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/davidcalhoun/tle.js/pull/64",
    "date": "2026-10-19",
    "date_is": "merged"
@@ -200,6 +207,7 @@
    "involvement": "reproduced and fix verified with gpconf",
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/parzivail/SGP.NET/pull/47",
    "date": "2026-11-10",
    "date_is": "merged"
@@ -225,6 +233,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/parzivail/SGP.NET/pull/49",
    "date": "2026-11-10",
    "date_is": "merged"
@@ -247,6 +256,10 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": {
+    "name": "on_error",
+    "scope": "one bad set"
+   },
    "proof": "https://github.com/AVSLab/basilisk/pull/1677",
    "date": "2026-11-12",
    "date_is": "merged"
@@ -272,6 +285,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/ATTron/astroz/pull/99",
    "date": "2026-09-26",
    "date_is": "merged"
@@ -297,6 +311,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/ATTron/astroz/pull/99",
    "date": "2026-09-26",
    "date_is": "merged"
@@ -322,6 +337,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/ATTron/astroz/pull/104",
    "date": "2026-09-26",
    "date_is": "merged"
@@ -346,6 +362,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/dnwrnr/sgp4/pull/46",
    "date": "2026-09-26",
    "date_is": "merged"
@@ -371,6 +388,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/csete/gpredict/pull/430",
    "date": "2026-10-10",
    "date_is": "merged"
@@ -396,6 +414,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/bilawalsidhu/gods-eye-view/pull/936",
    "date": "2026-10-12",
    "date_is": "merged"
@@ -426,6 +445,7 @@
     "text": "a416eea",
     "url": "https://github.com/csanfilippo/swift-sgp4/commit/a416eea220625c55a1a9cff5549643c395359ef0"
    },
+   "opt_in": null,
    "proof": "https://github.com/csanfilippo/swift-sgp4/releases/tag/4.1.0",
    "date": "2026-10-11",
    "date_is": "released"
@@ -448,6 +468,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/anttikuosmanen-rgb/satvis/pull/85",
    "date": "2026-11-10",
    "date_is": "merged"
@@ -464,13 +485,18 @@
    "status": "released",
    "release": {
     "name": "v1.0.4",
-    "url": "https://github.com/akhenakh/sgp4/releases/tag/v1.0.4"
+    "url": "https://github.com/akhenakh/sgp4/releases/tag/v1.0.4",
+    "not_counted": {
+     "tag": "v1.0.3",
+     "why": "re-tagged to the fixed commit after Go's checksum database had stored the unfixed v1.0.3"
+    }
    },
    "merged": null,
    "by": "Fabrice Aneche (akhenakh), the maintainer",
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/akhenakh/sgp4/commit/44978c8e5c175200f792451dbf924514e8e59500",
    "date": "2026-11-10",
    "date_is": "merged"
@@ -493,6 +519,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/AVSLab/basilisk/pull/1675",
    "date": "2026-11-11",
    "date_is": "merged"
@@ -518,6 +545,10 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": {
+    "name": "on_error",
+    "scope": null
+   },
    "proof": "https://github.com/ssmichael1/satkit/pull/287",
    "date": "2026-11-11",
    "date_is": "merged"
@@ -543,6 +574,10 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": {
+    "name": "decodeValidSets",
+    "scope": null
+   },
    "proof": "https://github.com/csanfilippo/swift-sgp4/pull/17",
    "date": "2026-11-14",
    "date_is": "merged"
@@ -565,6 +600,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/CelesTrak/fundamentals-of-astrodynamics/pull/175",
    "date": "2026-11-15",
    "date_is": "merged"
@@ -585,6 +621,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/brandon-rhodes/pyephem/issues/296",
    "date": "2026-09-25",
    "date_is": "reported"
@@ -605,6 +642,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/brandon-rhodes/python-sgp4/issues/173",
    "date": "2026-10-10",
    "date_is": "reported"
@@ -625,6 +663,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/brandon-rhodes/python-sgp4/issues/178",
    "date": "2026-11-08",
    "date_is": "reported"
@@ -645,6 +684,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/brandon-rhodes/python-sgp4/issues/179",
    "date": "2026-11-08",
    "date_is": "reported"
@@ -665,6 +705,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/CelesTrak/fundamentals-of-astrodynamics/issues/174",
    "date": "2026-10-08",
    "date_is": "reported"
@@ -687,6 +728,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/cbassa/strf/issues/88",
    "date": "2026-09-23",
    "date_is": "reported"
@@ -707,6 +749,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/dnwrnr/sgp4/issues/45",
    "date": "2026-09-24",
    "date_is": "reported"
@@ -727,6 +770,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/davidcalhoun/tle.js/issues/63",
    "date": "2026-09-28",
    "date_is": "reported"
@@ -749,6 +793,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/gavineadie/SatelliteKit/issues/16",
    "date": "2026-10-08",
    "date_is": "reported"
@@ -769,6 +814,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/gavineadie/SatelliteKit/issues/24",
    "date": "2026-11-09",
    "date_is": "reported"
@@ -789,6 +835,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/duncaneddy/brahe/issues/620",
    "date": "2026-11-10",
    "date_is": "reported"
@@ -809,6 +856,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/neuromorphicsystems/sgp4/issues/23",
    "date": "2026-11-10",
    "date_is": "reported"
@@ -829,6 +877,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/brandon-rhodes/pyephem/issues/297",
    "date": "2026-10-01",
    "date_is": "closed"
@@ -849,6 +898,7 @@
    "involvement": null,
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/SatDump/SatDump/issues/1221",
    "date": "2026-09-27",
    "date_is": "closed"
@@ -869,6 +919,7 @@
    "involvement": "reported by another user; gpconf tested the fix",
    "proof_given": null,
    "inferred": null,
+   "opt_in": null,
    "proof": "https://github.com/brandon-rhodes/python-sgp4/issues/169",
    "date": "2026-08-20",
    "date_is": "reported"

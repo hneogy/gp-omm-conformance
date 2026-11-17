@@ -125,10 +125,13 @@ class LoadSource(unittest.TestCase):
             self.assert_file_fails(*self.load(SUPGP, src))
 
     def test_the_http_200_answer_with_no_records_recorded_stays_the_empty_answer(self):
-        # D-514's ruling 2 and D-517: CelesTrak's no-data text under HTTP 200, alone or with one line end
-        for data in (GP, SUPGP, GP + b"\n", GP + b"\r\n"):
-            for src in ({"format": "tle", "http_status": 200, "record_count": 0, "sha256": "0" * 64},
-                        {"format": "tle", "sha256": "0" * 64}):
+        # D-514's ruling 2 and D-517: CelesTrak's no-data text under HTTP 200, alone or with one line end. Each text
+        # under its own provider's URL: a source with no provider URL takes neither (D-562, the owner's ruling of 14 Nov)
+        gp_url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=x&FORMAT=TLE"
+        sup_url = "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=x&FORMAT=TLE"
+        for data, url in ((GP, gp_url), (SUPGP, sup_url), (GP + b"\n", gp_url), (GP + b"\r\n", gp_url)):
+            for src in ({"format": "tle", "http_status": 200, "record_count": 0, "sha256": "0" * 64, "url": url},
+                        {"format": "tle", "sha256": "0" * 64, "url": url}):
                 with self.subTest(data=data, status=src.get("http_status")):
                     state, res = self.load(data, src)
                     self.assertEqual(state, "empty-404")
@@ -201,7 +204,9 @@ class TheFetch(unittest.TestCase):
         self.assertIsNone(self.fetch.why_unexpected(sup, 404, SUPGP))
         for entry, body in ((gp, SUPGP), (sup, GP), (gp, GP + b"\n"), (gp, GP + b"\r\n"), (gp, b" " + GP), (sup, SUPGP + b"\n\n")):
             with self.subTest(url=entry["url"], body=body):
-                self.assertEqual(self.fetch.why_unexpected(entry, 404, body), "HTTP 404")
+                why = self.fetch.why_unexpected(entry, 404, body)
+                self.assertTrue(why.startswith("HTTP 404 as expected, but its body"), why)   # D-563
+                self.assertIn(f"({len(body):,} bytes)", why)
 
     def test_the_runner_and_the_fetch_share_one_definition(self):
         from gpconf import fetch as gfetch, runner

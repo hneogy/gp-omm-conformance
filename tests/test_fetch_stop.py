@@ -162,7 +162,10 @@ class WhatStopsTheRun(_Fetch):
     def test_a_404_with_another_body_stops_the_run_where_a_404_is_expected(self):
         code, out, err, calls = self.go({**GOOD, T["url"]: (404, HTML)})
         self.assertEqual((code, calls), ("exit 2", [A["url"], T["url"]]))
-        self.assertEqual(self.meta("t.tle.unexpected")["unexpected"], "HTTP 404")
+        self.assertEqual(self.meta("t.tle.unexpected")["unexpected"],
+                         f"HTTP 404 as expected, but its body ({len(HTML):,} bytes) is not the provider's no-data text the "
+                         "corpus records")   # D-563: the body was unexpected, not the status
+        self.assertIn("HTTP 404 as expected, but its body", err)
         self.assertNotIn("refused this address", err)                  # not a refusal: a report to the corpus
         self.assertIn(fetch.ISSUES_URL, err)
         self.assertIn("only with --force, two hours or more from now", err)
@@ -201,7 +204,8 @@ class WhatStopsTheRun(_Fetch):
         self.assertIsNone(fetch.why_unexpected({"expect_status": 404}, 404, b"No SupGP data found"))
         # D-540: only the exact text is the expected answer; the runner reads nothing else in that file's place as the
         # empty answer, so a padded one stops the fetch (D-228 had taken it with its CRLF)
-        self.assertEqual(fetch.why_unexpected({"expect_status": 404}, 404, b"No SupGP data found\r\n"), "HTTP 404")
+        self.assertEqual(fetch.why_unexpected({"expect_status": 404}, 404, b"No SupGP data found\r\n"),
+                         "HTTP 404 as expected, but its body (21 bytes) is not the provider's no-data text the corpus records")   # D-563: the stop says the body was unexpected, not only the status
 
     def test_no_answer_at_all_exits_3_and_keeps_nothing(self):
         code, out, err, calls = self.go({**GOOD, A["url"]: "no answer"})
@@ -217,6 +221,12 @@ class NotAskedAgain(_Fetch):
         self.assertEqual((code, calls), (0, [T["url"], B["url"]]), out + err)
         self.assertIn("answered HTTP 404 0.2 h ago: kept as a.csv.unexpected, not requested again (--force applies after two hours)", out)
         self.assertTrue(os.path.exists(self.raw("b.csv")))
+
+    def test_a_later_run_says_the_body_not_the_status_was_unexpected(self):
+        # D-570 (the blind reader's F1): the plan line carries the clearer text, not "answered HTTP 404"
+        self.go({**GOOD, T["url"]: (404, HTML)})
+        code, out, err, calls = self.go({A["url"]: GOOD[A["url"]], B["url"]: GOOD[B["url"]]}, minutes=10)
+        self.assertIn("answered HTTP 404 as expected, but its body", out)
 
     def test_force_asks_again_only_after_two_hours_and_a_good_answer_clears_the_kept_one(self):
         self.go({**GOOD, A["url"]: (500, b"<html>Internal Server Error</html>")})

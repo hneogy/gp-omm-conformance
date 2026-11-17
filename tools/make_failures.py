@@ -36,14 +36,7 @@ reports as not exercised for every parser, on a file the fetch brings only on re
 The Alpha-5 letters I and O that python-sgp4's compiled `Satrec` writes, in the writer case below, are reported as
 [brandon-rhodes/python-sgp4#173](https://github.com/brandon-rhodes/python-sgp4/issues/173) (filed 2026-10-10, D-307).
 
-The reference and naive columns were measured on the 0.9.0 re-measure's fresh fetch (2026-11-11) with the corpus's ten
-launch-window captures added. A new user's fetch cannot obtain those files (D-229). Both figures, of 21 cases:
-- with the ten captures, as in the table below: the reference passes 17 and the naive adapter fails 14;
-- from a fresh fetch alone: the reference passes 16 and the naive adapter fails 13.
-The one case between them is `supgp-celestrak-classification-c`. It reads only launch-window captures, so without them
-it reports `not-available`: a pass for the reference, a fail for naive. The python-sgp4 column comes from the
-re-measure's own run on the fresh fetch alone, without the captures (D-483): it fails 7 of 21, and that case shows
-`not-available` there.
+{basis}
 python-sgp4 propagating an element set of ephemeris type 4 as SGP4, in `ephemeris-type-4-refused` below, is reported as
 [brandon-rhodes/python-sgp4#178](https://github.com/brandon-rhodes/python-sgp4/issues/178) (filed 2026-11-08).
 """
@@ -77,13 +70,83 @@ def cut(detail, n=600):
     return detail[:n - len(keep)] + " …" + keep
 
 
-def render(reps, generated_at):
+# What python-sgp4 2.27 was seen to answer for c9 on other platforms (D-593): the page names the one its own run saw and
+# these, recorded once, never assumed for the platform at hand
+C9_SEEN = {"NaN": "ubuntu-24.04 (Linux x86_64) with Python 3.12.16", "0.0": "macOS arm64 with Python 3.14.6"}
+C9 = "c9-letter-in-epoch-first.tle"
+
+
+def platform_line(reps):
+    """The platform the reports were measured on, read from the reports themselves (D-593): their own platform field
+    and the python-sgp4 version the sgp4 preset found. Reports that disagree, or say nothing, are named as such."""
+    seen = {n: (r or {}).get("platform") for n, r in reps.items() if r}
+    plats = {(p or {}).get("system", "not recorded") + "; Python " + (p or {}).get("python", "not recorded") for p in seen.values()}
+    found = ((reps.get("sgp4") or {}).get("preset") or {}).get("found") or "not recorded"
+    if len(plats) == 1:
+        return f"Platform, as the reports record it: {plats.pop()}; python-sgp4 {found}."
+    return "Platform: the reports record different platforms: " + "; ".join(
+        f"{n}: {(p or {}).get('system', 'not recorded')} / Python {(p or {}).get('python', 'not recorded')}" for n, p in seen.items()) + "."
+
+
+def c9_answer(rep):
+    """What python-sgp4 answered for c9's bstar in this run, read from its own item: "NaN", "0.0", or None."""
+    for c in (rep or {}).get("results", []):
+        for it in c.get("items", []):
+            if C9 in (it.get("file") or "") and it.get("status") == "fail":
+                d = it.get("detail") or ""
+                if "bstar = nan" in d:
+                    return "NaN"
+                if "bstar = Decimal('0.0')" in d:
+                    return "0.0"
+    return None
+
+
+def basis(reps, export):
+    """The paragraph that says what the page was graded on, computed from the reports and the tree (D-593)."""
+    ref = {c["case"]: c["status"] for c in (reps.get("reference") or {}).get("results", [])}
+    captures_absent = ref.get("supgp-celestrak-classification-c") == "not-available"
+    def n(rep, *keys):
+        return sum((rep or {}).get("summary", {}).get(k, 0) for k in keys)
+    # the case count from the reference's report, not a fixed number (D-604). Fixed text, not read from the reports:
+    # "one run", the fetch and its date (the owner's ruled wording), C9_SEEN's other platform; the tree sentence
+    # follows `export`, and the captures sentence classification-c's status in the reference report (D-605)
+    cases = qty((reps.get("reference") or {}).get("summary", {}).get("cases", 0), "case")
+    figures = (f"the reference passes {n(reps.get('reference'), 'pass', 'pass-tolerance')}, the naive adapter fails "
+               f"{n(reps.get('naive'), 'fail')} and python-sgp4 fails {n(reps.get('sgp4'), 'fail')}")
+    tree = ("the public export, the corpus as published, which leaves out the SupGP expected values (D-049)" if export
+            else "the private tree, with the SupGP expected values")
+    out = [f"All three columns come from one run, on the platform named below the intro, graded on {tree}, from the 0.9.0 "
+           "re-measure's fresh fetch (2026-11-11)."]
+    if captures_absent:
+        out.append("The corpus's ten operator-sourced launch-window captures are excluded (D-002), as a new user's fetch "
+                   "cannot obtain them either (D-229), so these figures are fetch-only, and `supgp-celestrak-classification-c`, "
+                   "which reads only those captures, reports `not-available`, where with the captures it is a pass for the "
+                   f"reference and a fail for naive. Of {cases}, {figures}. With the ten captures, 0.9.0's recorded "
+                   "measurement (D-489, on the re-measure's fresh fetch with the ten captures copied in, not this run) was: the "
+                   "reference passes 17 and the naive adapter fails 14.")
+    else:
+        out.append(f"The reference and naive columns read the corpus's ten launch-window captures as well (D-229). Of "
+                   f"{cases}, {figures}.")
+    here = c9_answer(reps.get("sgp4"))
+    if here:
+        others = "; ".join(f"{v} on {w}" for v, w in C9_SEEN.items() if v != here)
+        out.append(f"python-sgp4's answer to one corrupt input differs by platform: for `{C9}` in `corrupt-input` it "
+                   f"returned bstar {here} in this run" + (f", and was seen to return {others} (D-593)" if others else " (D-593)")
+                   + "; the case fails either way.")
+    return " ".join(out)
+
+
+def render(reps, generated_at, platform=None, export=None):
     """The catalogue text from the three reports (any may be None). Failing details of value-carrying checks on
     SupGP-sourced files are withheld (D-049); structural details stay readable (D-118)."""
     ident = "; ".join(f"{n}: run {rep.get('generated_at', 'unknown time')} with gpconf {rep.get('gpconf')} on corpus {rep.get('corpus_version')} (parser {rep.get('parser')})"
                       for n, rep in reps.items() if rep)
-    md = [INTRO, f"Generated {generated_at} by `tools/make_failures.py` from the runner reports "
-          f"`tools/_out/report-<adapter>.json` — {ident}.", "",
+    if export is None:
+        export = os.path.exists(os.path.join(ROOT, "EXPORT-MANIFEST.txt"))
+    import textwrap
+    para = "\n".join(textwrap.wrap(basis(reps, export), 118, break_long_words=False, break_on_hyphens=False))
+    md = [INTRO.replace("{basis}", para), f"Generated {generated_at} by `tools/make_failures.py` from the runner reports "
+          f"`tools/_out/report-<adapter>.json` — {ident}.", ""] + ([platform, ""] if platform else []) + [
           "## Status by case", "", "| case | reference | naive | python-sgp4 |", "|---|---|---|---|"]
     cases = [r["case"] for r in reps["reference"]["results"]]
     by = {n: {r["case"]: r for r in rep["results"]} for n, rep in reps.items() if rep}
@@ -99,7 +162,20 @@ def render(reps, generated_at):
     for n, label in (("reference", "reference"), ("naive", "naive"), ("sgp4", "python-sgp4")):
         for g in (reps.get(n) or {}).get("gates", []):
             md.append(f"- **{label}**: {g['headline']}")
-    for n, label in (("naive", "Naive parser"), ("sgp4", "python-sgp4 2.27 through sgp4.omm / twoline2rv")):
+    naive = reps.get("naive")
+    if naive:
+        # The naive parser is the corpus's own control, wrong on purpose: one table, not item by item (the owner's
+        # ruling, D-571, D-573). The detail is one command away, and the page no longer reads as a library failing.
+        md += ["", "## Naive parser, the corpus's control: what failed", "",
+               "The naive parser is the corpus's own, wrong on purpose, to show that each case catches what it is built to catch. "
+               "Its item-by-item failures are in `python -m gpconf run --preset naive` (add `--case <case>` for one).", "",
+               "| case | failing items | checks that failed |", "|---|---|---|"]
+        for r in naive["results"]:
+            fails = [i for i in r["items"] if i["status"] == "fail"]
+            if fails:
+                checks = ", ".join(f"`{c}`" for c in dict.fromkeys(i["check"] for i in fails))
+                md.append(f"| `{r['case']}` | {len(fails)} | {checks} |")
+    for n, label in (("sgp4", "python-sgp4 2.27 through sgp4.omm / twoline2rv"),):
         rep = reps.get(n)
         if not rep:
             continue
@@ -140,7 +216,8 @@ def render(reps, generated_at):
 def main():
     import datetime as dt
     reps = {n: load(n) for n in ("reference", "naive", "sgp4")}
-    open(OUT, "w", encoding="utf-8").write(render(reps, dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")))
+    open(OUT, "w", encoding="utf-8").write(render(reps, dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                                  platform_line(reps)))
     print(f"wrote {OUT}")
 
 

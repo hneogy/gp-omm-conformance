@@ -259,7 +259,7 @@ def summary(fails, ok_text, n_ok, n_all, unit="record"):
     """The writer case's detail, as run_writer words it."""
     if not fails:
         return ok_text
-    return f"{n_ok} of {qty(n_all, unit)} correct; " + "; ".join(fails[:8]) + (" ..." if len(fails) > 8 else "")
+    return f"{n_ok} of {qty(n_all, unit)} correct; " + "; ".join(fails[:8]) + (f"; … and {len(fails) - 8} more" if len(fails) > 8 else "")
 
 
 class WriterCounts(unittest.TestCase):

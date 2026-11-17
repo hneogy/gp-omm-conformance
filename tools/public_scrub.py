@@ -198,6 +198,9 @@ _PRIVATE = [
      "  - D-502 describes private correspondence;"),
     # The owner's rulings of 2026-11-15 and 2026-11-16: CelesTrak's reply of 9 Oct 2026 is not reproduced, nor the
     # letter's quoted text or its summary.
+    ("D-340", '; the public text says "', 'with no name and no quote',
+     "f76aa570cf1a322117c8e9732e9f7ab4a079ef9d4b5c3bd176eb76b1e917a9f8",
+     '; the public text cites its source, with no name and no quote'),
     ("D-340", ' not catalogued objects (', 'October 2026); text only.**',
      "a17b22afefab35068b3cd200b402f54301351fc4b69420bb24ec38a2757d338d",
      " not catalogued objects (measured in the corpus's captures, D-274); text only.**"),

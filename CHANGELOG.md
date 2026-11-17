@@ -6,6 +6,114 @@ cases, or an additive protocol change; major: a changed `expected.json` schema; 
 before 1.0 and major from 1.0).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
+## [0.10.0]
+
+Fixes found by 0.9.0's own reviews (the blind pass on its late fix and blind pass D), including the known issue 0.9.0
+listed, and a check of the full upstream table against GitHub. Planned as 0.9.1; it is 0.10.0 because four entries
+below change what a check concludes, a minor bump under the versioning rule (D-333). Re-measured on 0.9.0's released
+corpus data, the 19 reports of the re-measure workflow (the presets and the libraries it runs) keep every one
+of their 399 case verdicts; the libraries measured outside that workflow were not re-run (D-579).
+
+### Changes that can move your result
+
+In `tle-omits-six-digit-objects`, CelesTrak's no-data TLE answer beside an OMM set holding ids below 100000 is
+compared with that set only when the files' metadata shows they were fetched together, within 15 minutes of each
+other. Otherwise the two count checks are not-exercised, and the detail says the metadata does not show the TLE was
+fetched with the OMM set. This was 0.9.0's known issue: a correct parser failed there with a data folder fetched
+before 0.6.0 (D-543, D-561, D-564). Whether the set holds ids below 100000 is now read from the reference reader, not
+from the parser under test. A parser that reads a six-digit id as its last five digits therefore fails both count
+checks, where in 0.9.0 it was not-exercised beside the recorded answer.
+
+In the same case, a TLE file the runner refused before any parser read it (`unreadable`), or one the reference reader
+itself rejects, is not compared with the OMM set: the two count checks are not-exercised, and the case still fails on
+that file's own item (`source-readable`, or `reference-reader` for a file the reference reader rejects). Until now an unreadable file passed "TLE has 0 records", or failed beside ids
+below 100000. A parser's own parse error is graded as before (D-565, D-570).
+
+A source with no provider URL, a file shipped with the corpus, never reads either provider's no-data text as the
+empty answer; until now either text in its place did (D-562).
+
+A `.meta.json` whose `http_status` is present and not an integer (`"404"`, `404.0`, `true`) makes its file unread,
+reported as not-fetched with a message saying why. No gpconf fetch writes such a meta. Until now `404.0` was read as
+404, and `"404"` gave a self-contradicting message (D-567, D-570).
+
+### Added
+
+- The full upstream table: every finding reported upstream, generated from the maintainer's record, in the README and
+  `docs/LIBRARIES.md` (D-552, D-553). Its check against GitHub (`tools/check_upstream_table.py`, in CI on every change
+  and weekly) fails on anything it cannot read, and confirms:
+  - that every link resolves and every status matches GitHub;
+  - that a fix counts as this project's only when this project wrote the pull request that made it, and that no fix
+    credited to a maintainer or contributor is this project's;
+  - that a released row's release holds the fix and is the first version that does, read in version order over every
+    tag, since GitHub's tag list is not in version order. One row, by this project's ruling, names an earlier release it
+    does not count, with its reason shown (akhenakh/sgp4: v1.0.3 was re-tagged after Go's checksum database stored the
+    unfixed v1.0.3);
+  - that a fix shown only by its release notes links its report, closed;
+  - for a fix the maintainer's record marks as an opt-in, that the opt-in's name (at least four characters) appears as
+    a whole word in the upstream's own release notes or changelog at the release, or in the merged pull request or
+    commit (satkit's `on_error`, swift-sgp4's `decodeValidSets`, Basilisk's `on_error`); the table then says the fix is
+    an opt-in and the default behaviour is unchanged, as the record states. The check cannot find an opt-in the record
+    does not mark, nor confirm that the default behaviour is unchanged.
+
+  The table and an earlier form of its check were published on GitHub's main branch before this release (D-571); this
+  is the first release to carry them (D-583, D-585, D-586, D-593).
+
+### Changed
+
+- The fetch's stop message says when the status was the expected one but the body was not the provider's no-data
+  text, and the fetch plan's line takes the same text (D-563, D-570).
+- The type-check ratchet runs on every push, not only nightly; its bound is unchanged at 45 (D-572).
+- `docs/FAILURES.md`: the naive control's section is one table, case by case, with the full detail one command away
+  (`gpconf run --preset naive`) (D-573).
+- `docs/FAILURES.md` is graded on the public export from the fetch alone, on GitHub's ubuntu-24.04 runner with Python
+  3.12 and python-sgp4 2.27; the page prints the platform as its reports record it:
+  "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39; Python 3.12.16; python-sgp4 2.27". The corpus's ten operator-sourced launch-window captures are
+  excluded (D-002), so `supgp-celestrak-classification-c` shows not-available there, and the figures with the captures
+  are given as 0.9.0's recorded measurement. python-sgp4's answer to one corrupt input differs by platform (NaN on that
+  platform, 0.0 on macOS arm64 with Python 3.14.6), and the page says so (D-593).
+- A detail that lists only the first of its findings now says how many it leaves out ("… and N more", or "and N more"
+  after a bracketed list), and the JSON report's item carries every one of them as `details` (documented in the
+  results schema and `docs/ADAPTERS.md`). A detail that gives a total and a few examples ("N records …, e.g. …") is as
+  before; so is the TLE writer's column layout, which shows three fields and the total ("… (N fields)") and now also
+  carries `details`. The propagation details (Vallado's verification set, the TLE/OMM twins, the type-4 case) open
+  with every failing set, and name refused and unsupported sets apart from failing ones, so a cut list of steps cannot
+  hide one (D-593). The report also records the system and Python the run used, as `platform`. No status changes.
+- `tle-omits-six-digit-objects`' description says when the count checks are not-exercised. Text only: no expected
+  value changed (D-576).
+- The README says that records read in place of a recorded 404 answer are graded as records (blind pass D's S2).
+- The D-341 time-budget test no longer depends on the machine's speed; no threshold changed (D-574, D-578).
+- The README's GitHub Action example named `@v0.8.0` and the Dockerfile's usage lines `0.9.0`; both now name
+  this release, and a test holds every such example pin to the package version, so it cannot drift again (D-590).
+- The 70000-99999 block's wording cites the corpus's own measurement, "measured in the corpus's captures, D-274",
+  in `docs/RESEARCH.md`, the `supgp-celestrak-classification-c` case's gap and `MANIFEST.md`. Text only; no value moves
+  (D-610).
+
+### pytest-gpconf 0.1.0
+
+A session in which gpconf grades no case now fails, with one test, `gpconf[no-case-graded]`, carrying gpconf's
+message; `--gpconf-allow-ungraded` turns that off. New options pass through to `gpconf run`: `--gpconf-data`,
+`--gpconf-sgp4-ver`, `--gpconf-propagate`, `--gpconf-strict` and `--gpconf-tag`. The plugin stops with a clear
+message if the report lacks a field it reads. Under pytest-xdist each worker runs gpconf itself; the README says so
+(D-575).
+
+### Moved to the next release
+
+Planned for this release and moved to the next:
+- the 147 mutants that survived 0.9.0's mutation run and that its triage put in the must-fix group as "likely" rather
+  than sure, still to be read and, where needed, given tests (D-533);
+- five items from the same triage: the TLE/OMM consistency check comparing every copy of an id, not only the last;
+  the KVN reader taking `COMMENT` as a comment only before a space or the line's end; the corpus's TLE rendering
+  refusing a malformed OBJECT_ID instead of cutting it; dead code in the runner removed; and a redundant condition in
+  its source loader;
+- three notes of the reviewer of D-540: the fetch's import on the run path, the vacuous "ok" under HTTP 200, and the
+  `HTTP {status or 404}` wording.
+
+### Known issues
+
+Carried from 0.9.0 (D-526): the corrupt-input case's count of a number a parser returns twice, and the corpus's own
+TLE rendering of an OBJECT_ID with more than one hyphen or more than eight characters. pytest-gpconf: a gpconf that
+writes no report shows as a collection error, and a skip's location points into the plugin.
+
 ## [0.9.0] - 2026-11-14
 
 Mutation testing of the grading code before the release: the full run killed 74.2% of 3,412 mutants (879

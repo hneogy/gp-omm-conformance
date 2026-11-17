@@ -48,6 +48,56 @@ class Core(unittest.TestCase):
                 self.assertEqual(core.verdict({"case": "c", "status": status, "items": []}).outcome, want)
         self.assertIn("gpconf fetch", core.verdict({"case": "c", "status": "not-fetched", "items": []}).message)
 
+    def test_the_run_options_pass_through(self):
+        # D-575: --data and four more of gpconf run's options (the design's gaps 1 and 2)
+        run = core.GpconfRun(preset="reference", data="/d", sgp4_ver="/v", propagate=True, strict=True, tags=["a", "b"], cases=["c"])
+        argv = run.argv
+        for pair in (["--data", "/d"], ["--sgp4-ver", "/v"], ["--case", "c"], ["--tag", "a"], ["--tag", "b"]):
+            self.assertTrue(any(argv[i:i + 2] == pair for i in range(len(argv))), (pair, argv))
+        self.assertIn("--propagate", argv)
+        self.assertIn("--strict", argv)
+        self.assertNotIn("--data", core.GpconfRun(preset="reference").argv)
+
+    def with_root_on_path(self, run):
+        env_path = os.environ.get("PYTHONPATH", "")
+        os.environ["PYTHONPATH"] = ROOT + (os.pathsep + env_path if env_path else "")
+        try:
+            return run.results(), run.ungraded()
+        finally:
+            os.environ["PYTHONPATH"] = env_path
+            if not env_path:
+                del os.environ["PYTHONPATH"]
+
+    def test_a_session_that_grades_no_case_is_named(self):
+        # the owner's ruling 8a (D-571, D-575): gpconf exits 2 when it grades nothing, and the plugin says so
+        import tempfile
+        with tempfile.TemporaryDirectory() as empty:
+            run = core.GpconfRun(preset="reference", root=ROOT, data=empty, cases=["analyst-objects"])
+            got, why = self.with_root_on_path(run)
+        self.assertEqual(run.returncode, 2)
+        self.assertEqual(got["analyst-objects"].outcome, core.SKIP)
+        self.assertIn("no case was graded", why)
+
+    def test_a_graded_session_is_not_flagged(self):
+        run = core.GpconfRun(preset="reference", root=ROOT, cases=["alpha5-encoding-vectors"])
+        _, why = self.with_root_on_path(run)
+        self.assertIsNone(why)
+
+    def test_a_report_without_the_fields_the_plugin_reads_stops_it(self):
+        import json, tempfile
+        from unittest import mock
+        run = core.GpconfRun(preset="reference")
+
+        def fake(argv, capture_output=None, text=None):
+            out = argv[argv.index("--json") + 1]
+            with open(out, "w", encoding="utf-8") as f:
+                json.dump({"results": []}, f)
+            return __import__("subprocess").CompletedProcess(argv, 0, "", "")
+        with mock.patch("pytest_gpconf.core.subprocess.run", side_effect=fake):
+            with self.assertRaises(RuntimeError) as e:
+                run.results()
+        self.assertIn("lacks gpconf, corpus_version", str(e.exception))
+
     def test_exactly_one_parser(self):
         with self.assertRaises(ValueError):
             core.GpconfRun()

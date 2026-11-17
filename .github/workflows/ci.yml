@@ -44,9 +44,20 @@ jobs:
           python tools/ran_not_skipped.py tests.test_release_hashes.ThePublishingStep 4
       - run: python -m gpconf run --preset reference --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 --case corrupt-input
       - run: python -m gpconf run --preset naive --case alpha5-encoding-vectors --case alpha5-tle-derived --case kvn-syntax-variants --case tle-writer-alpha5 --case corrupt-input || test $? -eq 1
-      - name: Type check at mypy's default settings (D-320); the stricter check is a ratchet in nightly.yml
+      - name: Type check at mypy's default settings (D-320)
         if: matrix.python-version == '3.12'
         run: python -m mypy gpconf --ignore-missing-imports
+      # The stricter check, as a ratchet, on every push as well as in nightly.yml: public main's nightly failed it
+      # unseen from 2026-11-02 to 2026-11-14 (D-560), so drift now fails the push that causes it (the owner's ruling,
+      # D-571; the bound unchanged, and equal to nightly.yml's, which tests/test_ratchet.py holds)
+      - name: Type check with the bodies of unannotated functions checked, as a ratchet — the count may fall, never rise
+        if: matrix.python-version == '3.12'
+        run: |
+          python -m mypy gpconf --ignore-missing-imports --check-untyped-defs > mypy.txt || true
+          tail -1 mypy.txt
+          n=$(grep -c ": error:" mypy.txt || true)
+          echo "errors: $n (ceiling 45)"
+          test "$n" -le 45
       - name: Mutant fuzzing of the grader, smoke (D-287, D-320) — 500 one-bug parsers at a fixed seed; any survivor outside the reviewed allowlist fails the job. The 5,000 run is in nightly.yml and on every tag
         if: matrix.python-version == '3.12'
         run: python tools/mutant_fuzz.py --count 500 --seed 20261009 --jobs 4 --ci

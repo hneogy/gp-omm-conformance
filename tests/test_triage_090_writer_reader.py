@@ -38,6 +38,15 @@ def three_inputs():
     return picked
 
 
+def inputs(n):
+    """n frozen, representable writer inputs (D-606's edge tests of the layout list)."""
+    with open(os.path.join(ROOT, "fixtures", CASE, "expected.json"), encoding="utf-8") as f:
+        recs = json.load(f)["records"]
+    picked = [r for r in recs if r["provenance"] == "derived" and r["representable_in_tle"]][:n]
+    assert len(picked) == n, len(picked)
+    return picked
+
+
 def run_writer(parser, records):
     res = CaseResult(CASE, CASE)
     Runner(parser, root=ROOT, fetch_hints=False).run_writer(None, {"records": records}, res)

@@ -17,18 +17,22 @@ reports as not exercised for every parser, on a file the fetch brings only on re
 The Alpha-5 letters I and O that python-sgp4's compiled `Satrec` writes, in the writer case below, are reported as
 [brandon-rhodes/python-sgp4#173](https://github.com/brandon-rhodes/python-sgp4/issues/173) (filed 2026-10-10, D-307).
 
-The reference and naive columns were measured on the 0.9.0 re-measure's fresh fetch (2026-11-11) with the corpus's ten
-launch-window captures added. A new user's fetch cannot obtain those files (D-229). Both figures, of 21 cases:
-- with the ten captures, as in the table below: the reference passes 17 and the naive adapter fails 14;
-- from a fresh fetch alone: the reference passes 16 and the naive adapter fails 13.
-The one case between them is `supgp-celestrak-classification-c`. It reads only launch-window captures, so without them
-it reports `not-available`: a pass for the reference, a fail for naive. The python-sgp4 column comes from the
-re-measure's own run on the fresh fetch alone, without the captures (D-483): it fails 7 of 21, and that case shows
-`not-available` there.
+All three columns come from one run, on the platform named below the intro, graded on the public export, the corpus as
+published, which leaves out the SupGP expected values (D-049), from the 0.9.0 re-measure's fresh fetch (2026-11-11).
+The corpus's ten operator-sourced launch-window captures are excluded (D-002), as a new user's fetch cannot obtain
+them either (D-229), so these figures are fetch-only, and `supgp-celestrak-classification-c`, which reads only those
+captures, reports `not-available`, where with the captures it is a pass for the reference and a fail for naive. Of 21
+cases, the reference passes 16, the naive adapter fails 13 and python-sgp4 fails 7. With the ten captures, 0.9.0's
+recorded measurement (D-489, on the re-measure's fresh fetch with the ten captures copied in, not this run) was: the
+reference passes 17 and the naive adapter fails 14. python-sgp4's answer to one corrupt input differs by platform: for
+`c9-letter-in-epoch-first.tle` in `corrupt-input` it returned bstar NaN in this run, and was seen to return 0.0 on
+macOS arm64 with Python 3.14.6 (D-593); the case fails either way.
 python-sgp4 propagating an element set of ephemeris type 4 as SGP4, in `ephemeris-type-4-refused` below, is reported as
 [brandon-rhodes/python-sgp4#178](https://github.com/brandon-rhodes/python-sgp4/issues/178) (filed 2026-11-08).
 
-Generated 2026-11-11T16:35:03Z (0.9.0's code before its version bump, which is why the runs below say gpconf 0.8.0) by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-11-11T16:00:17Z with gpconf 0.8.0 on corpus 0.8.0 (parser preset reference); naive: run 2026-11-11T16:00:19Z with gpconf 0.8.0 on corpus 0.8.0 (parser preset naive (a demonstration of failure, not a parser anyone should use)); sgp4: run 2026-11-11T14:39:08Z with gpconf 0.8.0 on corpus 0.8.0 (parser preset sgp4 (python-sgp4 2.27, the version it was tested with)).
+Generated 2026-11-15T22:40:19Z by `tools/make_failures.py` from the runner reports `tools/_out/report-<adapter>.json` — reference: run 2026-11-15T22:40:14Z with gpconf 0.10.0 on corpus 0.10.0 (parser preset reference); naive: run 2026-11-15T22:40:15Z with gpconf 0.10.0 on corpus 0.10.0 (parser preset naive (a demonstration of failure, not a parser anyone should use)); sgp4: run 2026-11-15T22:40:19Z with gpconf 0.10.0 on corpus 0.10.0 (parser preset sgp4 (python-sgp4 2.27, the version it was tested with)).
+
+Platform, as the reports record it: Linux-7.0.0-1017-azure-x86_64-with-glibc2.39; Python 3.12.16; python-sgp4 2.27.
 
 ## Status by case
 
@@ -39,14 +43,14 @@ Generated 2026-11-11T16:35:03Z (0.9.0's code before its version bump, which is w
 | `six-digit-omm-saramago` | pass (0 failing) | fail (8 failing) | pass-tolerance (0 failing) |
 | `tle-omits-six-digit-objects` | pass (0 failing) | fail (1 failing) | pass-tolerance (0 failing) |
 | `analyst-objects` | pass (0 failing) | fail (12 failing) | fail (2 failing) |
-| `nine-digit-supgp-launch-nominals` | pass (0 failing) | fail (5 failing) | fail (2 failing) |
-| `supgp-celestrak-classification-c` | pass (0 failing) | fail (5 failing) | not-available (0 failing) |
+| `nine-digit-supgp-launch-nominals` | pass (0 failing) | fail (1 failing) | fail (2 failing) |
+| `supgp-celestrak-classification-c` | not-available (0 failing) | not-available (0 failing) | not-available (0 failing) |
 | `bstar-and-derivative-forms` | pass (0 failing) | pass (0 failing) | pass-tolerance (0 failing) |
 | `satcat-70000-cutoff` | not-exercised (0 failing) | not-exercised (0 failing) | not-exercised (0 failing) |
-| `csv-json-omitted-mandatory-fields` | pass (0 failing) | fail (7 failing) | pass (0 failing) |
-| `mean-motion-derivative-convention` | pass (0 failing) | fail (6 failing) | pass-tolerance (0 failing) |
-| `tle-vs-omm-precision-loss` | pass (0 failing) | fail (6 failing) | pass-tolerance (0 failing) |
-| `omm-xml-schema` | pass (0 failing) | fail (6 failing) | fail (2 failing) |
+| `csv-json-omitted-mandatory-fields` | pass (0 failing) | fail (5 failing) | pass (0 failing) |
+| `mean-motion-derivative-convention` | pass (0 failing) | fail (4 failing) | pass-tolerance (0 failing) |
+| `tle-vs-omm-precision-loss` | pass (0 failing) | fail (4 failing) | pass-tolerance (0 failing) |
+| `omm-xml-schema` | pass (0 failing) | fail (4 failing) | fail (2 failing) |
 | `alpha5-encoding-vectors` | pass (0 failing) | fail (4 failing) | fail (2 failing) |
 | `alpha5-tle-derived` | pass (0 failing) | fail (8 failing) | pass-tolerance (0 failing) |
 | `kvn-syntax-variants` | pass (0 failing) | fail (5 failing) | skip (0 failing) |
@@ -64,126 +68,25 @@ One headline per parser, read across existing cases from the record counts behin
 - **naive**: not in any format it reads: TLE (Alpha-5, as Space-Track serves them; rendered by the corpus from the CelesTrak CSV capture): 256 dropped (the parser raised on the file); CSV (as CelesTrak serves them); live capture fetched 2026-11-11, not the snapshot: every record dropped (the parser raised on the file) [snapshot 2026-09-21, 256 objects, ids 100404-100789, Alpha-5 fields beginning with A: a decoder wrong from J upward is not caught by this snapshot]
 - **python-sgp4**: reads this month's launches in every format it reads here: TLE (Alpha-5, as Space-Track serves them; rendered by the corpus from the CelesTrak CSV capture): 256 loaded, CSV (as CelesTrak serves them); live capture fetched 2026-11-11, 246 objects, not the snapshot: 246 loaded [snapshot 2026-09-21, 256 objects, ids 100404-100789, Alpha-5 fields beginning with A: a decoder wrong from J upward is not caught by this snapshot]
 
-## Naive parser: what failed and why
+## Naive parser, the corpus's control: what failed
 
-### `six-digit-omm-saramago`
+The naive parser is the corpus's own, wrong on purpose, to show that each case catches what it is built to catch. Its item-by-item failures are in `python -m gpconf run --preset naive` (add `--case <case>` for one).
 
-8 failing items, shown as 1 bullet: 7 carried a detail identical to one shown.
-
-- **parse** (saramago-first.csv): parser raised AssertionError: catalog number wider than five digits [8 items with this detail: saramago-first.csv, saramago-first.json, saramago-first.xml, saramago-first.kvn, saramago.csv, saramago.json, saramago.xml, saramago.kvn]
-
-### `tle-omits-six-digit-objects`
-
-1 failing item.
-
-- **parse** (last-30-days.csv): parser raised AssertionError: catalog number wider than five digits
-
-### `analyst-objects`
-
-12 failing items, shown as 4 bullets: 8 carried a detail identical to one shown.
-
-- **parse** (analyst.tle): parser raised ValueError: invalid literal for int() with base 10: '  ' [2 items with this detail: analyst.tle, analyst-81011-first.tle]
-- **parse** (analyst.csv): parser raised ValueError: invalid literal for int() with base 10: '' [5 items with this detail: analyst.csv, analyst.json, analyst.kvn, analyst-81011-first.csv, analyst-81011-first.json]
-- **parse** (analyst.xml): parser raised TypeError: 'NoneType' object is not subscriptable
-- **parse** (analyst-270449-first.csv): parser raised AssertionError: catalog number wider than five digits [4 items with this detail: analyst-270449-first.csv, analyst-270449-first.json, analyst-270449-first.xml, analyst-270449-first.kvn]
-
-### `nine-digit-supgp-launch-nominals`
-
-5 failing items, shown as 1 bullet: 4 carried a detail identical to one shown.
-
-- **parse** (starlink-38381-799501621.csv): parser raised AssertionError: catalog number wider than five digits [5 items with this detail: starlink-38381-799501621.csv, starlink-38381-799501621.json, starlink-38381-799501621.xml, starlink-38381-799501621.kvn, starlink-all.csv]
-
-### `supgp-celestrak-classification-c`
-
-5 failing items, shown as 2 bullets: 3 carried a detail identical to one shown.
-
-- **parse** (starlink-g15-27.csv): parser raised AssertionError:  [4 items with this detail: starlink-g15-27.csv, starlink-g15-27.json, starlink-g15-27.xml, starlink-g15-27.kvn]
-- **parse** (starlink-g15-27.tle): parser raised AssertionError: classification
-
-### `csv-json-omitted-mandatory-fields`
-
-7 failing items, shown as 2 bullets: 5 carried a detail identical to one shown.
-
-- **parse** (saramago-first.csv): parser raised AssertionError: catalog number wider than five digits [5 items with this detail: saramago-first.csv, saramago-first.json, last-30-days.csv, starlink-38381-799501621.csv, starlink-38381-799501621.json]
-- **parse** (analyst.csv): parser raised ValueError: invalid literal for int() with base 10: '' [2 items with this detail: analyst.csv, analyst.json]
-
-### `mean-motion-derivative-convention`
-
-6 failing items, shown as 4 bullets: 2 carried a detail identical to one shown.
-
-- **parse** (analyst.tle): parser raised ValueError: invalid literal for int() with base 10: '  ' [2 items with this detail: analyst.tle, analyst-81011-first.tle]
-- **parse** (analyst.csv): parser raised ValueError: invalid literal for int() with base 10: '' [2 items with this detail: analyst.csv, analyst-81011-first.csv]
-- **parse** (starlink-g15-27.tle): parser raised AssertionError: classification
-- **parse** (starlink-g15-27.csv): parser raised AssertionError: 
-
-### `tle-vs-omm-precision-loss`
-
-6 failing items, shown as 4 bullets: 2 carried a detail identical to one shown.
-
-- **parse** (analyst.tle): parser raised ValueError: invalid literal for int() with base 10: '  ' [2 items with this detail: analyst.tle, analyst-81011-first.tle]
-- **parse** (analyst.csv): parser raised ValueError: invalid literal for int() with base 10: '' [2 items with this detail: analyst.csv, analyst-81011-first.csv]
-- **parse** (starlink-g15-27.tle): parser raised AssertionError: classification
-- **parse** (starlink-g15-27.csv): parser raised AssertionError: 
-
-### `omm-xml-schema`
-
-6 failing items, shown as 3 bullets: 3 carried a detail identical to one shown.
-
-- **parse** (saramago-first.xml): parser raised AssertionError: catalog number wider than five digits [4 items with this detail: saramago-first.xml, saramago.xml, analyst-270449-first.xml, starlink-38381-799501621.xml]
-- **parse** (analyst.xml): parser raised TypeError: 'NoneType' object is not subscriptable
-- **parse** (starlink-g15-27.xml): parser raised AssertionError: 
-
-### `alpha5-encoding-vectors`
-
-4 failing items.
-
-- **alpha5-decode** (alpha5.json): A0000 -> raised ValueError (expected 100000); E8493 -> raised ValueError (expected 148493); J2931 -> raised ValueError (expected 182931); P4018 -> raised ValueError (expected 234018); W1928 -> raised ValueError (expected 301928); Z9999 -> raised ValueError (expected 339999); A0000 -> raised ValueError (expected 100000); A9999 -> raised ValueError (expected 109999)
-- **alpha5-encode** (alpha5.json): 100000 -> '100000' (expected 'A0000'); 148493 -> '148493' (expected 'E8493'); 182931 -> '182931' (expected 'J2931'); 234018 -> '234018' (expected 'P4018'); 301928 -> '301928' (expected 'W1928'); 339999 -> '339999' (expected 'Z9999'); 100000 -> '100000' (expected 'A0000'); 109999 -> '109999' (expected 'A9999')
-- **ccsds-epoch-strings** (ccsds-epoch-strings.json): valid '2020-064T10:34:41.4264' rejected (ValueError); valid '2020-065T16:00:00' rejected (ValueError); valid '2002-204T15:56:23Z' rejected (ValueError); valid '2001-11-06T11:17:33' rejected (ValueError); valid '1998-11-20T06:49:59.999808Z' rejected (ValueError); valid '2016-12-31T23:59:60' rejected (ValueError); valid '1972-06-30T23:59:60' rejected (ValueError); valid '2016-366T23:59:60.5Z' rejected (ValueError)
-- **catalog-number-is-integer** (norad-cat-id-text.json): '1000000000' accepted as 1000000000 (should be rejected: ten digits exceed 'up to nine digits'; schema xsd:integer would accept it, the standard's text does not)
-
-### `alpha5-tle-derived`
-
-8 failing items.
-
-- **parse** (alpha5-A-100000-saramago-first.tle): parser raised ValueError: invalid literal for int() with base 10: 'A0000'
-- **parse** (alpha5-T-270449-analyst-first.tle): parser raised ValueError: invalid literal for int() with base 10: 'T0449'
-- **parse** (alpha5-A-last-30-days-snapshot.tle): parser raised ValueError: invalid literal for int() with base 10: 'A0404'
-- **parse** (alpha5-T-analyst-27xxxx-snapshot.tle): parser raised ValueError: invalid literal for int() with base 10: 'T0000'
-- **parse** (alpha5-synthetic-letters.tle): parser raised ValueError: invalid literal for int() with base 10: 'A9999'
-- **parse** (alpha5-synthetic-epoch-years.tle): parser raised ValueError: invalid literal for int() with base 10: 'Z0100'
-- **parse** (alpha5-synthetic-day-366.tle): parser raised ValueError: invalid literal for int() with base 10: 'Z0200'
-- **parse** (alpha5-synthetic-classification.tle): parser raised ValueError: invalid literal for int() with base 10: 'Z0205'
-
-### `kvn-syntax-variants`
-
-5 failing items.
-
-- **parse** (v02-day-of-year-epoch-Z.kvn): parser raised ValueError: time data '1998-324T06:49:59.999808Z' does not match format '%Y-%m-%dT%H:%M:%S.%f'
-- **parse** (v03-units-brackets-leading-zeros.kvn): parser raised ValueError: could not convert string to float: '16.05064833 [rev/day]'
-- **parse** (v04-comments-blank-lines-whitespace-LF.kvn): parser raised ValueError: not enough values to unpack (expected 2, got 1)
-- **parse** (v05-omm-3.0-header-optional-keywords-omitted.kvn): parser raised KeyError: 'NORAD_CAT_ID'
-- **parse** (v08-synthetic-epochs.kvn): parser raised ValueError: time data '1996-366T06:49:59.999808' does not match format '%Y-%m-%dT%H:%M:%S.%f'
-
-### `tle-writer-alpha5`
-
-3 failing items.
-
-- **tle-checksums-valid** (set): 5 of 759 records correct; id 100000: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 270449: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100404: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100405: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100406: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100407: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100408: line 1 is 70 characters, not 69; line 2 is 70 characters, not 69; id 100409: line 1 is 70 characters, …
-- **tle-writer-catalog-field** (set): 5 of 759 catalog fields correct; id 100000: field '10000' written for 100000 (expected 'A0000'; decodes to 10000); id 270449: field '27044' written for 270449 (expected 'T0449'; decodes to 27044); id 100404: field '10040' written for 100404 (expected 'A0404'; decodes to 10040); id 100405: field '10040' written for 100405 (expected 'A0405'; decodes to 10040); id 100406: field '10040' written for 100406 (expected 'A0406'; decodes to 10040); id 100407: field '10040' written for 100407 (expected 'A0407'; decodes to 10040); id 100408: field '10040' written for 100408 (expected 'A0408'; decodes to 1 …
-- **tle-writer-refuses-unencodable** (set): 0 of 3 numbers the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused; written instead of refused: id 340000: lines written instead of a refusal (line 1 columns 3-7 '34000', 70 characters); id 799501621: lines written instead of a refusal (line 1 columns 3-7 '79950', 73 characters); id -1: lines written instead of a refusal (line 1 columns 3-7 '-0001', 69 characters)
-- passed: **tle-writer-column-layout** (5 records with every field in its fixed columns); **tle-writer-round-trip** (759 records read back at the TLE field resolution (rendering observed per field: epoch: exact 5; mean_motion: exact 5; eccentricity: exact 3, quantised 2; inclination: exact 5; ra_of_asc_node: exact 5; arg_of_pericenter: …); **tle-writer-secondary-not-changed** (5 records with each side field kept, or zeroed or left out as documented)
-
-### `corrupt-input`
-
-9 failing items, shown as 5 bullets: 4 carried a detail identical to one shown.
-
-- **corrupt-tle-line-short** (c2-line-2-short.tle): built a record from the corrupt input: mean_motion = Decimal('1.623733631'), from the unedited file Decimal('11.62373363'); eccentricity = Decimal('0.148004'), from the unedited file Decimal('0.1487004'); mean_anomaly = Decimal('45.3718'), from the unedited file Decimal('345.3718')
-- **corrupt-input-neighbours-load** (c3-letter-in-epoch.tle): the parser refused the file as a whole (ValueError: could not convert string to float: '189.7O990935'), so the 2 valid sets around the corrupt one were given up with it [4 items with this detail: c3-letter-in-epoch.tle, c9-letter-in-epoch-first.tle, c10-letter-in-epoch-last.tle, c11-letter-in-epoch-second-of-five.tle]
-- **corrupt-tle-missing-line-2** (c4-line-2-missing.tle): the corrupt record dropped (refusals not reported by this adapter)
-- **corrupt-input-neighbours-load** (c6-invalid-catalog-field.tle): the parser refused the file as a whole (ValueError: invalid literal for int() with base 10: 'I9999'), so the 2 valid sets around the corrupt one were given up with it [2 items with this detail: c6-invalid-catalog-field.tle, c7-letter-o-catalog-field.tle]
-- **corrupt-tle-line-fields-differ** (c8-line-fields-differ.tle): read a set whose two lines name different objects as one record (D-391) (line 2's catalog field (columns 3 to 7) changed from '69999' to '69998', so that the two lines name different objects, line 2's checksum recomputed (8 to 7); line 1 is the real line)
-
+| case | failing items | checks that failed |
+|---|---|---|
+| `six-digit-omm-saramago` | 8 | `parse` |
+| `tle-omits-six-digit-objects` | 1 | `parse` |
+| `analyst-objects` | 12 | `parse` |
+| `nine-digit-supgp-launch-nominals` | 1 | `parse` |
+| `csv-json-omitted-mandatory-fields` | 5 | `parse` |
+| `mean-motion-derivative-convention` | 4 | `parse` |
+| `tle-vs-omm-precision-loss` | 4 | `parse` |
+| `omm-xml-schema` | 4 | `parse` |
+| `alpha5-encoding-vectors` | 4 | `alpha5-decode`, `alpha5-encode`, `ccsds-epoch-strings`, `catalog-number-is-integer` |
+| `alpha5-tle-derived` | 8 | `parse` |
+| `kvn-syntax-variants` | 5 | `parse` |
+| `tle-writer-alpha5` | 3 | `tle-checksums-valid`, `tle-writer-catalog-field`, `tle-writer-refuses-unencodable` |
+| `corrupt-input` | 9 | `corrupt-tle-line-short`, `corrupt-input-neighbours-load`, `corrupt-tle-missing-line-2`, `corrupt-tle-line-fields-differ` |
 
 ## python-sgp4 2.27 through sgp4.omm / twoline2rv: what failed and why
 
@@ -198,7 +101,7 @@ One headline per parser, read across existing cases from the record counts behin
 2 failing items.
 
 - **values** (starlink-all.csv): mismatch (details withheld: SupGP-derived values are not published, D-049; run the case on your own fetch, `python -m gpconf run --adapter <yours> --case nine-digit-supgp-launch-nominals --json out.json`, and the report shows them)
-- **classification-c** (starlink-all.csv): C not preserved for [100001, 100002, 100003]
+- **classification-c** (starlink-all.csv): C not preserved for [100001, 100002, 100003] and 11196 more
 
 ### `omm-xml-schema`
 
@@ -227,8 +130,8 @@ One headline per parser, read across existing cases from the record counts behin
 9 failing items, shown as 6 bullets: 3 carried a detail identical to one shown.
 
 - **corrupt-tle-line-short** (c2-line-2-short.tle): built a record from the corrupt input: eccentricity = Decimal('0.148004'), from the unedited file Decimal('0.1487004'); rev_at_epoch = 189308, from the unedited file 18930
-- **corrupt-tle-letter-in-number** (c3-letter-in-epoch.tle): built a record from the corrupt input: epoch = '2026-07-08T16:48:00.000000', from the unedited file '2026-07-08T17:02:16.167840'; bstar = Decimal('0.0'), from the unedited file Decimal('-0.000007051700000000001'); mean_motion_dot = Decimal('0.0'), from the unedited file Decimal('-2.3E-7') [3 items with this detail: c3-letter-in-epoch.tle, c10-letter-in-epoch-last.tle, c11-letter-in-epoch-second-of-five.tle]
-- **corrupt-tle-missing-line-2** (c4-line-2-missing.tle): built a record from the corrupt input: mean_motion = Decimal('0.0'), from the unedited file Decimal('11.62373363'); eccentricity = Decimal('0.0'), from the unedited file Decimal('0.1487004'); inclination = Decimal('0.0'), from the unedited file Decimal('34.2417')
+- **corrupt-tle-letter-in-number** (c3-letter-in-epoch.tle): built a record from the corrupt input: epoch = '2026-07-08T16:48:00.000000', from the unedited file '2026-07-08T17:02:16.167840'; bstar = Decimal('0.0'), from the unedited file Decimal('-0.000007051700000000001'); mean_motion_dot = Decimal('0.0'), from the unedited file Decimal('-2.3E-7'); … and 1 more [3 items with this detail: c3-letter-in-epoch.tle, c10-letter-in-epoch-last.tle, c11-letter-in-epoch-second-of-five.tle]
+- **corrupt-tle-missing-line-2** (c4-line-2-missing.tle): built a record from the corrupt input: mean_motion = Decimal('0.0'), from the unedited file Decimal('11.62373363'); eccentricity = Decimal('0.0'), from the unedited file Decimal('0.1487004'); inclination = Decimal('0.0'), from the unedited file Decimal('34.2417'); … and 4 more
 - **corrupt-tle-invalid-catalog-field** (c6-invalid-catalog-field.tle): the corrupt record dropped silently; 1 record the file does not hold, built from garbage [2 items with this detail: c6-invalid-catalog-field.tle, c7-letter-o-catalog-field.tle]
 - **corrupt-tle-line-fields-differ** (c8-line-fields-differ.tle): the corrupt record dropped silently; 1 record the file does not hold, built from garbage
 - **parse** (c9-letter-in-epoch-first.tle): the parser returned a value the runner cannot read: bstar = nan is not a finite number (D-325)
@@ -237,7 +140,7 @@ One headline per parser, read across existing cases from the record counts behin
 
 1 failing item.
 
-- **type4-not-propagated** (set): type4.tle propagated as SGP4: positions for an SGP4-XP set (EPHEMERIS_TYPE 4) look right and are not; type4.csv propagated as SGP4: positions for an SGP4-XP set (EPHEMERIS_TYPE 4) look right and are not; skipped, unsupported for both files: type4.json, type4.xml, type4.kvn, type4-sgp4-xp.kvn
+- **type4-not-propagated** (set): fails in 2 sets: type4.csv, type4.tle; type4.tle propagated as SGP4: positions for an SGP4-XP set (EPHEMERIS_TYPE 4) look right and are not; type4.csv propagated as SGP4: positions for an SGP4-XP set (EPHEMERIS_TYPE 4) look right and are not; skipped, unsupported for both files: type4.json, type4.xml, type4.kvn, type4-sgp4-xp.kvn
 
 ## How to read this
 

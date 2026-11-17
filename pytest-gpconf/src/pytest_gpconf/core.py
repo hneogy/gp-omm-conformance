@@ -45,20 +45,31 @@ def verdict(case_dict):
 class GpconfRun:
     """The adapter options as gpconf takes them, one run for all chosen cases, results by case id."""
 
+    # the fields every results-1.0 report carries (gpconf/schemas/results-1.0.schema.json's "required"); the report
+    # names no schema version, so the plugin checks the fields it reads are there (D-575)
+    REQUIRED = ("gpconf", "corpus_version", "parser", "generated_at", "summary", "inside_cases", "results", "gates")
+
     def __init__(self, preset=None, adapter=None, cmd=None, vectors_cmd=None, write_cmd=None, root=None, cases=(),
-                 python=None, extra=()):
+                 python=None, extra=(), data=None, sgp4_ver=None, propagate=False, strict=False, tags=()):
         if sum(x is not None for x in (preset, adapter, cmd)) != 1:
             raise ValueError("give exactly one of --gpconf-preset, --gpconf-adapter and --gpconf-cmd")
         self.argv = ["--preset", preset] if preset else ["--adapter", adapter] if adapter else ["--cmd", cmd]
-        for flag, v in (("--vectors-cmd", vectors_cmd), ("--write-cmd", write_cmd), ("--root", root)):
+        for flag, v in (("--vectors-cmd", vectors_cmd), ("--write-cmd", write_cmd), ("--root", root),
+                        ("--data", data), ("--sgp4-ver", sgp4_ver)):
             if v:
                 self.argv += [flag, v]
+        for flag, on in (("--propagate", propagate), ("--strict", strict)):
+            if on:
+                self.argv.append(flag)
         for c in cases:
             self.argv += ["--case", c]
+        for t in tags:
+            self.argv += ["--tag", t]
         self.argv += list(extra)
         self.python = python or sys.executable
         self._results = None
         self.output = ""
+        self.returncode = None
 
     def results(self):
         if self._results is None:
@@ -67,9 +78,23 @@ class GpconfRun:
                 p = subprocess.run([self.python, "-m", "gpconf", "run", "--json", out] + self.argv,
                                    capture_output=True, text=True)
                 self.output = p.stdout + p.stderr
+                self.returncode = p.returncode
                 if not os.path.exists(out):
                     raise RuntimeError(f"gpconf wrote no report (exit {p.returncode}):\n{self.output[-2000:]}")
                 with open(out, encoding="utf-8") as f:
                     report = json.load(f)
+            missing = [k for k in self.REQUIRED if k not in report]
+            if missing:
+                raise RuntimeError(f"gpconf's report lacks {', '.join(missing)}: not a results-1.0 report this plugin can read "
+                                   f"(gpconf {report.get('gpconf', '?')}); pin a gpconf this plugin supports")
             self._results = {c["case"]: verdict(c) for c in report["results"]}
         return self._results
+
+    def ungraded(self):
+        """gpconf's own message when it graded no case (exit 2 since 0.9.0), else None. A session where every case
+        skips is no pass: the plugin fails it unless the user opts out (the owner's ruling 8a, D-571; D-575)."""
+        self.results()
+        if self.returncode != 2:
+            return None
+        lines = [l for l in self.output.splitlines() if "no case was graded" in l]
+        return lines[-1].strip() if lines else "gpconf graded no case (exit 2): no result, not a pass"

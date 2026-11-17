@@ -96,7 +96,7 @@ class TheReport(unittest.TestCase):
     def test_the_field_is_an_addition(self):
         """Every field the report had before D-240 is still there, in the order it had."""
         keys = list(self.report)
-        self.assertEqual(keys, ["gpconf", "corpus_version", "parser", "preset", "generated_at", "summary", "inside_cases", "results", "gates"])   # inside_cases: D-312
+        self.assertEqual(keys, ["gpconf", "corpus_version", "parser", "preset", "generated_at", "platform", "summary", "inside_cases", "results", "gates"])   # inside_cases: D-312; platform: D-593
         self.assertEqual(sorted(self.report["inside_cases"]), ["cases_graded", "field_gaps", "items_skipped"])
         self.assertEqual(sorted(self.report["results"][0]), sorted(["case", "title", "status", "counts", "modes", "drift", "items"]))
 
@@ -121,7 +121,7 @@ class WhatAScriptIsTold(unittest.TestCase):
     def test_the_adapter_guide_says_it_and_describes_the_summary(self):
         guide = flat(read("docs", "ADAPTERS.md"))
         self.assertIn("A script should read this report or the exit status, never the printed lines, whose wording can change from one version to the next (D-240)", guide)
-        self.assertIn("`generated_at`, `summary`, `inside_cases`, `results` and `gates`", guide)   # inside_cases: D-312
+        self.assertIn("`generated_at`, `platform` (the system and Python the run used, D-593), `summary`, `inside_cases`, `results` and `gates`", guide)   # inside_cases: D-312
         for status in CASE_STATUSES:
             self.assertIn(f"`{status}`", guide)
         self.assertIn("they add up to `cases`", guide)
@@ -135,7 +135,8 @@ class WhatAScriptIsTold(unittest.TestCase):
 class TheCatalogueTable(unittest.TestCase):
     def test_a_cell_gives_the_failing_items_with_a_word_that_does_not_vary(self):
         text = read("docs", "FAILURES.md")
-        rows = [line for line in text.splitlines() if line.startswith("| `")]
+        status = text.split("## Status by case", 1)[1].split("\n## ", 1)[0]   # the status table, not the naive control's (D-573)
+        rows = [line for line in status.splitlines() if line.startswith("| `")]
         sys.path.insert(0, os.path.join(ROOT, "tools"))
         from cases import CASES   # one row per case: 18 until 0.9.0's three propagation cases (D-489)
         self.assertEqual(len(rows), len(CASES))

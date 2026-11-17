@@ -58,18 +58,36 @@ def answers(**overrides):
     a = {
         "/repos/o/libone/issues/10": {"state": "closed", "created_at": "2026-09-23T10:00:00Z", "closed_at": "2026-09-24T12:00:00Z"},
         "/repos/o/libone/pulls/11": {"state": "closed", "merged": True, "merged_at": "2026-09-24T12:00:00Z", "created_at": "2026-09-23T11:00:00Z",
-                                     "merge_commit_sha": "c" * 40},
+                                     "merge_commit_sha": "c" * 40, "user": {"login": "hneogy"}},
         "/repos/o/libone/releases/latest": {"tag_name": "2.27"},
         f"/repos/o/libone/compare/{'c' * 40}...2.27": {"status": "behind"},
         "/repos/o/libtwo/issues/5": {"state": "closed", "created_at": "2026-09-20T10:00:00Z", "closed_at": "2026-09-26T09:00:00Z"},
-        "/repos/o/libtwo/pulls/6": {"state": "closed", "merged": True, "merged_at": "2026-09-26T09:00:00Z", "created_at": "2026-09-21T10:00:00Z"},
+        "/repos/o/libtwo/pulls/6": {"state": "closed", "merged": True, "merged_at": "2026-09-26T09:00:00Z", "created_at": "2026-09-21T10:00:00Z",
+                                    "merge_commit_sha": "e" * 40, "user": {"login": "HNeogy"}},
+        # GitHub's tag order is not version order: the check sorts by version itself
+        "/repos/o/libtwo/tags?per_page=100&page=1": [{"name": "7.2.0-rc1"}, {"name": "7.0.0"}, {"name": "7.2.0"}, {"name": "7.1.0"}],
+        "/repos/o/libtwo/commits/7.2.0": {"commit": {"committer": {"date": "2026-11-11T22:00:00Z"}}},
+        "/repos/o/libtwo/commits/7.1.0": {"commit": {"committer": {"date": "2026-09-01T00:00:00Z"}}},
+        "/repos/o/libtwo/commits/7.0.0": {"commit": {"committer": {"date": "2026-06-01T00:00:00Z"}}},
+        f"/repos/o/libtwo/compare/{'e' * 40}...7.0.0": {"status": "behind"},
+        f"/repos/o/libtwo/compare/{'e' * 40}...7.2.0": {"status": "ahead"},
+        f"/repos/o/libtwo/compare/{'e' * 40}...7.1.0": {"status": "behind"},
         "/repos/o/libtwo/releases/tags/7.2.0": {"tag_name": "7.2.0", "published_at": "2026-11-11T22:22:13Z"},
         "/repos/o/libthree/issues/4": {"state": "closed", "created_at": "2026-09-22T10:00:00Z", "closed_at": "2026-09-25T10:00:00Z"},
         "/repos/o/libthree/issues/4/events": [{"event": "referenced", "commit_id": "a" * 40}, {"event": "closed", "commit_id": "b" * 40}],
-        f"/repos/o/libthree/commits/{'b' * 40}": {"sha": "b" * 40, "commit": {"committer": {"date": "2026-09-25T09:00:00Z"}}},
+        f"/repos/o/libthree/commits/{'b' * 40}": {"sha": "b" * 40, "commit": {"committer": {"date": "2026-09-25T09:00:00Z"}},
+                                                  "author": {"login": "maint"}},
+        "/repos/o/libthree/tags?per_page=100&page=1": [{"name": "4.1.0"}],
+        f"/repos/o/libthree/compare/{'b' * 40}...4.1.0": {"status": "identical"},
         "/repos/o/libthree/releases/tags/4.1.0": {"tag_name": "4.1.0", "published_at": "2026-09-30T00:00:00Z"},
         "/repos/o/libfour/issues/8": {"state": "closed", "created_at": "2026-10-01T10:00:00Z", "closed_at": "2026-10-03T10:00:00Z"},
-        "/repos/o/libfour/pulls/9": {"state": "closed", "merged": True, "merged_at": "2026-10-03T10:00:00Z", "created_at": "2026-10-02T10:00:00Z"},
+        "/repos/o/libfour/pulls/9": {"state": "closed", "merged": True, "merged_at": "2026-10-03T10:00:00Z", "created_at": "2026-10-02T10:00:00Z",
+                                     "merge_commit_sha": "9" * 40, "user": {"login": "contrib"}},
+        "/repos/o/libfour/tags?per_page=100&page=1": [{"name": "v1.0.4"}, {"name": "v1.0.3"}],
+        "/repos/o/libfour/commits/v1.0.4": {"commit": {"committer": {"date": "2026-10-04T00:00:00Z"}}},
+        "/repos/o/libfour/commits/v1.0.3": {"commit": {"committer": {"date": "2026-09-01T00:00:00Z"}}},
+        f"/repos/o/libfour/compare/{'9' * 40}...v1.0.4": {"status": "ahead"},
+        f"/repos/o/libfour/compare/{'9' * 40}...v1.0.3": {"status": "behind"},
         "/repos/o/libfour/releases/tags/v1.0.4": {"_status": 404},
         "/repos/o/libfour/git/ref/tags/v1.0.4": {"ref": "refs/tags/v1.0.4"},
         "/repos/o/libfive/issues/3": {"state": "open", "created_at": "2026-10-05T10:00:00Z", "closed_at": None},
@@ -257,7 +275,7 @@ class InvolvementNotesStatusesAndPrivateNotes(unittest.TestCase):
                             "on master; status: merged; the project has no releases.", "maintainer")
         self.assertEqual(r["status"], "merged-no-releases")
         a = {"/repos/o/x/issues/84": {"state": "closed", "created_at": "2026-11-09T00:00:00Z"},
-             "/repos/o/x/pulls/85": {"state": "closed", "merged": True, "merged_at": "2026-11-10T00:00:00Z"},
+             "/repos/o/x/pulls/85": {"state": "closed", "merged": True, "merged_at": "2026-11-10T00:00:00Z", "user": {"login": "maint"}},
              "/repos/o/x/releases": []}
         ut.complete([r], {f"{G}/o/x/pull/85": {"merged": True, "merged_at": "2026-11-10T00:00:00Z"}})
         self.assertEqual(run_check([r], a), [])
@@ -287,7 +305,13 @@ class GivenProofsAndInferredLinks(unittest.TestCase):
               f"likely fixing commit (inferred: only code change in 4.1.0, no commit references #4): [a416eea]({G}/o/libnine/commit/{'f' * 40}).")
     ANSWERS = {"/repos/o/libnine/issues/4": {"state": "closed", "created_at": "2026-10-08T10:00:00Z", "closed_at": "2026-10-11T04:30:31Z"},
                "/repos/o/libnine/releases/tags/4.1.0": {"tag_name": "4.1.0", "published_at": "2026-10-11T04:29:12Z"},
-               f"/repos/o/libnine/commits/{'f' * 40}": {"sha": "f" * 40, "commit": {"committer": {"date": "2026-10-11T04:15:39Z"}}}}
+               f"/repos/o/libnine/commits/{'f' * 40}": {"sha": "f" * 40, "commit": {"committer": {"date": "2026-10-11T04:15:39Z"}},
+                                                  "author": {"login": "maint"}},
+               "/repos/o/libnine/tags?per_page=100&page=1": [{"name": "4.1.0"}, {"name": "4.0.0"}],
+               "/repos/o/libnine/commits/4.1.0": {"commit": {"committer": {"date": "2026-10-11T04:15:39Z"}}},
+               "/repos/o/libnine/commits/4.0.0": {"commit": {"committer": {"date": "2026-06-01T00:00:00Z"}}},
+               f"/repos/o/libnine/compare/{'f' * 40}...4.1.0": {"status": "ahead"},
+               f"/repos/o/libnine/compare/{'f' * 40}...4.0.0": {"status": "behind"}}
 
     def row(self):
         r = ut.parse_bullet(self.BULLET, "maintainer")
@@ -321,6 +345,393 @@ class GivenProofsAndInferredLinks(unittest.TestCase):
         r = dict(self.row(), proof_given=None)
         p = run_check([r], self.ANSWERS)
         self.assertTrue(any("must be a merged pull request or a commit" in x for x in p), p)
+
+
+class AuthorshipReleasesAndReleaseOnlyFixes(unittest.TestCase):
+    """The three checks the owner added for 0.9.1 (the site's S-164 ruling): whose pull request fixed it, whether the
+    named release holds the fix and is the first that does, and whether a fix shown only by its release notes has its
+    report closed. Each mismatch is planted once on the consistent synthetic table."""
+    def setUp(self):
+        self.rows, _, gaps = build()
+        self.assertEqual(gaps, [])
+
+    def check(self, a, rows=None):
+        unchecked = []
+        path = recorded(a)
+        try:
+            p = cu.check({"rows": rows or self.rows}, cu.Recorded(path), unchecked=unchecked)[0]
+        finally:
+            os.unlink(path)
+        return p, unchecked
+
+    def test_the_consistent_table_passes_all_three_with_nothing_unchecked(self):
+        self.assertEqual(self.check(answers()), ([], []))
+
+    def test_a_my_pr_row_whose_pull_request_is_someone_elses(self):
+        a = answers(); a["/repos/o/libtwo/pulls/6"] = dict(a["/repos/o/libtwo/pulls/6"], user={"login": "someone"})
+        p, _ = self.check(a)
+        self.assertTrue(any("libtwo" in x and "fixed by my pull requests" in x and "is by someone" in x for x in p), p)
+
+    def test_a_maintainer_row_whose_pull_request_is_the_owners(self):
+        a = answers(); a["/repos/o/libfour/pulls/9"] = dict(a["/repos/o/libfour/pulls/9"], user={"login": "hneogy"})
+        p, _ = self.check(a)
+        self.assertTrue(any("libfour" in x and "is the owner's" in x for x in p), p)
+
+    def test_a_maintainer_row_whose_commit_is_the_owners(self):
+        a = answers(); a[f"/repos/o/libthree/commits/{'b' * 40}"] = dict(a[f"/repos/o/libthree/commits/{'b' * 40}"], author={"login": "hneogy"})
+        p, _ = self.check(a)
+        self.assertTrue(any("libthree" in x and "is the owner's" in x for x in p), p)
+
+    def test_the_owner_is_a_setting(self):
+        p, _ = self.check(answers(), )
+        self.assertEqual(p, [])
+        path = recorded(answers())
+        try:
+            p = cu.check({"rows": self.rows}, cu.Recorded(path), owner="someone-else", unchecked=[])[0]
+        finally:
+            os.unlink(path)
+        self.assertTrue(any("libone" in x and "is by hneogy" in x for x in p), p)
+
+    def test_an_author_github_does_not_name_is_not_a_pass(self):
+        a = answers(); a["/repos/o/libfour/pulls/9"] = {k: v for k, v in a["/repos/o/libfour/pulls/9"].items() if k != "user"}
+        p, u = self.check(a)
+        self.assertEqual(p, [])
+        self.assertTrue(any("libfour" in x and "names no author" in x for x in u), u)
+        self.assertTrue(any("names no author" in x for x in run_check(self.rows, a)))   # without a list, it is a problem
+
+    def test_a_release_that_does_not_hold_the_fix(self):
+        p, _ = self.check(answers(**{f"/repos/o/libtwo/compare/{'e' * 40}...7.2.0": {"status": "behind"}}))
+        self.assertTrue(any("libtwo" in x and "7.2.0 does not hold" in x for x in p), p)
+
+    def test_a_release_whose_commit_proof_it_does_not_hold(self):
+        p, _ = self.check(answers(**{f"/repos/o/libthree/compare/{'b' * 40}...4.1.0": {"status": "diverged"}}))
+        self.assertTrue(any("libthree" in x and "4.1.0 does not hold" in x for x in p), p)
+
+    def test_an_earlier_release_already_held_it(self):
+        p, _ = self.check(answers(**{f"/repos/o/libtwo/compare/{'e' * 40}...7.1.0": {"status": "ahead"}}))
+        self.assertTrue(any("libtwo" in x and "the earlier release 7.1.0 already holds" in x for x in p), p)
+
+    def test_a_pre_release_before_it_is_not_the_earlier_release(self):
+        a = answers(**{f"/repos/o/libtwo/compare/{'e' * 40}...7.2.0-rc1": {"status": "ahead"}})
+        self.assertEqual(self.check(a), ([], []))
+
+    def test_a_bare_tag_takes_the_next_listed_tag_when_it_is_older(self):
+        p, _ = self.check(answers(**{f"/repos/o/libfour/compare/{'9' * 40}...v1.0.3": {"status": "identical"}}))
+        self.assertTrue(any("libfour" in x and "the earlier release v1.0.3 already holds" in x for x in p), p)
+
+    def test_a_bare_tag_whose_next_listed_tag_is_newer_is_not_checked(self):
+        a = answers(**{"/repos/o/libfour/commits/v1.0.3": {"commit": {"committer": {"date": "2026-12-01T00:00:00Z"}}}})
+        p, u = self.check(a)
+        self.assertEqual(p, [])
+        self.assertTrue(any("libfour" in x and "is not checked" in x for x in u), u)
+
+    def test_a_compare_github_cannot_make_is_not_a_pass(self):
+        a = answers(); a.pop(f"/repos/o/libtwo/compare/{'e' * 40}...7.2.0")
+        p, u = self.check(a)
+        self.assertTrue(any("libtwo" in x and "could not compare" in x for x in u), u)
+
+    def test_a_released_pull_request_with_no_merge_commit_is_not_a_pass(self):
+        a = answers(); a["/repos/o/libtwo/pulls/6"] = dict(a["/repos/o/libtwo/pulls/6"], merge_commit_sha=None)
+        p, u = self.check(a)
+        self.assertTrue(any("libtwo" in x and "no merge commit" in x for x in u), u)
+
+    def test_a_release_notes_only_fix_whose_report_is_open(self):
+        g = GivenProofsAndInferredLinks()
+        r = g.row()
+        a = dict(g.ANSWERS); a["/repos/o/libnine/issues/4"] = dict(a["/repos/o/libnine/issues/4"], state="open")
+        p, _ = self.check(a, rows=[r])
+        self.assertTrue(any("libnine" in x and "shown only by its release notes" in x and "is open" in x for x in p), p)
+
+    def test_a_release_notes_only_fix_whose_inferred_commit_is_not_in_the_release(self):
+        g = GivenProofsAndInferredLinks()
+        a = dict(g.ANSWERS); a[f"/repos/o/libnine/compare/{'f' * 40}...4.1.0"] = {"status": "behind"}
+        p, _ = self.check(a, rows=[g.row()])
+        self.assertTrue(any("libnine" in x and "4.1.0 does not hold" in x for x in p), p)
+
+    # the blind reader's findings on the three checks (F1-F5)
+    def test_a_bare_tag_between_two_releases_counts(self):
+        a = answers(**{"/repos/o/libtwo/tags?per_page=100&page=1": [{"name": "7.2.0"}, {"name": "7.1.0"}, {"name": "7.1.5"}],
+                       "/repos/o/libtwo/commits/7.1.5": {"commit": {"committer": {"date": "2026-10-01T00:00:00Z"}}},
+                       f"/repos/o/libtwo/compare/{'e' * 40}...7.1.5": {"status": "ahead"}})
+        p, _ = self.check(a)
+        self.assertTrue(any("libtwo" in x and "the earlier release 7.1.5 already holds" in x for x in p), p)
+
+    def test_the_version_order_is_read_not_githubs_list_order(self):
+        a = answers(**{"/repos/o/libtwo/tags?per_page=100&page=1": [{"name": "7.2.0"}, {"name": "7.10.0"}, {"name": "7.1.0"}, {"name": "7.9.0"}],
+                       f"/repos/o/libtwo/compare/{'e' * 40}...7.1.0": {"status": "behind"}})
+        self.assertEqual(cu.version_key("v7.10.0") > cu.version_key("7.9.0"), True)
+        self.assertEqual(cu.version_key("1.0"), cu.version_key("v1.0.0"))
+        self.assertIsNone(cu.version_key("7.2.0-rc1"))
+        p, _ = self.check(a)   # 7.2.0's predecessor is 7.1.0 in version order, wherever GitHub lists it
+        self.assertEqual(p, [])
+
+    def test_tags_are_read_across_pages(self):
+        page1 = [{"name": f"9.{i}.0"} for i in range(100)]
+        a = answers(**{"/repos/o/libtwo/tags?per_page=100&page=1": page1,
+                       "/repos/o/libtwo/tags?per_page=100&page=2": [{"name": "7.2.0"}, {"name": "7.1.0"}]})
+        self.assertEqual(self.check(a), ([], []))
+        a[f"/repos/o/libtwo/compare/{'e' * 40}...7.1.0"] = {"status": "ahead"}
+        p, _ = self.check(a)
+        self.assertTrue(any("the earlier release 7.1.0 already holds" in x for x in p), p)
+
+    def test_more_tags_than_it_reads_is_not_checked(self):
+        a = answers()
+        for page in range(1, cu.TAG_PAGES + 1):
+            a[f"/repos/o/libtwo/tags?per_page=100&page={page}"] = [{"name": f"{page}.{i}.1"} for i in range(100)]
+        a["/repos/o/libtwo/tags?per_page=100&page=1"][0] = {"name": "7.2.0"}
+        p, u = self.check(a)
+        self.assertTrue(any("libtwo" in x and "no version order" in x for x in u), u)
+
+    def test_a_my_pr_row_with_no_pull_request_fails(self):
+        rows = [dict(r, prs=[], proof=f"{G}/o/libone/commit/{'c' * 40}") if r["library"] == "libone" else r for r in self.rows]
+        a = answers(**{f"/repos/o/libone/commits/{'c' * 40}": {"sha": "c" * 40, "author": {"login": "someone"},
+                                                                "commit": {"committer": {"date": "2026-09-24T12:00:00Z"}}}})
+        p, _ = self.check(a, rows=rows)
+        self.assertTrue(any("libone" in x and "links no pull request" in x for x in p), p)
+
+    def test_a_my_pr_row_whose_proof_is_not_a_pull_request_fails(self):
+        rows = [dict(r, proof=f"{G}/o/libone/commit/{'c' * 40}") if r["library"] == "libone" else r for r in self.rows]
+        a = answers(**{f"/repos/o/libone/commits/{'c' * 40}": {"sha": "c" * 40, "author": {"login": "hneogy"},
+                                                                "commit": {"committer": {"date": "2026-09-24T12:00:00Z"}}}})
+        p, _ = self.check(a, rows=rows)
+        self.assertTrue(any("libone" in x and "is not a pull request" in x for x in p), p)
+
+    def test_a_release_notes_only_fix_with_no_report_linked_fails(self):
+        g = GivenProofsAndInferredLinks()
+        r = dict(g.row(), issues=[])
+        p, _ = self.check(dict(g.ANSWERS), rows=[r])
+        self.assertTrue(any("libnine" in x and "no report is linked" in x for x in p), p)
+
+    def test_merged_not_released_reads_the_newest_version_not_the_first_listed_tag(self):
+        a = answers(); a.pop("/repos/o/libone/releases/latest")
+        a["/repos/o/libone/tags?per_page=100&page=1"] = [{"name": "v2.14"}, {"name": "v2.9"}, {"name": "2.28"}, {"name": "2.27"}]
+        a[f"/repos/o/libone/compare/{'c' * 40}...v2.14"] = {"status": "behind"}
+        a[f"/repos/o/libone/compare/{'c' * 40}...2.28"] = {"status": "ahead"}
+        p, _ = self.check(a)
+        self.assertTrue(any("libone" in x and "2.28 already holds" in x for x in p), p)
+
+    def test_merged_not_released_with_nothing_readable_is_not_checked(self):
+        a = answers(); a.pop("/repos/o/libone/releases/latest")
+        p, u = self.check(a)
+        self.assertTrue(any("libone" in x and "has shipped since could not be read" in x for x in u), u)
+
+    def test_the_command_fails_on_a_not_checked_item(self):
+        a = answers(); a.pop(f"/repos/o/libtwo/compare/{'e' * 40}...7.2.0")
+        rows_path = recorded({"rows": self.rows})
+        path = recorded(a)
+        try:
+            import contextlib, io
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                rc = cu.main(["--table", rows_path, "--recorded", path])
+        finally:
+            os.unlink(path); os.unlink(rows_path)
+        self.assertEqual(rc, 1)
+        self.assertIn("NOT CHECKED:", out.getvalue())
+        self.assertIn("0 mismatch(es), 1 not checked", out.getvalue())
+
+
+class ANamedEarlierReleaseNotCounted(unittest.TestCase):
+    """The owner's ruling on akhenakh/sgp4 #16 (option A): a row may name the one earlier release that holds the fix
+    but is not counted, with its reason shown in the table. The check passes it only if the earlier release holding
+    the fix is exactly that one, and fails it once it is no longer needed."""
+    BULLET = (f"- **libtwo**: epochs truncated. [#5]({G}/o/libtwo/issues/5), [PR #6]({G}/o/libtwo/pull/6), merged 2026-09-26, "
+              f"released in [7.2.0]({G}/o/libtwo/releases/tag/7.2.0) (7.1.0 not counted: re-tagged after a checksum database stored the old 7.1.0).")
+
+    RULED = {("o/libtwo", "7.2.0"): "7.1.0"}
+
+    def row(self, bullet=None):
+        r = ut.parse_bullet(bullet or self.BULLET, "my-pr")
+        ut.complete([r], {f"{G}/o/libtwo/pull/6": {"merged": True, "merged_at": "2026-09-26T09:00:00Z"}})
+        return r
+
+    def check(self, a, r=None):
+        unchecked = []
+        path = recorded(a)
+        try:
+            p = cu.check({"rows": [r or self.row()]}, cu.Recorded(path), unchecked=unchecked, exceptions=self.RULED)[0]
+        finally:
+            os.unlink(path)
+        return p, unchecked
+
+    def held_by_7_1(self, **more):
+        return answers(**dict({f"/repos/o/libtwo/compare/{'e' * 40}...7.1.0": {"status": "identical"}}, **more))
+
+    def test_read_from_the_ledger(self):
+        r = self.row()
+        self.assertEqual(r["release"]["name"], "7.2.0")
+        self.assertEqual(r["release"]["not_counted"], {"tag": "7.1.0", "why": "re-tagged after a checksum database stored the old 7.1.0"})
+
+    def test_shown_in_the_table_with_its_reason(self):
+        md = ut.render({"as_of": "x", "summary": {"total": 1, "my-pr": 1, "maintainer": 0, "open": 0, "other": 0}, "rows": [self.row()]})
+        self.assertIn(f"[7.2.0]({G}/o/libtwo/releases/tag/7.2.0) (7.1.0 not counted: re-tagged after a checksum database stored the old 7.1.0)", md)
+
+    def test_a_row_without_one_has_none(self):
+        r = self.row(self.BULLET.split(" (7.1.0")[0] + ".")
+        self.assertNotIn("not_counted", r["release"])
+
+    def test_passes_when_the_earlier_release_is_exactly_the_named_one(self):
+        self.assertEqual(self.check(self.held_by_7_1()), ([], []))
+
+    def test_without_the_exception_the_same_answers_fail(self):
+        r = self.row(); del r["release"]["not_counted"]
+        p, _ = self.check(self.held_by_7_1(), r)
+        self.assertTrue(any("the earlier release 7.1.0 already holds" in x for x in p), p)
+
+    def test_fails_when_it_names_another_release(self):
+        r = self.row(); r["release"]["not_counted"] = dict(r["release"]["not_counted"], tag="7.0.0")
+        p, _ = self.check(self.held_by_7_1(), r)
+        self.assertTrue(any("names 7.0.0 as not counted, which no ruling allows" in x for x in p), p)
+        self.assertTrue(any("the earlier release 7.1.0 already holds" in x for x in p), p)
+
+    def test_fails_once_it_is_no_longer_needed(self):
+        p, _ = self.check(answers())   # 7.1.0 does not hold the fix
+        self.assertTrue(any("names 7.1.0 as not counted" in x and "is not needed" in x for x in p), p)
+
+    def test_fails_when_the_release_before_the_named_one_holds_it_too(self):
+        p, _ = self.check(self.held_by_7_1(**{f"/repos/o/libtwo/compare/{'e' * 40}...7.0.0": {"status": "ahead"}}))
+        self.assertTrue(any("7.1.0 is not counted, but the release before it, 7.0.0, already holds" in x for x in p), p)
+
+    def test_fails_when_there_is_no_earlier_release(self):
+        a = self.held_by_7_1(**{"/repos/o/libtwo/tags?per_page=100&page=1": [{"name": "7.2.0"}]})
+        p, _ = self.check(a)
+        self.assertTrue(any("the release before 7.2.0 is none" in x and "is not needed" in x for x in p), p)
+
+    # the blind reader's findings on the exception (E1-E3)
+    def test_no_ruling_no_exception_on_another_row_or_tag(self):
+        r = self.row()
+        for ruled in ({}, {("o/libtwo", "7.2.0"): "7.0.0"}, {("o/other", "7.2.0"): "7.1.0"}):
+            path = recorded(self.held_by_7_1())
+            try:
+                p = cu.check({"rows": [r]}, cu.Recorded(path), unchecked=[], exceptions=ruled)[0]
+            finally:
+                os.unlink(path)
+            self.assertTrue(any("which no ruling allows" in x for x in p), (ruled, p))
+            self.assertTrue(any("already holds" in x for x in p), (ruled, p))   # and the real mismatch is reported
+
+    def test_the_shipped_ruling_is_the_one_row_only(self):
+        self.assertEqual(cu.EXCEPTIONS, {("akhenakh/sgp4", "v1.0.4"): "v1.0.3"})
+
+    def test_an_exception_on_a_row_that_is_not_released_fails(self):
+        r = ut.parse_bullet(f"- **libtwo**: epochs truncated. [#5]({G}/o/libtwo/issues/5), open, released in "
+                            f"[7.2.0]({G}/o/libtwo/releases/tag/7.2.0) (7.1.0 not counted: a reason).", "open")
+        ut.complete([r], {})
+        self.assertEqual(r["status"], "open")
+        p, _ = self.check(answers(**{"/repos/o/libtwo/issues/5": {"state": "open", "created_at": "2026-09-20T10:00:00Z"}}), r)
+        self.assertTrue(any("is not marked released" in x for x in p), p)
+
+    def test_an_exception_with_no_reason_fails(self):
+        for why in ("", "   ", None):
+            r = self.row(); r["release"]["not_counted"] = {"tag": "7.1.0", "why": why}
+            if why is None:
+                del r["release"]["not_counted"]["why"]
+            p, _ = self.check(self.held_by_7_1(), r)
+            self.assertTrue(any("with no reason" in x for x in p), (why, p))
+
+    def test_a_reason_with_parentheses_drops_the_exception_loudly(self):
+        r = self.row(self.BULLET.replace("stored the old 7.1.0", "(sum.golang.org) stored the old 7.1.0"))
+        self.assertNotIn("not_counted", r["release"])
+        p, _ = self.check(self.held_by_7_1(), r)
+        self.assertTrue(any("the earlier release 7.1.0 already holds" in x for x in p), p)
+
+    def test_a_pipe_in_the_reason_is_escaped(self):
+        r = self.row(); r["release"]["not_counted"]["why"] = "a | b"
+        md = ut.render({"as_of": "x", "summary": {"total": 1, "my-pr": 1, "maintainer": 0, "open": 0, "other": 0}, "rows": [r]})
+        self.assertIn("(7.1.0 not counted: a \\| b)", md)
+
+    def test_on_a_bare_tag(self):
+        bullet = (f"- **libfour**: one bad set lost the file. [#8]({G}/o/libfour/issues/8), [PR #9]({G}/o/libfour/pull/9), fixed by "
+                  f"someone, a contributor, released in [v1.0.4]({G}/o/libfour/releases/tag/v1.0.4) (v1.0.3 not counted: re-tagged).")
+        r = ut.parse_bullet(bullet, "maintainer")
+        ut.complete([r], {f"{G}/o/libfour/pull/9": {"merged": True, "merged_at": "2026-10-03T10:00:00Z"}})
+        a = answers(**{f"/repos/o/libfour/compare/{'9' * 40}...v1.0.3": {"status": "identical"}})
+        path = recorded(a)
+        try:
+            ok = cu.check({"rows": [r]}, cu.Recorded(path), unchecked=[], exceptions={("o/libfour", "v1.0.4"): "v1.0.3"})[0]
+            no = cu.check({"rows": [r]}, cu.Recorded(path), unchecked=[], exceptions={})[0]
+        finally:
+            os.unlink(path)
+        self.assertEqual(ok, [])
+        self.assertTrue(any("which no ruling allows" in x for x in no), no)
+
+    def test_a_compare_with_the_release_before_that_cannot_be_made_is_not_a_pass(self):
+        a = self.held_by_7_1(); a.pop(f"/repos/o/libtwo/compare/{'e' * 40}...7.0.0")
+        p, u = self.check(a)
+        self.assertTrue(any("could not compare" in x and "7.0.0" in x for x in u), u)
+
+
+class OptInFixes(unittest.TestCase):
+    """D-593: a row the record marks as an opt-in fix says plainly that the fix exists, that it is an
+    opt-in, and that the default behaviour is unchanged; the check finds the opt-in's name in the upstream's own
+    release notes or changelog at the named release, or in the merged pull request's text."""
+    REL = (f"- **libtwo**: epochs truncated. [#5]({G}/o/libtwo/issues/5), [PR #6]({G}/o/libtwo/pull/6), opt-in `keep_going` for one bad set, "
+           f"merged 2026-09-26, released in [7.2.0]({G}/o/libtwo/releases/tag/7.2.0).")
+    MRG = (f"- **libone**: an empty field raised an error. [#10]({G}/o/libone/issues/10), [PR #11]({G}/o/libone/pull/11), "
+           "opt-in `lenient`, merged 2026-09-24, not yet released.")
+
+    def row(self, bullet):
+        r = ut.parse_bullet(bullet, "my-pr")
+        ut.complete([r], {f"{G}/o/libtwo/pull/6": {"merged": True}, f"{G}/o/libone/pull/11": {"merged": True},
+                          f"{G}/o/libtwo/releases/tag/7.2.0": {"exists": True}})
+        return r
+
+    def check(self, a, r):
+        unchecked = []
+        path = recorded(a)
+        try:
+            p = cu.check({"rows": [r]}, cu.Recorded(path), unchecked=unchecked)[0]
+        finally:
+            os.unlink(path)
+        return [x for x in p if "opt-in" in x], [x for x in unchecked if "opt-in" in x]
+
+    def test_read_from_the_ledger(self):
+        self.assertEqual(self.row(self.REL)["opt_in"], {"name": "keep_going", "scope": "one bad set"})
+        self.assertEqual(self.row(self.MRG)["opt_in"], {"name": "lenient", "scope": None})
+        self.assertIsNone(ut.parse_bullet(self.REL.replace("opt-in `keep_going` for one bad set, ", ""), "my-pr")["opt_in"])
+
+    def test_the_table_says_it_plainly(self):
+        md = ut.render({"as_of": "x", "summary": {"total": 2, "my-pr": 2, "maintainer": 0, "open": 0, "other": 0},
+                        "rows": [self.row(self.REL), self.row(self.MRG)]})
+        self.assertIn("epochs truncated; for one bad set, the fix is an opt-in (`keep_going`), and the default behaviour is unchanged |", md)
+        self.assertIn("an empty field raised an error; the fix is an opt-in (`lenient`), and the default behaviour is unchanged |", md)
+
+    def test_a_released_opt_in_named_in_the_release_notes_passes(self):
+        a = answers(); a["/repos/o/libtwo/releases/tags/7.2.0"] = dict(a["/repos/o/libtwo/releases/tags/7.2.0"], body="Added `keep_going`.")
+        self.assertEqual(self.check(a, self.row(self.REL)), ([], []))
+
+    def test_a_released_opt_in_named_in_the_changelog_at_the_tag_passes(self):
+        import base64
+        a = answers(**{"/repos/o/libtwo/contents/CHANGELOG.md?ref=7.2.0": {"content": base64.b64encode(b"### Added\n- keep_going\n").decode()}})
+        self.assertEqual(self.check(a, self.row(self.REL)), ([], []))
+
+    def test_a_released_opt_in_the_notes_do_not_name_fails(self):
+        a = answers(); a["/repos/o/libtwo/releases/tags/7.2.0"] = dict(a["/repos/o/libtwo/releases/tags/7.2.0"], body="Bug fixes.")
+        p, _ = self.check(a, self.row(self.REL))
+        self.assertTrue(any("marks the fix as the opt-in `keep_going`, but the release notes or changelog at 7.2.0 does not name it" in x for x in p), p)
+
+    def test_notes_that_cannot_be_read_are_not_checked(self):
+        p, u = self.check(answers(), self.row(self.REL))   # no body, no changelog
+        self.assertEqual(p, [])
+        self.assertTrue(any("could not be read, so the opt-in `keep_going` is not checked" in x for x in u), u)
+
+    def test_a_merged_opt_in_named_in_its_pull_request_passes_and_unnamed_fails(self):
+        a = answers(); a["/repos/o/libone/pulls/11"] = dict(a["/repos/o/libone/pulls/11"], body="Adds `lenient=True`; default unchanged.")
+        self.assertEqual(self.check(a, self.row(self.MRG)), ([], []))
+        a["/repos/o/libone/pulls/11"] = dict(a["/repos/o/libone/pulls/11"], body="Fixes it.")
+        p, _ = self.check(a, self.row(self.MRG))
+        self.assertTrue(any("does not name it" in x for x in p), p)
+
+    def test_an_opt_in_on_a_row_not_fixed_fails(self):
+        r = ut.parse_bullet(f"- **libfive**: a letter read as a digit. [#3]({G}/o/libfive/issues/3), opt-in `strict`, open.", "open")
+        ut.complete([r], {})
+        p, _ = self.check(answers(), r)
+        self.assertTrue(any("marks an opt-in fix, but is not marked as fixed" in x for x in p), p)
+
+    def test_the_shipped_table_marks_the_three_rows_the_owner_named(self):
+        with open(os.path.join(ROOT, "docs", "upstream", "table.json"), encoding="utf-8") as f:
+            rows = json.load(f)["rows"]
+        marked = sorted((r["library"], r["opt_in"]["name"]) for r in rows if r.get("opt_in"))
+        self.assertEqual(marked, [("Basilisk", "on_error"), ("SGPKit (swift-sgp4)", "decodeValidSets"), ("satkit", "on_error")])
 
 
 class TheTableIsRenderedAndInjected(unittest.TestCase):

@@ -128,7 +128,7 @@ class ASurplusCopyFailsTheCasesWithNoValuesItem(unittest.TestCase):
         res, items = self.run_case(answering(lambda rs: rs + [dict(r) for r in rs], ("csv",)), "csv-json-omitted-mandatory-fields")
         (item,) = items
         self.assertEqual(item.detail.count("(D-311)"), 12)
-        self.assertTrue(item.detail.endswith(" ..."), item.detail)
+        self.assertTrue(item.detail.endswith("; … and 1 more"), item.detail)   # a cut list says how much is cut (0.10.0)
 
     def test_a_copy_under_an_id_the_file_does_not_hold_is_no_surplus(self):
         """A copy under another catalog number, or none, is not a surplus of the file's id: it carries no surplus words

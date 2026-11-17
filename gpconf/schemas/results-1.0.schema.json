@@ -9,6 +9,8 @@
     "gpconf": {"type": "string", "description": "the gpconf version that wrote the report"},
     "corpus_version": {"type": "string"},
     "parser": {"type": "string", "description": "the preset's label, or the --cmd / --adapter given"},
+    "platform": {"type": "object", "properties": {"system": {"type": "string"}, "python": {"type": "string"}},
+                 "description": "the system and Python the run used (platform.platform(), platform.python_version()); D-593"},
     "preset": {
       "type": "object",
       "required": ["name"],
@@ -85,7 +87,9 @@
             "properties": {"n": {"$ref": "#/$defs/count"}, "mean_signed": {"type": "number"}, "max_abs": {"type": "number"}}
           }
         },
-        "counts": {"type": "object", "description": "the record counts behind a values item (D-142)"}
+        "counts": {"type": "object", "description": "the record counts behind a values item (D-142)"},
+        "details": {"type": "array", "items": {"type": "string"},
+                    "description": "every finding behind a detail that names only the first few and says how many it leaves out ('… and N more', or 'and N more'; the TLE writer's column layout gives the total, '… (N fields)'; D-593, D-605, D-606); present only then"}
       }
     },
     "gate": {
