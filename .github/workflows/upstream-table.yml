@@ -1,5 +1,6 @@
 # The upstream table (D-552, D-553): every link in docs/upstream/table.json must resolve and every row's status must
-# match GitHub (a "merged" pull request really merged, an "open" issue really open). Any mismatch fails the run. It
+# match GitHub (a "merged" pull request really merged, an "open" issue really open; a fix's pull request by whom its
+# group says; a named release holding the fix, and the first to). Any mismatch, or anything it could not check, fails the run. It
 # reads the GitHub API only, with the job's read-only token; it writes nothing. It runs when the table, its tools or
 # the files that carry it change, once a week (an issue can close or a fix ship in between), and by hand.
 name: upstream table

@@ -112,10 +112,20 @@ def parse_bullet(line, group):
     issues = [u for _, u in links if kind_of(u) == "issue"]
     prs = [u for _, u in links if kind_of(u) == "pr"]
     commits = [u for _, u in links if kind_of(u) == "commit"]
-    rel = re.search(r"released in (\[([^\]]+)\]\((https://github\.com/[^)\s]+)\)|([\w.\-]+))", tail)
+    rel = re.search(r"released in (\[([^\]]+)\]\((https://github\.com/[^)\s]+)\)|([\w.\-]+))"
+                    r"(?: \(([\w.\-]+) not counted: ([^()]+)\))?", tail)
     release = None
     if rel:
         release = {"name": (rel.group(2) or rel.group(4)).rstrip("."), "url": rel.group(3)}
+        if rel.group(5):
+            # an earlier release that holds the fix but is not counted, with the reason, shown in the table; the
+            # check passes it only if that release is exactly the one before, and fails it once it is not needed
+            release["not_counted"] = {"tag": rel.group(5), "why": rel.group(6).strip()}
+    # a fix the maintainer's record marks as an opt-in (D-593): "opt-in `NAME`", optionally "for SCOPE", as a clause of
+    # its own (after a link, a comma, a semicolon or a parenthesis), so "not an opt-in `x`" is no mark; the table then
+    # says the fix is an opt-in and the default behaviour is unchanged, as the record does. The check confirms only that
+    # the name is in the upstream's own words; it cannot see an opt-in the record does not mark
+    oi = re.search(r"(?:^|[,;(]\s*|\)\s*)opt-in `([^`]+)`(?: for ([^,;.()]+))?", tail)
     merged = re.search(r"merged (\d{4}-\d{2}-\d{2})", tail)
     by = re.search(r"fixed by ([^,;]+(?:, (?:the maintainer|a contributor))?)", tail)
     given_status = {"closed (maintainers said planned)": "closed-planned",
@@ -134,7 +144,8 @@ def parse_bullet(line, group):
             "status": status, "release": release, "merged": merged.group(1) if merged else None,
             "by": by.group(1).strip() if by else None, "involvement": involvement,
             "proof_given": {"text": given.group(1), "url": given.group(2)} if given else None,
-            "inferred": {"label": inf.group(1), "text": inf.group(2), "url": inf.group(3)} if inf else None}
+            "inferred": {"label": inf.group(1), "text": inf.group(2), "url": inf.group(3)} if inf else None,
+            "opt_in": {"name": oi.group(1), "scope": (oi.group(2) or "").strip() or None} if oi else None}
 
 
 def complete(rows, facts):
@@ -206,13 +217,25 @@ STATUS_WORD = {"released": "released", "merged": "merged, not yet released",
                "open-others-report": "another user's report, open upstream"}   # counted apart from this project's open reports
 
 
+def opt_in_clause(r):
+    """The plain words for a fix the record marks as an opt-in (D-593): it exists, it is an opt-in, the default behaviour is unchanged."""
+    oi = r.get("opt_in")
+    if not oi:
+        return ""
+    where = f"for {oi['scope']}, " if oi.get("scope") else ""
+    return f"; {where}the fix is an opt-in (`{oi['name']}`), and the default behaviour is unchanged"
+
+
 def render(table):
     rows = table["rows"]
     out = ["| library | finding | status | proof | release | date |", "|---|---|---|---|---|---|"]
     for r in rows:
-        finding = (r["finding"] + (f" ({r['involvement']})" if r.get("involvement") else "")).replace("|", "\\|")
+        finding = (r["finding"] + opt_in_clause(r) + (f" ({r['involvement']})" if r.get("involvement") else "")).replace("|", "\\|")
         rel = link(r["release"]["url"], r["release"]["name"]) if r.get("release") and r["release"].get("url") else (
             r["release"]["name"] if r.get("release") else "")
+        nc = (r.get("release") or {}).get("not_counted")
+        if nc:
+            rel += f" ({nc['tag']} not counted: {nc['why']})".replace("|", "\\|")
         date = f"{r['date']} ({r['date_is']})" if r.get("date") else ""
         proof = link(r.get("proof"), (r.get("proof_given") or {}).get("text"))
         if r.get("inferred"):

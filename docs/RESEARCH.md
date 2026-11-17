@@ -43,7 +43,7 @@ analyst sat range (80000-series)". Wikipedia's table (secondary) lists 70000–7
 [Added 2026-10-17, on the owner's instruction of 2026-10-16 (D-340).] What the corpus now states of this block: the
 regular GP data holds only analyst objects in it, 80000-89999, and CelesTrak's pre-launch supplemental data uses
 placeholder numbers such as 72000 and 72001 for a launch stack, which are not catalogued objects, and that may change
-for future launches (confirmed in correspondence with CelesTrak, October 2026). The corpus's own GP captures agree: no
+for future launches (measured in the corpus's captures, D-274). The corpus's own GP captures agree: no
 id in the block but the 219 analysts 81011-89494 (docs/INVENTORY.md). The paragraph above stays as the research
 record.
 

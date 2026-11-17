@@ -812,7 +812,7 @@ How: the owner signed in to GitHub in the browser pane themselves (the agent ent
 
 **D-339 (2026-10-17) — 0.8.0: a raise on the corrupt-input case's unedited comparison file fails it as `parse` (the owner's ruling on round one's finding 6 on D-330).** D-334 left one finding of the separate reviewer's first reading of D-330 for the owner: a parser that raised on the corrupt-input case's comparison file, an unedited file holding the inputs' records with no edit (D-175), had the case's checks set aside, not failed, as D-294 provides for a comparison the parser voided; the reviewer showed a silent dropper that also raised there ending "4 pass, 1 not exercised", where its twin, the same dropper reading the file, failed. The owner ruled (2026-10-15): a raise while reading that file fails it as `parse`; a grader change, with the reviewer and the re-run as usual. **What changed** (`gpconf/runner.py`, `read_unedited`): the raise adds a `parse` failure on the unedited file, in the words a raise on any other valid file has ("parser raised ValueError: ..."), and the inputs it is the comparison for are still not graded against it, as before; `Unsupported` there is unchanged (D-280's bookkeeping), and a raise on a corrupt input is still that file refused as a whole. `docs/ADAPTERS.md`'s row for a raise says both. **The adversarial test and its twins**, `ARaiseOnTheComparisonFileFailsAsParse` in `tests/adversarial/test_answers_071.py`: the dropper that raises on the three comparison files fails, each file failing as `parse` in the parser's words, and its twin, the same dropper reading them, fails as before; a correct parser that raises on the TLE comparison file fails on that file alone, and its twin, the same parser reading it, passes; a correct parser that raises on the two cut files has refused them as a whole and passes, with no `parse` item. On the code before, the first two fail and the third passes [tested]. **The reading**, by a separate reviewer, of this diff: commit; nothing it made is an escape, a false fail, a crash or a hang. Every route on the comparison file it tried now fails as `parse`, once per file, in the parser's words: a raise of any kind, an exception whose text raises or runs to megabytes (cut at 200 characters), a generator that raises halfway, the runner's own exception types raised by the parser, a command's non-zero exit, output that is not JSON, a timeout and a kill; an exit there gives `parse` on each file and one `parser-exit` item, as on any other file; the three comparison files are valid (each reads 3 of 3 records with the corpus's own reader); one comparison file serving four inputs gets one item; the built-in presets' items are unchanged on all eighteen cases. It found, in this change, wording: (4) the docstring's "an answer that is no records" read as an empty answer, which does not fail; (5) the CHANGELOG said the inputs were set aside before, where they still are; older text this change left incomplete: (6) the corrupt-input case's outcomes text, and the test of a parser that refuses the unedited file too, which asserted the inputs' items only; (7) the guide's `--cmd` bullets, which say a non-zero exit or a timeout fails the file as `parse`, where on a corrupt input it is that file refused as a whole; and outside the model, (8) an exception class whose name runs to a million characters reaches the detail uncut (no crash and no hang). Mended: (4) to (7); the outcomes text is written again by `tools/make_expected.py`, and the case's `expected.json` differs from the committed one in that text and its generation time only [tested]; the test is renamed and asserts that the unedited TLE file fails as `parse`. Stated: (8). **For the owner, not changed (older; each found by the reading, with a probe and a twin):** (1) a command parser that dies by a signal, or runs past its 120 s, on a cut corrupt input passes `corrupt-file-cut` as the file refused as a whole, fail-closed, where its twin that loads the complete records and says nothing of the cut fails; the same death on the comparison file now fails as `parse`; owner decision 3 covers a refusal, not a crash. (2) A parser that raises on the cut CSV input and declares the CSV comparison file unsupported is never graded on CSV in a run without fetched data, since a raise on a whole input is not counted as reading its format for D-280's all-or-none rule: a CSV reader one degree off in every inclination passes the case with one item skipped, where its twin fails; a run with fetched data catches it; counting the raise as a read fails an existing test, and could fail an honest adapter whose library raises before the adapter checks the format. (3) A parser that drops the corrupt record's id from the TLE comparison file as well reads not-exercised (D-294's rule, held by a test), where its twin fails; the CSV and JSON comparison files are held to their frozen values (D-299) and catch the same drop, and the TLE file is not; the reviewer suggests holding it to its records' frozen values too. **Measured.** On the final form [tested]: the suite, 773 tests, OK with Python 3.14.6 (7 skipped), and 773 tests with 3.9.6 (42 skipped); the property module's 26 tests run, none skipped; mypy clean at CI's settings, the strict count 78; a public export, 315 files, its suite 771 tests OK, 42 skipped; and, on the form before the wording mends, whose runner differs from the final one in a docstring only, the sixteen published runs and GPKit's run again and compared with their runs at D-334: no case verdict and no item moved, GPKit's gate met. Alternatives: leaving the case not exercised (D-294's rule, which let the dropper's bug read as unmeasured, not failed); failing the inputs as well (each is graded against nothing, so the file's own failure is the one fact).
 
-**D-340 (2026-10-17) — The 70000-99999 block in the corpus's own words: in the regular GP data only analyst objects, 80000-89999, and in CelesTrak's pre-launch supplemental data placeholder numbers such as 72000 and 72001 for a launch stack, not catalogued objects (measured in the corpus's captures, D-274); text only.** The owner's instruction (2026-10-16): before the freeze, state that in the regular GP data nothing is numbered above 69999 except analyst objects, and that CelesTrak's pre-launch supplemental data uses placeholder numbers such as 72000 and 72001 for a launch stack, which are not catalogued objects and may change for future launches; check the `nine-digit-supgp-launch-nominals` case's notes and the README for anything it contradicts; text only, with an entry. **Checked against the corpus (2026-10-16) [tested on the corpus's captures, not a full catalog]:** as a statement about every number above 69999 it would contradict the corpus's own GP captures, which hold the Space Fence analyst objects 270000-270449 (`analyst-objects`, 346 of them) and every catalogued object from 100000 on (SARAMAGO, `six-digit-omm-saramago`); as a statement about the 70000-99999 block it holds: the GP captures have no id in that block but the 219 analysts 81011-89494 (docs/INVENTORY.md), and the only ids there besides are the supplemental product's 72000 and 72001. The owner ruled (2026-10-16): scope it to the 70000-99999 block; the public text says "confirmed in correspondence with CelesTrak, October 2026", with no name and no quote, and the owner reads the final line before anything is public (read and approved, 2026-10-17). **Done so:** the README's "What changed" paragraph, where it said that primary sources describe only 80000-89999 and that the rest of the block is reported by secondary sources only, now says the above; the supplemental case's interpretation (`tools/make_manifest.py`) calls the 72000-series ids placeholder numbers CelesTrak's pre-launch supplemental data gives a launch stack, not catalogued objects, where it said their use was described only by a secondary source; its gap (`tools/cases.py`), which said the meaning of the 72000-series ids was described only by a secondary source, now says that what the rest of 70000-79999 holds, beside the placeholders, is described by no primary source; `docs/RESEARCH.md` §1 keeps its research record (Wikipedia's table, secondary, listing 70000-79999 as "Expected post-launch orbits") and gains a dated line saying what the corpus now states. Written again by the tools: the case's `expected.json` (its gaps text and generation time only; every value unchanged [tested]), its `case.md`, `MANIFEST.md` and `manifest.json`. The `nine-digit-supgp-launch-nominals` case's notes already call 72000 and 72001 the placeholders and say they carry 2026-219A and 2026-219B; nothing there or elsewhere in the tracked files contradicts the wording [tested: git grep, 2026-10-16, for "79999", "7xxxx", "70000-7" and "70,000" outside the private handoff]. `AUDIT.md`, a dated audit, is unchanged. The corpus's own measurement (D-274: across its seventeen TLE capture files, no catalog number above 69999 outside 80000-89999 but the supplemental product's placeholders) now stands for the 70000-99999 block as scoped here; above 99999 the corpus's measurements stand as D-274 recorded them. **Measured** [tested]: the suite, 773 tests, OK with Python 3.14.6 (7 skipped) and with 3.9.6 (42 skipped); a public export, 315 files, its suite 771 tests OK, 42 skipped, its README carrying the line above; no runner or reader code changed, so the published runs were not run again. Alternatives: the wording as given, for every number above 69999 (the corpus's own captures contradict it); leaving the README's secondary-source sentence (it is now answered by the provider's word).
+**D-340 (2026-10-17) — The 70000-99999 block in the corpus's own words: in the regular GP data only analyst objects, 80000-89999, and in CelesTrak's pre-launch supplemental data placeholder numbers such as 72000 and 72001 for a launch stack, not catalogued objects (measured in the corpus's captures, D-274); text only.** The owner's instruction (2026-10-16): before the freeze, state that in the regular GP data nothing is numbered above 69999 except analyst objects, and that CelesTrak's pre-launch supplemental data uses placeholder numbers such as 72000 and 72001 for a launch stack, which are not catalogued objects and may change for future launches; check the `nine-digit-supgp-launch-nominals` case's notes and the README for anything it contradicts; text only, with an entry. **Checked against the corpus (2026-10-16) [tested on the corpus's captures, not a full catalog]:** as a statement about every number above 69999 it would contradict the corpus's own GP captures, which hold the Space Fence analyst objects 270000-270449 (`analyst-objects`, 346 of them) and every catalogued object from 100000 on (SARAMAGO, `six-digit-omm-saramago`); as a statement about the 70000-99999 block it holds: the GP captures have no id in that block but the 219 analysts 81011-89494 (docs/INVENTORY.md), and the only ids there besides are the supplemental product's 72000 and 72001. The owner ruled (2026-10-16): scope it to the 70000-99999 block; the public text cites its source, with no name and no quote, and the owner reads the final line before anything is public (read and approved, 2026-10-17). **Done so:** the README's "What changed" paragraph, where it said that primary sources describe only 80000-89999 and that the rest of the block is reported by secondary sources only, now says the above; the supplemental case's interpretation (`tools/make_manifest.py`) calls the 72000-series ids placeholder numbers CelesTrak's pre-launch supplemental data gives a launch stack, not catalogued objects, where it said their use was described only by a secondary source; its gap (`tools/cases.py`), which said the meaning of the 72000-series ids was described only by a secondary source, now says that what the rest of 70000-79999 holds, beside the placeholders, is described by no primary source; `docs/RESEARCH.md` §1 keeps its research record (Wikipedia's table, secondary, listing 70000-79999 as "Expected post-launch orbits") and gains a dated line saying what the corpus now states. Written again by the tools: the case's `expected.json` (its gaps text and generation time only; every value unchanged [tested]), its `case.md`, `MANIFEST.md` and `manifest.json`. The `nine-digit-supgp-launch-nominals` case's notes already call 72000 and 72001 the placeholders and say they carry 2026-219A and 2026-219B; nothing there or elsewhere in the tracked files contradicts the wording [tested: git grep, 2026-10-16, for "79999", "7xxxx", "70000-7" and "70,000" outside the private handoff]. `AUDIT.md`, a dated audit, is unchanged. The corpus's own measurement (D-274: across its seventeen TLE capture files, no catalog number above 69999 outside 80000-89999 but the supplemental product's placeholders) now stands for the 70000-99999 block as scoped here; above 99999 the corpus's measurements stand as D-274 recorded them. **Measured** [tested]: the suite, 773 tests, OK with Python 3.14.6 (7 skipped) and with 3.9.6 (42 skipped); a public export, 315 files, its suite 771 tests OK, 42 skipped, its README carrying the line above; no runner or reader code changed, so the published runs were not run again. Alternatives: the wording as given, for every number above 69999 (the corpus's own captures contradict it); leaving the README's secondary-source sentence (it is now answered by the provider's word).
 
 **D-341 (2026-10-17) — 0.8.0: a parser's command that crashes or runs out of time refuses nothing, and a provider TLE line blank in column 68 is refused (the owner's rulings on D-339's reading and on D-338's two calls); a raise beside an unsupported comparison file stated.** D-339's separate reading found, older than D-339: (1) a `--cmd` parser killed by a signal, or still running after its 120 seconds, on a cut corrupt input passed `corrupt-file-cut` as the file refused as a whole, fail-closed, where its twin that loads the complete records and says nothing of the cut failed; owner decision 3 covers a refusal, not a crash; and (2) a parser that raises on the cut CSV input and declares the CSV comparison file unsupported is never graded on CSV in a run without fetched data. D-338's entry left two calls for the owner: a card blank in column 69, its checksum, refused; and whether a provider line blank in column 68, the last digit of the right-justified element set number (line 1) or revolution number (line 2), is refused as well, since a line cut inside that number and padded to 69 columns read the cut number (292 as 29, 56353 as 5635). **The owner's rulings (2026-10-17):** (1) a crash or a timeout is a fail, not a refusal, in its own entry, with the reviewer and the re-run, and any published `--cmd` verdict that moves checked by hand first; (2) a stated limit in `docs/ADAPTERS.md`, since a run with fetched data catches it; D-338's calls: refuse both, in words, folded into the next grader entry with tests and twins. **What changed.** `gpconf/runner.py`: `CommandParser` raises the runner's own `CommandCrashed` when its command is ended by a signal (a negative return code; or, from a shell command, an exit of 128 plus the number of SIGSEGV, SIGBUS, SIGABRT, SIGILL, SIGFPE, SIGTRAP, SIGSYS, SIGKILL, SIGXCPU or SIGXFSZ, `CRASH_SIGNALS`, the faults and the kernel's limits, which is how a shell reports that signal; none on Windows) or is still running after its time, in words ("was ended by signal 11 (SIGSEGV)", "exited 139, which is how a shell reports signal 11 (SIGSEGV)", "did not finish within 120 seconds"); the guard passes it on as itself for an instance of the runner's own `CommandParser` (a subclass's included) only, so a Python parser that raises it is read as raising, and one that is a `CommandParser` can only fail itself by it; wherever a refusal or a rejection is the right outcome, it fails, "the parser's command ...: a crash or a timeout is no refusal and no rejection (D-341)": on a corrupt input (the input's own check fails, and the input counts as read for D-280's rule), on the vectors an Alpha-5 decoder or encoder, an epoch reader or a catalog-number reader must reject, and on the ids the TLE field cannot carry, which a writer must refuse; elsewhere a crash fails as it did, and everywhere it is worded as the command's end ("the parser's command was ended by ...") where it read as the parser's raise ("parser raised RuntimeError: exit -11", "parser raised TimeoutExpired", "raised CommandCrashed"), a crash at an item a raise fails too worded apart from a value the hook returned, and a writer's crashes listed apart from lines written instead of a refusal. `gpconf/reference.py`: a provider element line of 69 columns, a card image's included, blank in column 68 is refused, "TLE line 1 is blank in column 68, the last digit of its element set number: a line cut short inside that number, which is right-justified and never ends in a blank" (line 2 names its revolution number); lines a writer wrote are not read through it; a card blank in column 69 was refused already (D-338) and stays so. `docs/ADAPTERS.md`: the three command protocols say what a crash and a timeout are, which shell exits are read as a signal, that an uncaught exception that ends the process by a signal is a crash (a harness catches its library's errors and exits 1), and four stated limits: a crash the command does not report (an earlier command of a pipeline, a `|| true`, a wrapper that turns its child's signal into a plain exit) reads as what it did report; behind a shell that does not exec the harness, an end by any other signal (SIGTERM, SIGINT, SIGHUP, SIGQUIT, SIGPIPE, SIGALRM, SIGUSR1 and SIGUSR2 among them) reads as that exit, an answer; on Windows, which has no signals, a crash is its exit code (an `abort()` there exits 3, read as unsupported, or for a vector as a rejection, and a POSIX shell inside `--cmd` reports a child's signal as an exit like 139, an answer there), so the rule is POSIX's; a timeout kills the process the runner started, and behind a shell the shell's own children may run on. The row for `Unsupported` states (2). **The adversarial adapters and their twins**, `tests/adversarial/test_crashes_080.py`: a harness that crashes by SIGSEGV on the two cut files, run directly and behind a shell (`...; exit $?`, which bash, dash and zsh all report as 139), fails the corrupt-input case, each cut file in the crash's words, and its twin, the same harness exiting 1 there, passes; exits of 130, 143 and 255 behind a shell stay refusals, 139 and 152 read as SIGSEGV and SIGXCPU, and a program's own exit of 139 with no shell is its answer; a crash on the unedited comparison file fails it as `parse` in the command's words, and its inputs' not-exercised items say why in them; a crash on every call of the Alpha-5 decoder and the catalog-number reader, and on a writer's representable id, reads as the command's end, never as a value or a refusal; the same harness hanging past a 3-second time fails the case; crashing on every vector the reference rejects fails the four vector items that hold rejections, crashing on the three ids the TLE field cannot carry fails the writer's refusal item, listed as crashed, and each twin, the same harness answering an error or exiting 1, passes (the calls the reference answers are answered in-process and only the refusals run the harness, so each crash is real and each run takes seconds); a Python parser that raises `CommandCrashed` itself is read as raising, its refusal of the file, as before. Element set 292 and revolution 56353, cut at column 67 and padded to 69, a line blank in column 68 beside its checksum, and a card image blank in column 68 are refused in words by the reader and by the control adapter; the twins, the whole lines, read 292 and 56353, as lines and as card images, and a line a writer wrote is read as its fields say. The signal tests skip on Windows, the stated limit. On the code before, the crash, timeout and column-68 tests fail and the twins pass [tested]. **The first reading**, by a separate reviewer: not yet, for two false fails this entry made: (1) the test of a shell's report expected bash's 139 from a command dash and zsh exec, so it would have failed on CI's Linux, whose `/bin/sh` is dash, and the signal tests cannot hold on Windows; (2) every shell exit of 129 to 159 was read as a signal, so a harness refusing with 130 failed. It also found: crashes worded as the parser's raise outside the `parse` items, and a writer's crashes listed as lines written; the timeout sentence, true only of a command the shell execs; the class docstring and the help text; a twin the test docstring claimed and no test made; claims no test pinned (the epoch and catalog-id crash sites, the `parse` words, exits above 159 staying answers, written lines exempt from column 68); stated limits (a crash the command does not report; Windows); and, outside the model, a `CommandParser` instance with its methods replaced forging a crash, which fails only itself. It found every crash route it tried failing once, in the runner's words, each twin passing, no other place where an exception counts as a good outcome, no parser code run after the guard, none of the corpus's 2,737 TLE element lines blank in column 68, and every `expected.json` written again unchanged. **The first mend:** from a shell, only 128 plus a crash signal's number reads as a signal (`CRASH_SIGNALS`); every crash worded as the command's end; the tests' shell route `...; exit $?`, quoted as the suite quotes, and the signal tests skipped on Windows; the pins; the documents and the stated limits. **The second reading**, of that mend: commit; and (1) a stated limit it made, which would have blocked had it been called an escape: behind a shell that does not exec the harness, SIGXCPU under the user's own `ulimit -t` (exit 152) read as a refusal again; (2) on Windows the list resolved to four signals, so cmd.exe exits of 132, 136, 139 or 150 read as crashes; (3) a `CommandParser` subclass's real crash read as its raise; (4) words no test pinned; (5) at two valid-input sites a crash read as a value the hook returned; (6) small wording; (7) a stated limit: an uncaught exception that ends the process by a signal reads as a crash. **The second mend:** SIGXCPU and SIGXFSZ in the list, the list empty on Windows, a subclass's crash a crash, a crash listed apart at the valid-input sites, the documents, a pin for each. **The third reading**, of that mend: commit; nothing these lines bring is a crash, a hang, a false fail or an escape the documents do not state as a limit. It found SIGXCPU under `ulimit -t` and SIGXFSZ under `ulimit -f` read as crashes behind bash and dash, only exits 152 and 153 newly read as crashes across 0 to 255, every Windows exit an answer and a timeout still a crash, a whole run in which every hook raises byte-identical with the form before, and the shell tests holding under dash, zsh, bash and `/bin/sh`. It found, for the owner: (1) outside the model, these lines': the guard's `isinstance` reads the parser's own `__class__`, which is the parser's code, outside the guard's `try` (a forged crash still fails only the forger); (2) an escape older than this entry: `Runner.__init__` leaves unwrapped a parser that says its `__class__` is `_Guarded`, so its own comparisons decide checks (a lying integer passed the Alpha-5 decoder vectors, where its twin failed); (3) and (4) three of the mend's changes and the raise words at the valid-input sites with no test; (5) to (7) wording (the list of signals that read as answers is not closed; Swift's `fatalError` traps rather than aborts; a docstring and a comment); (8) a stated limit: a POSIX shell inside `--cmd` on Windows (Git Bash, MSYS2, Cygwin, WSL) reports a child's SIGSEGV as 139, an answer there; (9) a stated limit: a harness refusing with 152 or 153 behind a shell now fails. Done so: (3) to (9) mended in tests and words (a `CommandParser` subclass crashing and its twin refusing; the Alpha-5 encoder's crash words; a 153 subtest; the raise twins; the documents); (1) and (2), each a one-line change to the guard's reading of a parser's class (`issubclass(type(...))` and `type(...) is _Guarded`), go to D-342, the next grader entry, with its own reading. **Measured.** On the form the third reading read, with only its tests and words added since [tested]: the suite, 783 tests, OK with Python 3.14.6 (7 skipped) and with 3.9.6 (42 skipped); the property module's 26 tests run, none skipped; mypy clean at CI's settings, the strict count 78 against nightly's ceiling of 79; every `expected.json` written again from a fresh reading of every source equal to the committed one but for its generation time (on the first form; the reader is unchanged since); a public export, 316 files, its suite 781 tests OK, 42 skipped; and the sixteen published runs and GPKit's run again and compared with their runs at D-334: no case verdict moved and GPKit's gate is met; one item's words changed, in libsgp4's vectors, an item already failing: its harness's end on one valid vector, which the runner had counted as rejecting it, now reads as a crash, checked by hand and recorded privately (Batch G convention). The test file as committed, eleven tests, OK on both Pythons. Alternatives: counting a crash as a refusal where only a refusal is graded (the escape); reading every shell exit of 129 to 159 as a signal, as this entry's first form did (a program may choose such an exit, 130 or 143 among them, so only 128 plus a crash signal's number is read as one, and a harness that ends by SIGINT or SIGTERM behind a shell reads as refusing, a stated limit); killing a timed-out command's whole process group (the behaviour is older than this entry, and its words are now true of it); refusing a blank column 68 on written lines too (a writer's element set and revolution number are secondary fields, reported and never graded, D-095, and are left as they were).
 
@@ -2455,3 +2455,949 @@ pass, and neither file says "my report" or "my pull" any more.
   - **Judged a timing failure caused by that load** [inferred from those four passes]. The lesson is a memory note: no
     wide runs while a gate holds the lock.
 - **Next:** the gates again on this commit, in full, with nothing else of this session's running beside them.
+
+**D-561 (2026-11-15) — D-543 applied on the private branch 0.9.1: blind pass D's WV-1 (planned by the owner, D-542; code and tests only; it turns a failure into "not exercised", so it waits for a blind second reader and then the owner's ruling before it ships).**
+
+The scratch draft of D-543 (`~/Developer/gpconf-scratch/release-0.9.0/f0824/wv1/tree`) is applied unchanged. Its base
+equals 5468e89's `gpconf/runner.py`.
+
+- `Runner.same_fetch(tpath, opath)` is true when both `.meta.json` files are a live request's, within two hours of
+  each other.
+- In `check_set_relations`' empty-answer branch: when no recorded meta exists, ids below 100000 are present, and the
+  two files were not fetched together, the two count items are `not-exercised`. The detail says the answers may be
+  from different times.
+- Answers fetched together are compared and fail as before.
+- `tests/adversarial/test_set_relations_404_090.py` has 5 tests: no meta, a pre-0.6.0 live meta, the recorded meta,
+  answers fetched together, and no id below 100000.
+
+Predictions were written first (`~/Developer/gpconf-scratch/release-0.9.1/PREDICTIONS-D543.md`). Measured: the new file
+and the four related test modules, 54 run, OK, 3 skipped, as predicted. The whole suite runs through the lock after
+the upstream-table gates.
+
+This is a check that fails no more in one situation, so under the owner's quality rule it is a loosening. A blind second
+reader reviews it next, and the ruling is asked in `coordination/decisions-waiting/gp-omm-conformance.md`.
+
+**D-562 (2026-11-15) — A source with no provider URL takes no provider's no-data text (the owner's ruling of 14 Nov, D-544: not justified, not reachable in practice, fix in 0.9.1; private branch 0.9.1-s; stricter, so a separate reviewer before it ships, not a blind-reader-and-ruling case).**
+
+- **The change.** `Runner.no_data_answer` returns None at once for a source whose `url` is missing, empty or not a
+  string. Such a source is shipped with the corpus, never answered by a provider. Before, `no_data_texts_for(None)`
+  gave both providers' texts, so a shipped file replaced by either text read as the empty answer.
+- **New tests,** `tests/adversarial/test_no_url_no_data_091.py`, 3 tests:
+  - no URL, in five shapes and three texts: never the empty answer;
+  - a GP or SupGP source still takes its own text and not the other provider's;
+  - every shipped source without a URL in `fixtures/*/expected.json` is covered.
+
+  On the parent tree (0.9.1 at 75e8a52) 2 of the 3 fail and the control passes; on this change all 3 pass.
+- **One existing test adjusted, without changing what it checks.** `test_the_http_200_answer_with_no_records_recorded_stays_the_empty_answer`
+  (D-514 ruling 2, D-517) gave its synthetic sources no URL. Each text now sits under its own provider's URL, so the
+  ruled behaviour is checked as before: the text alone or with one line end, under HTTP 200 or no status, is the empty
+  answer.
+- **Light tests:** this file and the no-data, recorded-answer, fetch-stop, empty-answer and WV-1 modules pass, OK
+  with 1 skipped. The whole suite runs through the lock with the rest of 0.9.1.
+
+**D-563 (2026-11-15) — The fetch's stop message says when the body, not the status, was unexpected (the owner's 0.9.1 item, D-542), and two stand-ins D-562 broke are mended (private branch 0.9.1-s).**
+
+- **The message.** Where an entry expects a 404 and gets a 404 whose body is not its provider's no-data text,
+  `why_unexpected` now says: "HTTP 404 as expected, but its body (N bytes) is not the provider's no-data text the
+  corpus records for this request". The run still stops (exit 2). A status other than the expected one still reads
+  "HTTP N".
+  - The three tests that pinned the old words now pin the new ones: `test_fetch_stop`'s unit assertion and its
+    end-to-end run (meta and stderr), and `test_nodata_answer_090`'s six bodies (the words and the byte count).
+- **What D-562 missed.** D-562's light run did not include `tests.test_source_reading`. Two of its tests gave
+  synthetic sources no URL: a recorded 404, and D-514/D-517's HTTP 200 cases. They failed under D-562 (7 subtests).
+  - Each source now carries its provider's URL, with each text under its own provider. What they check is unchanged:
+    the exact 404 text is a zero-record file; the text alone or with one line end under 200 or no status is the empty
+    answer.
+  - The lesson: a light run is chosen by grep for every module that names the no-data texts, `empty-404` or
+    `no_data_answer`, not from memory.
+- **Light run:** those 21 modules (selected that way, run through `env` and `xargs`) give 353 tests, OK, 5 skipped.
+  The whole suite runs through the lock later.
+**D-564 (2026-11-15) — The blind reader of D-543 (D-561): sound with changes. F1 and F2 mended, F3's wording mended, and its missing tests added; F3's case description and the published-verdict question are for the owner (private branch 0.9.1).**
+
+- **The reader.** A fresh general-purpose helper, given the diff, the code and the questions only. It did not read
+  DECISIONS.md or docs/handoff/. Its verdict: sound with changes.
+- **F1 (medium): a wrong parser escaped.** The new branch decided "the OMM set holds ids below 100000" from the
+  parser's own output. A parser reading a six-digit id as its last five digits therefore turned two failures into
+  not-exercised. The reader showed the older recorded branch, the one an ordinary fetch since 0.6.0 reaches, had the
+  same weakness: in 0.9.0 that parser is not-exercised there, and nothing else in the case catches it.
+  - **Mended:** `ref_below`, the reference reader's ids below 100000 (the parser's ids where the reference read
+    none), decides whether the comparison is made, in both branches. The parser's ids are still what is graded.
+  - Measured: the truncating parser now fails with no meta and beside the recorded answer; the reference passes.
+    On D-561's tree both tests fail, which confirms the 0.9.0 weakness.
+- **F2 (low): the two-hour window took a re-fetch at the refetch age as "the same fetch".** It is now
+  `SAME_FETCH_SECONDS` = 15 minutes, strict `<`. Measured: 899 s compared (fail), 900 s and 7,200 s not compared.
+- **F3 (low): wording.**
+  - `same_fetch`'s docstring now says a meta with no provenance counts as live.
+  - The item's detail reads "the metadata does not show it was fetched with the OMM set", true both with no meta and
+    with metas fetched apart, and every item is checked, not the first only.
+  - Not done: the case's own check description in `fixtures/tle-omits-six-digit-objects/expected.json` (written by
+    `tools/cases.py`) still describes not-exercised for the recorded TLE only. That is a frozen corpus file, for the
+    owner.
+- **The reader's missing tests, added:** a missing CSV meta beside a live TLE meta; malformed or non-string
+  `retrieved_at` (four shapes); no provenance on either, 1 s apart (compared); the window boundary; the truncating
+  parser in both branches. The file now has 16 tests.
+- **Light run:** every module that touches the no-data path or this case, plus the golden item statuses (32 modules,
+  chosen by grep), gives 504 tests, OK, 9 skipped. The whole suite runs through the lock next.
+- **For the owner** (`coordination/decisions-waiting/gp-omm-conformance.md`):
+  1. F1's mend is stricter than 0.9.0 on an ordinary fetch. A library that mangles six-digit ids would move from
+     not-exercised to fail in `tle-omits-six-digit-objects`, so published rows can move. Under the owner's rule
+     (worse verdicts get a private, owner-approved report first), each row is re-measured before 0.9.1 ships.
+  2. Whether the case description is extended.
+
+**D-565 (2026-11-15) — S1 of blind pass D, narrowed: a TLE member the runner refused as unreadable is not compared with the OMM set; a parse error stays graded (private branch 0.9.1-s; the parse-error half was stopped at its first failure and goes to the owner).**
+
+- **As drafted,** S1 made both refused states, `unreadable` and `parse-error`, not-exercised in the two count checks.
+  Predictions were written first (`~/Developer/gpconf-scratch/release-0.9.1/PREDICTIONS-S1.md`).
+  - Points 1 and 2 held. On the parent tree an unreadable member passed on "TLE has 0 records" (fail beside 3 ids
+    below 100000), and the case failed either way on the file's own item.
+  - Point 3 was wrong. `tests/adversarial/test_tle_members_080.py::test_the_count_checks_read_every_member` (D-345)
+    failed in 2 subtests. A parser that returns nothing from a `.2le` gets a parse error there (D-144), and its
+    member's count items fail. That is a wrong parser caught, and S1 as drafted would have turned those failures into
+    not-exercised: a loosening.
+- **Stopped there, and narrowed.**
+  - Only `unreadable`, a file the runner refused before any parser read it, now gives not-exercised, with cause
+    "data" and a detail naming the state.
+  - `parse-error` keeps 0.9.0's grading, now pinned by a test: a parser that cannot read the TLE, beside ids below
+    100000, fails both items, and the case fails.
+  - `tests/adversarial/test_refused_tle_member_091.py` has 3 tests: the unreadable member, with and without ids
+    below 100000; the parse-error member, still graded; a readable no-data answer, compared as before.
+- **The remaining loosening.** Turning the unreadable member's "fail" beside ids below 100000 into not-exercised
+  loosens an item, though not the case. It waits for a blind reader and the owner's ruling. The vacuous pass turning
+  into not-exercised is stricter.
+- **Light run:** 40 modules chosen by grep (the no-data path, refusals, the count checks, golden statuses) give 648
+  tests, OK, 9 skipped.
+
+**D-567 (2026-11-15) — S3 of blind pass D: a .meta.json whose http_status is not an integer is not read, with a message that says why (private branch 0.9.1-s; stricter).**
+
+- **The change.** `Runner.status_not_an_integer` reports a present `http_status` that is not an int as
+  source-present not-fetched: "its .meta.json gives http_status X, not an integer status, which no gpconf fetch
+  writes: the file is not read". That covers a string, a float, a list or a boolean. Then it stops reading that file.
+  load_source and the SATCAT reader both call it.
+- **What it ends:**
+  - `"404"` gave the self-contradicting "holds an HTTP 404 response … where the corpus records HTTP 404";
+  - `404.0` passed as 404, which makes the change stricter;
+  - None and an integer behave as before.
+- **Predictions** were written first (`PREDICTIONS-S3.md`). Measured: `tests/adversarial/test_meta_status_type_091.py`
+  has 2 tests and passes. On the parent tree (dd8845d) the five bad values fail and the control passes, as predicted.
+  - The control was mended twice before it tested the right thing: once because no source-present item is raised for
+    a file that is read, once because the count items need an OMM set beside the TLE. Both were test mistakes, not
+    behaviour.
+- **Next:** the whole 0.9.1 gate, through the lock, with the gate script that exits non-zero on any failure.
+
+**D-568 (2026-11-15) — The whole 0.9.1 gate on 68ba9fe passes, as predicted: private suite 1,594 OK, export 509 files, export suite 1,592 OK, 0 unexpected crash reports, gate rc 0 (private branch 0.9.1-s; nothing ships).**
+
+- **The run.** One lock job, 04:02 to 04:54, with `~/Developer/gpconf-scratch/release-0.9.1/gate-template.sh`. Its exit
+  status is the worst of its parts; that was proven on stub trees first, failing and passing.
+- **The results.** Predictions were written before the run (`gate-68ba9fe/PREDICTIONS.md`), and every one held:
+  - private tree: 1,594 tests, OK, 25 skipped;
+  - export: exit 0, Vallado's two files refused, the private names file not exported;
+  - export suite: 1,592 tests, OK, 67 skipped;
+  - crash reports: 404 expected, 0 unexpected;
+  - gate rc 0.
+- **What it covers:** D-561 and D-564 (WV-1, with the blind reader's mends), D-562, D-563, D-565 and D-567, on top of
+  0.9.0 (5468e89). It is not a release gate: 0.9.1's freeze, nightlies, blind pass and the owner's rulings (decisions
+  waiting 3–8 and 10) come later.
+
+**D-569 (2026-11-15) — S4 of blind pass D measured: no change proposed. The case is not-fetched because 11 of its 12 provider files are not on disk, and the run's own summary already says so (private branch 0.9.1-s; nothing changed).**
+
+- **The run.** Blind pass D's own probe adapter, `Unsup`, raises `Unsupported` on the no-data bytes only. It ran on
+  d0a51af's tree, against blind pass D's folder `attempts/A-saramago-tle-01-exact`, which holds one file, the exact
+  answer in `saramago.tle`, with `--case six-digit-omm-saramago`.
+- **What it reported:**
+  - the case `not-fetched`, with skip 1 and n/f 11;
+  - "1 case reports not-fetched with 1 provider file on disk and 11 not (column n/f): the files it grades are among
+    those not on disk".
+- **Reading.** S4 said: "the case not-fetched with '1 needs fetched data'; the file is on disk; it was skipped". All
+  of that is true, and the summary line and the skip column already state it. Not-fetched is the correct status: the
+  case grades files that were not fetched. Nothing in the wording is false.
+- **Proposed:** no change. The owner may still want the per-case line to name the skipped file. That would be a
+  wording addition, not a fix.
+
+**D-570 (2026-11-15) — The blind reader of D-562, D-563, D-565 and D-567: D-562 and D-567 sound, D-563 sound with two wording points, D-565 sound with changes. All four of its points mended, each with a test that fails before the mend (private branch 0.9.1-s).**
+
+- **The reader.** A fresh helper, given the brief, the commits and the questions. It read none of DECISIONS.md,
+  docs/handoff/ or the predictions files. It ran 15 single-module runs, each gated on load and on no running suite.
+  Its trees are left in `~/Developer/gpconf-scratch/release-0.9.1/review2/` (334 MB), for deletion by the owner.
+- **Q1, D-565:** no path lets an unreadable member turn a failing case into a pass. Every `unreadable` return follows
+  a failing `source-readable` item, and no code lowers a status.
+- **D1 (low-medium), mended.** A TLE the reference reader itself rejects is a `parse-error` with no reference records.
+  No parser read it, yet it was still compared: a vacuous pass, or a correct parser failed beside five-digit ids.
+  - It now takes the unreadable branch (`tstate == "unreadable" or (tstate == "parse-error" and trefs is None)`),
+    with a detail saying "rejected by the reference reader". The parser's own parse errors stay graded.
+  - Test: twins.tle plus an orphan line 1, with and without five-digit ids: not-exercised, and the case still fails.
+    On the parent tree both subtests fail.
+- **S1 (low), mended:** the SATCAT reader's call to `status_not_an_integer` had no test. One is added, for `200.0`,
+  `"200"` and `True` on a SATCAT file. On the tree before D-567, all three fail; `200.0` was read as SATCAT data.
+- **F1 (low), mended.** The fetch plan's "--force: answered HTTP 404 …" line did not take D-563's clearer text. It
+  now does, wherever the kept `unexpected` says "as expected, but its body". Test: a later run's plan line names
+  the body. It fails on the parent.
+- **F2 (low), mended:** "for this request" is dropped from `why_unexpected`'s text, since the text is spliced into
+  other sentences ("… for <url>", "… for it at …"). The two pinning tests follow.
+- **Not mended, the reader's info notes:**
+  - a URL naming neither provider still takes both texts (SATCAT `records.php`). That predates the change; every
+    such source records records, so the text fails there (D-113).
+  - `res.recorded` and `res.reused` are filled before the status check. That is the same as the existing
+    `page_in_place` path.
+- **Light run, one lock job:** 43 modules (the D-565 selection plus the meta-status, reuse and request modules) give
+  673 tests, OK, 11 skipped.
+
+**D-571 (2026-11-15) — The full upstream table on public main, the profile README, and the owner's rulings on 0.9.1 (the owner's words; two public pushes on his go).**
+
+- **The table** (the owner's go, with four conditions).
+  - Condition 1 named 64419a8 as "the commit the gates ran on". The gate on 64419a8 failed (D-566), and it passed on
+    8e28daf, which is 64419a8 plus the README link fix. Neither holds any 0.9.1 commit. Asked, the owner answered:
+    push 8e28daf.
+  - Just before the push, everything held:
+    - the regenerated rows equal `table.json`: 38 rows, 0 gaps;
+    - the live check: 38 rows, 0 mismatches (2026-11-15T10:30:57Z);
+    - the real clone's merge has the scratch preview's tree (eb2a611);
+    - names in the tree and in added lines: 0;
+    - private-notes content: 0, apart from the test's synthetic `SECRET-DETAIL`;
+    - both commits are the owner's, with no trailer.
+  - Pushed: public main 4644ae8..848a3ed, a merge commit (parents 4644ae8 and acff769), no force. CI and the new
+    `upstream table` workflow started on it.
+  - Read on GitHub afterwards: the README and `docs/LIBRARIES.md` each carry the 38-row table and its summary, and the
+    live `docs/LIBRARIES.md` page (HTTP 200) carries `id="user-content-every-finding-reported-upstream"`.
+- **D4.** The profile's link to that anchor was checked live first. Then `hneogy/hneogy` main went 8fbe6fc..2a12edf,
+  a fast-forward of 4 commits, the three of 11 Nov kept in history. The scans were clean. The live profile shows the
+  table sentence, "twenty-one cases", v0.9.0 with its DOI and the 0.9.0 line.
+- **The owner's rulings on 0.9.1, his words** (all on private branches with gates; nothing released without his word):
+  - 3: D-543/WV-1 ships in 0.9.1.
+  - 4: F1 is stricter than 0.9.0. Re-measure against the released corpus and record any changed verdicts before it
+    ships.
+  - 5: the recommendation on the frozen case description is accepted, unless it changes a verdict; if it does, it
+    goes to him.
+  - 6: the ratchet fix is approved, bound unchanged. The findings trim is approved: the naive control's 121 lines
+    become one table, with the page-weight check unchanged.
+  - 7: S1 narrowed is accepted. The parse-error half stays stopped and goes on the 0.9.1-or-later list. (D-570's D1,
+    the reference reader's rejection, is the unread-file half, not the parser's parse error.)
+  - 10: the D-341 timing test is made deterministic, no threshold changed, after a blind second reader.
+  - 11: S4, no change.
+  - 8a and 8b (pytest-gpconf): approved.
+  - 9 (NDM's four questions): he reviews later.
+
+**D-572 (2026-11-15) — The type-check ratchet runs on every push as well as nightly, with its bound unchanged at 45 (the owner's ruling 6, D-571; private branch 0.9.1-s).**
+
+- **CI.** `ci.yml`'s 3.12 job gains nightly.yml's ratchet step, word for word: mypy 2.4.0, already installed there,
+  with `--check-untyped-defs`, and fail above 45. The default-settings type check stays as it was.
+- **Why.** Public main's nightly failed this ratchet unseen from 2026-11-02 to 2026-11-14 (D-560). On a push, drift
+  fails the change that causes it.
+- **`tests/test_ratchet.py`:** both workflows carry the step; each one's printed ceiling equals its test; the two
+  bounds are equal; and the bound is 45.
+  - Proven on a known-bad copy: with CI's bound at 46, the test fails ("(46, 46) != (45, 45)").
+  - `tests.test_ratchet` and `tests.test_timebudget` (which reads nightly.yml) pass.
+- **Not run here:** mypy itself. It is not installed on this Mac, and nothing is installed (the owner's rule). The
+  count is measured by CI and the nightly; it was 45 on 0ac32ee.
+
+**D-573 (2026-11-15) — The findings page's naive section becomes one table (the owner's ruling 6, D-571: "the naive control's 121 lines become one table, with the page-weight check unchanged"; private branch 0.9.1-s).**
+
+- **`tools/make_failures.py`.** The naive parser, the corpus's control and wrong on purpose, is now one table: case,
+  failing items, the checks that failed. It is introduced by a sentence pointing to
+  `python -m gpconf run --preset naive` for the detail. python-sgp4's section, the status table, the gate and "How
+  to read this" are rendered as before.
+- **`docs/FAILURES.md`** was regenerated from the same three reports as before (the maintainer's `tools/_out` runs of
+  2026-11-11), with the page's existing "Generated" line kept word for word: its note on the runs predating 0.9.0's
+  version bump stays true of those reports. The diff is one hunk: the naive section, 120 lines out and 20 in. The page
+  goes from 249 lines and 25,021 bytes to 149 and 14,849. It is regenerated in full from fresh reports with the F1
+  re-measure (ruling 4).
+- **Tests.** `tests/test_report_summary.py`'s catalogue test counted every line starting "| `" as a status row; the
+  naive table's rows start the same way. It now counts within "## Status by case" only, and checks what it did:
+  21 rows, one per case, the fixed word.
+  - `test_report_summary`, `test_number_agreement` (the "(s)" rule, and the collapsed-bullet examples, which come from
+    python-sgp4's section), `test_stage_package` and `test_export` pass.
+- **"The page-weight check unchanged."** No test or tool in gpconf checks the page's weight: the two tests that read
+  it check its table shape and its wording. So nothing was changed, and none was found to keep. Which check the
+  owner meant (perhaps the site's page budget) is asked in decisions-waiting.
+
+**D-574 (2026-11-15) — The D-341 budget test made deterministic, with no threshold changed (the owner's ruling 10, D-571; private branch 0.9.1-s; a blind second reader next, before it ships).**
+
+- **Before.** One test ran real subprocesses with a per-call budget of 1 s: the CSV propagate calls slept 5 s, and
+  the TLE calls had to start Python, load the vectors and answer inside 1 s. Under load the TLE calls missed the
+  budget, and it failed in the first upstream-table gate (D-566).
+- **Now, two tests:**
+  1. `test_a_propagate_call_past_the_budget_is_a_crash_not_a_refusal` (the same name). `gpconf.runner.subprocess.run`
+     is replaced by a stand-in. For a CSV propagate call it raises `subprocess.TimeoutExpired`, which is what a real
+     run past its budget raises. Otherwise it answers at once from `vectors/propagation-twins.json`, and it records
+     the `timeout` each call was given.
+     - Asserted: TLE positions pass; OMM positions fail with the D-341 text and "did not finish within 1 seconds";
+       every call carried timeout=1.
+     - No real process runs, so load cannot move it.
+  2. `test_a_real_command_past_the_budget_is_a_crash`. A real command whose every propagate call sleeps 5 s against
+     the 1 s budget: TLE and OMM positions both fail with the D-341 text. Load can only make the timeout surer, so it
+     cannot fail the way the old test did.
+- **Unchanged:** the budget (1 s in the test), the runner, and `CommandParser`. No production code is touched.
+- **Predictions** were written first (`PREDICTIONS-D341.md`). Measured: `tests.test_propagation_declaration` has 12
+  tests and passes.
+
+**D-575 (2026-11-15) — pytest-gpconf: an ungraded session fails, with an opt-out; the xdist note; `--gpconf-data` and four more run options; the report's fields checked (the owner's rulings 8a and 8b, D-571, and the design's in-scope gaps; private branch 0.9.1-s; nothing published).**
+
+- **8a.** When gpconf grades no case, it exits 2 (since 0.9.0). The plugin now adds one failing test,
+  `gpconf[no-case-graded]`, carrying gpconf's own message and what to do. `--gpconf-allow-ungraded` turns it off.
+  `GpconfRun` records the return code; `ungraded()` gives the message or None.
+- **8b.** The README says that under pytest-xdist each worker runs gpconf itself.
+- **Gaps 1–2.** `--gpconf-data`, `--gpconf-sgp4-ver`, `--gpconf-propagate`, `--gpconf-strict` and `--gpconf-tag`
+  (repeatable) pass through to `gpconf run`.
+- **Gap 4.** The report names no schema version (checked tonight: the results-1.0 schema has no such field). So the
+  plugin checks that the eight required fields it reads are present, and stops with a clear message if not.
+- **Gaps 5–6.** Not done: the no-report path and the skip location stay as they were.
+- **Tests.** `tests/test_pytest_plugin.py` has 9 tests, OK:
+  - the options' argv;
+  - a real run on an empty data folder with `analyst-objects`: exit 2, a skip, and "no case was graded";
+  - a graded run, not flagged;
+  - a report lacking the fields, which stops the plugin.
+- **Under pytest 9.2.0,** in the existing scratch venv `pytestenv-090` (no install), with the tree's plugin on
+  `PYTHONPATH`, the entry point resolving to it:
+  - empty data, `analyst-objects`: "1 failed, 1 skipped", exit 1, the failure being `gpconf[no-case-graded]` with
+    gpconf's message;
+  - the same with `--gpconf-allow-ungraded`: "1 skipped", exit 0;
+  - `alpha5-encoding-vectors`: "1 passed", exit 0.
+
+**D-576 (2026-11-15) — The case description of `tle-omits-six-digit-objects` extended for D-564, D-565 and D-570, text only (the owner's ruling 5, D-571: "accept your recommendation … unless it changes a verdict"; it changes none; private branch 0.9.1-s).**
+
+- **The two check descriptions,** in `tools/cases.py` and in the case's frozen `expected.json`, the only two places
+  holding them, now also say:
+  - with no record in place, the TLE answer is compared only when its metadata shows it was fetched with the OMM set,
+    and otherwise the item is not-exercised;
+  - whether the OMM set holds an id below 100000 is read from the input, never from the parser's answer;
+  - a TLE file no parser read (unreadable, or rejected by the reference reader) is not compared.
+- **No verdict moves.** The change is the `description` strings only: 4 lines changed in 2 files. The frozen
+  expected values are untouched. `manifest.json` lists the file's path, not its hash.
+- **Tests:** `test_sets_and_lines`, `test_set_relations_404_090`, `test_number_agreement` and `test_export` pass.
+
+**D-577 (2026-11-15) — Ruling 4's re-measure, step 1: the prediction from 0.9.0's own re-measure reports. F1 moves no verdict in any of the 19 measured rows. Step 2, the real run, waits for the owner's word for one Actions run (private branch 0.9.1-s; nothing run on Actions).**
+
+- **The ruling, the owner's words:** "F1 is stricter than 0.9.0: re-measure against the released corpus and record
+  any changed verdicts before it ships."
+- **The reports.** The 0.9.0 re-measure's reports were read from its run on `hneogy/gpconf-action-test` (43040131045,
+  2026-11-11): the artifacts `reports-presets` and `reports-recipes`, 19 JSON reports, the owner's own GitHub data.
+- **What F1 can move.** Only `tle-omits-six-digit-objects`'s two count items, and only where the parser's OMM ids
+  below 100000 differ from the reference's: a row that was not-exercised ("the OMM set fetched now holds N") and would
+  now fail.
+- **What the reports show:**
+  - no row is not-exercised in those items;
+  - six rows carry them, and all six pass on "OMM set has 0 ids below 100000", the reference's own reading: reference,
+    python-sgp4 2.27 and newest, go-sgp4, SGP.NET, and the reference preset;
+  - the other 13 rows answer no TLE/OMM pair in that case, so they have no count items, and nothing changes for them.
+- **Prediction:** 0 changed verdicts from F1. The other 0.9.1 changes (WV-1, S1/D1, S3, the derived-source rule) are
+  reached only by hand-made or pre-0.6.0 data folders, which a fresh fetch never writes.
+- **Step 2,** to measure rather than predict: the 0.9.0 workflow (`docs/handoff/remeasure-0.9.0.yml`) on a branch
+  made from 0.9.1's export.
+  - Its fetch job is replaced by a download of the 0.9.0 run's `data` artifact (13864438595, 855 KB, the corpus's
+    fetch of 2026-11-11, kept until 2026-12-11). That means no request to CelesTrak (D-537).
+  - The 0.9.0 run took about 5 minutes in 4 jobs.
+  - It is an extra scratch CI run, so it waits for the owner's word.
+
+**D-578 (2026-11-15) — The blind reader of D-574: sound with changes. Its gap, the shell-string form (older than D-574), is now held by a test, and the docstring is made true (ruling 10's reader; private branch 0.9.1-s; test-only).**
+
+- **The reader.** A fresh helper, given the commit and the questions only. It did not read DECISIONS.md, docs/handoff/
+  or the predictions. Its trees are in `~/Developer/gpconf-scratch/release-0.9.1/review3/`, for the owner to delete.
+- **Its verdict:** the new tests prove what the old one proved, free of the old race, with no threshold or production
+  code changed (the diff is the test file and DECISIONS.md).
+  - The deterministic test saw 16 calls, parse, probe and 7 sets by 2 formats, all with timeout=1.
+  - Of 10 mutations, it caught 9: a timeout turned into a refusal, a rejection or an exit 1; no `timeout=`; ×2;
+    +0.5; hard-coded 120; `crashed()` always None; `_crash` malformed.
+  - The real test caught 7 of the 10, and load can only push it toward the asserted timeout crash.
+- **The gap (medium, older than D-574):** no test reached `_run`'s shell branch, the one the command line uses
+  (`gpconf/__main__.py` passes `--cmd` and `--vectors-cmd` as strings). Dropping `timeout=` from the shell call went
+  unseen.
+  - **Mended:** `test_the_shell_string_form_carries_the_budget_too` runs the deterministic check with string
+    commands. It passes on the code. On a copy with the shell call's `timeout=` removed, it fails, with all 16
+    budgets None.
+- **The docstring** now says that every call *with times* outlasts the budget five times over, and that a probe or
+  parse call slowed past it is a timeout too. The real test gains its own docstring.
+- **Not changed:** the duplicated vector loading the reader noted (harmless), and the real test asserting the D-341
+  phrase, not the timeout wording. The deterministic test checks the timeout wording.
+
+**D-579 (2026-11-15) — Ruling 4's re-measure, measured: v0.9.0 against 0.9.1 on the released corpus's data, 19 reports, 399 case verdicts, 0 changed, as predicted (D-577); and the owner's ruling on the NDM design's questions (the owner's approval 13 for one Actions run; private branch 0.9.1-s).**
+
+- **The run:** 43706517205 on the branch `remeasure-0.9.1-f1be531` of private `hneogy/gpconf-action-test`,
+  2026-11-15 10:56:59Z to 10:59:42Z. That repository's main is unchanged (9025cb8), and the branch carries one
+  workflow, `remeasure.yml`, from `docs/handoff/remeasure-0.9.0.yml` with only these changes:
+  - no fetch of any kind: every job downloads the 0.9.0 re-measure's own `data` artifact (run 43040131045, the
+    corpus's fetch of 2026-11-11);
+  - no request to CelesTrak or Space-Track, and no comment posted;
+  - each library on two sides at once, public v0.9.0 and 0.9.1 (the export of private f1be531);
+  - every "newest" pinned to the version the 0.9.0 re-measure measured: python-sgp4 2.27, PyEphem 4.2.1,
+    satellite.js 7.1.0, tle.js 6.0.0, brahe 1.8.1;
+  - a summary that fails on any changed verdict.
+
+  All five jobs succeeded.
+- **The result,** recomputed here from the full downloaded reports, as the owner's counting rule asks:
+  - 19 reports, 399 case verdicts, 0 changed between v0.9.0 and 0.9.1;
+  - 0.9.1's verdicts: fail 122, skip 103, pass 68, not-available 50, pass-tolerance 37, not-exercised 19;
+  - the v0.9.0 side equals the original 0.9.0 re-measure (11 Nov, the 180fd1e freeze) in every report.
+- **So:** F1, which is stricter than 0.9.0 (D-564), moves no published verdict, and nothing goes to the owner as a
+  changed verdict. The other 0.9.1 changes also moved none.
+- **Not covered:** the libraries the 0.9.0 re-measure ran outside this workflow (libsgp4, SatDump, astroz, GPKit and
+  the rest, D-486, D-489 and D-490). Each is reached only through `tle-omits-six-digit-objects`'s count items.
+- **The owner's ruling on item 9, the NDM design (his words):** "accept the three recommendations: the parse_oem hook
+  optional; TEME-only derived inputs, said plainly; the notes say no provider OEM is tested yet." The fourth question
+  stays open. "Design only; no 0.10 code before 0.9.1 ships."
+
+**D-580 (2026-11-15) — The owner's ruling on the NDM design's fourth question: 0.10 may add all five OEM cases in one minor release, on conditions (the owner's words; design only).**
+
+- **The ruling, his words:** "yes, 0.10 may add all five OEM cases in one minor release, on conditions: each case
+  gets its own prediction and its own blind second reader before it's adopted; any case that isn't ready moves to
+  0.10.1 rather than holding the others; the release notes list all five plainly. Still design only; no 0.10 code
+  before 0.9.1 ships."
+- **So, for each of `oem-structure`, `oem-time-systems`, `oem-precision`, `oem-covariance-optional` and
+  `oem-malformed`:** a written prediction, then its own blind reader, before it is adopted. A case not ready moves to
+  0.10.1 alone. The 0.10 notes name all five, saying which shipped.
+- With D-579's three accepted recommendations, the design's four questions are all ruled. It stays a design until
+  0.9.1 ships.
+
+**D-581 (2026-11-15) — The 0.9.1 gate on 056d4f4 failed, 1 test in each suite: D-573's trim had left the SupGP-withholding guard exercising nothing. The guard is restored to full strength through the section that still renders details, with no loosening (private branch 0.9.1-s).**
+
+- **The gate.** One lock job with `gate-template.sh`, gate rc 1, the script stopping as built.
+  - Private suite: 1,603 tests, 1 failure, 25 skipped. Export suite: 1,601 tests, 1 failure, 67 skipped. The counts
+    are the ones predicted. 0 unexpected crash reports.
+  - The failure in both was `tests.test_runner_completeness::test_catalogue_withholds_supgp_values_for_every_value_carrying_check`:
+    `md.count("withheld")` gave 0 against 3.
+  - The Coordinator read the log first, while the gate ran.
+- **The cause.** The guard fed a SupGP report into `make_failures.render` as the naive parser's, because the naive
+  section rendered each item's detail through the withholding code. D-573 made that section a table of check names
+  and counts, so the withholding code was no longer reached from that slot.
+  - No value leaked: the table holds none. But the guard no longer tested the withholding, and its structural-detail
+  assertion had nothing to read.
+  - D-573's light runs missed it: they were chosen by the page's file name, and this test imports the renderer
+    instead.
+- **The mend:** the same report goes through the sgp4 slot, the section that still renders details. The guard is
+  unchanged: 3 values withheld, neither value shown, the structural detail readable.
+  - A second assertion feeds the report to the naive table and finds no value in it, and the table's row.
+  - Proven: it passes on the code. With the withholding switched off in a copy of `tools/make_failures.py`, it fails
+    ("0 != 3").
+- **Light run:** every module that imports the renderer or names the page (`test_number_agreement`,
+  `test_report_summary`, `test_runner_completeness`, `test_stage_package`) passes, OK with 1 skipped.
+- **Next:** the gate again, in full, on this commit.
+
+**D-582 (2026-11-15) — The 0.9.1 gate on fad4df0 passes, as predicted: private suite 1,604 OK, export 510 files, export suite 1,602 OK, 0 unexpected crash reports, gate rc 0 (private branch 0.9.1-s; nothing ships).**
+
+- **The run.** One lock job with `gate-template.sh`, ending 12:06:49Z. The predictions were written first
+  (`gate-fad4df0/PREDICTIONS.md`): 1,604 and 1,602 tests, 0 failures, rc 0. All held.
+- **What it covers since 68ba9fe** (D-568):
+  - D-570, the second reader's four mends;
+  - D-572, the ratchet on push;
+  - D-573, the findings trim;
+  - D-574 and D-578, the deterministic budget tests and the shell-string form;
+  - D-575, pytest-gpconf;
+  - D-576, the case description;
+  - D-581, the withholding guard restored after D-573's trim broke it in 056d4f4's gate.
+- **The state of 0.9.1.** Every ruled item on the list is done and gated:
+  - 3 and 4: WV-1, measured as moving 0 of 399 verdicts (D-579);
+  - 5, 6 and 7: the description, the ratchet and trim, and S1 narrowed;
+  - 8 and 10: pytest-gpconf and the budget test, with its reader;
+  - 11: S4, no change.
+
+  The parse-error half of S1 is on the 0.9.1-or-later list. What a release still needs, each on the owner's word:
+  a freeze, three nightlies, a blind pass scoped to the changed paths, and the notes.
+
+**D-583 (2026-11-15) — The upstream table's check gains the three checks the owner sent for 0.9.1 (the site's S-164 ruling, option A): authorship, the release holds the fix and is the first that does, and a release-notes-only fix's report is closed. Run live on the public table: 1 mismatch, akhenakh/sgp4 v1.0.4, which D-445 chose on purpose; the exception is for the owner (private branch 0.9.1-s; stricter).**
+
+- **Merged first.** The gated branch `upstream-table` (D-556..D-560, D-566, head 8e28daf, the commit public main 848a3ed
+  was exported from) merged into 0.9.1-s as 5bb5958, so 0.9.1 carries the table, its tools and its check. Only
+  `DECISIONS.md` was changed on both sides; both appended blocks were kept whole, `upstream-table`'s first.
+- **The checks** (`tools/check_upstream_table.py`):
+  1. Authorship. A "fixed by my pull requests" row's pull requests are the owner's (`--owner`, default `hneogy`); no
+     pull request or commit linked from a "fixed by maintainers and contributors" row (its inferred commit included)
+     is his. The author is the pull request's `user.login`, the commit's `author.login`.
+  2. The release holds the fix. For a released row, a compare of the fix (the proof pull request's merge commit, the
+     proof commit, or the inferred commit) with the named tag is `ahead` or `identical`. Then the release published
+     just before it (drafts and pre-releases left out) must not hold it. For a bare tag with no GitHub release, the
+     tag GitHub lists next is taken, only if its commit is older.
+  3. A fix whose only proof is its release notes (swift-sgp4 #4, D-558) has every linked report closed.
+  Anything the check cannot read (no author, no merge commit, no compare, no order around a tag) is printed as NOT
+  CHECKED and fails the run like a mismatch; it is never a pass.
+- **Prediction** (written before the live run, `gpconf-scratch/release-0.9.1/PREDICTION-upstream-three-checks.md`):
+  0 authorship mismatches, 0 releases not holding their fix, 0 expected but possible on "the first release", the
+  swift-sgp4 #4 report closed, NOT CHECKED possible for bare tags.
+- **Measured** (live, read-only, GitHub API with the owner's token; the table's bytes equal public main's, blob
+  9f6f4d4): 38 rows, 127 answers read. Authorship: 24 authors read, 0 mismatches. Holds the fix: 37 compares, 0
+  mismatches. Release-notes-only: closed. First release: **1 mismatch, akhenakh/sgp4**: v1.0.3 already holds
+  44978c8. The first run also gave 1 NOT CHECKED, satkit v0.24.3, a bare tag (the project has one GitHub release,
+  v0.24.0); the bare-tag order was then added, and satkit's v0.24.2 does not hold 576cde2 (checked by hand too).
+- **The akhenakh row is not wrong.** The ledger says why (D-445): v1.0.3 was re-tagged to the fixed commit after Go's
+  checksum database had stored the unfixed v1.0.3, so Go users get the fix from v1.0.4. GitHub's v1.0.3 and v1.0.4 are
+  the same commit today. The check cannot see the checksum database, so the row needs a recorded exception, and an
+  exception loosens the check for that row: the owner's ruling, after a blind second reader (decisions waiting).
+  Until then the check exits 1 on the live table, and nothing on public main changes.
+- **Tests** (`tests/test_upstream_table.py`, 29 → 46): the synthetic answers gained authors, merge commits, release
+  lists and compares; one test per planted mismatch, one per NOT CHECKED path, and the command's exit status. Proven
+  on mutants under `gpconf-scratch/release-0.9.1/mut-three/`: removing the authorship block fails 5 tests, the
+  release block 9, the release-notes block its test (with the open and declined tests, cut with it), and dropping the
+  pre-release filter 6.
+- **Docs.** The workflow's comment names the new checks. The README and `docs/LIBRARIES.md` sentences about the check
+  claim less than it now does, so they stay true; their wording waits for the akhenakh ruling.
+
+**D-584 (2026-11-15) — The 0.9.1 release notes drafted, privately, with three questions for the owner before the number is final: 0.9.1 or 0.10.0 under the README's rule, the mutation re-run 0.9.0's notes promised for 0.9.1, and the akhenakh row (docs/handoff only; nothing released).**
+
+- `docs/handoff/0.9.1-release-notes-draft.md`: the changelog entry, with four grading changes under "Changes that can
+  move your result" (WV-1, the unreadable member, the no-URL source, the non-integer status), the other changes,
+  pytest-gpconf 0.1.0 and the known issues; and a short release text in the owner's voice.
+- **The number.** The README says a change of check semantics is a minor bump before 1.0 (D-333), and four entries
+  are that. Read literally, the release is 0.10.0. The draft recommends 0.10.0 and leaves it to the owner.
+- **The promise.** 0.9.0's changelog says a full mutation re-run is planned for 0.9.1 (D-535). It is not done. The
+  draft recommends running it on the frozen tree before the tag.
+- Claims marked [at freeze] are checked on the frozen tree or removed before the notes go to the tag.
+
+**D-585 (2026-11-15) — The owner's rulings 14 and 15, and the akhenakh/sgp4 exception built as ruled: one named earlier release not counted, its reason shown in the table, passing only if the earlier release is exactly that one; live 0 mismatches, 0 not checked, as predicted. The release is 0.10.0 (private branch 0.9.1-s; a blind reader next, its result to the owner).**
+
+- **The owner's words** (directly, 15 Nov, 12:21 ET):
+  - 14: "option A, a named exception for that row only, reason shown in the public table, passing only if the
+    earlier release is exactly v1.0.3 and failing once no longer needed. Blind reader first; bring me its result."
+  - 15.1: "the release is 0.10.0 per the README's rule. Renumber: NDM tier → 0.11, frames → 0.12. Update
+    FUTURE-TIERS and tell the Coordinator so GPKit's CDM design and astro's Phase 5 gates are updated to the new
+    numbers." Done: `coordination/PHASES/FUTURE-TIERS.md` updated, the Coordinator told. The handoff documents that
+    say "0.9.1" (todo, design notes, the notes draft) keep their names; the version itself is set at the freeze.
+  - 15.2: "yes, run the full mutation re-run on the frozen tree before the tag (3,600 s per-mutant cap, deferred as a
+    long job), but only after the battery is above 50% and the Coordinator's lock fix is approved. Results go in
+    the notes."
+- **The exception.**
+  - The ledger bullet says "released in v1.0.4 (v1.0.3 not counted: re-tagged to the fixed commit after Go's
+    checksum database had stored the unfixed v1.0.3)".
+  - `tools/upstream_table.py` reads it into `release.not_counted` {tag, why} and renders it after the release link.
+    The regenerated table differs from the public one in that row only (README and `docs/LIBRARIES.md` re-injected;
+    `as_of` kept at 2026-11-14, since no other fact was re-read).
+  - The check passes the row only when:
+    1. the release published just before v1.0.4 holds the fix;
+    2. that release is exactly the named tag;
+    3. the release before that one does not hold the fix.
+
+    It fails when the named tag is another release, when the earlier release no longer holds the fix ("not needed"),
+    when there is no earlier release, and when the release before the named one holds it too. A compare it cannot
+    make is NOT CHECKED.
+- **Tests:** 46 → 56, one per case above, plus parsing, rendering and the same answers failing without the exception.
+- **Live run 3** (prediction written first): 38 rows, 128 answers, 0 mismatches, 0 not checked, rc 0.
+- **Docs:** the README and `docs/LIBRARIES.md` sentences now say what the check covers, including the one named
+  exception.
+
+**D-586 (2026-11-15) — The blind reader of D-583 and D-585: both "sound with changes". Every finding is mended, each with a test that fails on a mutant without it. Live 0 mismatches and 0 not checked, as predicted (private branch 0.9.1-s; all stricter; the result goes to the owner, as he asked).**
+
+- **The reader.** A fresh general-purpose helper, given only the brief
+  (`gpconf-scratch/release-0.9.1/REVIEW-BRIEF-exception.md`): the commits, the owner's words for the exception, and
+  the questions. It read neither DECISIONS.md nor docs/handoff/ and made no network request. It ran 11 mutants (8
+  caught) and 11 probes. Its trees are in `release-0.9.1/review4/`, and its probe scripts in this session's
+  scratchpad, for deletion by the owner.
+- **The exception (D-585):**
+  - **E1 (medium):** it was not tied to the row. Any row could name any earlier release as not counted. Mended:
+    `EXCEPTIONS = {("akhenakh/sgp4", "v1.0.4"): "v1.0.3"}` in the check, the owner's ruling. A not-counted release
+    anywhere else, or naming another tag, is a mismatch, and the row's real mismatch is still reported.
+  - **E2 (low):** an exception on a row not marked released was shown but never checked. Mended: that is a mismatch.
+  - **E3 (low):** the reason could be empty or missing. Mended: that is a mismatch.
+  - A reason with parentheses drops the exception and fails loudly. The `|` escape is now tested too.
+- **The three checks (D-583):**
+  - **F1 (medium):** a bare tag between two GitHub releases was skipped.
+  - **F2 (medium-low):** the releases list was read as one page.
+  - **F3 (medium):** the bare-tag path trusted GitHub's tag order. That order is not version order: measured live,
+    python-sgp4 lists v2.14 … v1.0 before 2.27 … 2.15, and satellite.js lists v7.0.0-rc.0 first.
+  - Mended, all three: "the release before" is now the plain version tag just below the named one, in version
+    order, over every tag read page by page (up to 1,000; past that, NOT CHECKED). Pre-release tags are left out, and
+    the commit-date guard is kept.
+  - **F4 (low-medium):** a my-pr row with no pull request, or whose proof is a commit, passed. Mended: it must link a
+    pull request, and its proof must be one.
+  - **F5 (low):** a release-notes-only row with no report linked passed. Mended.
+  - **The reader's note on older code, also mended:** "merged, not yet released" compared the fix with the first
+    tag GitHub lists. For python-sgp4 that was v2.14, not the newest 2.27, so it could never see #172 ship. The check
+    has done this since D-553, and it is public on main. It now compares with the latest release and the newest
+    version tag, and anything unreadable is NOT CHECKED. Live, #172 is compared with 2.27: behind.
+  - **Not mended, [inferred] by the reader:** a maintainer row linking only the merge commit of the owner's pull
+    request would show the merger as its author. No row links a merge commit that way.
+- **Docs (the reader's Q6):** the README and `docs/LIBRARIES.md` sentences now claim what is enforced: a fix counted
+  as this project's only when its pull request is; the first *version* holding the fix; one row by ruling.
+- **Tests:** 56 → 72. Seven mutants of the mends plus one of the older-code mend, each caught.
+- **Live runs 4 and 5** (predictions first, in `PREDICTION-upstream-three-checks.md`): 38 rows, 0 mismatches, 0 not
+  checked, rc 0.
+
+**D-587 (2026-11-15) — The 0.10.0 freeze candidate: the version set to 0.10.0 (the owner's ruling 15.1), the changelog entry without a date, blind pass D's S2 sentence in the README; the gate's prediction written before it runs (private branch 0.9.1-s; nothing released).**
+
+- **The version,** as 0.9.0's staging commit did (dbefb67): `gpconf/__init__.py`, `pyproject.toml`, `manifest.json`,
+  `tools/make_manifest.py`, `MANIFEST.md`, `CITATION.cff`'s version, the README's User-Agent and citation lines, and
+  pytest-gpconf's dependency (`gpconf>=0.10.0`) and README. The citation date and the version DOI are set at the
+  release, as for 0.9.0.
+- **The README's status paragraph** described 0.8.0's changes under the number 0.9.0. Its lead now says what
+  0.10.0 is, citing D-579, and the rest is labelled "From 0.8.0". It is not rewritten; that is for the owner.
+- **S2** (blind pass D, in the owner's 0.9.1 plan, D-542; no code change): the README says that records read in place
+  of a recorded 404 answer are graded as records.
+- **The changelog entry** `## [0.10.0]`, from the notes draft (D-584), brought up to D-586. Two things are not yet in
+  it:
+  - the mutation re-run's results, after the run (ruling 15.2);
+  - a line on what moved to a later release. 0.9.1's plan also listed the 147 likely-(a) and five (b)
+    mutation-survivor groups and the D-540 reviewer's three notes. The owner's 0.9.1 rulings did not take them up,
+    and this freeze does not do them. That is for the owner (decisions waiting).
+- **Light checks:** the version, brand, User-Agent, install-layout, plugin and summary modules, run one at a time:
+  OK.
+- **The gate's prediction,** before it runs (the template gate: private suite, export, export suite):
+  - all pass, rc 0, and 0 unexpected crash reports;
+  - private about 1,676 tests: fad4df0's 1,604 plus the upstream table's 72;
+  - export suite about 2 fewer, as before.
+
+  The exact counts depend on `test_brand`'s additions from the merge, so a count within a few of these, with every
+  test passing, meets the prediction. The gate waits for the power gate (battery under 30% at 12:40).
+
+**D-588 (2026-11-15) — The owner's item 17: the README's Status paragraph rewritten to describe 0.10.0, briefly, with its 0.8.0 history left to the changelog; the changelog says plainly what moved to the next release. The new freeze commit (private branch 0.9.1-s; nothing released).**
+
+- **The owner's words** (directly, 15 Nov): "(1) yes, the changelog states plainly that the 147+5 survivor groups
+  and the D-540 reviewer notes moved to the next release. (2) Rewrite the README's Status paragraph to describe
+  0.10.0 accurately and briefly; move the 0.8.0 history to the changelog, not the README. Every claim must match what
+  the code and tests do. Show me the diff, then re-run the gate on the new freeze commit."
+- **The Status paragraph,** from about 40 lines to 17. It says:
+  - the release's four grading changes, each as D-561..D-570 do it;
+  - the re-measure as D-579 measured it: 19 reports of the workflow, the presets and the libraries it runs, 399
+    verdicts, and the libraries outside it not re-run (the earlier draft's "19 published library rows" was too broad,
+    and the changelog's lead is corrected the same way);
+  - the upstream check (D-583..D-586) and pytest-gpconf's ungraded failure with its opt-out (D-575);
+  - the fuzz counts as `ci.yml` (500 per push) and `nightly.yml` (5,000 nightly and on `v*` tags) run them;
+  - 0.9.0's measured naive and python-sgp4 counts, said to be 0.9.0's (D-483, D-489);
+  - the User-Agent with its version, which `tests/test_fetch_user_agent.py` requires in this paragraph (D-252);
+  - the audit line, and a link to the changelog for every release's changes.
+- **The 0.8.0 history it carried** is already in the changelog. Each decision it cited (D-229, D-247, D-248,
+  D-252..D-254, D-329, D-336, D-337, D-341..D-361, D-367, D-368, D-373, D-380, D-382) appears in `CHANGELOG.md`,
+  checked by search. The fetch size and the 46 requests stay where the README already gives them (the quick start,
+  "Fetching responsibly"), so nothing was copied in.
+- **What moved,** in the changelog under "Moved to the next release":
+  - the 147 survivors marked likely harmful (D-535);
+  - five items: the triage's "For the 0.9.1 list" minus the unreadable-member item, which D-565 did (consistency check
+    on every copy, KVN `COMMENT`, OBJECT_ID refused, dead code, the redundant `load_source` condition);
+  - the D-540 reviewer's three notes.
+
+  "The five (b) groups" are those five items. That is [my reading] of the plan's phrase: the triage notes list
+  exactly these, and no other list of five was found.
+- **Light checks:** User-Agent, versions, brand, the upstream table, install layout: OK, run one at a time.
+- **This commit is the new freeze.** The gate's prediction, before it runs, is D-587's:
+  - all pass, rc 0, and 0 unexpected crash reports;
+  - private about 1,676 tests, and the export about 2 fewer.
+
+**D-589 (2026-11-15) — The owner's approvals of D-588 and the reading of "five (b) groups", and the renumbering carried into the private roadmap and the NDM design; the 0.10.0 freeze commit, whose gate runs once (private branch 0.9.1-s; private files only; nothing released).**
+
+- **The owner's words** (directly, 15 Nov):
+  - "Status rewrite and changelog approved; your reading of the five (b) groups is right."
+  - "Fold the ROADMAP-AFTER-0.9.0.md line 218 fix (and any other renumbered tier references) into this freeze before
+    its gate runs, so the gate runs once."
+  - "The lock fix is approved in two steps (Coordinator installing); the mutation re-run waits for battery >50% and
+    step 2."
+  - The earlier message on line 218 asked that a private coordination path be replaced by plain wording.
+- **`docs/ROADMAP-AFTER-0.9.0.md`** is private and not on the export allowlist. Every release after 0.9.0 moved up
+  by one:
+  - 0.9.1 → 0.10.0;
+  - the adoption release 0.10 → 0.11, including its tag, its "done when" and §6's "Gate: 0.11 out";
+  - OCM, CDM and e2 0.11 → 0.12;
+  - the CLI/API freeze 0.12 → 0.13;
+  - the order line.
+
+  Line 218 named the coordination brief's path. It now says "the NDM tier's adoption brief", with no path. One point
+  is recorded as open, not decided: the frames and time tier, now 0.12 in the Coordinator's plan, is not in this
+  roadmap, and where it falls against the roadmap's 0.12 (OCM, CDM, e2) is for the owner.
+- **`docs/handoff/ndm-0.10-design.md`:** the title, the order line, the cases' heading and the data-source line say
+  0.11.
+  - The file keeps its name, since D-entries cite it.
+  - The questions and the owner's rulings are kept as asked and given, with a note on how to read their numbers.
+  - Historical handoff records (0.9.0's triage and decision notes) are not edited.
+- **The gate.** 0afb2d8's gate was stopped while still queued behind the power gate; it never started. The export
+  is unchanged by this commit, since both files are private. This commit is the freeze, and its gate runs once, with
+  D-587's prediction.
+
+**D-590 (2026-11-15) — The examples' version pins: the README's Action example named @v0.8.0, now @v0.10.0, the release being shipped; the Dockerfile's usage lines named 0.9.0, now 0.10.0; and a test holds every example pin to the package version. The 0.10.0 freeze commit, whose gate runs once (private branch 0.9.1-s; nothing released).**
+
+- **The owner's words** (directly, 15 Nov): "the README's GitHub Action example still pins @v0.8.0. Update it to the
+  release being shipped (@v0.10.0 at tag time), check every other doc and example for stale @v0.x pins, and add a test
+  that the README's pin matches the package version so it can't drift again. Then queue one gate for the whole freeze,
+  with its prediction updated for the new test." Also: "Stop the freeze gate now". cda4a15's gate was stopped while
+  still waiting on the lock, before it started, and the Coordinator was told (95408 and 98302 both handled).
+- **The search,** over every tracked file except the history (DECISIONS.md, CHANGELOG.md, docs/handoff/). It covered
+  `@v0.x`, `gp-omm-conformance@`, `uses:`, `gpconf==`/`>=`, `GPCONF_VERSION=` and `gpconf:0.x`.
+  - Stale: `README.md`'s `- uses: hneogy/gp-omm-conformance@v0.8.0`, and `docker/Dockerfile`'s two usage comments
+    (`GPCONF_VERSION=0.9.0`, `gpconf:0.9.0`). All three are updated.
+  - Not stale: `docs/BRAND.md`'s `@<tag>`, and pytest-gpconf's `gpconf>=0.10.0` (D-587). The templates and the guides
+    hold no pins.
+- **The test,** `tests/test_versions.py`, class `ExamplePins` (3 tests):
+  - the README has an Action example, and its tag is the package version;
+  - every Action tag, Docker build version and image tag in the README, the user docs, the guides, the Dockerfile and
+    pytest-gpconf's README is the package version;
+  - the pin reader finds each form, and not `@<tag>`.
+
+  Proven on copies with the old pins put back: the README's @v0.8.0 fails 2 tests, the Dockerfile's 0.9.0 fails 1.
+  `docker/` is exported, so the export suite holds the Dockerfile too.
+- **Light checks:** versions, brand and export modules OK, run one at a time.
+- **The gate's prediction,** before it runs: D-587's plus these 3 tests.
+  - all pass, rc 0, and 0 unexpected crash reports;
+  - private about 1,679 tests, and the export about 1,677.
+
+**D-591 (2026-11-15) — The owner's ruling on the release order after 0.10.0: 0.11 adoption and OEM, 0.12 OCM, CDM, OPM and e2, 0.13 frames and time, 0.14 the CLI/API freeze, last. Carried into the private roadmap and the NDM design; the 0.10.0 freeze commit (private branch 0.9.1-s; private files only; nothing released).**
+
+- **The owner's words** (directly, 15 Nov, about 13:05 ET): "Item 19 ruled: B, with one change. The roadmap already
+  puts the CLI/API freeze at 0.13, so B would put it in the same release as frames. The freeze goes last: 0.11 =
+  adoption + OEM; 0.12 = OCM, CDM, OPM, e2 (OCM and CDM each get a design first, per D-378); 0.13 = frames and time;
+  0.14 = CLI/API freeze." Also: "the power gate reopens above 50%, not 30%, because the battery fell below 30%."
+- **`docs/ROADMAP-AFTER-0.9.0.md`:**
+  - §4 is now "0.12, 0.13 and 0.14: toward the freeze", in three parts:
+    - 0.12: OCM and CDM, each with a design first (D-378); e2; and OPM, with "no design yet";
+    - 0.13: the frames and time tier, with FUTURE-TIERS' scope and GPKit's Phase 5 gate;
+    - 0.14: the CLI and API freeze.
+  - The order-at-a-glance line follows the ruling.
+  - The closing note says the order follows this ruling and quotes it. It replaces D-589's "open" note.
+  - The "Not required for 1.0" sentence is unchanged: adding frames there was a claim the ruling did not make, and it
+    was taken out before this commit.
+- **`docs/handoff/ndm-0.10-design.md`:** its title and its OCM/CDM heading put OCM and CDM in 0.12, and its renumbering
+  note gives the order.
+- **Sent word for word:** to the Coordinator, for FUTURE-TIERS; and to the GPKit release session, for
+  `cdm-reader-2.1.md` (gpconf 0.12) and `phase5-frames.md` (gpconf 0.13).
+- **The gate.** b930854's gate was stopped while still waiting on the lock, before it started. The export is unchanged
+  by this commit (both files are private), so the prediction is D-590's:
+  - all pass, rc 0, and 0 unexpected crash reports;
+  - private about 1,679 tests, and the export about 1,677.
+
+  It waits for the power gate, which now reopens above 50%.
+
+**D-592 (2026-11-15) — What comes after the gate, prepared privately: the v0.10.0 release notes draft, the release checklist (post-push steps included) and the nightlies' schedule. The changelog's missing line on the example pins is added, so the freeze commit moves once more before its gate (private branch 0.9.1-s; nothing released).**
+
+- **The owner's words** (directly, 15 Nov): "While the gate waits, prepare what comes after it, all private: the 0.10.0
+  release notes draft (the semantic-change reason for the minor bump, the new upstream checks, the pin and drift tests,
+  the tier order), the post-push checklist (Zenodo DOI and CITATION.cff, the PyPI upload steps, the Action tag, the run
+  id and commit for the sites session's S-164), and the three nightlies' schedule. Show me the release notes when
+  they're drafted."
+- **A correction in the coordination file, on his word:** item 19's note gave GPKit's changes as "~13:20 ET". The
+  commits say 60ad566 at 13:06:13 ET (18:06:13Z) and 1a5e95f at 13:06:37 ET (18:06:37Z). The note now gives those
+  times, read from the commits, and says it was corrected. DECISIONS.md never carried the wrong time.
+- **The changelog** lacked D-590: it now says that the README's Action example named @v0.8.0 and the Dockerfile 0.9.0,
+  and that a test holds every example pin to the package version. This is text in an exported file, so the freeze
+  commit moves. 25112a9's gate was stopped while still waiting on the power gate, before it started.
+- **New private files** (none exported):
+  - `docs/handoff/release-notes-v0.10.0-draft.md`: the GitHub release text in the owner's voice, with one slot for the
+    mutation re-run's figure;
+  - `docs/handoff/release-checklist-v0.10.0.md`: what must be true first; the release-day text (the dates, the table's
+    "as of" refreshed by a live check, any changed row to the owner first); B1–B8 as 0.9.0 ran them; S-164's run id
+    and commit; the Action tag; PyPI; Zenodo and `CITATION.cff`;
+  - `docs/handoff/nightlies-0.10.0.md`: the f082464 method, three branches in gpconf-action-test, and a schedule with
+    each estimate marked as one and the measured times it rests on.
+- **Two choices recorded for the owner,** in the checklist: regenerate `docs/FAILURES.md` with 0.10.0's runner or reword
+  its "before its version bump" line; and whether PyPI gets a TestPyPI rehearsal this time.
+- **The gate's prediction,** before it runs: D-590's, since the changelog line is text that no test counts.
+  - all pass, rc 0, and 0 unexpected crash reports;
+  - private about 1,679 tests, and the export about 1,677.
+
+**D-593 (2026-11-15) — The one freeze move for 0.10.0, on the owner's rulings 21, 22, 23/26 and 25 and his "… and N more": opt-in rows said plainly and checked, the public text corrected, FAILURES.md graded on the public export from the fetch alone on one stated platform, and report details that never hide a cut list or a failing set; no status changes (private branch 0.9.1-s; the records of each step are D-594..D-602 on 0.10.0-records).**
+
+- **21 (opt-in fixes).**
+  - A ledger bullet marks `opt-in \`NAME\`` [for SCOPE], and the table says "the fix is an opt-in (`NAME`), and the
+    default behaviour is unchanged": satkit (`on_error`), swift-sgp4 (`decodeValidSets`), Basilisk #1677 (`on_error`,
+    for one bad set).
+  - `tools/check_upstream_table.py` finds NAME in the upstream's own release notes or changelog at the release, or in
+    the merged pull request's text. Anything unreadable is NOT CHECKED.
+  - Tests 72 → 81, three mutants caught. Live: 0 mismatches and 0 not checked, as predicted.
+- **22 (the blind reader of the public text).** In the README and the changelog: "four changes alter what a check
+  concludes"; the no-data rule's "beside an OMM set holding ids below 100000"; the reference-rejected TLE's
+  `reference-reader` item; "147 … (D-533)"; "is present and not an integer"; "by this project's ruling"; and the full
+  upstream table and its check listed as **Added**, first in a release, published on main before it (D-571). The
+  release notes (records branch) carry the owner's A6 wording.
+- **"… and N more"** (the owner, on the GPKit release session's finding).
+  - `shown()`, `cut()` and `more()` in `gpconf/runner.py`: every list of findings a detail cuts (24 places) says how
+    many it leaves out, and the item carries the whole list as `details` in the JSON report (optional, additive, in
+    the results schema and ADAPTERS.md).
+  - `tests/test_cut_lists_0100.py`, 7 tests. python-sgp4's report grows from 172 KB to 1.0 MB, because one SupGP item
+    lists all 11,199 findings.
+- **25 (failing sets named).**
+  - `failing_sets()` opens the sgp4-ver, twins and type-4 propagation details with every failing set ("steps fail in
+    2 sets: 20413, 23333; ").
+  - `tests/test_failing_sets_0100.py` has 5 tests, which fail if a failing set is missing from the text. With the
+    opening removed, 4 of them fail.
+- **No status changes,** measured as predicted: the new runner against ce911e6's on the same data (reference, naive,
+  python-sgp4, and python-sgp4 with Vallado's files) gave 84 case results and 1,602 items with identical statuses.
+- **23/26 (FAILURES.md).**
+  - Graded on the public export from the fetch artifact alone, on ubuntu-24.04 / Python 3.12.16 / sgp4 2.27: the
+    private scratch repo, branch `failures-0.10.0-fetch-only`, run **43758971243** (b22af79), success. Run 43758885274
+    failed on my workflow's `tail -1`, not on gpconf.
+  - The ten operator-sourced captures are excluded (D-002; the owner withdrew his earlier grant), and they are not
+    in git anywhere.
+  - Against the private tree, every case status is equal except `supgp-celestrak-classification-c` → not-available
+    (reference and naive), from the excluded captures. The figures are 16, 13 and 7; c9 on that platform is NaN. All
+    of this is as predicted.
+  - The page prints the platform and versions, says it is fetch-only on the public export, labels the with-captures
+    figures as 0.9.0's recorded measurement, and keeps the c9 note. `docs/FAILURES.md` is byte-equal to the run's
+    artifact.
+- **Light checks:** every touched module run one at a time, OK. The gate comes after a fresh blind read.
+
+**D-603 (2026-11-15) — The owner's ruling 28: the second blind reading's findings F1–F6 mended in one commit before the gate, and a regression of mine found and fixed on the way; every test the reader named added, its four surviving faults now caught; no status changes (private branch 0.9.1-s; the freeze moves once, for defects in what ships).**
+
+- **F1.** The README no longer says FAILURES.md's counts were measured with the launch-window files. It says the page
+  is fresh-fetch only (16, 13 and 7), as the page shows.
+- **F2.** The opt-in check is tightened, and every public claim says what it does and doesn't detect.
+  - The marker counts only as a clause of its own, so "not an opt-in \`x\`" is no mark.
+  - Names shorter than 4 characters are refused, and the name must appear as a whole word.
+  - A merged row proved by a commit reads the commit's message; a release outside GitHub is NOT CHECKED.
+  - Live, the stricter check passes all three ledger rows: 0 mismatches, 0 not checked (prediction 1).
+- **F3.** The cut lists the reading found unmarked are marked, and their items carry the full list: the refusal
+  reasons, tle-checksums-valid, the writer's unsupported reasons, the parser-exit kinds, corrupt-input's field
+  differences (their 160-character cut is gone) and the refused-set lists. The text names the one form not carried:
+  "N …, e.g. …".
+- **F4.**
+  - The report records \`platform\` (system and Python; optional, additive, in the schema and ADAPTERS.md).
+  - make_failures computes the page's basis, the platform line and the c9 note from the reports, and the tree's
+    export marker. The c9 note gives this run's answer and the other platform's recorded one.
+  - The changelog quotes the platform line exactly as the page prints it.
+- **F5.**
+  - The page's wording and its D-489 basis are corrected.
+  - Refused sets are named apart ("refused in …") in the sgp4-ver, twins and type-4 details.
+  - The opt-in check's message is fixed.
+  - "item 21/23/25" and the session phrases in code and tests are replaced by D-593 and "found while checking GPKit
+    2.0.0 against gpconf 0.9.0". "Excluded (D-002)" is kept.
+- **F6.** `tests/test_freeze_mends_0100.py` (13 tests): code-only and refused sets (twins, Vallado); \`details\` on values
+  and every cut detail of a real run; the page's figures, platform line and c9 note; the opt-in negation, short names,
+  whole words, and a release body unreadable beside a readable changelog; and corrupt-input's surplus copies.
+  - The reader's four surviving faults are each caught: A by the codes-only test, B by the refused-set test, C by two
+    details tests, E by the figures test.
+- **A regression of mine, class (c), found by existing tests and fixed** (the owner's item 32, all ids there):
+  - The F3 line \`if cut(diffs, 3):\`, inside \`run_corrupt_input\`, called the helper that the function's local \`cut\` (a
+    file cut mid-record) hides. That gave 26 failing results in test_corrupt_input, test_report_summary and
+    test_must_090_2.
+  - Fixed with \`cut_list = cut\`, used at both calls there. The same hidden call (\`details=cut(over_w)\`) is in 733accb,
+    latent: no test reached it, so 733accb's gate would have passed. CorruptInputSurplusCopies now reaches it (it fails
+    on 733accb, passes here).
+  - My earlier claim that 733accb's gate would fail was wrong, and was corrected to the Coordinator.
+- **Measured** (lock jobs; predictions first; every script exits non-zero on a failure, proven on planted cases):
+  - final.sh: all 17 modules OK, A/B/C/E caught.
+  - cmp.sh, the new runner against ce911e6's on the same data: 84 case results and 1,602 items, 0 differences.
+  - FAILURES.md: private scratch run 43770544688 (export only, fetch only, no captures). The page is byte-equal to its
+    artifact; the table is identical to 43758971243's, the figures are 16, 13 and 7, the platform is read from the
+    reports, and c9 gives NaN.
+
+**D-604 (2026-11-15) — The third blind reading of 0.10.0's freeze: the mend, one commit on 3536128.**
+The reader returned "ready with changes". The mend was chosen under the owner's delegation, with conditions: no
+exclusion and no loosening; each surviving mutant killed by a test or written up; the overclaim narrowed to what is
+verified; predictions first; no push until the owner's ruling. No status moves.
+- **The overclaim:** README's Status said the opt-in check confirms "the upstream's own notes" name the opt-in. For a
+  fix not yet released, it reads the merged pull request or commit, which for a my-pr row is this project's own text. The
+  sentence now says what is read: the release notes or changelog, or, for a fix not yet released, the merged pull request
+  or commit. The draft release notes say the same.
+- **Details:** a refused list cut at 3 (the twins) or 4 (Vallado) now keeps every refusal, one by one, in the item's
+  `details`, through `cut_any`. Both Vallado items carry them. ADAPTERS.md's sentence is now true for these items.
+- **Unsupported sets:** a set answered "unsupported" while others propagate is named ("unsupported in 1 set: N; ") in
+  the twins and in both Vallado items, as the type-4 case already named its twins. Vallado's error-codes item also names
+  its refused sets in its opening.
+- **FAILURES.md:** its case count comes from the reference report's `summary.cases`. "One run" and the fetch date are
+  the owner's ruled wording. They stay, recorded as fixed text that the reports do not carry.
+- **The opt-in check's limits** are written into its docstring. No behaviour change, since a MISMATCH turned into NOT
+  CHECKED would loosen it.
+- **The reader's mutants** (a different set from D-603's): three survived on 3536128, removing the type-4 case's
+  `t0_other`, removing the opt-in check's left word boundary, and inverting `captures_absent`. Each is now caught by
+  `tests/test_third_reading_0100.py`. The reader's fourth mutant was already caught.
+- **Not decided here:** private branch names in D-593 stay as written, the log being append-only (D-606); whether
+  GPKit 2.0.0 is public stays the owner's question.
+- **Measured** (one lock job, its script proven on planted failures first):
+  - 18 modules OK on the mend. On 3536128 exactly the 5 predicted new tests fail. All four mutants are caught.
+  - The four presets (reference, naive, sgp4, and sgp4 with Vallado's files): 84 case results and 1,602 items with their
+    `detail` and `details` text, 0 differences from 3536128.
+  - FAILURES.md's basis paragraph, from CI run 43770544688's own reports, is unchanged, so the page stands as committed.
+- **A correction to D-603's text:** five of its lines show a backslash before each backtick (`\``), a quoting slip
+  when the entry was written. Read them as plain code quotes. D-603 is not edited (append-only).
+
+**D-605 (2026-11-15) — The reading of D-604's mend: tests at the edges, labels, wording, and the writer's layout list.**
+A fresh blind reading of D-604 found no behaviour bug. The mend is narrow, as the reading allowed: tests and wording,
+plus one list that was still cut without its full copy. No status moves.
+- **Tests at the edges of `cut_any`:** three of the reader's mutants survived D-604's tests: the twins' threshold,
+  their refusal limit, and `>` made `>=`. Each is now caught by a test at its edge, in
+  `tests/test_third_reading_0100.py`:
+  - one set of bad steps plus one refusal keeps all of them;
+  - exactly four refusals are cut and kept;
+  - exactly three are not cut and carry no `details`.
+- **The writer's layout list:** a record with more than three fields out of their columns is shown with three and a
+  count. Its every field is now in `details` (before this, the shown entry was cut and the rest lost). A test proves
+  it.
+- **Labels:** D-604's internal labels in code, tests and the check's docstring are replaced by D-numbers.
+- **Wording:**
+  - the opt-in sentence says the notes "contain its name", which is what is checked;
+  - CHANGELOG names unsupported sets beside refused ones;
+  - ADAPTERS.md and the schema give both forms of the count ("… and N more", "and N more");
+  - make_failures and the opt-in check's docstring say which sentences are fixed text, and the check's limits (case,
+    hyphens, the file names read).
+- **Measured** (one run, predictions first, the script proven on planted failures):
+  - all 19 modules OK; on D-604 only the new layout test fails;
+  - the three mutants each caught;
+  - the four presets: 84 case results and 1,602 items, status, text and `details` all unchanged;
+  - FAILURES.md's basis unchanged.
+  - A first run stopped on one mutant whose test raised an error instead of failing. The test now asserts `details`
+    is present first, which is stricter.
+
+**D-606 (2026-11-15) — The reading of D-605: tests at the edges of the writer's layout list, its released form kept,
+wording.** A fresh blind reading of D-605 found tests, wording and labels only. No status moves, and no runner code
+changes: D-606 is tests and documents.
+- **The layout entry keeps its released form.** A record with more than three fields out of their columns has been
+  shown as three and the total, "… (N fields)", since D-119 (0.9.0 prints it). The reading asked whether to change it
+  to "… and N more"; the owner ruled to keep the released text and document it. ADAPTERS.md, the results schema and
+  the CHANGELOG now name this form, and say the item carries `details` (D-605).
+- **Tests at the edges:** a record with exactly three misplaced fields is not cut and carries no `details`; eight
+  failing records are shown whole, nine are cut and carry all nine; the twins test pins exactly six steps. The
+  reading's two surviving mutants (`> 3` made `>= 3`, `> 8` made `>= 8`) are each caught, and so is a change of the
+  layout text to "… and N more".
+- **Wording:** "after a bracketed list" (was "inside"); refused and unsupported sets are named "apart from failing
+  ones"; private mutant letters are dropped from test docstrings.
+- **Internal names in this log (the owner's ruling):** the published log is append-only, so earlier entries are not
+  corrected. From D-604 on, entries name no internal roles, item numbers or session names. D-604's entry had not been
+  published, so it was reworded before its first push to drop them; its content is otherwise unchanged.
+- **Measured** (one lock job, predictions first, the script proven on planted failures): 20 modules OK; on D-605 the
+  new tests pass (the code is the same); the three mutants each caught; the four presets (84 case results, 1,602
+  items) show 0 differences in status, text and `details`; FAILURES.md's basis unchanged.
+
+**D-607 (2026-11-15) — The upstream table: CelesTrak/fundamentals-of-astrodynamics #172 fixed by the maintainer, merged,
+not yet released; on public main and folded into 0.10.0 as a defect in what ships.** The fix for `twoline2rv`'s reading
+of an Alpha-5 field beginning with I or O (the C++ code) was merged on 2026-11-15 as PR #175 (e0c9911), and #172 was
+closed as completed. No release holds it: the repository has no GitHub releases, and its newest tag is behind the fix.
+The table still said "open", so the weekly check would have failed on it. No status of gpconf's own moves.
+- **The row:** moved from "Reported, still open" to "Fixed by maintainers and contributors after my report", status
+  "merged, not yet released", proof PR #175, dated 2026-11-15 (merged), fixed by the maintainer. The repository and the
+  function are named, no person. The summary becomes 10 / 13 / 12 / 3, total 38. The ledger's bullet moves with it,
+  and the table regenerated from the ledger equals the committed one. The date in "as of 2026-11-14" is unchanged, by
+  the owner's condition that nothing else changes.
+- **Public main** (the owner's conditional word): the same row and counts, exported from the private upstream-table
+  line and merged as a merge commit, no force, after the facts were read again, the live check passed (38 rows, 0
+  mismatches) and the whole-tree attribution scan was clean. The upstream-table workflow on main passed afterwards.
+- **0.10.0:** this commit holds only the row, the counts, the ledger's bullet and this entry; one gate follows.
+- **Not part of this:** CelesTrak/fundamentals-of-astrodynamics #178 (C#) and #179 (MATLAB), opened by the maintainer
+  as follow-ons, are not reports of this project's and are not rows. brandon-rhodes/python-sgp4 PR #172 is a different
+  row and is unchanged.
+
+**D-608 (2026-11-16) — The README's two status sentences restored, re-verified at 0.10.0; the changelog link dropped; the
+upstream table's row fixes folded in. One commit, one gate (the owner's rulings of 2026-11-15 and 2026-11-16).** The
+gate on D-607 failed three README tests, all from D-588's rewrite of the Status paragraph, which had dropped two
+sentences the tests pin and added a relative link the package's README may not carry.
+- **The two sentences, each checked at 0.10.0 before it went back:** "A user's fetch is 46 requests, the same 46 as in
+  0.6.0, and asks for nothing it knows will answer 404" (D-247): `tools/fetchlist.json` is the same list as 0.6.0's (64
+  entries, equal as parsed), and the fetch's own tests count 46 requests and four answers written from the corpus's
+  record. "604 derived Alpha-5 TLE sets, 304 fetched TLE sets" (D-248): 604 counted from the shipped derived files by
+  `tests/test_sets_and_lines.py`; 304 by `tools/validate_render.py` on the maintainer's captures, 304 of 304 for the
+  name line, line 1 and line 2. The tests stay as they are.
+- **The link:** "is in `CHANGELOG.md`" stays as text, without the link (D-459's list of the package README's links).
+- **The upstream table, as on public main (b2f0147):** #172's and #174's library cells name the repository and the code,
+  "CelesTrak's fundamentals-of-astrodynamics (SGP4 reference code)"; SatelliteKit #24's finding says "the reference
+  SGP4 code's"; python-sgp4 #169 is "another user's report, open upstream", checked as an open row is, with a planted
+  test of a closed issue under that status; the summary counts it apart ("3 others: 2 that ended another way and 1
+  another user's report"); the table's date is the day it was last checked, 2026-11-16. The ledger's bullets carry the
+  same, and the table regenerated from the ledger equals the committed one.
+
+**D-609 (2026-11-16) — CelesTrak's reply of 9 Oct 2026 is not reproduced in the exported decision log, nor the
+letter's quoted text or its summary; the confirmed reading is stated as the corpus's own measurement (the owner's
+rulings of 2026-11-15 and 2026-11-16).** This log is append-only and is not changed: the export shortens the passages,
+as D-542 does for private correspondence. Each passage is found inside its own entry from a neutral head to a tail and
+replaced only if its SHA-256 matches; a passage missing or changed stops the export.
+- **What the exported copy says instead:** D-274's reply becomes "Reply received 9 Oct 2026; not reproduced here.", its
+  title drops the received time and the address, and its reading "concerns the letter's statement on TLE formats and
+  catalog numbers above 99999"; D-238's summary of the letter becomes "What it says is kept in the private record.";
+  the letter's subject, its quoted promise and its quoted count of lines are left out of D-261, D-246 and D-248; D-340
+  states the corpus's own measurement (D-274's check of all seventeen TLE capture files), and its title says "measured in
+  the corpus's captures, D-274".
+- **docs/PLAN.md and docs/RESEARCH.md** cite that measurement, where they cited the reply.
+- **The export tests** count the lines the shortened passages take out exactly, 18, a fixed number: a replacement that
+  added or dropped a line fails.
+- **Public main** carries the same since cd8bd5d (2026-11-16), pushed on the owner's word after the live check, the name
+  search and the attribution scan; this commit brings the freeze to the same export.
+
+**D-610 (2026-11-16) — The 70000-99999 block's wording cites the corpus's own measurement in place of the
+correspondence it was first confirmed in (the owner's ruling of 2026-11-16, item 11).** Text only; no value moves. The
+wording "measured in the corpus's captures, D-274" (D-274's check of all seventeen TLE capture files) replaces the
+earlier one in `docs/RESEARCH.md`, `tools/cases.py` (the supplemental case's gap) and `tools/make_manifest.py` (its
+interpretation), and so, written again by the tools, in `MANIFEST.md`, `manifest.json`, the case's `case.md` and its
+`expected.json` (its gaps text and generation time only). The exported copy of D-340 says the same through one more
+hash-matched passage. The released 0.8.0 changelog line stays as written (D-262); 0.10.0's entry says what changed.
+- **No capture read:** the supplemental case's `expected.json` has its gaps text edited in place (one phrase; every
+  value and its generation time unchanged [tested]), since the files behind it are D-002 data.
+- **The generated files catch up (the owner's option A):** writing them again also writes 0.10.0's revised
+  `tle-omits-six-digit-objects` description, already in `tools/cases.py` and `tools/make_manifest.py` at the freeze but
+  never written into `manifest.json`, `MANIFEST.md` and five cases' `case.md`; they now match their sources.

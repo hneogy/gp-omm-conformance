@@ -270,6 +270,9 @@ class CorpusIncomplete(Exception):
 REPO_URL = "https://github.com/hneogy/gp-omm-conformance"
 
 
+# D-564: the widest gap between two requests of one fetch run that still counts as "fetched together"
+SAME_FETCH_SECONDS = 15 * 60
+
 def is_provider_data(path):
     """A provider response under fixtures/<case>/raw/: never shipped there with the corpus (D-019). A fetch brings it,
     or, for the provider's recorded empty answer, writes it from the one response the corpus ships, in recorded/ (D-247)."""
@@ -804,9 +807,48 @@ def split_refusals(recs):
 
 
 # --------------------------------------------------------------------------- report objects
+def shown(words, n=6, sep="; "):
+    """The first n of a list of findings, and "… and N more" when it is cut, so a cut list never reads as complete
+    (D-593). The whole list goes into the JSON report's item as "details"."""
+    words = [str(w) for w in words]
+    return sep.join(words[:n]) + (f"{sep}… and {len(words) - n} more" if len(words) > n else "")
+
+
+def failing_sets(sets, what="steps fail in"):
+    """The opening that names every failing set, so a cut list of steps cannot hide a set ("steps fail in 2 sets:
+    20413, 23333; "; D-593, found while checking GPKit 2.0.0 against gpconf 0.9.0). Numbers sort as numbers."""
+    names = list(dict.fromkeys(str(x) for x in sets))
+    if not names:
+        return ""
+    names.sort(key=lambda x: (0, int(x), "") if x.isdigit() else (1, 0, x))
+    return f"{what} {qty(len(names), 'set')}: {', '.join(names)}; "
+
+
+def more(words, n):
+    """" and N more" after a sample of n, when the list is longer; "" otherwise (a list in its own brackets keeps them)."""
+    return f" and {len(words) - n} more" if len(words) > n else ""
+
+
+def cut(words, n=6):
+    """The full list for an item's "details", or None when nothing was cut."""
+    return [str(w) for w in words] if len(words) > n else None
+
+
+def cut_any(*parts):
+    """The full lists for an item's "details" when any of them was cut where it was shown (each part: the list and the
+    number shown), or None when nothing was cut (D-604: a refused list cut at 3 or 4 beside steps cut at 6)."""
+    if any(len(words) > n for words, n in parts):
+        return [str(w) for words, _ in parts for w in words]
+    return None
+
+
+cut_list = cut   # the same helper under a name a function's own local "cut" (a file cut mid-record) cannot hide
+
+
 class Item:
-    def __init__(self, check, status, file=None, detail="", tolerance=None, counts=None, cause=None):
+    def __init__(self, check, status, file=None, detail="", tolerance=None, counts=None, cause=None, details=None):
         self.check, self.status, self.file, self.detail, self.tolerance = check, status, file, detail, tolerance
+        self.details = details  # every finding behind a detail that shows only the first few
         self.counts = counts  # structured record counts behind a values item (D-142), so headlines never parse the sentence
         # why a not-exercised item was not exercised (D-294): "parser" when the parser's own behaviour voided the
         # comparison (it does not return the record from the unedited file either, D-175; it never returns the
@@ -821,6 +863,8 @@ class Item:
             d["tolerance_stats"] = self.tolerance.as_dict()
         if self.counts is not None:
             d["counts"] = self.counts
+        if self.details:
+            d["details"] = list(self.details)
         return d
 
 
@@ -1189,11 +1233,11 @@ class CaseResult:
         self.fmt_dodged = []      # (fmt, item index, path) for each per-input Unsupported answer (D-280)
         self.secondary_not_kept = []   # the writer case's secondary fields some record lost, for the printed status (D-369)
 
-    def add(self, check, status, file=None, detail="", tolerance=None, counts=None, cause=None):
+    def add(self, check, status, file=None, detail="", tolerance=None, counts=None, cause=None, details=None):
         if tolerance and status == "pass":
             status = "pass-tolerance"
             detail = (detail + "; " if detail else "") + tolerance.text()
-        self.items.append(Item(check, status, file, detail, tolerance, counts, cause))
+        self.items.append(Item(check, status, file, detail, tolerance, counts, cause, details))
 
     def voided_by_parser(self):
         """The checks this case lists whose every item is not-exercised by the parser's own doing (D-294)."""
@@ -1352,9 +1396,9 @@ def _vector_item(res, check, file, calls, bad, ok_detail):
     elif calls.unsupported:
         res.add(check, "fail", file, f"{calls.name} answered unsupported for {calls.unsupported} of {qty(calls.calls, 'vector')} "
                 f"({'; '.join(calls.reasons)}) and answered the rest: an operation is unsupported for all of its vectors or none"
-                + (f"; {'; '.join(bad[:8])}" if bad else ""))
+                + (f"; {shown(bad, 8)}" if bad else ""), details=cut(bad, 8))
     else:
-        res.add(check, "fail" if bad else "pass", file, "; ".join(bad[:8]) if bad else ok_detail)
+        res.add(check, "fail" if bad else "pass", file, shown(bad, 8) if bad else ok_detail, details=cut(bad, 8))
 
 
 class Runner:
@@ -1405,6 +1449,17 @@ class Runner:
                 n["_bad"] = bad
             out.append(n)
         return out
+
+    def status_not_an_integer(self, res, path, got):
+        """True, after reporting it, when a .meta.json's http_status is there but is not an integer ("404", 404.0, a
+        list, a boolean): no gpconf fetch writes one. "404" gave a self-contradicting "holds an HTTP 404 response ...
+        where the corpus records HTTP 404", and 404.0 passed as 404 (S3 of blind pass D, D-567). The file is not read."""
+        if got is None or (isinstance(got, int) and not isinstance(got, bool)):
+            return False
+        res.add("source-present", "not-fetched", path,
+                f"its .meta.json gives http_status {got!r}, not an integer status, which no gpconf fetch writes: the file is not read"
+                + ("; delete the file and its .meta.json, then fetch it again" if self.fetch_hints else ""))
+        return True
 
     def page_in_place(self, res, path, full, meta, src):
         """A response an earlier fetch saved in the data's place, refused in load_source's words (D-228), and in
@@ -1464,6 +1519,22 @@ class Runner:
         res.add("source-present", "not-fetched", path, "not on disk: provider data is not shipped with the corpus"
                 + (f"; fetch it with {self.hint()}" if self.fetch_hints else ""))
 
+    def same_fetch(self, tpath, opath):
+        """Whether the TLE answer and the OMM file were fetched together: both .meta.json files are a live request's (or
+        record no provenance, as a fetch before 0.6.0 may), less than SAME_FETCH_SECONDS apart. One run's requests are
+        seconds apart; a later re-fetch of one file waits at least the refetch age, two hours, so a window that wide let
+        a re-fetched OMM set count as fetched with an old TLE answer (D-543; D-564, the blind reader's F2)."""
+        def at(path):
+            full = self.path(path)
+            meta = saved_meta(full) if is_provider_data(path) and os.path.exists(full + ".meta.json") else {}
+            when = meta.get("retrieved_at") if meta.get("provenance") in (None, "live") else None
+            try:
+                return dt.datetime.strptime(when, "%Y-%m-%dT%H:%M:%SZ") if isinstance(when, str) else None
+            except ValueError:
+                return None
+        t, o = at(tpath), at(opath)
+        return t is not None and o is not None and abs((t - o).total_seconds()) < SAME_FETCH_SECONDS
+
     def no_data_answer(self, res, path, src, raw, meta_status):
         """The provider's no-data text the file holds, if it is the empty answer for this source; None if it is not
         (the reading goes on, and a file that reads no records fails below); False after failing `source-readable`.
@@ -1476,7 +1547,13 @@ class Runner:
         - a source recorded as HTTP 200 or with no status: the text alone, or with one line end after it (a single LF
           or a single CRLF), is CelesTrak's empty answer (the owner's ruling, D-514 and D-517), unless the corpus
           records records for it (D-113). Where the source's URL names the provider (GP's `gp.php`/`gp-first.php`, or
-          SupGP's), only that provider's text counts; other whitespace never does."""
+          SupGP's), only that provider's text counts; other whitespace never does.
+        A source with no provider URL is shipped with the corpus (built from GP data, or made by hand): no provider ever
+        answered for it, so nothing in its place is a provider's empty answer, and the file is read as what it is
+        (D-562; before, either provider's text was taken)."""
+        url = src.get("url")
+        if not isinstance(url, str) or not url:
+            return None
         recorded = src.get("http_status")
         facts = src.get("facts")
         body = facts.get("response_body") if isinstance(facts, dict) else None
@@ -1524,6 +1601,8 @@ class Runner:
                 res.recorded[path] = {"file": recorded.get("file") if isinstance(recorded, dict) else None, "http_status": meta.get("http_status"),
                                       "captured_at": meta.get("retrieved_at")}
             got = meta.get("http_status")
+            if self.status_not_an_integer(res, path, got):
+                return "missing", fmt, None, None, None, None
             if got not in (None, 200) and got != src.get("http_status", 200):
                 # A fetch before v0.5.1 wrote a response it did not expect to the data path itself, "so it is never
                 # re-requested". It is not the source, and reading it would charge the parser with an error page or
@@ -1633,8 +1712,9 @@ class Runner:
         held = _held(r["norad_cat_id"] for r in refrecs or [])
         got = _held(q.get("norad_cat_id") for q in parsed or [])
         over = [(i, n, held[i]) for i, n in got.items() if i is not None and i in held and n > held[i]]
-        words = ["; ".join(f"id {i}: returned {qty(n, 'time')} where the input holds it {'once' if h == 1 else qty(h, 'time')} (D-311)"
-                           for i, n, h in over[:12]) + (" ..." if len(over) > 12 else "")] if over else []
+        over_w = [f"id {i}: returned {qty(n, 'time')} where the input holds it {'once' if h == 1 else qty(h, 'time')} (D-311)"
+                  for i, n, h in over]
+        words = [shown(over_w, 12)] if over else []
         # and a record under a catalog number the file does not hold, or with none where the file's records all carry one,
         # in the values item's words: no check of a pairs case read it, nor of the facts or XML case for an integer id in
         # place of one the file holds, so run alone such a case passed it (D-346's reading, its finding 1; D-348)
@@ -1649,7 +1729,7 @@ class Runner:
             if len(nameless) - len(non_int):
                 words.append(f"{qty(len(nameless) - len(non_int), 'record')} without norad_cat_id")
         if words:
-            res.add("records-returned", "fail", path, "; ".join(words))
+            res.add("records-returned", "fail", path, "; ".join(words), details=cut(over_w, 12))
 
     def report_refusals(self, res, path, refusals, returned=None, held=None):
         """One item per file that carries refusals (D-144): the reasons with their counts; a refusal without a reason fails it,
@@ -1669,15 +1749,16 @@ class Runner:
             if r["ok"]:
                 reasons[r["reason"]] = reasons.get(r["reason"], 0) + 1
         no_reason = sum(1 for r in refusals if not r["ok"])
-        text = f"{len(refusals) - no_reason} refused with a reason" + ("" if not reasons else ": " + "; ".join(
-            f"{reason[:120]!r} x{n}" for reason, n in sorted(reasons.items(), key=lambda kv: -kv[1])[:5]))
+        reason_words = [f"{reason[:120]!r} x{n}" for reason, n in sorted(reasons.items(), key=lambda kv: -kv[1])]
+        text = f"{len(refusals) - no_reason} refused with a reason" + ("" if not reasons else ": " + shown(reason_words, 5))
         if no_reason:
             text += (f"; {qty(no_reason, 'refusal')} without a reason, counted as no refusal, crediting no record: a refusal "
                      f"that gives no reason is no better than a drop")
         if both:
             text += ("; returned and refused the same record — a refusal means the record was dropped; don't report warnings "
-                     f"as refusals ({'id' if len(both) == 1 else 'ids'} {', '.join(map(str, both[:12]))}{' ...' if len(both) > 12 else ''}; D-396)")
-        res.add("refusals", "fail" if no_reason or both else "info", path, text)
+                     f"as refusals ({'id' if len(both) == 1 else 'ids'} {shown(both, 12, ', ')}; D-396)")
+        res.add("refusals", "fail" if no_reason or both else "info", path, text,
+                details=(cut(reason_words, 5) or []) + (cut([f"returned and refused: {b}" for b in both], 12) or []) or None)
 
     # ---- value comparison
     def compare_values(self, res, path, fmt, mode, parsed, oracle, check="values", exempt=None, partial=False, oracle_label=None, held=None, held_in_file=None):
@@ -1902,7 +1983,7 @@ class Runner:
             dup_note += (f"; the input holds {qty(len(repeated), 'id')} more than once with records that differ (e.g. id {repeated[0][0]}, "
                          f"{qty(repeated[0][1], 'record')}): each copy returned is compared with the input's record it matches (D-343)")
         if fails:
-            res.add(check, "fail", path, f"{graded_records} compared vs {label}; " + "; ".join(fails[:12]) + (" ..." if len(fails) > 12 else "") + dup_note, counts=counts)
+            res.add(check, "fail", path, f"{graded_records} compared vs {label}; " + shown(fails, 12) + dup_note, counts=counts, details=cut(fails, 12))
         else:
             res.add(check, "pass", path, f"{qty(graded_records, 'record')} {pick(graded_records, 'matches', 'match')} {label}" + dup_note, tolerance=tol, counts=counts)
         # D-284: a field with expected values that this parser never returned in this file was not compared above;
@@ -1984,8 +2065,8 @@ class Runner:
             return n, bad, tol
 
         def report(check, n, bad, tol, ok_text):
-            res.add(check, "fail" if bad else "pass", path, "; ".join(bad[:6]) + (f" … ({len(bad)} mismatches)" if len(bad) > 6 else "") if bad
-                    else ok_text + (f"; {tol} within tolerance" if tol else ""))
+            res.add(check, "fail" if bad else "pass", path, shown(bad) if bad
+                    else ok_text + (f"; {tol} within tolerance" if tol else ""), details=cut(bad))
 
         if "leading-dot-decimals" in active and fmt in ("csv", "kvn", "xml"):
             kws = leading_dot_keywords(read_bytes(self.path(path)).decode("utf-8", "replace"), fmt)
@@ -2023,8 +2104,9 @@ class Runner:
             bad = [r["norad_cat_id"] for r in refrecs if not r["tle"]["checksums_valid"] or r["tle"]["line_lengths"][1:] != [69, 69]]
             # a check on the file's own lines, read by the corpus's reader: no parser takes part, so it is never a
             # parser pass (D-129's rule for the SATCAT check, applied here by D-297; the red team's finding)
-            res.add("tle-checksums-valid", "fail" if bad else "info", path, f"invalid lines for ids {bad[:5]}; a property of the file, not a result of the parser under test" if bad
-                    else f"{qty(len(refrecs), 'record')}, all checksums valid (data check; the parser under test is not involved)")
+            res.add("tle-checksums-valid", "fail" if bad else "info", path, f"invalid lines for ids {shown(bad, 5, ', ')}; a property of the file, not a result of the parser under test" if bad
+                    else f"{qty(len(refrecs), 'record')}, all checksums valid (data check; the parser under test is not involved)",
+                    details=cut(bad, 5))
         if "tle-catalog-field-decodes" in active or "alpha5-decode" in active:
             want = {r["norad_cat_id"] for r in refrecs}
             got = {p.get("norad_cat_id") for p in parsed}
@@ -2070,7 +2152,7 @@ class Runner:
                 elif result == "tolerance":
                     tol.add("epoch", diff)
             yrs = sorted({r["tle"]["two_digit_year"] for r in refrecs})
-            res.add("two-digit-year-pivot", "fail" if bad else "pass", path, f"epoch mismatch for ids {bad[:3]}" if bad else f"epochs match for two-digit years {yrs}", tolerance=tol)
+            res.add("two-digit-year-pivot", "fail" if bad else "pass", path, f"epoch mismatch for ids {bad[:3]}{more(bad, 3)}" if bad else f"epochs match for two-digit years {yrs}", tolerance=tol, details=cut(bad, 3))
 
     def check_presence(self, res, path, parsed, refrecs, active):
         many: dict = {}
@@ -2098,18 +2180,18 @@ class Runner:
             if empty:
                 bad = bad_ids(empty, lambda c: c.get("object_id") not in (None,))
                 res.add("object-id-may-be-empty", "fail" if bad else "pass", path,
-                        f"parser invented or kept a value for empty OBJECT_ID on ids {bad[:3]}" if bad else f"{qty(len(empty), 'empty OBJECT_ID record')} handled")
+                        f"parser invented or kept a value for empty OBJECT_ID on ids {bad[:3]}{more(bad, 3)}" if bad else f"{qty(len(empty), 'empty OBJECT_ID record')} handled", details=cut(bad, 3))
         if "object-name-unknown-literal" in active:
             unk = [r for r in refrecs if r.get("object_name") == "UNKNOWN"]
             if unk:
                 # held as the values item holds the name, so a TLE name line padded to 24 columns is UNKNOWN too (D-369)
                 bad = bad_ids(unk, lambda c: compare_value("object_name", c.get("object_name"), "UNKNOWN")[0] == "mismatch")
-                res.add("object-name-unknown-literal", "fail" if bad else "pass", path, f"UNKNOWN not preserved for {bad[:3]}" if bad else f"{qty(len(unk), 'UNKNOWN name')} preserved")
+                res.add("object-name-unknown-literal", "fail" if bad else "pass", path, f"UNKNOWN not preserved for {bad[:3]}{more(bad, 3)}" if bad else f"{qty(len(unk), 'UNKNOWN name')} preserved", details=cut(bad, 3))
         if "classification-c" in active:
             cc = [r for r in refrecs if r.get("classification_type") == "C"]
             if cc:
                 bad = bad_ids(cc, lambda c: "classification_type" in c and c["classification_type"] != "C")
-                res.add("classification-c", "fail" if bad else "pass", path, f"C not preserved for {bad[:3]}" if bad else f"{qty(len(cc), 'record')} with classification C accepted")
+                res.add("classification-c", "fail" if bad else "pass", path, f"C not preserved for {bad[:3]}{more(bad, 3)}" if bad else f"{qty(len(cc), 'record')} with classification C accepted", details=cut(bad, 3))
         if "element-set-zero-and-rev-one" in active:
             z = [r for r in refrecs if r.get("element_set_no") == 0 or r.get("rev_at_epoch") in (0, 1)]
             if z:
@@ -2122,7 +2204,7 @@ class Runner:
                                                     for c in copies_of(r["norad_cat_id"])}
                 bad = [r["norad_cat_id"] for r in z
                        if not given[r["norad_cat_id"]] & {(e, v) for e in (r["element_set_no"], _ABSENT) for v in (r["rev_at_epoch"], _ABSENT)}]
-                res.add("element-set-zero-and-rev-one", "fail" if bad else "pass", path, f"mismatch for {bad[:3]}" if bad else f"{qty(len(z), 'record')} with element set 0 / rev 0-1 preserved")
+                res.add("element-set-zero-and-rev-one", "fail" if bad else "pass", path, f"mismatch for {bad[:3]}{more(bad, 3)}" if bad else f"{qty(len(z), 'record')} with element set 0 / rev 0-1 preserved", details=cut(bad, 3))
 
     def check_empty_answer(self, res, path, fmt, raw, body, status):
         """The provider's empty answer is presented to the parser under test (D-143): an empty but valid result must
@@ -2168,7 +2250,7 @@ class Runner:
                     if v not in (None, default) and not (k == "mean_element_theory" and v in ("SGP4", "SGP/SGP4")):
                         bad.append((p.get("norad_cat_id"), k, v))
             res.add("csv-json-omit-constant-metadata", "fail" if bad else "pass", path,
-                    f"non-default metadata invented: {bad[:3]}" if bad else f"parsed with {absent} absent; defaults or None returned")
+                    f"non-default metadata invented: {bad[:3]}{more(bad, 3)}" if bad else f"parsed with {absent} absent; defaults or None returned", details=cut(bad, 3))
         if fmt in ("csv", "json") and "supgp-extra-keys-tolerated" in active:
             extra = reffacts.get("non_omm_columns") or reffacts.get("non_omm_keys") or []
             if extra:
@@ -2236,7 +2318,8 @@ class Runner:
                     for f, d in vals.items():
                         if len(d) > 1:
                             bad.append(f"id {cat} {f} (copy {i + 1} of {len(firsts)} in {names[anchor]}): {d}")
-            res.add("omm-formats-agree", "fail" if bad else "pass", set_name, "; ".join(bad[:6]) if bad else f"{len(omm)} OMM renderings agree on {qty(records, 'record')}")
+            res.add("omm-formats-agree", "fail" if bad else "pass", set_name, shown(bad) if bad else f"{len(omm)} OMM renderings agree on {qty(records, 'record')}",
+                    details=cut(bad))
         if tles and omm:
             opath, (_, ofmt, oparsed, orefs) = next(iter(omm.items()))
             oby = {p.get("norad_cat_id"): p for p in oparsed}
@@ -2252,15 +2335,29 @@ class Runner:
                 label = set_name if k == 0 else f"{set_name}: {os.path.basename(tpath)}"   # the first member's items as before
                 if "tle-format-omits-ids-above-99999" in active or "tle-count-equals-omm-count-below-100000" in active:
                     below = {i for i in oby if i is not None and i < 100000}
+                    # what the input holds, read by the reference reader: whether the OMM set disagrees with the TLE answer is
+                    # decided from the input, never from the parser's ids, so a parser that mangles six-digit ids into
+                    # five-digit ones cannot make the comparison "not made" (D-564, the blind reader of D-543, F1)
+                    ref_below = ({r.get("norad_cat_id") for r in orefs if isinstance(r.get("norad_cat_id"), int) and r["norad_cat_id"] < 100000}
+                                 if orefs is not None else below)
                     status = None
                     if tstate == "empty-404":
                         ok = not below
                         body = res.empty_answers.get(tpath, "No GP data found")  # the text the file holds: GP or SupGP
                         rec = res.recorded.get(tpath)
-                        if rec is None:
+                        if rec is None and ref_below and not self.same_fetch(tpath, opath):
+                            # No meta says the TLE answer and the OMM set were fetched together (a data folder from before
+                            # 0.6.0, or the corpus's record copied into place by hand): an answer from another time is not
+                            # evidence about today's OMM set, and the parser is not to blame (D-543, blind pass D's WV-1)
+                            status = "not-exercised"
+                            detail = (f"the TLE file holds CelesTrak's no-data answer {body!r}, but the metadata does not show it was fetched with the "
+                                      f"OMM set, which holds {qty(len(ref_below), 'id')} below 100000: the two answers may be from different times, so "
+                                      f"they are not compared")
+                        elif rec is None:
                             detail = f"TLE request returned {body!r}; OMM set has {qty(len(below), 'id')} below 100000 (expected 0)"
-                        elif ok:
-                            # The answer is the corpus's record, written by the fetch, which did not request it (D-247).
+                        elif not ref_below:
+                            # The answer is the corpus's record, written by the fetch, which did not request it (D-247); the input
+                            # holds no id below 100000, so the record agrees with it and the parser's ids are graded (D-564).
                             detail = (f"the corpus's record of the TLE answer is {body!r} (HTTP {rec['http_status']}, captured {rec['captured_at']}; "
                                       f"not requested by this fetch); OMM set has {qty(len(below), 'id')} below 100000 (expected 0)")
                         else:
@@ -2268,8 +2365,8 @@ class Runner:
                             # carry, CelesTrak's answer today is not the recorded one, and the comparison is not made.
                             status = "not-exercised"
                             detail = (f"the corpus's record of the TLE answer is {body!r} (captured {rec['captured_at']}), from when this set held no id "
-                                      f"below 100000; the OMM set fetched now holds {len(below)}, so CelesTrak's TLE answer today is not the recorded one, "
-                                      f"and this fetch did not request it: not compared")
+                                      f"below 100000; the OMM set fetched now holds {len(ref_below)}, so CelesTrak's TLE answer today is not the recorded "
+                                      f"one, and this fetch did not request it: not compared")
                     elif tstate == "missing":
                         # D-318: the TLE file of this set is not on disk (not fetched, or a capture no fetch brings). The
                         # comparison used to run on nothing and FAIL -- "TLE has 0 records" -- for any parser at all, the
@@ -2278,6 +2375,18 @@ class Runner:
                         ok, status = None, "not-exercised"
                         detail = (f"the TLE file of this set ({os.path.basename(tpath)}) is not on disk, so its records are not compared with the OMM set's "
                                   f"{qty(len(below), 'id')} below 100000")
+                    elif tstate == "unreadable" or (tstate == "parse-error" and trefs is None):
+                        # S1 of blind pass D (D-565), and the blind reader's D1 (D-570): a TLE file the runner refused before
+                        # any parser read it has no records to count -- refused as unreadable, or rejected by the reference
+                        # reader itself (a parse-error with no reference records). The comparison passed on "TLE has 0
+                        # records" beside an OMM set with no id below 100000, and failed a correct parser beside five-digit
+                        # ids; the file's own item already fails the case, so the comparison is not made. A parse error of
+                        # the parser's own stays graded: a parser that returns nothing from a member it was given fails
+                        # that member's items (D-144, D-345, tests/adversarial/test_tle_members_080.py).
+                        ok, status = None, "not-exercised"
+                        why = "rejected by the reference reader" if tstate == "parse-error" else "unreadable"
+                        detail = (f"the TLE file of this set ({os.path.basename(tpath)}) was not read ({why}; its own item says why), so its "
+                                  f"records are not compared with the OMM set's {qty(len(below), 'id')} below 100000")
                     elif tstate == "unsupported":
                         # D-318, the same fault from the other side: a parser with no TLE reader has nothing to count, and
                         # the file's own item already skips. All-or-none holds as for any format (D-280).
@@ -2401,13 +2510,15 @@ class Runner:
                         bad.append(none)
                         bad_dot.append(none)
                     if "tle-values-match-omm-within-tle-precision" in active:
-                        detail = "; ".join(bad[:6]) if bad else f"{qty(n, 'TLE/OMM pair')} consistent under the precision rules"
+                        detail = shown(bad) if bad else f"{qty(n, 'TLE/OMM pair')} consistent under the precision rules"
                         if quant and not bad:
                             detail += "; provider TLE epoch quantisation observed (data property, not a parser tolerance): " + quant.text().replace("within tolerance: ", "")
-                        res.add("tle-values-match-omm-within-tle-precision", "fail" if bad else "pass", label, detail, tolerance=tol)
+                        res.add("tle-values-match-omm-within-tle-precision", "fail" if bad else "pass", label, detail, tolerance=tol,
+                                details=cut(bad))
                     if "mmdot-is-tle-field-value" in active:
                         res.add("mmdot-is-tle-field-value", "fail" if bad_dot else "pass", label,
-                                "; ".join(bad_dot[:6]) if bad_dot else f"{qty(n, 'pair')}: OMM MEAN_MOTION_DOT equals the TLE field as printed, and MEAN_MOTION_DDOT the TLE field's five rounded digits", tolerance=tol_dot)
+                                shown(bad_dot) if bad_dot else f"{qty(n, 'pair')}: OMM MEAN_MOTION_DOT equals the TLE field as printed, and MEAN_MOTION_DDOT the TLE field's five rounded digits", tolerance=tol_dot,
+                                details=cut(bad_dot))
 
     # ---- per-kind drivers
     def run_gp_like(self, case, exp, res):
@@ -2543,6 +2654,8 @@ class Runner:
                 continue
             meta = saved_meta(full)
             got = meta.get("http_status")
+            if self.status_not_an_integer(res, path, got):
+                continue
             if got not in (None, 200) and got != src.get("http_status", 200):
                 # an error page an earlier fetch saved in the data's place, refused as load_source refuses it (D-228): it was
                 # read as a SATCAT file (D-351)
@@ -2720,6 +2833,7 @@ class Runner:
             res.add("tle-writer-catalog-field", "skip", None, "parser exposes no write_tle hook")
             return
         lines_bad, cat_bad, rt_bad, emitted_bad, refused_ok, layout_bad, crashed_bad = [], [], [], [], [], [], []
+        layout_full, layout_cut = [], False   # each record's every misplaced field, for details when any was cut (D-605)
         side_changed, side_checked = [], 0   # side fields written as another value (D-381, D-383)
         conv, sec, signs, prov = {}, {}, {}, {}
         written, refused_real, rt_checked, unreadable = 0, 0, 0, 0
@@ -2769,6 +2883,8 @@ class Runner:
             layout = W.check_layout(l1, l2)  # right length and checksum say nothing about where the fields sit (D-119)
             if layout:
                 layout_bad.append(f"id {cat}: " + "; ".join(layout[:3]) + (f" … ({len(layout)} fields)" if len(layout) > 3 else ""))
+                layout_full.append(f"id {cat}: " + "; ".join(layout))
+                layout_cut = layout_cut or len(layout) > 3
             rt_checked += 1
             try:
                 mism, c = W.round_trip(l0, l1, l2, rec)
@@ -2801,14 +2917,15 @@ class Runner:
         if unsupported:
             res.add("tle-writer-catalog-field", "fail", None,
                     f"write_tle answered unsupported for {unsupported} of {qty(len(exp['records']), 'record')} "
-                    f"({'; '.join(unsupported_reasons[:3])}) and wrote or refused the rest: an operation is "
-                    "unsupported for all of its records or none (D-205, D-280); what was written is graded below")
+                    f"({shown(unsupported_reasons, 3)}) and wrote or refused the rest: an operation is "
+                    "unsupported for all of its records or none (D-205, D-280); what was written is graded below",
+                    details=cut(unsupported_reasons, 3))
 
         def summary(fails, ok_text, n_ok, n_all, unit="record"):
             # a failing detail opens with what passed, so a failure confined to a few inputs cannot read as a general one
             if not fails:
                 return ok_text
-            return f"{n_ok} of {qty(n_all, unit)} correct; " + "; ".join(fails[:8]) + (" ..." if len(fails) > 8 else "")
+            return f"{n_ok} of {qty(n_all, unit)} correct; " + shown(fails, 8)
 
         n_real = written + refused_real
         n_lines = written + unreadable   # an output that could not be read as lines is one of these, and failed (D-337)
@@ -2816,22 +2933,24 @@ class Runner:
         nothing = "no record was written as TLE lines that could be read, so nothing here was checked"
         if n_lines:
             res.add("tle-checksums-valid", "fail" if lines_bad else "pass", None,
-                    summary(lines_bad, f"{qty(written, 'record')} written as two 69-character lines with valid checksums", n_lines - len(lines_bad), n_lines))
+                    summary(lines_bad, f"{qty(written, 'record')} written as two 69-character lines with valid checksums", n_lines - len(lines_bad), n_lines),
+                    details=cut(lines_bad, 8))
         else:
             res.add("tle-checksums-valid", "not-exercised", None, nothing, cause="parser")
         if n_real or cat_bad:
             res.add("tle-writer-catalog-field", "fail" if cat_bad else "pass", None,
                     summary(cat_bad, f"{qty(written, 'catalog field')} written correctly (five digits below 100000, Alpha-5 from 100000)",
-                            n_real - len(cat_bad), n_real, "catalog field"))
+                            n_real - len(cat_bad), n_real, "catalog field"), details=cut(cat_bad, 8))
         elif not any(i.check == "tle-writer-catalog-field" for i in res.items):   # the all-or-none item speaks otherwise
             res.add("tle-writer-catalog-field", "not-exercised", None, nothing, cause="parser")
         conv_text = "; ".join(f"{f}: " + ", ".join(f"{k} {n}" for k, n in sorted(v.items())) for f, v in conv.items())
         if rt_checked:
             res.add("tle-writer-column-layout", "fail" if layout_bad else "pass", None,
-                    summary(layout_bad, f"{qty(rt_checked, 'record')} with every field in its fixed columns", rt_checked - len(layout_bad), rt_checked))
+                    summary(layout_bad, f"{qty(rt_checked, 'record')} with every field in its fixed columns", rt_checked - len(layout_bad), rt_checked),
+                    details=[str(x) for x in layout_full] if (len(layout_bad) > 8 or layout_cut) else None)
             res.add("tle-writer-round-trip", "fail" if rt_bad else "pass", None,
                     summary(rt_bad, f"{qty(written, 'record')} read back at the TLE field resolution (rendering observed per field: {conv_text})",
-                            rt_checked - len(rt_bad), rt_checked))
+                            rt_checked - len(rt_bad), rt_checked), details=cut(rt_bad, 8))
         else:
             res.add("tle-writer-column-layout", "not-exercised", None, nothing, cause="parser")
             res.add("tle-writer-round-trip", "not-exercised", None, nothing, cause="parser")
@@ -2840,11 +2959,13 @@ class Runner:
             head = f"{len(refused_ok)} of {qty(len(unrep), 'number')} the TLE catalog field cannot represent (synthetic inputs, D-096) correctly refused"
             if emitted_bad or crashed_bad:
                 detail = (head + (f" ({', '.join(map(str, refused_ok))})" if refused_ok else "")
-                          + ("; written instead of refused: " + "; ".join(emitted_bad[:8]) if emitted_bad else "")
-                          + ("; crashed instead of refusing: " + "; ".join(crashed_bad[:8]) if crashed_bad else ""))
+                          + ("; written instead of refused: " + shown(emitted_bad, 8) if emitted_bad else "")
+                          + ("; crashed instead of refusing: " + shown(crashed_bad, 8) if crashed_bad else ""))
             else:
                 detail = head + f" ({', '.join(map(str, refused_ok))}); a refusal is the right output here, and such numbers belong in the OMM formats"
-            res.add("tle-writer-refuses-unencodable", "fail" if emitted_bad or crashed_bad else "pass", None, detail)
+            full = ([f"written instead of refused: {w}" for w in emitted_bad] + [f"crashed instead of refusing: {w}" for w in crashed_bad]
+                    if len(emitted_bad) > 8 or len(crashed_bad) > 8 else None)
+            res.add("tle-writer-refuses-unencodable", "fail" if emitted_bad or crashed_bad else "pass", None, detail, details=full)
         if sec:
             sec_text = "; ".join(f"{f}: " + ", ".join(f"{k} {n}" for k, n in sorted(v.items())) for f, v in sec.items())
             sign_text = ", ".join(f"'{k}' {n}" for k, n in sorted(signs.items())) or "no zero second derivative written"
@@ -2857,7 +2978,8 @@ class Runner:
             res.add("tle-writer-secondary-not-changed", "fail" if side_changed else "pass", None,
                     summary([f"{c} written as another value, neither the record's nor zero or left out" for c in side_changed],
                             f"{qty(side_checked, 'record')} with each side field kept, or zeroed or left out as documented",
-                            side_checked - len(side_changed), side_checked))
+                            side_checked - len(side_changed), side_checked),
+                    details=cut([f"{c} written as another value, neither the record's nor zero or left out" for c in side_changed], 8))
         else:
             res.add("tle-writer-secondary-not-changed", "not-exercised", None, nothing, cause="parser")
         if prov:
@@ -3014,8 +3136,8 @@ class Runner:
                 readings[("surplus", upath)] = True
                 over = sorted(k for k, n in (base_count or {}).items() if k is not None and n > 1)
                 if over:
-                    res.add("values", "fail", upath, "; ".join(f"id {k}: returned {qty(base_count[k], 'time')} where the input holds it once (D-311)" for k in over[:6])
-                            + (" ..." if len(over) > 6 else ""))
+                    over_w = [f"id {k}: returned {qty(base_count[k], 'time')} where the input holds it once (D-311)" for k in over]
+                    res.add("values", "fail", upath, shown(over_w), details=cut_list(over_w))
             if why:
                 for c in (check, "corrupt-input-neighbours-load"):
                     res.add(c, "not-exercised", path, f"no comparison: the unedited file {uname} cannot serve as one ({why}), so nothing here isolates what the edit changes",
@@ -3062,6 +3184,7 @@ class Runner:
             ids = {r["norad_cat_id"] for r in want}
             with_reason = [x for x in refusals if x["ok"]]
             outcome: dict = {}  # id -> (outcome, what)
+            full_diffs: dict = {}  # id -> every field difference, when what shows only the first (D-593)
             for r in want:
                 cat = r["norad_cat_id"]
                 if whole:
@@ -3071,7 +3194,9 @@ class Runner:
                         diffs = [d for copy in by_id[cat] for d in self.unedited_diffs(copy, base[cat])]
                     else:
                         diffs = ["a record the parser does not return from the unedited file"]
-                    outcome[cat] = ("garbage", "; ".join(diffs[:3])) if diffs else ("loaded", None)
+                    outcome[cat] = ("garbage", shown(diffs, 3)) if diffs else ("loaded", None)
+                    if cut_list(diffs, 3):
+                        full_diffs[cat] = list(diffs)
                 elif any(x["id"] == cat for x in with_reason):
                     outcome[cat] = ("refused", next(x["reason"] for x in with_reason if x["id"] == cat))
                 elif any(x["id"] == cat for x in refusals):
@@ -3189,7 +3314,8 @@ class Runner:
                     status, text = "fail", text + garbage_extra
                 if corrupt["norad_cat_id"] in surplus:
                     status, text = "fail", text + "; " + twice(corrupt["norad_cat_id"])
-            res.add(check, status, path, text, counts=counts, cause="parser" if status == "not-exercised" else None)
+            res.add(check, status, path, text, counts=counts, cause="parser" if status == "not-exercised" else None,
+                    details=full_diffs.get(corrupt["norad_cat_id"]) if status == "fail" and "built a record" in text else None)
             # the valid records around it, graded where the parser returns them from the unedited file
             valid = [r for r in want if r["role"] == "valid"]
             graded = [r for r in valid if r["norad_cat_id"] not in unread]
@@ -3199,7 +3325,7 @@ class Runner:
             note = f"; not graded: {', '.join(left_out)}, which the parser does not return from the unedited file either" if left_out else ""
             label = {"garbage": "changed by the corrupt input"}
             problems = [f"{r['norad_cat_id']} {label.get(outcome[r['norad_cat_id']][0], outcome[r['norad_cat_id']][0])}"
-                        + (f" ({outcome[r['norad_cat_id']][1][:160]})" if outcome[r['norad_cat_id']][1] else "")
+                        + (f" ({outcome[r['norad_cat_id']][1]})" if outcome[r['norad_cat_id']][1] else "")
                         for r in graded if outcome[r["norad_cat_id"]][0] != "loaded"]
             loaded_n = len(graded) - len(problems)
             problems += [twice(r["norad_cat_id"]) for r in graded if r["norad_cat_id"] in surplus]
@@ -3212,7 +3338,8 @@ class Runner:
                 res.add("corrupt-input-neighbours-load", "fail", path, f"the parser refused the file as a whole ({whole}), so the {where(len(graded))} {pick(len(graded), 'was', 'were')} given up with it" + note)
             elif problems:
                 res.add("corrupt-input-neighbours-load", "fail", path, f"{loaded_n} of {where(len(graded))} loaded as the parser reads {pick(len(graded), 'it', 'them')} from "
-                        f"the unedited file {uname}; " + "; ".join(problems) + note)
+                        f"the unedited file {uname}; " + "; ".join(problems) + note,
+                        details=[f"{r['norad_cat_id']}: {d}" for r in graded for d in full_diffs.get(r["norad_cat_id"], [])] or None)
             else:
                 res.add("corrupt-input-neighbours-load", "pass", path, f"{where(len(graded))} loaded, {pick(len(graded), '', 'each ')}exactly as the parser reads it from the unedited file {uname}" + note)
         self.grade_values_only(case, exp, res, by_file)
@@ -3323,16 +3450,19 @@ class Runner:
             return
         refs = P.reference(directory, self.root)
         pos_bad, code_bad, refused, unsupported, compared, max_r, max_v, codes = [], [], [], [], 0, 0.0, 0.0, 0
+        pos_sets, code_sets, refused_sets, unsupported_sets = [], [], [], []   # the sets each list's entries belong to (D-593)
         for ref in refs:
             try:
                 answers = hook(P.raw_of(ref), "tle", list(ref["times"]))
             except Unsupported as e:
                 unsupported.append(str(e).strip() or "no reason given")
+                unsupported_sets.append(ref["catalog"])
                 continue
             except Exception as e:
                 # a valid element set refused: a refusal is the library declining the set, which Vallado's file does
                 # not (an error code is a value per step, D-218's line); a crash is no answer either (D-341)
                 refused.append(f"{ref['catalog']}: " + (crashed(e) or f"{type(e).__name__}: {str(e)[:120]}"))
+                refused_sets.append(ref["catalog"])
                 continue
             problems, st = P.grade_set(ref, answers)
             compared += st["compared"]
@@ -3340,13 +3470,15 @@ class Runner:
             codes += bool(ref["error"])
             pos_bad += [f"{ref['catalog']} {p}" for p in problems["values"]]
             code_bad += [f"{ref['catalog']} {p}" for p in problems["codes"]]
+            pos_sets += [ref["catalog"]] * bool(problems["values"])
+            code_sets += [ref["catalog"]] * bool(problems["codes"])
         if len(unsupported) == len(refs):
             for c in checks:
                 res.add(c, "skip", None, f"parser reports propagation unsupported: {'; '.join(dict.fromkeys(unsupported))}")
             return
         mix = (f"; propagate answered unsupported for {len(unsupported)} of {qty(len(refs), 'element set')}: a hook is "
                "unsupported for all of its inputs or none (D-205, D-280)") if unsupported else ""
-        lost = (f"; {qty(len(refused), 'valid element set')} refused: " + "; ".join(refused[:4])) if refused else ""
+        lost = (f"; {qty(len(refused), 'valid element set')} refused: " + shown(refused, 4)) if refused else ""
         stats = f"largest differences {max_r:.3g} km and {max_v:.3g} km/s over {qty(compared, 'step')} (the bar {P.BAR:g}, WGS-72, opsmode 'i'; read from {where})"
         bad = pos_bad + ([] if not lost else [lost])
         none = "" if compared else "; no step was compared"
@@ -3354,13 +3486,17 @@ class Runner:
         # file's numbers is a pass, which is also what a parser copying tcppver.out gives (a documented limit, D-401)
         ok = "pass-tolerance" if (max_r or max_v) else "pass"
         res.add("sgp4-ver-positions", "fail" if bad or unsupported or not compared else ok, None,
-                ("; ".join(pos_bad[:6]) + (" ..." if len(pos_bad) > 6 else "") + "; " if pos_bad else "") + stats + none + lost + mix)
+                failing_sets(pos_sets) + failing_sets(refused_sets, "refused in") + failing_sets(unsupported_sets, "unsupported in")
+                + (shown(pos_bad) + "; " if pos_bad else "") + stats + none + lost + mix,
+                details=cut_any((pos_bad, 6), (refused, 4)))
         res.add("sgp4-ver-error-codes", "fail" if code_bad or refused or unsupported else "pass", None,
-                ("; ".join(code_bad[:6]) + (" ..." if len(code_bad) > 6 else "") if code_bad else
+                failing_sets(refused_sets, "refused in") + failing_sets(unsupported_sets, "unsupported in")
+                + (failing_sets(code_sets) + shown(code_bad) if code_bad else
                  # D-459: a run that refused sets has its codes ungraded for them; say so, not what a pass says
                  f"error codes not graded for every set: of the sets graded, {qty(codes, 'run')} ended in an SGP4 error whose step and code matched"
                  if (refused or unsupported) else
-                 f"{qty(codes, 'run')} ending in an SGP4 error, each at its step with its code, and no false decay") + lost + mix)
+                 f"{qty(codes, 'run')} ending in an SGP4 error, each at its step with its code, and no false decay") + lost + mix,
+                details=cut_any((code_bad, 6), (refused, 4)))
 
     def run_twins(self, case, exp, res):
         """The TLE/OMM exact twins (D-406; lane C's design section 3): each of seven shipped TLE sets and its OMM CSV
@@ -3385,8 +3521,8 @@ class Runner:
                 self.report_missing(res, os.path.relpath(path, self.root))
         tle_lines = read_bytes(tle_path).decode("ascii").split("\r\n")
         csv_lines = read_bytes(csv_path).decode("utf-8").split("\r\n")
-        out: dict = {"tle": {"bad": [], "codes": [], "stats": [], "unsupported": [], "refused": []},
-               "csv": {"bad": [], "codes": [], "stats": [], "unsupported": [], "refused": []}}
+        out: dict = {"tle": {"bad": [], "codes": [], "stats": [], "unsupported": [], "refused": [], "sets": [], "refused_sets": [], "unsupported_sets": []},
+               "csv": {"bad": [], "codes": [], "stats": [], "unsupported": [], "refused": [], "sets": [], "refused_sets": [], "unsupported_sets": []}}
         answers = {}
         for k, st in enumerate(ref["sets"]):
             # the two element lines, as the Vallado case sends a set: a hook reading two lines is not failed by a name
@@ -3400,14 +3536,17 @@ class Runner:
                     a = hook(raws[fmt], fmt, times)
                 except Unsupported as e:
                     o["unsupported"].append(str(e).strip() or "no reason given")
+                    o["unsupported_sets"].append(st["norad_cat_id"])
                     continue
                 except Exception as e:
                     o["refused"].append(f"{st['norad_cat_id']}: " + (crashed(e) or f"{type(e).__name__}: {str(e)[:120]}"))
+                    o["refused_sets"].append(st["norad_cat_id"])
                     continue
                 answers[(k, fmt)] = a
                 problems, stats = P.grade_steps(st["steps"], a)
                 o["bad"] += [f"{st['norad_cat_id']} {x}" for x in problems["values"]]
                 o["codes"] += [f"{st['norad_cat_id']} {x}" for x in problems["codes"]]
+                o["sets"] += [st["norad_cat_id"]] * bool(problems["values"] or problems["codes"])
                 o["stats"].append(stats)
         n = len(ref["sets"])
         for fmt, check, label in (("tle", "twins-tle-positions", "TLE"), ("csv", "twins-omm-positions", "OMM CSV")):
@@ -3418,15 +3557,17 @@ class Runner:
             compared = sum(x["compared"] for x in o["stats"])
             mr = max([x["max_r"] for x in o["stats"]] or [0.0])
             mv = max([x["max_v"] for x in o["stats"]] or [0.0])
-            words = o["bad"] + o["codes"] + [f"{qty(len(o['refused']), 'set')} refused: " + "; ".join(o["refused"][:3])] * bool(o["refused"])
-            if o["unsupported"]:
-                words.append(f"answered unsupported for {len(o['unsupported'])} of {qty(n, 'set')}: all or none (D-205, D-280)")
+            words = o["bad"] + o["codes"] + [f"{qty(len(o['refused']), 'set')} refused: " + shown(o["refused"], 3)] * bool(o["refused"])
+            unsup = [f"answered unsupported for {len(o['unsupported'])} of {qty(n, 'set')}: all or none (D-205, D-280)"] * bool(o["unsupported"])
+            words += unsup
             stats = (f"largest differences {mr:.3g} km and {mv:.3g} km/s over {qty(compared, 'step')} against the corpus's "
                      f"reference vectors (the bar {P.BAR:g}, WGS-72, opsmode 'i')")
             ok = "pass-tolerance" if (mr or mv) else "pass"
             res.add(check, "fail" if words or not compared else ok, None,
-                    ("; ".join(words[:6]) + (" ..." if len(words) > 6 else "") + "; " if words else "") + stats
-                    + ("" if compared else "; no step was compared"))
+                    failing_sets(o["sets"]) + failing_sets(o["refused_sets"], "refused in") + failing_sets(o["unsupported_sets"], "unsupported in")
+                    + (shown(words) + "; " if words else "") + stats + ("" if compared else "; no step was compared"),
+                    # the whole lists, the refusals one by one, when the steps or the refusals were cut (D-604)
+                    details=cut_any((o["bad"] + o["codes"], 6 - bool(o["refused"]) - bool(o["unsupported"])), (o["refused"], 3), (unsup, 6)))
         both = [k for k in range(n) if (k, "tle") in answers and (k, "csv") in answers]
         if not both:
             res.add("twins-tle-omm-agree", "skip", None, "no set was propagated from both renderings")
@@ -3441,10 +3582,10 @@ class Runner:
             differ += [f"{ref['sets'][k]['norad_cat_id']} t = {ref['sets'][k]['steps'][i]['t']:g}" for i in d]
         bad = mr > P.BAR or mv > P.BAR or differ or not together   # D-459: agreement over no step is no agreement
         res.add("twins-tle-omm-agree", "fail" if bad else ("pass-tolerance" if (mr or mv) else "pass"), None,
-                (f"error codes differ between the renderings at {', '.join(differ[:4])}; " if differ else "")
+                (f"error codes differ between the renderings at {shown(differ, 4, ', ')}; " if differ else "")
                 + f"TLE and OMM answers of the same {qty(len(both), 'set')} differ by at most {mr:.3g} km and {mv:.3g} km/s "
                   f"over {qty(together, 'step')} both propagated (the bar {P.BAR:g})"
-                + ("" if together else "; no step was propagated from both renderings, so nothing agreed"))
+                + ("" if together else "; no step was propagated from both renderings, so nothing agreed"), details=cut(differ, 4))
 
     def run_type4(self, case, exp, res):
         """Ephemeris type 4 (D-409; lane C's design section 4; the owner's ruling of 2026-11-01): one shipped set, 20453,
@@ -3529,11 +3670,13 @@ class Runner:
             # still hand the positions over (the review of D-409)
             return "stamped" if any(position(a.get("r")) for a in answers) else "codes"
         t4_bad, t4_ok, t0_bad, t0_stats, skipped = [], [], [], [], []
+        t4_sets, t0_sets, t0_other = [], [], []   # the files each list's entries belong to (D-593)
         for fmt, f4, f0 in pairs:
             # the twin first: a command's propagate op is probed with the first set it is sent, and a probe with the
             # type-4 set would read a correct command's refusal as having no op (the review of D-409)
             k0, a0 = call(f0, fmt)
             k4, a4 = call(f4, fmt)
+            n0, n4 = len(t0_bad), len(t4_bad)
             if k4 == "unsupported" and k0 == "unsupported":
                 skipped.append(f"{f4}: {a4}")
                 continue
@@ -3572,6 +3715,11 @@ class Runner:
                                   "(a code at every step), or a refusal")
                 else:
                     t4_bad.append(f"{f4}: the answer is no list of steps (an empty list too: answer a refusal or a code per step)")
+            if k0 == "answer":
+                t0_sets += [f0] * (len(t0_bad) > n0)
+            else:
+                t0_other += [f0] * (len(t0_bad) > n0)   # a twin refused, or unsupported alone: no steps to fail
+            t4_sets += [f4] * (len(t4_bad) > n4)
         if len(skipped) == len(pairs):
             for c in checks:
                 res.add(c, "skip", None, f"parser reports propagation unsupported for every format: {'; '.join(dict.fromkeys(skipped))}")
@@ -3583,8 +3731,9 @@ class Runner:
         else:
             words = t4_bad
             res.add("type4-not-propagated", "fail" if words else "pass", None,
-                    ("; ".join(words[:6]) + (" ..." if len(words) > 6 else "") if words else
-                     f"{qty(len(t4_ok), 'type-4 file')} not propagated: " + "; ".join(t4_ok[:6])) + unsup)
+                    (failing_sets(t4_sets, "fails in") + shown(words) if words else
+                     f"{qty(len(t4_ok), 'type-4 file')} not propagated: " + shown(t4_ok)) + unsup,
+                    details=cut(words) if words else cut(t4_ok))
         compared = sum(s["compared"] for s in t0_stats)
         mr = max([s["max_r"] for s in t0_stats] or [0.0])
         mv = max([s["max_v"] for s in t0_stats] or [0.0])
@@ -3593,8 +3742,8 @@ class Runner:
                  f"vectors (the bar {P.BAR:g}, WGS-72, opsmode 'i')")
         ok = "pass-tolerance" if (mr or mv) else "pass"
         res.add("type4-twins-propagate", "fail" if words or not compared else ok, None,
-                ("; ".join(words[:6]) + (" ..." if len(words) > 6 else "") + "; " if words else "") + stats
-                + ("" if compared else "; no step was compared") + unsup)
+                failing_sets(t0_sets) + failing_sets(t0_other, "refused or unsupported in") + (shown(words) + "; " if words else "") + stats
+                + ("" if compared else "; no step was compared") + unsup, details=cut(words))
 
     def run_case(self, case):
         exp = json.loads(read_bytes(os.path.join(self.root, "fixtures", case["id"], "expected.json")).decode("utf-8"))
@@ -3649,8 +3798,8 @@ class Runner:
         exits = self.parser_exits[exits_before:]
         if exits:
             kinds = sorted({f"{what} in {where}" for where, what in exits})
-            res.add("parser-exit", "fail", None, f"the parser tried to end the run {qty(len(exits), 'time')} ({'; '.join(kinds[:4])}): "
-                    "a parser must not exit the process; the run continued and this case fails (D-293)")
+            res.add("parser-exit", "fail", None, f"the parser tried to end the run {qty(len(exits), 'time')} ({shown(kinds, 4)}): "
+                    "a parser must not exit the process; the run continued and this case fails (D-293)", details=cut(kinds, 4))
         # D-280 (the SM-26 audit, issue #1): an Unsupported format is unsupported for all of a case's inputs or
         # none, as D-205 holds for the vector hooks. A skip earned while other files of the same format were read
         # is a dodge, and becomes the failure it hid.

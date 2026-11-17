@@ -143,11 +143,19 @@ class ReportAndCatalogue(unittest.TestCase):
                 item("omm-formats-agree", "{'15.1234567': ['a.csv'], '15.1234568': ['b.xml']}"),
                 item("tle-values-match-omm-within-tle-precision", "eccentricity tle 0.0001234 omm 0.0001235"),
                 item("parse", "parser raised ValueError: satellite number cannot exceed 339999")]}]}
-        md = make_failures.render({"reference": rep, "naive": rep, "sgp4": None}, "2026-01-01T00:00:00Z")
+        # The detailed section is the one that renders each item's detail: since D-573 that is python-sgp4's, the naive
+        # control being one table of check names and counts, so the report goes through the sgp4 slot (D-581). The
+        # guard is unchanged: three values withheld, no value shown, a structural detail readable.
+        md = make_failures.render({"reference": rep, "naive": None, "sgp4": rep}, "2026-01-01T00:00:00Z")
         self.assertEqual(md.count("withheld"), 3, md)
         self.assertNotIn("15.1234567", md)
         self.assertNotIn("0.0001234", md)
         self.assertIn("satellite number cannot exceed 339999", md)   # a structural detail stays readable
+        # and the naive control's table, fed the same report, shows no value at all
+        naive = make_failures.render({"reference": rep, "naive": rep, "sgp4": None}, "2026-01-01T00:00:00Z")
+        self.assertNotIn("15.1234567", naive)
+        self.assertNotIn("0.0001234", naive)
+        self.assertIn("| `nine-digit-supgp-launch-nominals` | 4 |", naive)
 
 
     NOTICE = ("; the input holds 1 id more than once with records that differ (e.g. id 25544, 2 records): each copy "

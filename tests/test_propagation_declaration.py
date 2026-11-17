@@ -129,19 +129,61 @@ class TheDeclaration(unittest.TestCase):
 
 
 class TheBudget(unittest.TestCase):
+    """The command's budget applies to each propagate call (D-341). D-574 (the owner's ruling 10): no wall-clock race.
+    The deterministic test hands each call to a stand-in for subprocess.run that raises the TimeoutExpired a real run
+    raises past its budget (CSV calls) or answers at once (TLE calls), and checks every call carried the budget of 1 s.
+    The real test makes every call with times outlast the budget five times over; a probe or parse call slowed past it
+    is a timeout too, so load can only make it surer. Before, a TLE call had to finish a real Python start inside 1 s,
+    and under load it did not (D-566). The shell-string form, the one the command line uses, is held too (D-578, the
+    blind reader of D-574)."""
+    VECTORS = os.path.join(ROOT, "vectors", "propagation-twins.json")
+
     def test_a_propagate_call_past_the_budget_is_a_crash_not_a_refusal(self):
-        """The command's budget applies to each propagate call (D-341): here every CSV call outlasts it."""
-        code = ("import json,sys,time; q=json.load(sys.stdin)['input']; v=json.load(open({vec!r})); "
-                "by={{s['line1']: {{str(x['t']): x for x in s['steps']}} for s in v['sets']}}; "
-                "ts=q['tsince']; time.sleep(5) if ts and q['fmt'] == 'csv' else None; "
-                "l1=[l for l in q['raw'].splitlines() if l.startswith('1 ')]; "
-                "print(json.dumps({{'result': [{{'r': by[l1[0]][str(t)]['r'], 'v': by[l1[0]][str(t)]['v'], 'error': 0}} for t in ts] if l1 or not ts else []}}))"
-                ).format(vec=os.path.join(ROOT, "vectors", "propagation-twins.json"))
-        p = CommandParser([sys.executable, "-c", "print('[]')"], vectors_cmd=[sys.executable, "-c", code], timeout=1)
-        items = {i.check: i for i in run(p).items}
-        self.assertEqual(items["twins-tle-positions"].status, "pass")
+        self.check_budget(["parse-cmd"], ["vectors-cmd"])
+
+    def test_the_shell_string_form_carries_the_budget_too(self):
+        # gpconf/__main__.py passes --cmd and --vectors-cmd as strings: _run's shell branch (D-578)
+        self.check_budget("parse-cmd", "vectors-cmd")
+
+    def check_budget(self, cmd, vectors_cmd):
+        import subprocess
+        from unittest import mock
+        with open(self.VECTORS, encoding="utf-8") as f:
+            v = json.load(f)
+        by = {st["line1"]: {str(x["t"]): x for x in st["steps"]} for st in v["sets"]}
+        budgets = []
+
+        def stand_in(argv, input=None, capture_output=None, timeout=None, **kw):
+            budgets.append(timeout)
+            out = b"[]"
+            if input:
+                q = json.loads(input)["input"] if input.strip().startswith(b"{") else None
+                if q is not None:
+                    ts = q["tsince"]
+                    if ts and q["fmt"] == "csv":
+                        raise subprocess.TimeoutExpired(argv, timeout)   # what a real run past its budget raises
+                    l1 = [l for l in q["raw"].splitlines() if l.startswith("1 ")]
+                    res = [{"r": by[l1[0]][str(t)]["r"], "v": by[l1[0]][str(t)]["v"], "error": 0} for t in ts] if l1 or not ts else []
+                    out = json.dumps({"result": res}).encode()
+            return subprocess.CompletedProcess(argv, 0, out, b"")
+
+        p = CommandParser(cmd, vectors_cmd=vectors_cmd, timeout=1)
+        with mock.patch("gpconf.runner.subprocess.run", side_effect=stand_in):
+            items = {i.check: i for i in run(p).items}
+        self.assertEqual(items["twins-tle-positions"].status, "pass", items["twins-tle-positions"].detail)
         self.assertEqual(items["twins-omm-positions"].status, "fail")
         self.assertIn("a crash or a timeout is no refusal and no rejection (D-341)", items["twins-omm-positions"].detail)
+        self.assertIn("did not finish within 1 seconds", items["twins-omm-positions"].detail)
+        self.assertTrue(budgets and set(budgets) == {1}, budgets)   # the budget, unchanged, on every call
+
+    def test_a_real_command_past_the_budget_is_a_crash(self):
+        """Every call with times sleeps 5 s against the 1 s budget, so each is a crash, never a refusal (D-341)."""
+        code = "import json,sys,time; q=json.load(sys.stdin)['input']; time.sleep(5) if q['tsince'] else None; print(json.dumps({'result': []}))"
+        p = CommandParser([sys.executable, "-c", "print('[]')"], vectors_cmd=[sys.executable, "-c", code], timeout=1)
+        items = {i.check: i for i in run(p).items}
+        for c in ("twins-tle-positions", "twins-omm-positions"):
+            self.assertEqual(items[c].status, "fail", items[c].detail)
+            self.assertIn("a crash or a timeout is no refusal and no rejection (D-341)", items[c].detail)
 
 
 if __name__ == "__main__":

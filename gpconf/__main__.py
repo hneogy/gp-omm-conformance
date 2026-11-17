@@ -413,6 +413,8 @@ def main(argv=None):
         failed_write = write_json(args.json, {"gpconf": __version__, "corpus_version": manifest["corpus_version"], "parser": parser_name,
                        **({"preset": {k: preset.get(k) for k in ("name", "library", "found", "tested_with", "runtime") if k != "runtime" or preset.get(k)}} if preset else {}),
                        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                       # where the run happened, so a page made from reports names the platform they measured (D-593)
+                       "platform": {"system": __import__("platform").platform(), "python": __import__("platform").python_version()},
                        "summary": status_totals(results),  # case totals as numbers: what a script reads (D-240)
                        "inside_cases": annotation_totals(results),  # item skips, field gaps, cases graded (D-312)
                        "results": [r.as_dict() for r in results], "gates": gates})

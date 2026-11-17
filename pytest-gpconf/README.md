@@ -14,7 +14,14 @@ The options are `gpconf run`'s: `--gpconf-preset`, `--gpconf-adapter module:Clas
 given). Writing the adapter is `docs/ADAPTERS.md` in the corpus, and the corpus's `templates/` hold one in eight
 languages.
 
+`--gpconf-data DIR` points at your fetched provider files (`gpconf fetch`), and `--gpconf-sgp4-ver DIR`,
+`--gpconf-propagate`, `--gpconf-strict` and `--gpconf-tag` pass through as `gpconf run` takes them. When gpconf grades
+no case (every chosen case needs data you have not fetched, say), the session gets one failing test,
+`gpconf[no-case-graded]`, so it cannot pass silently; `--gpconf-allow-ungraded` turns that off.
+
+With pytest-xdist (`-n`), each worker runs gpconf itself, so gpconf runs once per worker; the results are the same.
+
 The plugin runs gpconf once per session and reads its `--json` report (the results schema 1.0); it changes no
 verdict. A case passes when gpconf says pass or pass within tolerance.
 
-Tested with pytest 9.2 and gpconf 0.9.0.
+Tested with pytest 9.2 and gpconf 0.10.0.

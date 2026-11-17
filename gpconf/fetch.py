@@ -252,6 +252,11 @@ def why_unexpected(entry, status, body):
     # nothing else in that file's place as the empty answer (D-540)
     if status == entry.get("expect_status") and body in tuple(t.encode("utf-8") for t in no_data_texts_for(entry.get("url"))):
         return None
+    if status == entry.get("expect_status"):
+        # the status was the expected one and the body was not: say so, so that nobody takes it for a wrong status
+        # (the owner's 0.9.1 item, D-542; D-563)
+        return (f"HTTP {status} as expected, but its body ({len(body):,} bytes) is not the provider's no-data text "
+                "the corpus records")
     return f"HTTP {status}"
 
 
@@ -432,8 +437,8 @@ def plan(entries, force=False, include_recaptures=False, root=None, now=None, re
             # asked again inside two hours, and after that only with --force
             u_age = unexpected_age_seconds(e, now, root)
             what = f"HTTP {unexp['http_status']}" if unexp.get("http_status") else "an unexpected response"
-            if unexp.get("unexpected", "").startswith("an "):
-                what = unexp["unexpected"]
+            if unexp.get("unexpected", "").startswith("an ") or "as expected, but its body" in unexp.get("unexpected", ""):
+                what = unexp["unexpected"]   # the clearer text where the body, not the status, was unexpected (D-570, the reader's F1)
             kept = os.path.basename(unexpected_paths(e, root)[0])
             if force and u_age >= MIN_REFETCH_AGE_SECONDS and not opted_out:
                 action, reason = "fetch", f"--force: answered {what} {hours(u_age)} ago"

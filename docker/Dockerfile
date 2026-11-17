@@ -5,8 +5,8 @@
 # NOT BUILT: written 2026-11-10; the image, its name (ghcr.io/hneogy/gpconf, the owner's ruling, D-378) and its
 # publication are the owner's, on the release. Build from this folder:
 #
-#     docker build --build-arg GPCONF_VERSION=0.9.0 -t gpconf:0.9.0 docker/
-#     docker run --rm -v "$PWD:/work" -w /work gpconf:0.9.0 run --preset sgp4
+#     docker build --build-arg GPCONF_VERSION=0.10.0 -t gpconf:0.10.0 docker/
+#     docker run --rm -v "$PWD:/work" -w /work gpconf:0.10.0 run --preset sgp4
 #
 # The Node presets resolve their libraries from the working directory (gpconf/presets.py), so the image keeps them in
 # /opt/gpconf-node and passes --module for each: `run --preset satellite.js --module /opt/gpconf-node/node_modules/satellite.js/dist/index.js`

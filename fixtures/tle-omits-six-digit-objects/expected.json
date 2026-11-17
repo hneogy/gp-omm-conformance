@@ -9049,7 +9049,7 @@
  "checks": [
   {
    "id": "tle-format-omits-ids-above-99999",
-   "description": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'. Where the TLE file is the corpus's own record of that answer, which a fetch writes without requesting it (D-247), and the fetched OMM set holds an id below 100000, the record no longer describes that day: the comparison is not made and the item reports not-exercised."
+   "description": "A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'. Where the TLE file is the corpus's own record of that answer, which a fetch writes without requesting it (D-247), and the fetched OMM set holds an id below 100000, the record no longer describes that day: the comparison is not made and the item reports not-exercised. Where no record is in place, the TLE answer is compared only when its metadata shows it was fetched with the OMM set; otherwise the two may be from different times and the item reports not-exercised. Whether the OMM set holds an id below 100000 is read from the input, never from the parser's answer, and a TLE file no parser read (refused as unreadable, or rejected by the reference reader) is not compared."
   },
   {
    "id": "empty-answer-yields-no-records",
@@ -9057,7 +9057,7 @@
   },
   {
    "id": "tle-count-equals-omm-count-below-100000",
-   "description": "The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query. With the corpus's record of the TLE answer in place of a fetched one (D-247), it is compared only while the fetched OMM set holds no id below 100000."
+   "description": "The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query. With the corpus's record of the TLE answer in place of a fetched one (D-247), it is compared only while the fetched OMM set holds no id below 100000. With no record in place, it is compared only when the metadata shows the TLE answer and the OMM set were fetched together. The ids below 100000 are counted in the input, and a TLE file no parser read is not compared."
   },
   {
    "id": "catalog-number-is-integer",

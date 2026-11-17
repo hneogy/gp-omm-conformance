@@ -1034,7 +1034,7 @@ check leaving it out.
 
 `--json FILE` writes all of it. A script should read this report or the exit status, never the printed lines, whose
 wording can change from one version to the next (D-240). The top level holds `gpconf`, `corpus_version`, `parser` (and
-`preset` for a preset), `generated_at`, `summary`, `inside_cases`, `results` and `gates`. `inside_cases`, from 0.7.0, holds
+`preset` for a preset), `generated_at`, `platform` (the system and Python the run used, D-593), `summary`, `inside_cases`, `results` and `gates`. `inside_cases`, from 0.7.0, holds
 `items_skipped`, `field_gaps` and `cases_graded` for the run, and a result that has either of the first two carries them
 as `annotations`. `summary`, from 0.6.0, holds the case totals
 as numbers:
@@ -1044,7 +1044,12 @@ they add up to `cases`. Each result holds `case`, `title`, `status`, `counts`, `
 file matched the tested snapshot or was compared live), `drift`, `items`, `reused` when provider files were copied
 from an earlier version's cache, and `unexpected` when the fetch kept a response it did not expect for one of the
 case's files (D-228), with `in_place` true where an earlier fetch saved that response in the data's place (D-351). Each item holds `check`, `status`, `file` and `detail`; a values item adds `counts`,
-the numbers above, and a pass within tolerance adds `tolerance_stats`.
+the numbers above, and a pass within tolerance adds `tolerance_stats`. A detail that names only the first few of its
+findings says how many it leaves out ("… and N more", or "and N more" after a bracketed list, wherever in the detail
+the list sits), and its item adds `details`, every one of them; a detail that
+gives a total and a few examples ("N records …, e.g. …") does not (D-593). One list gives a total instead: the
+TLE writer's column-layout item shows a record with more than three fields out of their columns as three and
+"… (N fields)", N being all of them, as 0.9.0 did, and that item adds `details` too (D-605, D-606).
 
 ### Fuzz your adapter: `gpconf fuzz`
 

@@ -74,15 +74,19 @@ class LoadSourceTests(unittest.TestCase):
 
     def test_the_404_body_is_a_legitimate_zero_record_file(self):
         body = b"No GP data found"
-        src = {"format": "tle", "http_status": 404, "record_count": 0, "bytes": 16, "sha256": __import__("hashlib").sha256(body).hexdigest()}
+        src = {"format": "tle", "http_status": 404, "record_count": 0, "bytes": 16, "sha256": __import__("hashlib").sha256(body).hexdigest(),
+               "url": "https://celestrak.org/NORAD/elements/gp.php?CATNR=100000&FORMAT=TLE"}   # a provider source has its URL; one without takes no no-data text (D-562)
         state, fails = self.load("saramago.tle", body, src)
         self.assertEqual((state, fails), ("empty-404", []))
 
     def test_the_no_data_text_under_http_200_is_the_empty_answer(self):
         # D-517, the owner's ruling (D-514): CelesTrak can answer HTTP 200 with the no-data text; that is the empty
         # answer, not an unreadable file (mutant 431 of the 0.9.0 run). With and without a recorded status, both texts.
-        for body in (b"No GP data found", b"No SupGP data found", b"No GP data found\r\n"):
-            for src in ({"format": "tle", "http_status": 200, "record_count": 0}, {"format": "tle", "record_count": 0}):
+        gp_url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=x&FORMAT=TLE"
+        sup_url = "https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FILE=x&FORMAT=TLE"
+        for body, url in ((b"No GP data found", gp_url), (b"No SupGP data found", sup_url), (b"No GP data found\r\n", gp_url)):
+            # each text under its own provider's URL (D-540); a source with no URL takes neither (D-562)
+            for src in ({"format": "tle", "http_status": 200, "record_count": 0, "url": url}, {"format": "tle", "record_count": 0, "url": url}):
                 with self.subTest(body=body, status=src.get("http_status")):
                     state, fails = self.load("answer.tle", body, dict(src, sha256=__import__("hashlib").sha256(body).hexdigest()))
                     self.assertEqual((state, fails), ("empty-404", []))

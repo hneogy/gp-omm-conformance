@@ -1,6 +1,6 @@
-# Corpus manifest (0.9.0)
+# Corpus manifest (0.10.0)
 
-Generated 2026-11-10T05:12:49Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
+Generated 2026-11-16T21:38:47Z by `tools/make_manifest.py`. Machine-readable form: `manifest.json`. Decisions and reversals: `DECISIONS.md`.
 
 No provider data is shipped, and one provider response is: CelesTrak's 16-byte answer `No GP data found`, in `recorded/` with its provenance, which holds no orbital data (D-247, a named exception to D-023). Each case lists the exact source URLs, retrieval times and SHA-256 hashes of the files we tested; `tools/fetch.py` rebuilds them on your machine under CelesTrak's usage policy (each URL once, cached, never looped), and writes the recorded answer where it used to request it.
 
@@ -106,7 +106,7 @@ Tests: supgp-extra-fields, classification-c
 Coverage gaps:
 
 - perishable: this post-deployment file is replaced after cataloguing, so the five files are the corpus's own capture of that launch window, no fetch requests them, and from a fetch the case is not-available: only the maintainer's copy can run it (D-229)
-- what the rest of the 70000-79999 block holds, beside the 72000-series placeholders (confirmed in correspondence with CelesTrak, October 2026), is described by no primary source (RESEARCH.md §1)
+- what the rest of the 70000-79999 block holds, beside the 72000-series placeholders (measured in the corpus's captures, D-274), is described by no primary source (RESEARCH.md §1)
 - the 72000-series placeholders raise the same identity-over-time question as the nine-digit nominals, stated as an open question in that case's gaps: 72000 and 72001 share their OBJECT_IDs, 2026-219A and 2026-219B, with two of the per-satellite nominals [tested]
 
 ## 8. `bstar-and-derivative-forms`
@@ -294,9 +294,9 @@ Coverage gaps:
 - **xml-ndm-wrapper-omm-2.0** — CelesTrak XML has an <ndm> root containing one <omm> per record with id=CCSDS_OMM_VERS and version=2.0; CREATION_DATE and ORIGINATOR elements are present but empty.
 - **kvn-blank-mandatory-values** — CelesTrak KVN writes CREATION_DATE and ORIGINATOR with blank values and blank OBJECT_ID for analyst objects; MEAN_ELEMENT_THEORY is 'SGP/SGP4'.
 - **leading-dot-decimals** — CSV, KVN and XML values may start with '.' or '-.' (no leading zero) and use 'E' exponents; JSON carries numbers.
-- **tle-format-omits-ids-above-99999** — A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'. Where the TLE file is the corpus's own record of that answer, which a fetch writes without requesting it (D-247), and the fetched OMM set holds an id below 100000, the record no longer describes that day: the comparison is not made and the item reports not-exercised.
+- **tle-format-omits-ids-above-99999** — A TLE/3LE/2LE request returns only objects with catalog numbers below 100000; if none qualify the response is HTTP 404 'No GP data found'. Where the TLE file is the corpus's own record of that answer, which a fetch writes without requesting it (D-247), and the fetched OMM set holds an id below 100000, the record no longer describes that day: the comparison is not made and the item reports not-exercised. Where no record is in place, the TLE answer is compared only when its metadata shows it was fetched with the OMM set; otherwise the two may be from different times and the item reports not-exercised. Whether the OMM set holds an id below 100000 is read from the input, never from the parser's answer, and a TLE file no parser read (refused as unreadable, or rejected by the reference reader) is not compared.
 - **empty-answer-yields-no-records** — A provider answer that carries no data (HTTP 404, body 'No GP data found' or 'No SupGP data found') is an empty but valid result: handed to the parser, it yields zero records and no error. An error here collapses 'nothing to load' into 'unreadable' (D-143). From v0.6.0 a fetch does not request the four GP answers of this kind: it writes them from the one provider response the corpus ships, recorded/celestrak-no-gp-data-found.txt (D-247).
-- **tle-count-equals-omm-count-below-100000** — The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query. With the corpus's record of the TLE answer in place of a fetched one (D-247), it is compared only while the fetched OMM set holds no id below 100000.
+- **tle-count-equals-omm-count-below-100000** — The number of TLE records equals the number of OMM records whose NORAD_CAT_ID < 100000 for the same query. With the corpus's record of the TLE answer in place of a fetched one (D-247), it is compared only while the fetched OMM set holds no id below 100000. With no record in place, it is compared only when the metadata shows the TLE answer and the OMM set were fetched together. The ids below 100000 are counted in the input, and a TLE file no parser read is not compared.
 - **nine-digit-ids-parse** — NORAD_CAT_ID values >= 100000000 parse and round-trip as integers in CSV, JSON, XML and KVN.
 - **supgp-extra-keys-tolerated** — SupGP CSV/JSON add non-OMM keys (RMS, DATA_SOURCE); parsers must ignore unknown keys rather than fail.
 - **classification-c** — CLASSIFICATION_TYPE may be 'C' (CelesTrak supplemental) rather than 'U'.
