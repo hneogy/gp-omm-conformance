@@ -60,6 +60,8 @@ gpconf/*.py
 gpconf/adapters/*.py
 gpconf/adapters/*.mjs
 tests/*.py
+# The reviewed list of lines the export wording guard keeps (D-612): file and SHA-256 only.
+tests/export_wording_allowlist.tsv
 # The adversarial adapters and their tests (D-287): wrong-on-purpose parsers that hold the grader honest.
 tests/adversarial/*.py
 tests/adversarial/redteam/*.py

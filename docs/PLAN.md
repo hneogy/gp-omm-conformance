@@ -5,9 +5,9 @@ Companion document: `RESEARCH.md` (sources and verbatim quotes; everything below
 
 ## 0. Three findings that change the brief
 
-**A. CelesTrak does not emit Alpha-5.** In the corpus's captures, its TLE/3LE/2LE output carries nothing
+**A. CelesTrak does not emit Alpha-5.** In the corpus's captures, its TLE/3LE/2LE GP output carries nothing
 above 69999 except the analyst objects in 80000-89999 (RESEARCH §2.2; measured across all seventeen TLE capture files,
-D-274), so every
+D-274, whose only other numbers above 69999 are the supplemental data's temporary ids 72000 and 72001), so every
 object with a catalog number >= 100000 is silently omitted. Real Alpha-5 element sets exist only on
 Space-Track, behind a login, via the GP class with `format/tle` (RESEARCH §4). So the
 "Alpha-5 across the range" coverage cannot come from CelesTrak, and the corpus has to
@@ -335,8 +335,6 @@ that agree across formats stay at the record level as before.
 
 ## Publishability options (not decided; owner's call after the audit)
 
-1. Ask CelesTrak directly whether fixture files may be redistributed with attribution
-   (owner-only action: contacting a person).
 2. Publish the corpus with `expected.json`, metadata and SHA-256 hashes only, and have
    `tools/fetch.py` recreate `raw/` on the developer's machine. Trade-off: each adopter makes
    ~40 requests / ~12 MB against CelesTrak once, and later fetches will not reproduce the
@@ -466,8 +464,8 @@ and skips KVN. Unit tests pass.
 4. File the upstream reports (drafts in `docs/upstream/`).
 5. `python3 tools/export_public.py --dest <new-dir>`; `git init` there; publish; set the
    citation URL in the README; tag `0.1.0`.
-6. Distribution per the original outline (forums, issue trackers as a test resource, one
-   brief e-mail to Dr. Kelso with the corpus): owner-only actions.
+6. Distribution per the original outline (forums, issue trackers as a test resource):
+   owner-only actions.
 
 ## Addendum (2026-09-21, after the Phase 4 review)
 

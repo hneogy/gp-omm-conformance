@@ -11,7 +11,7 @@ import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
-from public_scrub import SUPGP_CASES, supgp_value_strings  # noqa: E402
+from public_scrub import SUPGP_CASES, supgp_value_strings, entry_start  # noqa: E402
 import export_public  # noqa: E402
 from public_scrub import PRIVATE_NAMES as PRIVATE  # noqa: E402  (D-545; None in the public tree)
 
@@ -29,14 +29,161 @@ ALLOWED_HOME_PATHS = {("tests/test_install_layout.py", "/U" + "sers/u")}
 
 def lines_removed(private):
     """How many lines the shortened passages take out of the private log: each passage's own line breaks less its
-    replacement's, computed from the passages themselves (the owner's ruling of 2026-11-16, option A: exact, not loosened)."""
+    replacement's, computed from the passages themselves (the owner's ruling of 2026-11-16: exact, not loosened)."""
     from public_scrub import _PRIVATE
     n = 0
     for entry, head, tail, digest, new in _PRIVATE:
-        start = private.find(f"**{entry} (")
+        start = entry_start(private, entry)
         i = private.find(head, start)
         span = private[i:private.find(tail, i + len(head)) + len(tail)]
         n += span.count("\n") - new.count("\n")
+    return n
+
+
+# D-612 (the owner's ruling of 2026-11-17): the exported tree names private correspondence nowhere outside the stub
+# lines. WORDING finds every line that names the operator, correspondence, a reply, or a letter in its correspondence
+# forms; each such line may stay only if it is listed, by file and the SHA-256 of the line, in
+# tests/export_wording_allowlist.tsv, a list reviewed line by line (a citation or credit, an Alpha-5 or other technical
+# use, or a public GitHub reply; never a description of the correspondence). Any other such line fails, and so does a
+# listed line that is gone or changed. And no window of WINDOW characters of any text the export removes (a stubbed
+# entry or a shortened passage) may appear in the exported decision log or changelog, unless the same window stays in
+# the private log outside what is removed, in a replacement, or in another file of the tree (an entry quoting the
+# README, say); every other file is held by the wording check above.
+# Each family of wording the guard looks for, matched in any case and with either apostrophe (D-615); the planted test
+# holds every family with a line that only that family catches.
+WORDING_FAMILIES = [
+    ("name", r"kelso"),
+    ("operator", r"celestrak['\u2019]s operator"),
+    ("written to", r"written to (?:celestrak|its operator|the operator)"),
+    ("wrote to", r"wrote to (?:celestrak|its operator|the operator)"),
+    ("sent to", r"sent to (?:celestrak|its operator|the operator)"),
+    ("correspondence", r"correspondence"),
+    ("confirmed in", r"confirmed in"),
+    ("asked for separately", r"asked for separately"),
+    ("rights holders", r"rights holders"),
+    ("permission asked", r"permission (?:is|was) (?:asked|awaited|requested)"),
+    ("permission request", r"permission request"),
+    ("bundling answer", r"bundling answer"),
+    ("reply", r"\brepl(?:y|ied|ies)\b"),
+    ("the letter", r"\bthe letter (?:to|of|from|was|is|says|said|promise[sd]?|asks|gives|went|sent)\b"),
+    ("letter to", r"\bletter to\b"),
+    ("the letter's", r"\bthe letter['\u2019]s\b"),
+    ("draft", r"\b(?:the|this|that|its) draft\b(?! release)"),
+    ("letter near the provider", r"\bletter\b[^.\n]{0,40}\b(?:celestrak|operator)\b"),
+]
+WORDING = re.compile("(?i:" + "|".join(rx for _, rx in WORDING_FAMILIES) + ")")
+WORDING_ALLOWLIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "export_wording_allowlist.tsv")
+WINDOW = 60
+
+
+def wording_hits(root):
+    """-> [(path relative to root, line number, line)] for every text line WORDING finds outside the stub lines."""
+    from public_scrub import STUB_LINES
+    out = []
+    for d, dirs, fs in os.walk(root):
+        dirs[:] = sorted(x for x in dirs if x != ".git")
+        for f in sorted(fs):
+            p = os.path.join(d, f)
+            try:
+                with open(p, encoding="utf-8") as fh:
+                    lines = fh.read().splitlines()
+            except (UnicodeDecodeError, OSError):
+                continue
+            rel = os.path.relpath(p, root).replace(os.sep, "/")
+            out += [(rel, i, l) for i, l in enumerate(lines, 1) if l not in STUB_LINES and WORDING.search(l)]
+    return out
+
+
+def wording_failures(root, allowlist_path=WORDING_ALLOWLIST):
+    """-> [str]: every unlisted WORDING line, and every listed line not found exactly once."""
+    import hashlib
+    listed = {}
+    with open(allowlist_path, encoding="utf-8") as fh:
+        rows = fh.read().splitlines()
+    for row in rows:
+        if row.strip() and not row.startswith("#"):
+            rel, digest = row.split("\t")
+            listed[(rel, digest)] = 0
+    bad = []
+    for rel, i, l in wording_hits(root):
+        key = (rel, hashlib.sha256(l.encode("utf-8")).hexdigest())
+        if key in listed:
+            listed[key] += 1
+        else:
+            bad.append(f"{rel}:{i}: not on the reviewed list: {l[:120]}")
+    bad += [f"{rel}: a listed line ({d[:12]}) is gone, changed or repeated ({n} found)" for (rel, d), n in listed.items() if n != 1]
+    return bad
+
+
+def removed_windows(private_decisions, private_changelog, other=""):
+    """The WINDOW-character windows of every text the export removes that stay nowhere else: not in the private log or
+    changelog outside the removed text, and not in any replacement or stub line."""
+    from public_scrub import _PRIVATE, _STUBS, _CHANGELOG, STUB_LINES
+    spans, kept_d, kept_c = [], private_decisions, private_changelog
+    for entry, digest, line in _STUBS:
+        s = entry_start(private_decisions, entry)
+        ends = [x for x in (private_decisions.find("\n**D-", s + 1), private_decisions.find("\n## ", s + 1)) if x > 0]
+        spans.append(private_decisions[s:min(ends)])
+    for entry, head, tail, digest, new in _PRIVATE:
+        s = entry_start(private_decisions, entry); i = private_decisions.find(head, s)
+        spans.append(private_decisions[i:private_decisions.find(tail, i + len(head)) + len(tail)])
+    for release, head, tail, digest, new in _CHANGELOG:
+        s = private_changelog.find(f"## [{release}]"); i = private_changelog.find(head, s)
+        span = private_changelog[i:private_changelog.find(tail, i + len(head)) + len(tail)]
+        spans.append(span); kept_c = kept_c.replace(span, "\0")
+    for span in spans:
+        kept_d = kept_d.replace(span, "\0")
+    keep = "\0".join([kept_d, kept_c, other] + [e[4] for e in _PRIVATE] + [e[4] for e in _CHANGELOG] + list(STUB_LINES))
+    norm = lambda s: " ".join(s.split())
+    keep = norm(keep)
+    out = set()
+    for span in spans:
+        s = norm(span)
+        out |= {s[k:k + WINDOW] for k in range(0, max(1, len(s) - WINDOW + 1)) if s[k:k + WINDOW] not in keep}
+    return out
+
+
+def tree_text(root, skip=("DECISIONS.md", "CHANGELOG.md")):
+    """Every other text file of a tree, whitespace normalised and joined (what a removed window may also be in)."""
+    parts = []
+    for d, dirs, fs in os.walk(root):
+        dirs[:] = [x for x in dirs if x != ".git"]
+        for f in fs:
+            p = os.path.join(d, f)
+            if os.path.relpath(p, root).replace(os.sep, "/") in skip:
+                continue
+            try:
+                with open(p, encoding="utf-8") as fh:
+                    parts.append(" ".join(fh.read().split()))
+            except (UnicodeDecodeError, OSError):
+                continue
+    return "\0".join(parts)
+
+
+def window_leaks(root, windows, files=("DECISIONS.md", "CHANGELOG.md")):
+    """-> [str]: the exported log and changelog files that hold any removed window (whitespace normalised)."""
+    bad = []
+    for rel in files:
+        p = os.path.join(root, rel)
+        if not os.path.exists(p):
+            continue
+        with open(p, encoding="utf-8") as fh:
+            text = " ".join(fh.read().split())
+        found = [w for w in windows if w in text]
+        if found:
+            bad.append(f"{rel}: {len(found)} removed window(s), e.g. {found[0][:40]!r}")
+    return bad
+
+
+def stub_lines_removed(private):
+    """How many lines the stubbed entries take out of the private log (D-612), computed from the entries themselves."""
+    from public_scrub import _STUBS
+    n = 0
+    for entry, digest, line in _STUBS:
+        s = entry_start(private, entry)
+        ends = [x for x in (private.find("\n**D-", s + 1), private.find("\n## ", s + 1)) if x > 0]
+        body = private[s:min(ends)]
+        n += body.count("\n") - line.count("\n") - (1 if body.endswith("\n") else 0)
     return n
 
 
@@ -90,7 +237,9 @@ class ExportGuardTests(unittest.TestCase):
         # confirms written bundling permission; the package is staged from the export (tools/stage_package.py)
         rels = {os.path.relpath(f, self.dest).replace(os.sep, "/") for f in self.files}
         vallado = ["harnesses/vallado/reference/SGP4-VER.TLE", "harnesses/vallado/reference/tcppver.out"]
-        self.assertEqual(sorted(export_public.WITHHELD), vallado)
+        self.assertEqual(sorted(k for k, v in export_public.WITHHELD.items() if v == export_public.VALLADO_PRIVATE), vallado)
+        self.assertEqual(sorted(k for k, v in export_public.WITHHELD.items() if v != export_public.VALLADO_PRIVATE),
+                         ["docs/upstream/python-sgp4-omm-initialize-drops-classification.md"])   # a draft held until filed (D-613)
         for f in vallado:
             self.assertNotIn(f, rels)
         self.assertIn("harnesses/vallado/reference/PROVENANCE.json", rels)   # what they are, and why withheld, is public
@@ -131,10 +280,11 @@ class ExportGuardTests(unittest.TestCase):
         self.assertEqual(named_in(text), [])
         private = open(os.path.join(ROOT, "DECISIONS.md"), encoding="utf-8").read()
         self.assertIn(PRIVATE["private_marker"], private)   # the original is untouched
-        # the note and its blank line, less exactly the lines the shortened passages took up (D-274's reply, the owner's
-        # ruling of 2026-11-16), nothing more
-        self.assertEqual(len(text.splitlines()), len(private.splitlines()) + 2 - lines_removed(private))
-        self.assertEqual(lines_removed(private), 18)   # pinned: D-274's reply block; any other line count is a change
+        # the note and its blank line, less exactly the lines the shortened passages and the stubbed entries took up
+        # (D-612), nothing more
+        self.assertEqual(len(text.splitlines()), len(private.splitlines()) + 2 - lines_removed(private) - stub_lines_removed(private))
+        self.assertEqual(lines_removed(private), 14)   # pinned (D-616): any other line count is a change
+        self.assertEqual(stub_lines_removed(private), 35)   # pinned: D-274's and D-609's many lines become one each
         for given, want in PRIVATE["decisions_cases"]:
             self.assertEqual(scrub_decisions_md(given)[0].splitlines()[-1], want)
 
@@ -166,6 +316,79 @@ class ExportGuardTests(unittest.TestCase):
         for sample in PRIVATE["names_cases"]["clean"]:
             self.assertEqual(named_in(sample), [], sample)
 
+    def test_no_private_correspondence_outside_the_stubs(self):
+        """D-612, D-613: every flagged line is a reviewed one, and no removed text is left."""
+        import hashlib
+        self.assertEqual(wording_failures(self.dest), [])
+        if PRIVATE:
+            windows = removed_windows(open(os.path.join(ROOT, "DECISIONS.md"), encoding="utf-8").read(),
+                                      open(os.path.join(ROOT, "CHANGELOG.md"), encoding="utf-8").read(), tree_text(self.dest))
+            self.assertGreater(len(windows), 1000)   # the removed text is long; a handful would mean the spans are wrong
+            self.assertEqual(window_leaks(self.dest, windows), [])
+            # the windows exempted because another file of the tree holds them are exactly the reviewed ones (D-613)
+            from public_scrub import EXEMPT_WINDOWS
+            every = removed_windows(open(os.path.join(ROOT, "DECISIONS.md"), encoding="utf-8").read(),
+                                    open(os.path.join(ROOT, "CHANGELOG.md"), encoding="utf-8").read())
+            exempt = {hashlib.sha256(w.encode("utf-8")).hexdigest() for w in every - windows}
+            self.assertEqual(exempt, EXEMPT_WINDOWS)
+
+    def test_the_wording_guard_fails_on_planted_lines(self):
+        """The guard is proven on planted copies: an unlisted line, a listed line changed, a removed window put back."""
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            root = os.path.join(tmp, "t")
+            shutil.copytree(self.dest, root)
+            with open(os.path.join(root, "README.md"), "a", encoding="utf-8") as f:
+                f.write("\nA note from CelesTrak's oper" + "ator, confirm" + "ed in his rep" + "ly.\n")
+            self.assertTrue(any("README.md" in b and "not on the reviewed list" in b for b in wording_failures(root)))
+            hit = wording_hits(self.dest)[0]
+            p = os.path.join(root, hit[0]); lines = open(p, encoding="utf-8").read().split("\n")
+            lines[hit[1] - 1] += " (changed)"
+            open(p, "w", encoding="utf-8").write("\n".join(lines))
+            self.assertTrue(any("gone, changed or repeated" in b for b in wording_failures(root)))
+        if PRIVATE:
+            windows = removed_windows(open(os.path.join(ROOT, "DECISIONS.md"), encoding="utf-8").read(),
+                                      open(os.path.join(ROOT, "CHANGELOG.md"), encoding="utf-8").read(), tree_text(self.dest))
+            w = sorted(windows)[len(windows) // 2]
+            with tempfile.TemporaryDirectory() as tmp:
+                k = w.find(" ", 10)   # across a line break, as the hard-wrapped log would carry it
+                open(os.path.join(tmp, "DECISIONS.md"), "w", encoding="utf-8").write("text " + w[:k] + "\n  " + w[k + 1:] + " text\n")
+                self.assertEqual(len(window_leaks(tmp, windows)), 1)
+
+    def test_the_exported_changelog_names_no_private_correspondence(self):
+        """D-612, D-613 (the owner's rulings, 2026-11-17): two released changelog lines are shortened in the public
+        copy only, the private CHANGELOG staying as released; a passage missing or not the recorded one stops the export."""
+        import hashlib
+        from public_scrub import _CHANGELOG, PrivatePassageError, scrub_changelog_md
+        text = open(os.path.join(self.dest, "CHANGELOG.md"), encoding="utf-8").read()
+        self.assertIn("eccentricity truncation, after D-277.", text)
+        self.assertIn("72001 (a single satellite), which in the corpus's TLE captures appear only there (D-274). Text only; no value moves (D-340).", " ".join(text.split()))
+        self.assertEqual(scrub_changelog_md(text), (text, 0))   # the exported copy is already shortened
+        self.assertEqual(len(_CHANGELOG), 2 if PRIVATE else 0)   # the lists are private (D-613): empty in the public tree
+        if PRIVATE:   # the private repository holds the released lines
+            private = open(os.path.join(ROOT, "CHANGELOG.md"), encoding="utf-8").read()
+            out, n = scrub_changelog_md(private)
+            self.assertEqual(n, 2)
+            self.assertEqual(len(private.splitlines()) - len(out.splitlines()), 0)   # pinned: the 0.8.0 passage keeps its line count
+            norm = lambda s: " ".join(s.split())
+            # the whole sentences around each replacement, so a passage cut in the wrong place fails here
+            self.assertIn("rendered with CelesTrak's eccentricity truncation, after D-277. The documentation", norm(out))
+            self.assertIn("80000-89999; CelesTrak's supplemental data gave launch 2026-219 the temporary ids 72000 (the stack) "
+                          "and 72001 (a single satellite), which in the corpus's TLE captures appear only there (D-274). Text only; "
+                          "no value moves (D-340). Changed:", norm(out))
+            self.assertEqual(norm(out).count("no value moves (D-340)."), norm(private).count("no value moves (D-340)."))
+            for release, head, tail, digest, new in _CHANGELOG:
+                s0 = private.find(f"## [{release}]"); i = private.find(head, s0)
+                span = private[i:private.find(tail, i + len(head)) + len(tail)]
+                self.assertEqual(hashlib.sha256(span.encode("utf-8")).hexdigest(), digest, release)
+        if not _CHANGELOG:
+            return
+        release, head, tail, digest, new = _CHANGELOG[0]
+        with self.assertRaises(PrivatePassageError):   # the head is there but the passage is not the recorded one
+            scrub_changelog_md(f"# C\n## [{release}] - x\n{head}something else{tail}\n")
+        with self.assertRaises(PrivatePassageError):   # the release is there but its passage is gone
+            scrub_changelog_md(f"# C\n## [{release}] - x\nnothing of it\n")
+
     def test_the_exported_decision_log_shortens_the_private_passages(self):
         """D-542 (the owner's ruling, 2026-11-14): each passage is shortened in the exported copy, nothing else changes,
         and a passage that is missing or not the recorded one stops the export. The passages are known here only by
@@ -182,16 +405,18 @@ class ExportGuardTests(unittest.TestCase):
             self.assertEqual(n, len(_PRIVATE))
             before, after = private.splitlines(), out.splitlines()
             self.assertEqual(len(before) - lines_removed(private), len(after))   # exactly the passages' own lines go
-            self.assertEqual(len(before) - len(after), 18)   # pinned, not computed from the replacements
+            self.assertEqual(len(before) - len(after), 14)   # pinned, not computed from the replacements (D-616)
             import collections
             changed = list((collections.Counter(after) - collections.Counter(before)).elements())
-            # one line per entry; D-499's two lines; D-274's title line and its reading's line (2026-11-16)
-            self.assertEqual(len(changed), len({e for e, *_ in _PRIVATE}) + 2)
+            # one line per entry, and the further lines of entries shortened in more than one place (pinned, D-613)
+            self.assertEqual(len(changed), len({e for e, *_ in _PRIVATE}) + 7)
             for entry, head, tail, digest, new in _PRIVATE:
-                i = private.find(head, private.find(f"**{entry} ("))
+                i = private.find(head, entry_start(private, entry))
                 span = private[i:private.find(tail, i + len(head)) + len(tail)]
                 self.assertEqual(hashlib.sha256(span.encode("utf-8")).hexdigest(), digest, entry)
                 self.assertNotIn(span, out, entry)
+        if not _PRIVATE:
+            return   # the lists are private (D-613): nothing to plant against in the public tree
         entry, head, tail, digest, new = _PRIVATE[2]
         with self.assertRaises(PrivatePassageError):   # the head is there but the passage is not the recorded one
             scrub_private_passages(f"# T\n**{entry} (x)** {head}something else {tail}\n")
@@ -316,6 +541,57 @@ class LicenceFiles(unittest.TestCase):
         allow = open(os.path.join(ROOT, "PUBLIC_ALLOWLIST.txt"), encoding="utf-8").read().splitlines()
         self.assertIn("NOTICE", allow)
         self.assertIn('license-files = ["LICENSE", "NOTICE"]', open(os.path.join(ROOT, "pyproject.toml"), encoding="utf-8").read())
+
+
+class PrivateListsAreNotPublished(unittest.TestCase):
+    def test_the_export_carries_no_list_of_what_it_withholds(self):
+        """D-613: no hash or match string of removed text is published; the private file is refused by the export and
+        the exported scrub tool holds no SHA-256 of removed text."""
+        self.assertTrue(export_public.private_names_file("tools/private-passages.json"))
+        src = open(os.path.join(ROOT, "tools", "public_scrub.py"), encoding="utf-8").read()
+        self.assertEqual(re.findall(r"\b[0-9a-f]{64}\b", src), [])
+        self.assertIn("docs/upstream/python-sgp4-omm-initialize-drops-classification.md", export_public.WITHHELD)
+
+
+class EntryLookup(unittest.TestCase):
+    def test_undated_and_dated_entries_are_both_found(self):
+        """D-613: the early entries are written "**D-n —"; a lookup by "**D-n (" alone skipped them without a word."""
+        text = "# L\n\n**D-046 — An early one.** x\n\n**D-490 (2026-11-11) — A later one.** y\n"
+        self.assertEqual(text[entry_start(text, "D-046"):].split("**")[1], "D-046 — An early one.")
+        self.assertEqual(text[entry_start(text, "D-490"):].split("**")[1], "D-490 (2026-11-11) — A later one.")
+        self.assertEqual(entry_start(text, "D-047"), -1)
+
+
+class WordingGuardPlanted(unittest.TestCase):
+    PLANTS = {   # one line per family, split so that this file's own text is not a hit
+        "name": "As Kel" + "so wrote in the FAQ.", "operator": "celestrak\u2019s oper" + "ator said so.",
+        "written to": "A sentence writ" + "ten to CelesTrak.", "wrote to": "The owner wro" + "te to celestrak.",
+        "sent to": "The note was se" + "nt to CelesTrak.", "correspondence": "Some corres" + "pondence followed.",
+        "confirmed in": "It was confir" + "med in a note.", "asked for separately": "It is ask" + "ed for separately.",
+        "rights holders": "The rights hol" + "ders agreed.", "permission asked": "The permission is awa" + "ited.",
+        "permission request": "The permission requ" + "est went out.", "bundling answer": "It waits on the bundling ans" + "wer.",
+        "reply": "A rep" + "ly came.", "the letter": "The let" + "ter was in the drawer.",
+        "letter to": "A let" + "ter to the editor.", "the letter's": "The let" + "ter\u2019s margin.",
+        "draft": "This dra" + "ft says so.", "letter near the provider": "A let" + "ter for CelesTrak.",
+    }
+
+    def test_each_family_has_a_plant_only_it_catches(self):
+        """D-615: every family of the guard has a planted line that it, and no other family, catches; so dropping any one
+        family misses its line; and the guard as a whole flags every planted line."""
+        pinned = ["bundling answer", "confirmed in", "correspondence", "draft", "letter near the provider", "letter to",
+                  "name", "operator", "permission asked", "permission request", "reply", "rights holders", "sent to",
+                  "the letter", "the letter's", "written to", "wrote to", "asked for separately"]
+        self.assertEqual(sorted(name for name, _ in WORDING_FAMILIES), sorted(pinned))   # pinned (D-616): 18 families
+        self.assertEqual(sorted(self.PLANTS), sorted(pinned))
+        for name, line in self.PLANTS.items():
+            caught = [n for n, rx in WORDING_FAMILIES if re.search("(?i:" + rx + ")", line)]
+            self.assertEqual(caught, [name], line)
+            without = re.compile("(?i:" + "|".join(rx for n, rx in WORDING_FAMILIES if n != name) + ")")
+            self.assertIsNone(without.search(line), name)
+        with tempfile.TemporaryDirectory() as tmp:
+            open(os.path.join(tmp, "x.md"), "w", encoding="utf-8").write("\n".join(self.PLANTS.values()) + "\n")
+            empty = os.path.join(tmp, "allow.tsv"); open(empty, "w").close()
+            self.assertEqual(len(wording_failures(tmp, empty)), len(self.PLANTS))
 
 
 if __name__ == "__main__":

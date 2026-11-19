@@ -23,7 +23,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
-from public_scrub import scrub_expected, scrub_audit_md, scrub_decisions_md, PRIVATE_NAMES, named_in  # noqa: E402
+from public_scrub import scrub_expected, scrub_audit_md, scrub_decisions_md, scrub_changelog_md, scrub_file_passages, _FILES, PRIVATE_NAMES, named_in  # noqa: E402
 RAW = re.compile(r"(^|/)fixtures/[^/]+/raw(/|$)")
 # The maintainer's instructions for coding assistants stay in the private repository (D-461, the owner's ruling of
 # 2026-11-10): the two instruction files at any depth, and anything under the assistant's settings folder, are refused
@@ -34,6 +34,7 @@ INSTRUCTION_FILE_NAMES = {"bccc86317c281a19e56f3f941077ea61b3fb37d5bd527c518b92b
                     "b951327c37d8a1ed4d5ed18908681f6aca718ecdfe174aa39cf2237547f92fe7"}
 INSTRUCTION_FOLDER_NAMES = {"e026f56c08dcdea441a2aa620ab410ce91162062609b2430f5a13bc9b7cf93f1"}
 PRIVATE_NAMES_FILE = "tools/private-names.json"
+PRIVATE_PASSAGES_FILE = "tools/private-passages.json"   # what the public copy withholds, with its hashes (D-613)
 
 
 def _h(name):
@@ -42,7 +43,7 @@ def _h(name):
 
 def private_names_file(rel):
     """The private names file, refused whatever the allowlist says (D-545)."""
-    return rel.replace(os.sep, "/").lstrip("./") == PRIVATE_NAMES_FILE
+    return rel.replace(os.sep, "/").lstrip("./") in (PRIVATE_NAMES_FILE, PRIVATE_PASSAGES_FILE)
 
 
 def instruction_file(rel):
@@ -63,8 +64,10 @@ RECORDED = {"recorded/celestrak-no-gp-data-found.txt": "000844fd5b7a7b64f14b58cc
 # for tests and the private repository only, until the owner confirms written bundling permission (D-388); the package
 # is staged from the export, so they never reach it either.
 VALLADO_PRIVATE = "Vallado's verification file (AIAA 2006-6753), private until the owner confirms written bundling permission (D-388)"
+UNREPORTED = "a draft of a finding not yet reported upstream, held out of the public copy until it is filed (D-613)"
 WITHHELD = {"harnesses/vallado/reference/SGP4-VER.TLE": VALLADO_PRIVATE,
-            "harnesses/vallado/reference/tcppver.out": VALLADO_PRIVATE}
+            "harnesses/vallado/reference/tcppver.out": VALLADO_PRIVATE,
+            "docs/upstream/python-sgp4-omm-initialize-drops-classification.md": UNREPORTED}
 
 
 def main():
@@ -124,6 +127,16 @@ def main():
         elif rel == "AUDIT.md":
             text, removed = scrub_audit_md(data.decode("utf-8"))
             if removed:
+                data = text.encode("utf-8")
+                scrubbed.append(rel)
+        elif rel == "CHANGELOG.md":   # two released lines that named private correspondence, shortened (D-612)
+            text, n = scrub_changelog_md(data.decode("utf-8"))
+            if n:
+                data = text.encode("utf-8")
+                scrubbed.append(rel)
+        elif rel in {f[0] for f in _FILES}:   # named lines of other files, shortened in the public copy (D-613)
+            text, n = scrub_file_passages(rel, data.decode("utf-8"))
+            if n:
                 data = text.encode("utf-8")
                 scrubbed.append(rel)
         elif rel == "DECISIONS.md":   # the coding assistant's name reworded in the exported copy only (D-462)

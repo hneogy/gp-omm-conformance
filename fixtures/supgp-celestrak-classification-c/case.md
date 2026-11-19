@@ -9,7 +9,7 @@ CelesTrak supplemental GP: classification C, element set 0, RMS/DATA_SOURCE colu
 
 ## How to read a failure
 
-CelesTrak supplemental records differ from the GP records of the 18th Space Defense Squadron (18 SDS): CLASSIFICATION_TYPE C, ELEMENT_SET_NO 0, extra RMS and DATA_SOURCE columns, 72000-series ids (placeholder numbers CelesTrak's pre-launch supplemental data gives a launch stack, not catalogued objects; measured in the corpus's captures, D-274), and a TLE epoch rounded to the TLE's 864 microsecond resolution. Parsers that hard-code 'U', reject unknown columns, or compare epochs exactly will fail.
+CelesTrak supplemental records differ from the GP records of the 18th Space Defense Squadron (18 SDS): CLASSIFICATION_TYPE C, ELEMENT_SET_NO 0, extra RMS and DATA_SOURCE columns, 72000-series ids (72000 for the stack and 72001 for a single satellite of launch 2026-219; in the corpus's TLE captures they appear only in this supplemental data, D-274), and a TLE epoch rounded to the TLE's 864 microsecond resolution. Parsers that hard-code 'U', reject unknown columns, or compare epochs exactly will fail.
 
 ## Checks
 
@@ -32,8 +32,8 @@ Provides:
 Gaps (stated explicitly for this case):
 
 - perishable: this post-deployment file is replaced after cataloguing, so the five files are the corpus's own capture of that launch window, no fetch requests them, and from a fetch the case is not-available: only the maintainer's copy can run it (D-229)
-- what the rest of the 70000-79999 block holds, beside the 72000-series placeholders (measured in the corpus's captures, D-274), is described by no primary source (RESEARCH.md §1)
-- the 72000-series placeholders raise the same identity-over-time question as the nine-digit nominals, stated as an open question in that case's gaps: 72000 and 72001 share their OBJECT_IDs, 2026-219A and 2026-219B, with two of the per-satellite nominals [tested]
+- what the rest of the 70000-79999 block holds, beside the 72000-series temporary ids (measured in the corpus's captures, D-274), is described by no primary source (RESEARCH.md §1)
+- the 72000-series temporary ids raise the same identity-over-time question as the nine-digit nominals, stated as an open question in that case's gaps: 72000 and 72001 share their OBJECT_IDs, 2026-219A and 2026-219B, with two of the per-satellite nominals [tested]
 
 ## Library behaviour observed (docs/CROSSCHECK.md)
 
