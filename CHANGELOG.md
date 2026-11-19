@@ -84,9 +84,12 @@ reported as not-fetched with a message saying why. No gpconf fetch writes such a
 - The D-341 time-budget test no longer depends on the machine's speed; no threshold changed (D-574, D-578).
 - The README's GitHub Action example named `@v0.8.0` and the Dockerfile's usage lines `0.9.0`; both now name
   this release, and a test holds every such example pin to the package version, so it cannot drift again (D-590).
-- The 70000-99999 block's wording cites the corpus's own measurement, "measured in the corpus's captures, D-274",
-  in `docs/RESEARCH.md`, the `supgp-celestrak-classification-c` case's gap and `MANIFEST.md`. Text only; no value moves
-  (D-610).
+- The 70000-99999 block's wording says only what the corpus's captures show (D-274): CelesTrak's supplemental data
+  gave launch 2026-219 the temporary ids 72000 (the stack) and 72001 (a single satellite), found in the corpus's TLE
+  captures only there; the README, `docs/RESEARCH.md`, the `supgp-celestrak-classification-c` case and `MANIFEST.md`
+  say so, and the claims the captures cannot show are gone. The TLE sentence in `docs/PLAN.md` and `docs/RESEARCH.md`
+  §2.2, which said nothing above 69999 but the analyst objects, now names those two ids. Text only; no value moves
+  (D-610, D-612).
 
 ### pytest-gpconf 0.1.0
 
@@ -560,9 +563,9 @@ the rule is POSIX's. A provider TLE line blank in column 68, the last digit of i
 is refused in words, as a line cut short inside that number (D-341).
 
 Changed: the README, the supplemental case's notes and `docs/RESEARCH.md` say what the 70000-99999 block holds: in
-the regular GP data, only analyst objects, 80000-89999; CelesTrak's pre-launch supplemental data uses placeholder
-numbers such as 72000 and 72001 for a launch stack, which are not catalogued objects, and that may change for future
-launches (confirmed in correspondence with CelesTrak, October 2026). Text only; no value moves (D-340).
+the regular GP data, only analyst objects, 80000-89999; CelesTrak's supplemental data gave launch 2026-219 the
+temporary ids 72000 (the stack) and 72001 (a single satellite), which in the corpus's TLE captures appear only
+there (D-274). Text only; no value moves (D-340).
 
 Changed: in the corrupt-input case, a parser that raises on an unedited comparison file, a valid file of its format,
 fails it as `parse`, as on any other valid file; before, nothing failed: the inputs it is the comparison for were set
@@ -882,7 +885,7 @@ survives outside a reviewed allowlist: 500 mutants on every push, 5,000 every ni
 Changed: the exact fetch size the README gives is the 0.6.2 release's measurement, 3,191,362 bytes (the owner's timed
 first-time fetch on release day: 46 requests, each answered 200, in 2 min 2.4 s), where it gave the 0.6.1 release's
 3,201,056; the rounded 3.2 MB is the same (D-277). The phrase "CelesTrak-style rendering" is gone: the derived lines
-are described as rendered with CelesTrak's eccentricity truncation, after Dr. Kelso's reply (D-274, D-277). The
+are described as rendered with CelesTrak's eccentricity truncation, after D-277. The
 documentation inside each `expected.json` is regenerated to match `tools/cases.py`; no record, value or source hash
 of a real record changed (D-278).
 

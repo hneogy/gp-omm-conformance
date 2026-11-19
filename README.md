@@ -126,10 +126,9 @@ your own parser, [`docs/ONBOARDING.md`](docs/ONBOARDING.md) gets you to a first 
 
 **What changed.** On 2026-07-11 the US Space Force catalog assigned number 100000 (to the
 Portuguese CubeSat SARAMAGO) after exhausting the five-digit range, which ends at 69999 (CelesTrak).
-Of the 70000-99999 block, the regular GP data holds only analyst objects, 80000-89999 (Space-Track).
-CelesTrak's pre-launch supplemental data uses placeholder numbers such as 72000 and 72001 for a launch
-stack, which are not catalogued objects, and that may change for future launches (confirmed in
-correspondence with CelesTrak, October 2026).
+Of the 70000-99999 block, the regular GP data holds only analyst objects, 80000-89999, the range Space-Track documents
+for them. CelesTrak's supplemental data gave launch 2026-219 the temporary ids 72000 (the stack) and 72001 (a single
+satellite); in the corpus's TLE captures they appear only there (measured, D-274).
 Every object catalogued since has a six-digit number. The fixed-width
 TLE format has room for five characters, so two coexisting answers exist:
 

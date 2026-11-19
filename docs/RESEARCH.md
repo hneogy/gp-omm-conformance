@@ -41,9 +41,9 @@ analyst sat range (80000-series)". Wikipedia's table (secondary) lists 70000–7
 "Expected post-launch orbits". The 90000 block is not described in any primary source I read.
 
 [Added 2026-10-17, on the owner's instruction of 2026-10-16 (D-340).] What the corpus now states of this block: the
-regular GP data holds only analyst objects in it, 80000-89999, and CelesTrak's pre-launch supplemental data uses
-placeholder numbers such as 72000 and 72001 for a launch stack, which are not catalogued objects, and that may change
-for future launches (measured in the corpus's captures, D-274). The corpus's own GP captures agree: no
+regular GP data holds only analyst objects in it, 80000-89999, and CelesTrak's supplemental data gave launch 2026-219
+the temporary ids 72000 (the stack) and 72001 (a single satellite), which in the corpus's TLE captures appear only
+there (measured, D-274). The corpus's regular GP captures hold no
 id in the block but the 219 analysts 81011-89494 (docs/INVENTORY.md). The paragraph above stays as the research
 record.
 
@@ -99,8 +99,9 @@ and, in the FAQ addendum:
 > JSON will include all of the data.
 
 So a TLE/3LE/2LE request for a group **silently drops** objects >= 100000 rather than
-encoding them in Alpha-5: in the TLE format CelesTrak serves nothing above 69999 except the
-analyst objects in 80000-89999 (the FAQ above; measured across the corpus's seventeen TLE capture files, D-274). The word "Alpha-5" does not appear anywhere on CelesTrak's GP
+encoding them in Alpha-5: in the TLE format CelesTrak's GP data serves nothing above 69999 except the
+analyst objects in 80000-89999 (the FAQ above; measured across the corpus's seventeen TLE capture files, D-274, whose
+only other numbers above 69999 are the supplemental data's temporary ids 72000 and 72001). The word "Alpha-5" does not appear anywhere on CelesTrak's GP
 formats page. The FAQ explains the design position:
 
 > There have been numbering schemes suggested that would extend the range of catalog IDs
@@ -705,8 +706,8 @@ authority extends to people who obtain the data from CelesTrak, and none says it
 3. SupGP records are derived from operator data, several under permissions granted to
    CelesTrak specifically. These are the weakest case for redistribution and are the **only**
    source of real 9-digit catalog numbers. They stay gitignored (DECISIONS D-002, D-018).
-4. Resolving this needs one of: a statement from CelesTrak (contacting Dr. Kelso is an
-   owner-only action under the maintainer's decision policy), or the owner's own legal judgment. Options that avoid
+4. Resolving this needs one of: a statement from CelesTrak (an owner-only step under
+   the maintainer's decision policy), or the owner's own legal judgment. Options that avoid
    the question are listed in PLAN.md "Phase 2 amendments".
 
 Building the fixtures continues; publishing them does not, until the owner decides.
