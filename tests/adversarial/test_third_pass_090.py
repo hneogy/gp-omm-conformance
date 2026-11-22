@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
-"""The third blind pass's findings that were not adapter wins (a fresh session on the 0.8.0 candidate, 2026-10-29;
+"""The third blind pass's findings that were not adapter wins (a reviewer on the 0.8.0 candidate, 2026-10-29;
 its report and adapters are in the private handoff), held here as they are mended for 0.9.0 (D-389 onward).
 
 A: a parser's refusal reason reached the gate headline raw (a line break forged a gate line; a lone surrogate ended

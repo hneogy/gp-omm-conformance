@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
-"""The fresh-session red team's adapters against the current runner (D-293 to D-303).
+"""The independent red team's adapters against the current runner (D-293 to D-303).
 
 A blind audit of gpconf 0.6.2 from PyPI on 2026-10-09 wrote fourteen escapes, each a "Win" that ended a run with
 no failing case, and a "Twin" with the same bug that failed. Here every Win that was an escape fails, or reads

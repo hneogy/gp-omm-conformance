@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
-# Written by the fresh-session red team, 2026-10-09: a blind audit of gpconf 0.6.2 from PyPI, asked to get a
+# Written by the independent red team, 2026-10-09: a blind audit of gpconf 0.6.2 from PyPI, asked to get a
 # wrong parser past the runner. Kept as written but for this header; see tests/adversarial/__init__.py.
 """E8: a record the parser drops from the unedited file as well is not graded in corrupt-input (D-175); the
 corrupt record's items report not-exercised and the case still passes.

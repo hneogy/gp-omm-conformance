@@ -2,7 +2,7 @@
 # Copyright 2026 NEOGY LLC
 """The second blind audit's adapters against the current runner (D-311 to D-313).
 
-A fresh session audited the gpconf 0.7.0 release candidate on 2026-10-10 from its wheel and sdist alone. It found no
+An independent reviewer audited the gpconf 0.7.0 release candidate on 2026-10-10 from its wheel and sdist alone. It found no
 compared value that escapes: each of its seven wins avoided comparison through a documented outcome. One is closed
 (F1: a record returned more often than the input holds it now fails). The other six stand by design, and what this
 file holds them to is that the run SAYS so: an item that skipped and a field that was never returned show in the

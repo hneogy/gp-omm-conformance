@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
-# Written by the fresh-session red team, 2026-10-10: a blind audit of the gpconf 0.7.0 release candidate, from its
+# Written by the independent red team, 2026-10-10: a blind audit of the gpconf 0.7.0 release candidate, from its
 # wheel and sdist alone, asked to get a wrong parser past the runner. Kept as written but for this header; see
 # tests/adversarial/test_redteam2.py.
 """TWIN F2. Same defect (object_id not correct) but the wrong value is RETURNED instead of

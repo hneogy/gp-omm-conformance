@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
-"""The blind review of the 0.8.0 candidate (D-369; a fresh session with the wheel only, the owner's ruling of
+"""The blind review of the 0.8.0 candidate (D-369; a reviewer with the wheel only, the owner's ruling of
 2026-10-27): the grader findings fixed in 0.8.0, each with a wrong-on-purpose input or adapter and its twin.
 
 - check-tle --against passed a file that lost or repeated source records, with exit 0 (finding 1); the secondary
