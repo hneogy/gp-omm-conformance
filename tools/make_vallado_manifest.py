@@ -4,8 +4,8 @@
 """
 tools/make_vallado_manifest.py -- the corpus's own manifest of Vallado's two verification files (D-388).
 
-Reads the private copies in harnesses/vallado/reference/ (withheld from the export and the package until the owner
-confirms written bundling permission), checks them against their PROVENANCE.json, and writes
+Reads the private copies in harnesses/vallado/reference/ (withheld from the export and the package, D-388), checks
+them against their PROVENANCE.json, and writes
 harnesses/vallado/reference-manifest.json: per file its bytes, SHA-256 and line count; per element set its catalog
 number, run (start, stop, step), the number of steps the driver schedules and the number tcppver.out prints;
 and, for each set whose block stops short, the expected error: the step it comes at and its code. The code is measured

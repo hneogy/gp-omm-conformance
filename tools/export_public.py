@@ -25,8 +25,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 from public_scrub import scrub_expected, scrub_audit_md, scrub_decisions_md, scrub_changelog_md, scrub_file_passages, _FILES, PRIVATE_NAMES, named_in  # noqa: E402
 RAW = re.compile(r"(^|/)fixtures/[^/]+/raw(/|$)")
-# The maintainer's instructions for coding assistants stay in the private repository (D-461, the owner's ruling of
-# 2026-11-10): the two instruction files at any depth, and anything under the assistant's settings folder, are refused
+# The maintainer's private instruction files stay in the private repository (D-461, the owner's ruling of
+# 2026-11-10): the two instruction files at any depth, and anything under the private settings folder, are refused
 # whatever the allowlist says. The public tree never spells their names (D-545): a file is matched by the SHA-256 of
 # its name, a folder by the SHA-256 of each folder's name, in lower case. The private names file, when present, adds
 # the original pattern as a second check, and the export refuses that file itself.
@@ -61,9 +61,9 @@ RECORDED = {"recorded/celestrak-no-gp-data-found.txt": "000844fd5b7a7b64f14b58cc
             "recorded/celestrak-no-gp-data-found.provenance.json": None}
 # Files the allowlist matches that stay private, each with its reason (D-367). SM-26's adapters were the one entry until
 # SM-26 licensed them under Apache-2.0 (D-380); they are exported from D-382. Vallado's verification files stay private,
-# for tests and the private repository only, until the owner confirms written bundling permission (D-388); the package
-# is staged from the export, so they never reach it either.
-VALLADO_PRIVATE = "Vallado's verification file (AIAA 2006-6753), private until the owner confirms written bundling permission (D-388)"
+# for tests and the private repository only, kept out of the public copy (D-388); the package is staged from the
+# export, so they never reach it either.
+VALLADO_PRIVATE = "Vallado's verification file (AIAA 2006-6753), kept out of the public copy and the package (D-388)"
 UNREPORTED = "a draft of a finding not yet reported upstream, held out of the public copy until it is filed (D-613)"
 WITHHELD = {"harnesses/vallado/reference/SGP4-VER.TLE": VALLADO_PRIVATE,
             "harnesses/vallado/reference/tcppver.out": VALLADO_PRIVATE,
@@ -94,7 +94,7 @@ def main():
             refused.append((rel, "the private names file (D-545)"))
             continue
         if instruction_file(rel):
-            refused.append((rel, "instructions for coding assistants, private (D-461)"))
+            refused.append((rel, "a maintainer-only instruction file, private (D-461)"))
             continue
         if rel.replace(os.sep, "/").startswith("recorded/"):
             want = RECORDED.get(rel.replace(os.sep, "/"), "")
@@ -139,13 +139,13 @@ def main():
             if n:
                 data = text.encode("utf-8")
                 scrubbed.append(rel)
-        elif rel == "DECISIONS.md":   # the coding assistant's name reworded in the exported copy only (D-462)
+        elif rel == "DECISIONS.md":   # private names reworded in the exported copy only (D-462)
             text, n = scrub_decisions_md(data.decode("utf-8"))
             if n:
                 data = text.encode("utf-8")
                 scrubbed.append(rel)
         found = named_in(rel + "\n" + data.decode("utf-8", "replace"))
-        if found:   # the assistant's or its maker's name, or an instruction file's, would go public (D-545)
+        if found:   # a private name, or an instruction file's, would go public (D-545)
             named.append((rel, found))
             continue
         lines.append(f"{rel}\t{len(data)}\t{hashlib.sha256(data).hexdigest()}")

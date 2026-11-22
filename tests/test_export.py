@@ -70,6 +70,9 @@ WORDING_FAMILIES = [
     ("the letter's", r"\bthe letter['\u2019]s\b"),
     ("draft", r"\b(?:the|this|that|its) draft\b(?! release)"),
     ("letter near the provider", r"\bletter\b[^.\n]{0,40}\b(?:celestrak|operator)\b"),
+    ("bundling permi" + "ssion", r"bundling permissio(?:n)"),   # D-617
+    ("written permi" + "ssion", r"written permissio(?:n)"),   # D-619
+    ("assist" + "ant", r"\bassistan(?:t)(?:s|['\u2019]s)?\b"),   # D-618
 ]
 WORDING = re.compile("(?i:" + "|".join(rx for _, rx in WORDING_FAMILIES) + ")")
 WORDING_ALLOWLIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "export_wording_allowlist.tsv")
@@ -233,8 +236,8 @@ class ExportGuardTests(unittest.TestCase):
             self.assertIn(f"tests/adversarial/{f}", rels)
 
     def test_vallados_files_are_withheld_from_the_export_and_the_package(self):
-        # D-388, the owner's ruling (2026-11-06): private, for tests and the private repository only, until the owner
-        # confirms written bundling permission; the package is staged from the export (tools/stage_package.py)
+        # D-388, the owner's ruling (2026-11-06): private, for tests and the private repository only, kept out of the
+        # public copy; the package is staged from the export (tools/stage_package.py)
         rels = {os.path.relpath(f, self.dest).replace(os.sep, "/") for f in self.files}
         vallado = ["harnesses/vallado/reference/SGP4-VER.TLE", "harnesses/vallado/reference/tcppver.out"]
         self.assertEqual(sorted(k for k, v in export_public.WITHHELD.items() if v == export_public.VALLADO_PRIVATE), vallado)
@@ -248,8 +251,8 @@ class ExportGuardTests(unittest.TestCase):
         for f in vallado:
             self.assertFalse([p for p in stage_package.CORPUS if fnmatch.fnmatch(f, p)], f)
 
-    def test_no_instructions_for_coding_assistants_are_exported(self):
-        """D-461 (the owner's ruling, 2026-11-10): the instruction files and the assistant's settings folder stay
+    def test_no_private_instruction_files_are_exported(self):
+        """D-461 (the owner's ruling, 2026-11-10): the instruction files and the private settings folder stay
         private, whatever the allowlist says. Their names are spelt only in the private names file (D-545); the
         public tree matches them by hash."""
         found = [os.path.relpath(os.path.join(b, f), self.dest) for b, ds, fs in os.walk(self.dest) for f in fs + ds
@@ -268,10 +271,10 @@ class ExportGuardTests(unittest.TestCase):
         for rel in cases["kept"]:
             self.assertFalse(export_public.instruction_file(rel), rel)
 
-    def test_the_exported_decision_log_names_no_coding_assistant(self):
+    def test_the_exported_decision_log_spells_no_private_name(self):
         """D-462 (the owner's ruling, 2026-11-10): reworded in the exported copy, with a note; the private log intact."""
         text = open(os.path.join(self.dest, "DECISIONS.md"), encoding="utf-8").read()
-        self.assertIn("Public copy: the coding assistant's name", text)
+        self.assertIn("Public copy: private names and files", text)
         self.assertIn("passages about unreported findings and private correspondence are shortened (D-542)", text)
         from public_scrub import scrub_decisions_md, named_in
         self.assertEqual(scrub_decisions_md("# T\nno mention here\n"), ("# T\nno mention here\n", 0))
@@ -284,13 +287,13 @@ class ExportGuardTests(unittest.TestCase):
         # (D-612), nothing more
         self.assertEqual(len(text.splitlines()), len(private.splitlines()) + 2 - lines_removed(private) - stub_lines_removed(private))
         self.assertEqual(lines_removed(private), 14)   # pinned (D-616): any other line count is a change
-        self.assertEqual(stub_lines_removed(private), 35)   # pinned: D-274's and D-609's many lines become one each
+        self.assertEqual(stub_lines_removed(private), 117)   # pinned: D-274's, D-609's and D-618's six entries' lines become one each
         for given, want in PRIVATE["decisions_cases"]:
             self.assertEqual(scrub_decisions_md(given)[0].splitlines()[-1], want)
 
     def test_the_exported_tree_spells_no_private_name(self):
         """D-545 (the owner's ruling, 2026-11-14): no file of the exported tree, by name or content, holds the
-        assistant's or its maker's name, an instruction file's name or the co-author trailer, in any case; the
+        private names, an instruction file's name or the co-author trailer, in any case; the
         export refuses the private names file; and the check that stops the export finds each name it must."""
         rels = {os.path.relpath(f, self.dest).replace(os.sep, "/") for f in self.files}
         self.assertNotIn(export_public.PRIVATE_NAMES_FILE, rels)
@@ -573,6 +576,8 @@ class WordingGuardPlanted(unittest.TestCase):
         "reply": "A rep" + "ly came.", "the letter": "The let" + "ter was in the drawer.",
         "letter to": "A let" + "ter to the editor.", "the letter's": "The let" + "ter\u2019s margin.",
         "draft": "This dra" + "ft says so.", "letter near the provider": "A let" + "ter for CelesTrak.",
+        "bundling permi" + "ssion": "It waits on written bundling permi" + "ssion.",
+        "written permi" + "ssion": "Not before written permi" + "ssion.", "assist" + "ant": "A coding assis" + "tant helped.",
     }
 
     def test_each_family_has_a_plant_only_it_catches(self):
@@ -580,8 +585,9 @@ class WordingGuardPlanted(unittest.TestCase):
         family misses its line; and the guard as a whole flags every planted line."""
         pinned = ["bundling answer", "confirmed in", "correspondence", "draft", "letter near the provider", "letter to",
                   "name", "operator", "permission asked", "permission request", "reply", "rights holders", "sent to",
-                  "the letter", "the letter's", "written to", "wrote to", "asked for separately"]
-        self.assertEqual(sorted(name for name, _ in WORDING_FAMILIES), sorted(pinned))   # pinned (D-616): 18 families
+                  "the letter", "the letter's", "written to", "wrote to", "asked for separately", "bundling permi" + "ssion",
+                  "written permi" + "ssion", "assist" + "ant"]
+        self.assertEqual(sorted(name for name, _ in WORDING_FAMILIES), sorted(pinned))   # pinned (D-616 to D-619): 21 families
         self.assertEqual(sorted(self.PLANTS), sorted(pinned))
         for name, line in self.PLANTS.items():
             caught = [n for n, rx in WORDING_FAMILIES if re.search("(?i:" + rx + ")", line)]

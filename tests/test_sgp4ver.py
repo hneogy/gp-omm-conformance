@@ -3,7 +3,7 @@
 """The readers for Vallado's two verification files and the corpus's manifest of them (D-388).
 
 The readers are tested on text written here, so they run everywhere; the manifest is held to the private copies,
-which the export and the package leave out until the owner confirms written bundling permission, so those tests skip
+which the export and the package leave out (D-388), so those tests skip
 in a clone, an export and public CI.
 
 Run: python -m unittest tests.test_sgp4ver"""

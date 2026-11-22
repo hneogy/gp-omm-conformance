@@ -4,7 +4,7 @@ message: "If you use this corpus, please cite it as below. Use the concept DOI t
 type: dataset
 title: "gpconf: a conformance corpus for orbital-data parsers crossing the five-digit catalog-number boundary"
 version: "0.10.0"
-date-released: "2026-11-14"
+date-released: "2026-11-22"
 doi: 10.5281/zenodo.22867654
 license: Apache-2.0
 authors:

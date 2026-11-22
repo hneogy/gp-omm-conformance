@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
-"""The second blind review of the 0.8.0 candidate (D-370; a fresh session with the wheel of e42e9fd alone, the owner's
+"""The second blind review of the 0.8.0 candidate (D-370; a reviewer with the wheel of e42e9fd alone, the owner's
 ruling of 2026-10-28): the grader findings fixed in 0.8.0, each with a wrong-on-purpose adapter or input and its twin.
 
 - F1: check-tle --against said [pass], and exited 0, for wrong values written under an id the source holds more than

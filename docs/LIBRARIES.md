@@ -73,6 +73,7 @@ The full list, not highlights (D-552), the same table as the README's: generated
 | satkit | `TLE.from_lines` dropped a whole file for one bad set; the fix is an opt-in (`on_error`), and the default behaviour is unchanged | released | [PR #287](https://github.com/ssmichael1/satkit/pull/287) | [v0.24.3](https://github.com/ssmichael1/satkit/releases/tag/v0.24.3) | 2026-11-11 (merged) |
 | SGPKit (swift-sgp4) | `TLEDecoder.decodeCollection` dropped every TLE in a file for one bad set; found by gpconf (`corrupt-input`); the fix is an opt-in (`decodeValidSets`), and the default behaviour is unchanged | released | [PR #17](https://github.com/csanfilippo/swift-sgp4/pull/17) | [4.5.0](https://github.com/csanfilippo/swift-sgp4/releases/tag/4.5.0) | 2026-11-14 (merged) |
 | CelesTrak's fundamentals-of-astrodynamics (SGP4 reference code) | `twoline2rv` reads an Alpha-5 field beginning with I or O as a five-digit number | merged, not yet released | [PR #175](https://github.com/CelesTrak/fundamentals-of-astrodynamics/pull/175) |  | 2026-11-15 (merged) |
+| brahe | `OMM.from_str` refuses CelesTrak's ndm-wrapped XML and KVN with an empty CREATION_DATE; `parse_norad_id("A+123")` accepted; Alpha-5 encoding below 100000 unpadded | merged, not yet released | [PR #645](https://github.com/duncaneddy/brahe/pull/645) |  | 2026-11-20 (merged) |
 | PyEphem | Alpha-5 fields read as catalog number 0, silently | open | [#296](https://github.com/brandon-rhodes/pyephem/issues/296) |  | 2026-09-25 (reported) |
 | python-sgp4 | `Satrec.sgp4init` writes I and O as Alpha-5 letters | open | [#173](https://github.com/brandon-rhodes/python-sgp4/issues/173) |  | 2026-10-10 (reported) |
 | python-sgp4 | a type 4 (SGP4-XP) TLE propagated as plain SGP4 | open | [#178](https://github.com/brandon-rhodes/python-sgp4/issues/178) |  | 2026-11-08 (reported) |
@@ -83,13 +84,12 @@ The full list, not highlights (D-552), the same table as the README's: generated
 | tle.js | `getEpochDay()` reads up to a stray letter and `isValidTLE()` calls the TLE valid | open | [#63](https://github.com/davidcalhoun/tle.js/issues/63) |  | 2026-09-28 (reported) |
 | SatelliteKit | B* read from a TLE as e-53 instead of e-05 | open | [#16](https://github.com/gavineadie/SatelliteKit/issues/16) |  | 2026-10-08 (reported) |
 | SatelliteKit | deep-space Lyddane check on `abs(inclination)` where the reference SGP4 code's is signed | open | [#24](https://github.com/gavineadie/SatelliteKit/issues/24) |  | 2026-11-09 (reported) |
-| brahe | `OMM.from_str` refuses CelesTrak's ndm-wrapped XML and KVN with an empty CREATION_DATE; `parse_norad_id("A+123")` accepted; Alpha-5 encoding below 100000 unpadded | open | [#620](https://github.com/duncaneddy/brahe/issues/620) |  | 2026-11-10 (reported) |
 | sgp4 crate (Rust) | a type 4 (SGP4-XP) TLE propagated as plain SGP4 | open | [#23](https://github.com/neuromorphicsystems/sgp4/issues/23) |  | 2026-11-10 (reported) |
 | PyEphem | a letter in the epoch field accepted and the epoch read up to it | declined | [#297](https://github.com/brandon-rhodes/pyephem/issues/297) |  | 2026-10-01 (closed) |
 | SatDump | Alpha-5 sets dropped silently; SupGP CSV rejected whole on master | closed (maintainers said planned) | [#1221](https://github.com/SatDump/SatDump/issues/1221) |  | 2026-09-27 (closed) |
 | python-sgp4 | nine-digit NORAD_CAT_ID refused by the OMM reader (reported by another user; gpconf tested the fix) | another user's report, open upstream | [#169](https://github.com/brandon-rhodes/python-sgp4/issues/169) |  | 2026-08-20 (reported) |
 
-38 findings: 10 fixed by this project's pull requests, 13 by maintainers and contributors after this project's report, 12 still open, 3 others: 2 that ended another way and 1 another user's report; as of 2026-11-17.
+38 findings: 10 fixed by this project's pull requests, 14 by maintainers and contributors after this project's report, 11 still open, 3 others: 2 that ended another way and 1 another user's report; as of 2026-11-22.
 <!-- upstream-table:end -->
 
 ## Known gaps

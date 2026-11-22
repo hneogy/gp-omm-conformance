@@ -1,10 +1,10 @@
 {
  "generated_by": "tools/upstream_table.py (D-552, D-553)",
- "as_of": "2026-11-17",
+ "as_of": "2026-11-22",
  "summary": {
   "my-pr": 10,
-  "maintainer": 13,
-  "open": 12,
+  "maintainer": 14,
+  "open": 11,
   "other": 3,
   "total": 38
  },
@@ -606,6 +606,30 @@
    "date_is": "merged"
   },
   {
+   "group": "maintainer",
+   "library": "brahe",
+   "finding": "`OMM.from_str` refuses CelesTrak's ndm-wrapped XML and KVN with an empty CREATION_DATE; `parse_norad_id(\"A+123\")` accepted; Alpha-5 encoding below 100000 unpadded",
+   "issues": [
+    "https://github.com/duncaneddy/brahe/issues/620"
+   ],
+   "prs": [
+    "https://github.com/duncaneddy/brahe/pull/644",
+    "https://github.com/duncaneddy/brahe/pull/645"
+   ],
+   "commits": [],
+   "status": "merged",
+   "release": null,
+   "merged": "2026-11-20",
+   "by": "the maintainer",
+   "involvement": null,
+   "proof_given": null,
+   "inferred": null,
+   "opt_in": null,
+   "proof": "https://github.com/duncaneddy/brahe/pull/645",
+   "date": "2026-11-20",
+   "date_is": "merged"
+  },
+  {
    "group": "open",
    "library": "PyEphem",
    "finding": "Alpha-5 fields read as catalog number 0, silently",
@@ -817,27 +841,6 @@
    "opt_in": null,
    "proof": "https://github.com/gavineadie/SatelliteKit/issues/24",
    "date": "2026-11-09",
-   "date_is": "reported"
-  },
-  {
-   "group": "open",
-   "library": "brahe",
-   "finding": "`OMM.from_str` refuses CelesTrak's ndm-wrapped XML and KVN with an empty CREATION_DATE; `parse_norad_id(\"A+123\")` accepted; Alpha-5 encoding below 100000 unpadded",
-   "issues": [
-    "https://github.com/duncaneddy/brahe/issues/620"
-   ],
-   "prs": [],
-   "commits": [],
-   "status": "open",
-   "release": null,
-   "merged": null,
-   "by": null,
-   "involvement": null,
-   "proof_given": null,
-   "inferred": null,
-   "opt_in": null,
-   "proof": "https://github.com/duncaneddy/brahe/issues/620",
-   "date": "2026-11-10",
    "date_is": "reported"
   },
   {

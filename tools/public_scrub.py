@@ -126,8 +126,8 @@ def scrub_audit_md(text):
     return "\n".join(out) + "\n", removed
 
 
-# D-462 (the owner's ruling of 2026-11-10): the exported decision log names neither the coding assistant nor its
-# instructions file. The private log is append-only and never altered; only the exported copy changes, with a note.
+# D-462 (the owner's ruling of 2026-11-10): the exported decision log spells no private name and no private
+# instruction file. The private log is append-only and never altered; only the exported copy changes, with a note.
 # D-545 (the owner's ruling of 2026-11-14): the public tree never spells those names either, so the rewording table,
 # its fallbacks, the names the export refuses to publish and the cases that prove each check are in the private names
 # file, which stays in the private repository and which the export refuses. Without it (in the public tree) the
@@ -153,7 +153,7 @@ def named_in(text):
     return [m.group(0) for w in PRIVATE_NAMES["names"] for m in re.finditer(w, text, re.I)]
 
 
-DECISIONS_NOTE = ("*Public copy: the coding assistant's name and its instructions file, which stays in the maintainer's private "
+DECISIONS_NOTE = ("*Public copy: private names and files, which stay in the maintainer's private "
                   "repository, are reworded here (D-462), and passages about unreported findings and private correspondence "
                   "are shortened (D-542); the private original is intact.*")
 
@@ -296,7 +296,7 @@ def scrub_file_passages(rel, text):
 
 
 def scrub_decisions_md(text):
-    """-> (text, n): the exported DECISIONS.md with every mention of the coding assistant reworded (D-462) and the
+    """-> (text, n): the exported DECISIONS.md with every private name reworded (D-462) and the
     D-542 passages shortened, and a note under the title; n counts the replacements. The rewording table and its
     fallbacks are in the private names file (D-545); without it only the D-542 passages are shortened."""
     import re

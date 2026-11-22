@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 NEOGY LLC
-# Written by the fresh-session red team, 2026-10-09: a blind audit of gpconf 0.6.2 from PyPI, asked to get a
+# Written by the independent red team, 2026-10-09: a blind audit of gpconf 0.6.2 from PyPI, asked to get a
 # wrong parser past the runner. Kept as written but for this header; see tests/adversarial/__init__.py.
 """E15: no case that runs without fetched data grades a CSV, JSON or XML value against an oracle: the only OMM
 files that ship are corrupt-input's, which the reference reader refuses whole before any value is read, and whose

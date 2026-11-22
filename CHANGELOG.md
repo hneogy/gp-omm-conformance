@@ -6,13 +6,16 @@ cases, or an additive protocol change; major: a changed `expected.json` schema; 
 before 1.0 and major from 1.0).
 `DECISIONS.md` holds the reasoning behind every entry, by decision number.
 
-## [0.10.0]
+## [0.10.0] - 2026-11-22
 
 Fixes found by 0.9.0's own reviews (the blind pass on its late fix and blind pass D), including the known issue 0.9.0
 listed, and a check of the full upstream table against GitHub. Planned as 0.9.1; it is 0.10.0 because four entries
 below change what a check concludes, a minor bump under the versioning rule (D-333). Re-measured on 0.9.0's released
 corpus data, the 19 reports of the re-measure workflow (the presets and the libraries it runs) keep every one
 of their 399 case verdicts; the libraries measured outside that workflow were not re-run (D-579).
+
+Mutation testing of the grading code before the release: 2,968 of 3,503 mutants killed (84.73%), 535 survive; with
+the two runner.py:2967 timeout kills re-checked as survivors, 2,966 (84.67%), 537 survive (D-626, D-627).
 
 ### Changes that can move your result
 
@@ -102,6 +105,7 @@ message if the report lacks a field it reads. Under pytest-xdist each worker run
 ### Moved to the next release
 
 Planned for this release and moved to the next:
+- the review of the 535 mutants that survive 0.10.0's mutation run; it changes no shipped grade (D-626);
 - the 147 mutants that survived 0.9.0's mutation run and that its triage put in the must-fix group as "likely" rather
   than sure, still to be read and, where needed, given tests (D-533);
 - five items from the same triage: the TLE/OMM consistency check comparing every copy of an id, not only the last;
