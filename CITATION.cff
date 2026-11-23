@@ -75,3 +75,6 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.24238053
     description: "Version DOI for release v0.9.0"
+  - type: doi
+    value: 10.5281/zenodo.24447791
+    description: "Version DOI for release v0.10.0"

@@ -15,7 +15,8 @@ corpus data, the 19 reports of the re-measure workflow (the presets and the libr
 of their 399 case verdicts; the libraries measured outside that workflow were not re-run (D-579).
 
 Mutation testing of the grading code before the release: 2,968 of 3,503 mutants killed (84.73%), 535 survive; with
-the two runner.py:2967 timeout kills re-checked as survivors, 2,966 (84.67%), 537 survive (D-626, D-627).
+the two runner.py:2967 timeout kills re-checked as survivors, 2,966 (84.67%), 537 survive (D-626, D-627). Version DOI
+10.5281/zenodo.24447791 (Zenodo record 24447791); the concept DOI 10.5281/zenodo.22867654 resolves to the latest release.
 
 ### Changes that can move your result
 

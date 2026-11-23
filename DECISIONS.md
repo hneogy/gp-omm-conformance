@@ -3575,3 +3575,36 @@ run:
   expected values.
 - **For 0.10.1:** the page's runs are of 2026-11-15, from the 0.9.0 re-measure's fetched data. A regeneration on
   0.10.x's own code is noted for 0.10.1; the release checklist's step 4 names a line the page no longer has.
+
+**D-629 (2026-11-22) — For 0.10.1: one changelog line on 0.9.0's sgp4-ver-positions report, which could hide a failing
+set when the list of failing steps was cut; 0.10.0's D-593 names every failing set (the owner's ruling of
+2026-11-22). No code or status changes; nothing public until the 0.10.1 export, on the owner's word.**
+- **What 0.9.0 did (read from the code at 0ac32ee, nothing run):** `gpconf/runner.py` lines 3324-3361 add every set's
+  failing steps to one list, and the item's verdict uses the whole list. The detail text printed the first six entries
+  and " ..." with no count. When the first six were one set's, a second failing set was counted but not named.
+- **The instance:** GPKit 2.0.0 under the exact epoch reading. Its record (GPKit 063a7ce, in its v2.0.1) grades set
+  20413 failing on 7 of its 70 steps, up to 4.63e-7 km against the 2e-7 bar, beside 23333's 15. 0.9.0's report named
+  23333 only. `gpconf/propagation.py` (grade_set, BAR) is byte-identical between 0ac32ee and f22bf63, and 0.10.0's
+  report opens "steps fail in 2 sets: 20413, 23333". The verdict was fail under both versions, and no verdict moves.
+- **The line, for the 0.10.1 changelog (under Fixed, citing this entry and D-593):** "0.9.0's sgp4-ver-positions
+  report could leave a failing set unnamed when its list of failing steps was cut at six (set 20413 under the exact
+  epoch reading, as GPKit 063a7ce records); the verdict counted it. 0.10.0 names every failing set (D-593, D-629)."
+- **Where it waits:** the 0.10.1 list in docs/handoff/HANDOFF-0.10.0-released-2026-11-22.md.
+
+**D-630 (2026-11-22) — v0.10.0's version DOI 10.5281/zenodo.24447791 in CITATION.cff, the README and the changelog,
+the D-555 way (the owner's ruling of 2026-11-22). Public main f22bf63 says "version 0.10.0" in the README's citation
+and then lists "this release's, v0.9.0 10.5281/zenodo.24238053", so a small export follows on the owner's word.**
+- **CITATION.cff:** a version-DOI identifier for v0.10.0 after v0.9.0's. The top-level `doi:` stays the concept DOI
+  10.5281/zenodo.22867654, as for every release.
+- **README, citation paragraph:** "this release's, v0.10.0 10.5281/zenodo.24447791", with v0.9.0's DOI first among
+  the releases before it.
+- **CHANGELOG, [0.10.0]:** "Version DOI 10.5281/zenodo.24447791 (Zenodo record 24447791); the concept DOI
+  10.5281/zenodo.22867654 resolves to the latest release.", in the lead, as 0.9.0's entry carries its own.
+- **Zenodo record 24447791,** read through its API on 2026-11-22: published, version v0.10.0, created 19:24:35Z, four
+  seconds after the GitHub release.
+- **Next:** the export of this branch under a Q, with predictions; remote..HEAD to the owner before any push. No tag,
+  no PyPI. The package files are unchanged; the three edited files are text outside the package's grading code.
+
+**D-631 (2026-11-22) — D-629's entry goes public with the D-630 export, as part of DECISIONS.md; the changelog line it
+sets out still waits for the 0.10.1 changelog (the owner's ruling of 2026-11-22). D-629's "nothing public until the
+0.10.1 export" means that line, not the entry.**

@@ -751,7 +751,8 @@ Zenodo gives two kinds of DOI. The **concept DOI**, [10.5281/zenodo.22867654](ht
 refers to the corpus as a whole and always resolves to the latest release; use it when you mean the corpus in general.
 Each release also has a **version DOI** of its own, on that release's Zenodo record (the concept DOI's page lists every
 version); use one when your results depend on a specific set of expected values. `CITATION.cff` lists the version DOIs:
-this release's, v0.9.0 [10.5281/zenodo.24238053](https://doi.org/10.5281/zenodo.24238053), and those of the releases before it: v0.8.0 [10.5281/zenodo.23853937](https://doi.org/10.5281/zenodo.23853937),
+this release's, v0.10.0 [10.5281/zenodo.24447791](https://doi.org/10.5281/zenodo.24447791), and those of the releases before it: v0.9.0 [10.5281/zenodo.24238053](https://doi.org/10.5281/zenodo.24238053),
+v0.8.0 [10.5281/zenodo.23853937](https://doi.org/10.5281/zenodo.23853937),
 v0.7.0 [10.5281/zenodo.23382463](https://doi.org/10.5281/zenodo.23382463),
 v0.6.2 [10.5281/zenodo.23265462](https://doi.org/10.5281/zenodo.23265462),
 v0.6.1 [10.5281/zenodo.23144821](https://doi.org/10.5281/zenodo.23144821),
